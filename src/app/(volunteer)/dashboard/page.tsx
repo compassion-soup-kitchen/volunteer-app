@@ -18,10 +18,14 @@ import {
   RiInformationLine,
   RiTrophyLine,
   RiStarFill,
+  RiGraduationCapLine,
+  RiFileTextLine,
 } from "@remixicon/react";
 import Link from "next/link";
 import { getUserApplicationStatus } from "@/lib/application-actions";
 import { getDashboardData } from "@/lib/dashboard-actions";
+import { getAvailableTraining } from "@/lib/training-actions";
+import { getPendingResignCount } from "@/lib/document-actions";
 
 export const metadata: Metadata = {
   title: "Dashboard | Te Pūaroha",
@@ -30,10 +34,15 @@ export const metadata: Metadata = {
 export default async function VolunteerDashboard() {
   const session = await auth();
   const firstName = session?.user?.name?.split(" ")[0] || "there";
-  const [appStatus, dashboardData] = await Promise.all([
+  const [appStatus, dashboardData, trainingSessions, pendingResigns] = await Promise.all([
     getUserApplicationStatus(),
     getDashboardData(),
+    getAvailableTraining(),
+    getPendingResignCount(),
   ]);
+  const registeredTraining = trainingSessions.filter(
+    (s) => s.userAttendanceStatus === "REGISTERED"
+  );
 
   const reachedMilestones = dashboardData?.milestones?.filter((m) => m.reached) ?? [];
   const nextMilestone = dashboardData?.milestones?.find((m) => !m.reached);
@@ -151,6 +160,85 @@ export default async function VolunteerDashboard() {
                 <RiArrowRightLine className="size-3.5" />
               </Link>
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Agreements needing re-sign */}
+      {pendingResigns > 0 && (
+        <Card className="border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                <RiFileTextLine className="size-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <CardTitle>Agreement Updates</CardTitle>
+                <CardDescription>
+                  {pendingResigns} agreement{pendingResigns !== 1 ? "s" : ""} need
+                  your signature
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/documents">
+                Review & Sign
+                <RiArrowRightLine className="size-3.5" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upcoming Training */}
+      {registeredTraining.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
+                  <RiGraduationCapLine className="size-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Upcoming Training</CardTitle>
+                  <CardDescription>Sessions you&apos;re registered for</CardDescription>
+                </div>
+              </div>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/training">
+                  View all
+                  <RiArrowRightLine className="size-3.5" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {registeredTraining.slice(0, 3).map((ts) => (
+                <div
+                  key={ts.id}
+                  className="flex items-center justify-between rounded-md border border-border p-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{ts.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(ts.date).toLocaleDateString("en-NZ", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                      })}{" "}
+                      &middot; {ts.startTime}–{ts.endTime}
+                      {ts.location && ` · ${ts.location}`}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    Registered
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

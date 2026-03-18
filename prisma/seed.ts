@@ -74,6 +74,50 @@ async function main() {
   }
   console.log(`Created ${serviceAreas.length} service areas`);
 
+  // Create agreement templates
+  await prisma.agreementTemplate.upsert({
+    where: { agreementType: "CODE_OF_CONDUCT" },
+    update: {},
+    create: {
+      agreementType: "CODE_OF_CONDUCT",
+      title: "Te Tikanga — Code of Conduct",
+      content: `As a volunteer at Compassion Soup Kitchen | Te Pūaroha, I agree to:
+
+• Treat all people with aroha (love), manaakitanga (hospitality), and respect
+• Maintain confidentiality about the people we serve
+• Follow health and safety guidelines at all times
+• Arrive on time for scheduled shifts and notify coordinators of absences
+• Respect the property and resources of the organisation
+• Work cooperatively with other volunteers, staff, and coordinators
+• Represent Compassion Soup Kitchen positively in the community
+• Report any concerns about safety or welfare to a coordinator`,
+      version: "1.0",
+      updatedById: admin.id,
+    },
+  });
+
+  await prisma.agreementTemplate.upsert({
+    where: { agreementType: "SAFEGUARDING" },
+    update: {},
+    create: {
+      agreementType: "SAFEGUARDING",
+      title: "Safeguarding Policy",
+      content: `As a volunteer, I understand and commit to:
+
+• Acting in the best interests of all tamariki (children) and vulnerable people
+• Never being alone with a child or vulnerable person in an unsupervised setting
+• Reporting any concerns about abuse or neglect to a coordinator immediately
+• Completing a Ministry of Justice (MOJ) check if required
+• Maintaining appropriate boundaries with all people we serve
+• Not using personal devices to photograph or record people we serve
+• Understanding that breaches of this policy may result in immediate removal`,
+      version: "1.0",
+      updatedById: admin.id,
+    },
+  });
+
+  console.log("Created agreement templates");
+
   // Create volunteer profile for Aroha
   const kitchenArea = await prisma.serviceArea.findUnique({ where: { name: "Kitchen & Meals" } });
   const gardenArea = await prisma.serviceArea.findUnique({ where: { name: "Community Garden" } });
@@ -459,6 +503,26 @@ async function main() {
         reviewedAt: new Date(),
       },
     });
+
+    // Create signed agreements for additional volunteers
+    for (const vol of [vol2Profile, vol3Profile, vol4Profile]) {
+      await prisma.signedAgreement.createMany({
+        data: [
+          {
+            volunteerId: vol.id,
+            agreementType: "CODE_OF_CONDUCT",
+            signatureData: "data:image/png;base64,seed-placeholder",
+            documentVersion: "1.0",
+          },
+          {
+            volunteerId: vol.id,
+            agreementType: "SAFEGUARDING",
+            signatureData: "data:image/png;base64,seed-placeholder",
+            documentVersion: "1.0",
+          },
+        ],
+      });
+    }
 
     console.log("Created additional volunteers: Hemi, Mere, Tāne");
 

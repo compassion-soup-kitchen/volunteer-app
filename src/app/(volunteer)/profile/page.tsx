@@ -17,8 +17,11 @@ import {
   RiShieldCheckLine,
   RiEditLine,
   RiArrowRightLine,
+  RiArrowLeftLine,
+  RiGraduationCapLine,
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
+import { getVolunteerTrainingHistory } from "@/lib/training-actions";
 import { ProfileEditForm } from "./profile-edit-form";
 
 export const metadata: Metadata = {
@@ -45,7 +48,10 @@ const DAYS_SHORT: Record<string, string> = {
 
 export default async function ProfilePage() {
   const session = await auth();
-  const profile = await getVolunteerProfile();
+  const [profile, trainingHistory] = await Promise.all([
+    getVolunteerProfile(),
+    getVolunteerTrainingHistory(),
+  ]);
 
   // No profile yet — prompt to apply
   if (!profile) {
@@ -87,11 +93,20 @@ export default async function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-24">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
-          <p className="text-muted-foreground">
-            Kia ora, {session?.user?.name?.split(" ")[0] || "there"}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:block">
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link href="/dashboard">
+                <RiArrowLeftLine className="size-4" />
+              </Link>
+            </Button>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
+            <p className="text-muted-foreground">
+              Kia ora, {session?.user?.name?.split(" ")[0] || "there"}
+            </p>
+          </div>
         </div>
         <Badge
           variant={
@@ -247,15 +262,88 @@ export default async function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Agreements */}
+      {/* Training History */}
       <Card>
         <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+              <RiGraduationCapLine className="size-4 text-primary" />
+            </div>
+            <CardTitle className="text-base">Whakangungu — Training</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {trainingHistory.length > 0 ? (
+            <div className="space-y-2">
+              {trainingHistory.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-md border border-border p-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(item.date).toLocaleDateString("en-NZ", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                      {" · "}
+                      {item.type === "INDUCTION"
+                        ? "Induction"
+                        : item.type === "DE_ESCALATION"
+                          ? "De-escalation"
+                          : item.type === "HEALTH_SAFETY"
+                            ? "Health & Safety"
+                            : "Other"}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={
+                      item.status === "ATTENDED"
+                        ? "text-xs text-green-600 border-green-200"
+                        : item.status === "REGISTERED"
+                          ? "text-xs text-blue-600 border-blue-200"
+                          : item.status === "NO_SHOW"
+                            ? "text-xs text-destructive border-destructive/30"
+                            : "text-xs"
+                    }
+                  >
+                    {item.status === "ATTENDED"
+                      ? "Completed"
+                      : item.status === "REGISTERED"
+                        ? "Upcoming"
+                        : item.status === "NO_SHOW"
+                          ? "Missed"
+                          : "Cancelled"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No training sessions yet
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Agreements */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
               <RiShieldCheckLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Signed Agreements</CardTitle>
           </div>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/documents">
+              View all
+              <RiArrowRightLine className="size-3.5" />
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           {profile.signedAgreements.length > 0 ? (

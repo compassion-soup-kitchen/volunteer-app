@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RiInformationLine, RiArrowRightLine } from "@remixicon/react";
+import { RiInformationLine, RiArrowRightLine, RiArrowLeftLine } from "@remixicon/react";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -29,13 +29,22 @@ export default async function ShiftsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Available Shifts
-        </h1>
-        <p className="text-muted-foreground">
-          Browse and sign up for upcoming mahi
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="hidden sm:block">
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link href="/dashboard">
+              <RiArrowLeftLine className="size-4" />
+            </Link>
+          </Button>
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Available Shifts
+          </h1>
+          <p className="text-muted-foreground">
+            Browse and sign up for upcoming mahi
+          </p>
+        </div>
       </div>
 
       {!isApproved && (

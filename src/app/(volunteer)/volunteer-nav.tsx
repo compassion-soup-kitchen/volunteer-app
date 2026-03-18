@@ -11,6 +11,7 @@ import {
   RiUserLine,
   RiLogoutBoxLine,
   RiTimeLine,
+  RiGraduationCapLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: RiDashboardLine },
   { href: "/shifts", label: "Shifts", icon: RiCalendarLine },
   { href: "/hours", label: "Hours", icon: RiTimeLine },
+  { href: "/training", label: "Training", icon: RiGraduationCapLine },
   { href: "/profile", label: "Profile", icon: RiUserLine },
 ];
 
@@ -40,8 +42,31 @@ export function VolunteerNav({
             </span>
           </Link>
 
+          {/* Desktop nav links */}
+          <nav className="hidden items-center gap-1 sm:flex">
+            {navItems.map((item) => {
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="size-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
           <div className="flex items-center gap-2">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
+            <span className="hidden text-sm text-muted-foreground lg:inline">
               {user.name || user.email}
             </span>
             <ThemeToggle />

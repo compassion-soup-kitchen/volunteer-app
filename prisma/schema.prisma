@@ -36,6 +36,7 @@ model User {
   createdTraining      TrainingSession[]
   createdAnnouncements Announcement[]
   uploadedDocuments    Document[]           @relation("UploadedBy")
+  updatedAgreements    AgreementTemplate[]  @relation("AgreementTemplateUpdatedBy")
 }
 
 model Account {
@@ -174,6 +175,18 @@ model SignedAgreement {
   documentVersion String?
 
   volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+}
+
+model AgreementTemplate {
+  id            String        @id @default(cuid())
+  agreementType AgreementType @unique
+  title         String
+  content       String        @db.Text
+  version       String        @default("1.0")
+  updatedAt     DateTime      @updatedAt
+  updatedById   String?
+
+  updatedBy User? @relation("AgreementTemplateUpdatedBy", fields: [updatedById], references: [id])
 }
 
 // ─── Operations ───────────────────────────────────────

@@ -6,7 +6,6 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
-  RiHeartLine,
   RiDashboardLine,
   RiTeamLine,
   RiFileListLine,
@@ -14,6 +13,8 @@ import {
   RiLogoutBoxLine,
   RiMenuLine,
   RiMapPinLine,
+  RiGraduationCapLine,
+  RiFileTextLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -31,6 +32,8 @@ export function StaffNav({
     { href: "/staff/applications", label: "Applications", icon: RiFileListLine },
     { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
     { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
+    { href: "/staff/training", label: "Training", icon: RiGraduationCapLine },
+    { href: "/staff/documents", label: "Documents", icon: RiFileTextLine },
     ...(user.role === "ADMIN"
       ? [{ href: "/staff/service-areas", label: "Service Areas", icon: RiMapPinLine }]
       : []),
