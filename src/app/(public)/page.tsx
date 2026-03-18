@@ -579,7 +579,7 @@ export default function Home() {
 
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} Compassion Soup Kitchen &mdash;
+              &copy; 2025 Compassion Soup Kitchen &mdash;
               Te Pūaroha. All rights reserved.
             </p>
             <p className="text-xs italic text-muted-foreground">
