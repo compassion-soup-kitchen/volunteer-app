@@ -127,9 +127,14 @@ export default function Home() {
               Contact
             </a>
             <ThemeToggle />
-            <Button size="sm">
-              Sign Up
-              <RiArrowRightLine data-icon="inline-end" className="size-3.5" />
+            <a href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              Sign In
+            </a>
+            <Button size="sm" asChild>
+              <a href="/register">
+                Sign Up
+                <RiArrowRightLine data-icon="inline-end" className="size-3.5" />
+              </a>
             </Button>
           </div>
 
@@ -186,9 +191,15 @@ export default function Home() {
                 <ThemeToggle />
               </div>
               <Separator />
-              <Button size="sm" className="w-full">
-                Sign Up
+              <Button size="sm" className="w-full" asChild>
+                <a href="/register">Sign Up</a>
               </Button>
+              <a
+                href="/login"
+                className="text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Already have an account? Sign In
+              </a>
             </div>
           </div>
         )}
@@ -212,16 +223,20 @@ export default function Home() {
               volunteers and help restore mana, one meal at a time.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" className="px-6">
-                Become a Volunteer
-                <RiArrowRightLine
-                  data-icon="inline-end"
-                  className="size-3.5"
-                />
+              <Button size="lg" className="px-6" asChild>
+                <a href="/register">
+                  Become a Volunteer
+                  <RiArrowRightLine
+                    data-icon="inline-end"
+                    className="size-3.5"
+                  />
+                </a>
               </Button>
-              <Button variant="outline" size="lg" className="px-6">
-                <RiTimeLine data-icon="inline-start" className="size-3.5" />
-                See Upcoming Shifts
+              <Button variant="outline" size="lg" className="px-6" asChild>
+                <a href="/login">
+                  <RiTimeLine data-icon="inline-start" className="size-3.5" />
+                  See Upcoming Shifts
+                </a>
               </Button>
             </div>
           </motion.div>
@@ -388,9 +403,11 @@ export default function Home() {
           </div>
 
           <motion.div {...fadeUp} className="mt-10 text-center">
-            <Button size="lg" className="px-6">
-              View Available Shifts
-              <RiArrowRightLine data-icon="inline-end" className="size-3.5" />
+            <Button size="lg" className="px-6" asChild>
+              <a href="/register">
+                View Available Shifts
+                <RiArrowRightLine data-icon="inline-end" className="size-3.5" />
+              </a>
             </Button>
           </motion.div>
         </div>
@@ -497,15 +514,17 @@ export default function Home() {
               that work for your schedule.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button size="lg" className="px-8">
-                Create Your Account
-                <RiArrowRightLine
-                  data-icon="inline-end"
-                  className="size-3.5"
-                />
+              <Button size="lg" className="px-8" asChild>
+                <a href="/register">
+                  Create Your Account
+                  <RiArrowRightLine
+                    data-icon="inline-end"
+                    className="size-3.5"
+                  />
+                </a>
               </Button>
-              <Button variant="outline" size="lg" className="px-6">
-                Learn More
+              <Button variant="outline" size="lg" className="px-6" asChild>
+                <a href="#about">Learn More</a>
               </Button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -565,7 +584,7 @@ export default function Home() {
               <ul className="mt-3 space-y-2">
                 <li>
                   <a
-                    href="#"
+                    href="/register"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Sign Up
@@ -573,7 +592,7 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="/login"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Available Shifts
