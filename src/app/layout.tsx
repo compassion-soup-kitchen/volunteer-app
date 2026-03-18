@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   title: "Te Pūaroha | Compassion Soup Kitchen — Volunteer",
   description:
     "Nau mai, haere mai. Join Compassion Soup Kitchen volunteers in serving meals, building community, and restoring mana in Aotearoa New Zealand.",
+  icons: {
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
