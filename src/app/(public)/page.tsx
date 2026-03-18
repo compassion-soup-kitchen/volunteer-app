@@ -596,7 +596,9 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="https://www.compassion.org.nz/volunteer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Volunteer FAQ
@@ -604,7 +606,9 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="https://www.compassion.org.nz/volunteer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Group Volunteering
@@ -620,7 +624,9 @@ export default function Home() {
               <ul className="mt-3 space-y-2">
                 <li>
                   <a
-                    href="#"
+                    href="https://www.compassion.org.nz/donate"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Donate
@@ -628,7 +634,9 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="https://www.compassion.org.nz/donate"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Sponsor a Meal
@@ -636,7 +644,9 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="https://www.compassion.org.nz/about"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Corporate Partnerships
@@ -644,7 +654,9 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="https://www.compassion.org.nz/donate"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Donate Kai
