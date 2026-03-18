@@ -42,11 +42,12 @@ export function SignaturePad({
     ctx.lineJoin = "round";
     ctx.lineWidth = 2;
 
-    // Use CSS variable for stroke color so it works in dark mode
-    const style = getComputedStyle(document.documentElement);
-    ctx.strokeStyle = style.getPropertyValue("--foreground").trim()
-      ? `oklch(${style.getPropertyValue("--foreground").trim()})`
-      : "#1a1a1a";
+    // Fill canvas with white background so exported PNG is visible in any theme
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    // Always draw in dark ink for contrast on white background
+    ctx.strokeStyle = "#1a1a1a";
 
     if (initialValue) {
       const img = new Image();
@@ -108,6 +109,9 @@ export function SignaturePad({
     const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     ctx.clearRect(0, 0, rect.width * dpr, rect.height * dpr);
+    // Restore white background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
     setHasSignature(false);
     onSignatureChange(null);
   }
@@ -129,7 +133,7 @@ export function SignaturePad({
           </Button>
         )}
       </div>
-      <div className="rounded-md border border-input bg-background">
+      <div className="rounded-md border border-input bg-white">
         <canvas
           ref={canvasRef}
           className="h-32 w-full cursor-crosshair touch-none"
