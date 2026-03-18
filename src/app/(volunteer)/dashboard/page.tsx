@@ -8,12 +8,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   RiCalendarLine,
   RiTimeLine,
   RiArrowRightLine,
+  RiCheckLine,
+  RiTimerLine,
+  RiInformationLine,
 } from "@remixicon/react";
 import Link from "next/link";
+import { getUserApplicationStatus } from "@/lib/application-actions";
+import { getDashboardData } from "@/lib/dashboard-actions";
 
 export const metadata: Metadata = {
   title: "Dashboard | Te Pūaroha",
@@ -22,6 +28,10 @@ export const metadata: Metadata = {
 export default async function VolunteerDashboard() {
   const session = await auth();
   const firstName = session?.user?.name?.split(" ")[0] || "there";
+  const [appStatus, dashboardData] = await Promise.all([
+    getUserApplicationStatus(),
+    getDashboardData(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -34,7 +44,8 @@ export default async function VolunteerDashboard() {
         </p>
       </div>
 
-      {session?.user?.role === "PUBLIC" && (
+      {/* No application yet */}
+      {!appStatus && session?.user?.role === "PUBLIC" && (
         <Card className="border-primary/20 bg-primary/[0.03]">
           <CardHeader>
             <CardTitle>Complete Your Application</CardTitle>
@@ -54,7 +65,93 @@ export default async function VolunteerDashboard() {
         </Card>
       )}
 
+      {/* Application pending */}
+      {appStatus?.applicationStatus === "PENDING" && (
+        <Card className="border-yellow-500/20 bg-yellow-50/50 dark:bg-yellow-950/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+                <RiTimerLine className="size-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle>Application Under Review</CardTitle>
+                  <Badge variant="secondary">Pending</Badge>
+                </div>
+                <CardDescription>
+                  Ngā mihi for applying — our team is reviewing your application
+                  and will be in touch soon
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+
+      {/* Application approved */}
+      {appStatus?.applicationStatus === "APPROVED" && (
+        <Card className="border-green-500/20 bg-green-50/50 dark:bg-green-950/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <RiCheckLine className="size-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle>Welcome to the Whānau!</CardTitle>
+                  <Badge className="bg-green-600">Approved</Badge>
+                </div>
+                <CardDescription>
+                  Your application has been approved. You can now sign up for
+                  shifts and start volunteering.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link href="/shifts">
+                Browse Available Shifts
+                <RiArrowRightLine className="size-3.5" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* More info requested */}
+      {appStatus?.applicationStatus === "INFO_REQUESTED" && (
+        <Card className="border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                <RiInformationLine className="size-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle>More Information Needed</CardTitle>
+                  <Badge variant="outline">Action Required</Badge>
+                </div>
+                <CardDescription>
+                  We need a bit more info to process your application. Please
+                  check your application page for details.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline">
+              <Link href="/application">
+                View Details
+                <RiArrowRightLine className="size-3.5" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
+        {/* Upcoming Shifts */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -68,12 +165,39 @@ export default async function VolunteerDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              No upcoming shifts. Browse available shifts to sign up.
-            </p>
+            {dashboardData && dashboardData.upcomingShifts.length > 0 ? (
+              <div className="space-y-3">
+                {dashboardData.upcomingShifts.map((shift) => (
+                  <div
+                    key={shift.id}
+                    className="flex items-center justify-between rounded-md border border-border p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{shift.serviceArea}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(shift.date).toLocaleDateString("en-NZ", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                        })}{" "}
+                        &middot; {shift.startTime}–{shift.endTime}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Signed up
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No upcoming shifts. Browse available shifts to sign up.
+              </p>
+            )}
           </CardContent>
         </Card>
 
+        {/* Hours */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -87,10 +211,25 @@ export default async function VolunteerDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="font-mono text-2xl font-bold">0h</p>
-            <p className="text-sm text-muted-foreground">
-              Hours will appear here once you start volunteering
-            </p>
+            {dashboardData && dashboardData.totalHours > 0 ? (
+              <div className="space-y-2">
+                <p className="font-mono text-2xl font-bold">
+                  {dashboardData.hoursThisMonth}h
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {dashboardData.totalHours}h total across{" "}
+                  {dashboardData.totalShifts} shift
+                  {dashboardData.totalShifts !== 1 ? "s" : ""}
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="font-mono text-2xl font-bold">0h</p>
+                <p className="text-sm text-muted-foreground">
+                  Hours will appear here once you start volunteering
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

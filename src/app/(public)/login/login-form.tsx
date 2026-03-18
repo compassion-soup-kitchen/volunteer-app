@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
-import { RiShieldKeyholeLine, RiUserLine } from "@remixicon/react";
+import { RiShieldKeyholeLine, RiUserLine, RiHeartLine } from "@remixicon/react";
 import { login, type AuthState } from "@/lib/auth-actions";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
 const DEV_ACCOUNTS = [
   { label: "Admin", email: "admin@soupkitchen.org.nz", password: "admin123!", icon: RiShieldKeyholeLine },
   { label: "Coordinator", email: "coordinator@soupkitchen.org.nz", password: "coord123!", icon: RiUserLine },
+  { label: "Volunteer", email: "volunteer@soupkitchen.org.nz", password: "volunteer123!", icon: RiHeartLine },
 ];
 
 export function LoginForm() {
