@@ -33,9 +33,7 @@ export function VolunteerNav({
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center bg-primary">
-              <RiHeartLine className="size-4 text-primary-foreground" />
-            </div>
+            <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-8" />
             <span className="text-sm font-semibold tracking-tight">
               Te Pūaroha
             </span>

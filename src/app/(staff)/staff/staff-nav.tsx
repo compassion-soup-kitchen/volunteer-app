@@ -80,9 +80,7 @@ export function StaffNav({
         )}
       >
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-          <div className="flex size-8 items-center justify-center bg-sidebar-primary">
-            <RiHeartLine className="size-4 text-sidebar-primary-foreground" />
-          </div>
+          <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-8" />
           <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
             Te Pūaroha
           </span>

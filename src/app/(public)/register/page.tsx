@@ -16,9 +16,7 @@ export default function RegisterPage() {
         {/* Brand */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2.5">
-            <div className="flex size-10 items-center justify-center bg-primary">
-              <RiHeartLine className="size-5 text-primary-foreground" />
-            </div>
+            <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-10" />
             <span className="text-lg font-semibold tracking-tight">
               Te Pūaroha
             </span>

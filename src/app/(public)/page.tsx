@@ -87,9 +87,7 @@ export default function Home() {
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <a href="/" className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center bg-primary">
-              <RiHeartLine className="size-4.5 text-primary-foreground" />
-            </div>
+            <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-9" />
             <div className="leading-none">
               <span className="text-base font-semibold tracking-tight">
                 Te Pūaroha
@@ -540,9 +538,7 @@ export default function Home() {
           <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2.5">
-                <div className="flex size-9 items-center justify-center bg-primary">
-                  <RiHeartLine className="size-4.5 text-primary-foreground" />
-                </div>
+                <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-9" />
                 <div className="leading-none">
                   <p className="text-base font-semibold tracking-tight">
                     Te Pūaroha
