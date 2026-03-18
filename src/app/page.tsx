@@ -313,39 +313,30 @@ export default function Home() {
               className="flex items-center"
             >
               <div className="w-full space-y-4">
-                <Card>
-                  <CardContent>
-                    <blockquote className="border-l-2 border-primary pl-4 text-base italic text-muted-foreground">
-                      &ldquo;He aha te mea nui o te ao? He tangata, he tangata,
-                      he tangata.&rdquo;
-                    </blockquote>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      What is the most important thing in the world? It is
-                      people, it is people, it is people.
+                <div className="relative bg-primary px-8 py-10 sm:px-10 sm:py-12">
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-4 top-4 font-serif text-6xl leading-none text-primary-foreground/20 sm:left-6 sm:top-5 sm:text-7xl"
+                  >
+                    &ldquo;
+                  </span>
+                  <blockquote className="relative">
+                    <p className="text-xl font-semibold leading-snug tracking-tight text-primary-foreground sm:text-2xl">
+                      He aha te mea nui o te ao?
                     </p>
-                  </CardContent>
-                </Card>
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="text-center">
-                      <p className="font-mono text-2xl font-bold text-primary">
-                        1901
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Year founded
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="text-center">
-                      <p className="font-mono text-2xl font-bold text-primary">
-                        7 days
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Open every week
-                      </p>
-                    </CardContent>
-                  </Card>
+                    <p className="mt-2 text-xl font-semibold leading-snug tracking-tight text-primary-foreground sm:text-2xl">
+                      He tangata, he tangata, he tangata.
+                    </p>
+                  </blockquote>
+                  <Separator className="my-5 bg-primary-foreground/20" />
+                  <p className="text-sm leading-relaxed text-primary-foreground/70">
+                    What is the most important thing in the world?
+                    <br />
+                    It is people, it is people, it is people.
+                  </p>
+                  <p className="mt-3 text-xs text-primary-foreground/50">
+                    — Māori whakataukī
+                  </p>
                 </div>
               </div>
             </motion.div>
