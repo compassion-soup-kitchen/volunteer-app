@@ -6,17 +6,18 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
-  RiHeartLine,
   RiDashboardLine,
   RiCalendarLine,
   RiUserLine,
   RiLogoutBoxLine,
+  RiTimeLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: RiDashboardLine },
   { href: "/shifts", label: "Shifts", icon: RiCalendarLine },
+  { href: "/hours", label: "Hours", icon: RiTimeLine },
   { href: "/profile", label: "Profile", icon: RiUserLine },
 ];
 

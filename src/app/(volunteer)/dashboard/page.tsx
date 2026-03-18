@@ -16,6 +16,8 @@ import {
   RiCheckLine,
   RiTimerLine,
   RiInformationLine,
+  RiTrophyLine,
+  RiStarFill,
 } from "@remixicon/react";
 import Link from "next/link";
 import { getUserApplicationStatus } from "@/lib/application-actions";
@@ -32,6 +34,9 @@ export default async function VolunteerDashboard() {
     getUserApplicationStatus(),
     getDashboardData(),
   ]);
+
+  const reachedMilestones = dashboardData?.milestones?.filter((m) => m.reached) ?? [];
+  const nextMilestone = dashboardData?.milestones?.find((m) => !m.reached);
 
   return (
     <div className="space-y-6">
@@ -200,27 +205,66 @@ export default async function VolunteerDashboard() {
         {/* Hours */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
-                <RiTimeLine className="size-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
+                  <RiTimeLine className="size-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Your Hours</CardTitle>
+                  <CardDescription>Volunteer time this month</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle>Your Hours</CardTitle>
-                <CardDescription>Volunteer time this month</CardDescription>
-              </div>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/hours">
+                  View all
+                  <RiArrowRightLine className="size-3.5" />
+                </Link>
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
             {dashboardData && dashboardData.totalHours > 0 ? (
-              <div className="space-y-2">
-                <p className="font-mono text-2xl font-bold">
-                  {dashboardData.hoursThisMonth}h
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {dashboardData.totalHours}h total across{" "}
-                  {dashboardData.totalShifts} shift
-                  {dashboardData.totalShifts !== 1 ? "s" : ""}
-                </p>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="font-mono text-2xl font-bold">
+                    {dashboardData.hoursThisMonth}h
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {dashboardData.totalHours}h total across{" "}
+                    {dashboardData.totalShifts} shift
+                    {dashboardData.totalShifts !== 1 ? "s" : ""}
+                  </p>
+                </div>
+
+                {/* Milestones preview */}
+                {reachedMilestones.length > 0 && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <RiTrophyLine className="size-4 text-yellow-600" />
+                    <div className="flex gap-1">
+                      {reachedMilestones.map((m) => (
+                        <RiStarFill
+                          key={m.hours}
+                          className="size-4 text-yellow-500"
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {reachedMilestones.length} milestone
+                      {reachedMilestones.length !== 1 ? "s" : ""} reached
+                    </span>
+                  </div>
+                )}
+
+                {/* Next milestone progress */}
+                {nextMilestone && (
+                  <p className="text-xs text-muted-foreground">
+                    {Math.round(nextMilestone.hours - dashboardData.totalHours)}h
+                    to{" "}
+                    <span className="font-medium">{nextMilestone.label}</span>{" "}
+                    milestone
+                  </p>
+                )}
               </div>
             ) : (
               <>

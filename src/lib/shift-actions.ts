@@ -417,6 +417,84 @@ export async function updateShift(
   }
 }
 
+// ─── Attendance Actions ────────────────────────────────
+
+export async function markAttendance(
+  signupId: string,
+  status: "ATTENDED" | "NO_SHOW"
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await auth();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
+  ) {
+    return { error: "Not authorised." };
+  }
+
+  const db = getDb();
+  const signup = await db.shiftSignup.findUnique({
+    where: { id: signupId },
+    include: { shift: true },
+  });
+
+  if (!signup) return { error: "Signup not found." };
+
+  try {
+    await db.shiftSignup.update({
+      where: { id: signupId },
+      data: {
+        status,
+        attendanceMarkedById: session.user.id,
+        attendanceMarkedAt: new Date(),
+      },
+    });
+
+    revalidatePath(`/staff/shifts/${signup.shiftId}`);
+    revalidatePath("/staff/shifts");
+    revalidatePath("/staff/dashboard");
+    return { success: true };
+  } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+export async function markBulkAttendance(
+  shiftId: string,
+  attendanceMap: Record<string, "ATTENDED" | "NO_SHOW">
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await auth();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
+  ) {
+    return { error: "Not authorised." };
+  }
+
+  const db = getDb();
+
+  try {
+    await db.$transaction(
+      Object.entries(attendanceMap).map(([signupId, status]) =>
+        db.shiftSignup.update({
+          where: { id: signupId },
+          data: {
+            status,
+            attendanceMarkedById: session.user!.id,
+            attendanceMarkedAt: new Date(),
+          },
+        })
+      )
+    );
+
+    revalidatePath(`/staff/shifts/${shiftId}`);
+    revalidatePath("/staff/shifts");
+    revalidatePath("/staff/dashboard");
+    return { success: true };
+  } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
 export async function deleteShift(
   shiftId: string
 ): Promise<{ error?: string; success?: boolean }> {

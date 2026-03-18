@@ -347,7 +347,220 @@ async function main() {
       },
     });
 
-    console.log("Created shifts and signups");
+    console.log("Created shifts and signups for Aroha");
+
+    // ─── Additional Volunteers (for attendance testing) ───
+
+    const vol2Password = await bcrypt.hash("volunteer123!", 12);
+    const vol2User = await prisma.user.upsert({
+      where: { email: "hemi@soupkitchen.org.nz" },
+      update: {},
+      create: {
+        name: "Hemi Tūhoe",
+        email: "hemi@soupkitchen.org.nz",
+        password: vol2Password,
+        role: "VOLUNTEER",
+      },
+    });
+
+    const vol2Profile = await prisma.volunteerProfile.upsert({
+      where: { userId: vol2User.id },
+      update: {},
+      create: {
+        userId: vol2User.id,
+        phone: "021 555 2222",
+        address: "10 Cuba Street, Te Aro, Wellington",
+        status: "ACTIVE",
+        mojStatus: "CLEARED",
+        interests: { connect: [{ id: kitchenArea!.id }] },
+      },
+    });
+
+    await prisma.application.upsert({
+      where: { id: "seed-app-hemi" },
+      update: {},
+      create: {
+        id: "seed-app-hemi",
+        volunteerId: vol2Profile.id,
+        status: "APPROVED",
+        reviewedById: admin.id,
+        reviewedAt: new Date(),
+      },
+    });
+
+    const vol3User = await prisma.user.upsert({
+      where: { email: "mere@soupkitchen.org.nz" },
+      update: {},
+      create: {
+        name: "Mere Ngata",
+        email: "mere@soupkitchen.org.nz",
+        password: vol2Password,
+        role: "VOLUNTEER",
+      },
+    });
+
+    const vol3Profile = await prisma.volunteerProfile.upsert({
+      where: { userId: vol3User.id },
+      update: {},
+      create: {
+        userId: vol3User.id,
+        phone: "021 555 3333",
+        address: "5 Courtenay Place, Wellington",
+        status: "ACTIVE",
+        mojStatus: "CLEARED",
+        interests: { connect: [{ id: kitchenArea!.id }, { id: gardenArea!.id }] },
+      },
+    });
+
+    await prisma.application.upsert({
+      where: { id: "seed-app-mere" },
+      update: {},
+      create: {
+        id: "seed-app-mere",
+        volunteerId: vol3Profile.id,
+        status: "APPROVED",
+        reviewedById: admin.id,
+        reviewedAt: new Date(),
+      },
+    });
+
+    const vol4User = await prisma.user.upsert({
+      where: { email: "tane@soupkitchen.org.nz" },
+      update: {},
+      create: {
+        name: "Tāne Raukawa",
+        email: "tane@soupkitchen.org.nz",
+        password: vol2Password,
+        role: "VOLUNTEER",
+      },
+    });
+
+    const vol4Profile = await prisma.volunteerProfile.upsert({
+      where: { userId: vol4User.id },
+      update: {},
+      create: {
+        userId: vol4User.id,
+        phone: "021 555 4444",
+        address: "22 Willis Street, Wellington",
+        status: "ACTIVE",
+        mojStatus: "CLEARED",
+        interests: { connect: [{ id: gardenArea!.id }] },
+      },
+    });
+
+    await prisma.application.upsert({
+      where: { id: "seed-app-tane" },
+      update: {},
+      create: {
+        id: "seed-app-tane",
+        volunteerId: vol4Profile.id,
+        status: "APPROVED",
+        reviewedById: admin.id,
+        reviewedAt: new Date(),
+      },
+    });
+
+    console.log("Created additional volunteers: Hemi, Mere, Tāne");
+
+    // ─── Past shift with UNMARKED signups (for testing attendance) ─
+
+    const unmarkedPastShift = await prisma.shift.create({
+      data: {
+        serviceAreaId: kitchenArea!.id,
+        date: toDate(-1),
+        startTime: "08:00",
+        endTime: "12:00",
+        capacity: 6,
+        notes: "Yesterday's kai prep — attendance needs marking",
+        createdById: coordinator.id,
+      },
+    });
+
+    // All four volunteers signed up, none marked yet
+    for (const vol of [profile, vol2Profile, vol3Profile, vol4Profile]) {
+      await prisma.shiftSignup.create({
+        data: {
+          shiftId: unmarkedPastShift.id,
+          volunteerId: vol.id,
+          status: "SIGNED_UP",
+        },
+      });
+    }
+
+    console.log("Created past shift with 4 unmarked signups (yesterday)");
+
+    // Today's shift with signups
+    const todayShift = await prisma.shift.create({
+      data: {
+        serviceAreaId: gardenArea!.id,
+        date: toDate(0),
+        startTime: "09:00",
+        endTime: "13:00",
+        capacity: 5,
+        notes: "Today's garden mahi — mark attendance as volunteers arrive",
+        createdById: coordinator.id,
+      },
+    });
+
+    for (const vol of [profile, vol2Profile, vol3Profile]) {
+      await prisma.shiftSignup.create({
+        data: {
+          shiftId: todayShift.id,
+          volunteerId: vol.id,
+          status: "SIGNED_UP",
+        },
+      });
+    }
+
+    console.log("Created today's shift with 3 signups");
+
+    // Signups on upcoming shifts from other volunteers too
+    await prisma.shiftSignup.create({
+      data: {
+        shiftId: upcomingShift1.id,
+        volunteerId: vol2Profile.id,
+        status: "SIGNED_UP",
+      },
+    });
+
+    await prisma.shiftSignup.create({
+      data: {
+        shiftId: upcomingShift1.id,
+        volunteerId: vol3Profile.id,
+        status: "SIGNED_UP",
+      },
+    });
+
+    await prisma.shiftSignup.create({
+      data: {
+        shiftId: upcomingShift2.id,
+        volunteerId: vol4Profile.id,
+        status: "SIGNED_UP",
+      },
+    });
+
+    // Past shift signups from other volunteers (some attended, some not)
+    await prisma.shiftSignup.create({
+      data: {
+        shiftId: pastShift1.id,
+        volunteerId: vol2Profile.id,
+        status: "ATTENDED",
+        attendanceMarkedById: coordinator.id,
+        attendanceMarkedAt: toDate(-7),
+      },
+    });
+
+    await prisma.shiftSignup.create({
+      data: {
+        shiftId: pastShift1.id,
+        volunteerId: vol3Profile.id,
+        status: "NO_SHOW",
+        attendanceMarkedById: coordinator.id,
+        attendanceMarkedAt: toDate(-7),
+      },
+    });
+
+    console.log("Created additional signups across shifts");
 
     // ─── Training Sessions ────────────────────────────────
 
