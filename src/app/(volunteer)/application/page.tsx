@@ -69,7 +69,7 @@ export default async function ApplicationPage() {
     const status = appStatus.applicationStatus;
     if (!status) redirect("/dashboard");
 
-    const config = STATUS_CONFIG[status];
+    const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
     const StatusIcon = config.icon;
 
     return (
