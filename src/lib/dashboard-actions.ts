@@ -1,5 +1,6 @@
 "use server";
 
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getMilestones, type Milestone } from "@/lib/milestones";
@@ -18,6 +19,7 @@ function diffHours(start: string, end: string): number {
 // ─── Dashboard Data ─────────────────────────────────────
 
 export async function getDashboardData() {
+  await connection();
   const session = await auth();
   if (!session?.user?.id) return null;
 
@@ -119,6 +121,7 @@ export type VolunteerHoursData = {
 };
 
 export async function getVolunteerHoursData(): Promise<VolunteerHoursData | null> {
+  await connection();
   const session = await auth();
   if (!session?.user?.id) return null;
 

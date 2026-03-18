@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -59,6 +60,7 @@ const STATUS_CONFIG = {
 };
 
 export default async function ApplicationPage() {
+  await connection();
   const [appStatus, serviceAreas] = await Promise.all([
     getUserApplicationStatus(),
     getServiceAreas(),

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,6 +37,7 @@ export default async function AgreementDetailPage({
 }: {
   params: Promise<{ agreementType: string }>;
 }) {
+  await connection();
   const { agreementType } = await params;
 
   return (

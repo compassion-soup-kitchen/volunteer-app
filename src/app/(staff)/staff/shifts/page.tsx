@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { getStaffShifts } from "@/lib/shift-actions";
 import { getServiceAreas } from "@/lib/application-actions";
 import { StaffShiftList } from "./staff-shift-list";
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StaffShiftsPage() {
+  await connection();
   const [shifts, serviceAreas] = await Promise.all([
     getStaffShifts(),
     getServiceAreas(),

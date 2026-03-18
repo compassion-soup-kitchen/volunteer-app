@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { getServiceAreas } from "@/lib/application-actions";
 import { ShiftForm } from "./shift-form";
 import Link from "next/link";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewShiftPage() {
+  await connection();
   const serviceAreas = await getServiceAreas();
 
   return (

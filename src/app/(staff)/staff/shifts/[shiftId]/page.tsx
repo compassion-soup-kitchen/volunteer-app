@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { getShiftDetail } from "@/lib/shift-actions";
 import { ShiftDetailView } from "./shift-detail-view";
@@ -15,6 +16,7 @@ export default async function ShiftDetailPage({
 }: {
   params: Promise<{ shiftId: string }>;
 }) {
+  await connection();
   const { shiftId } = await params;
   const shift = await getShiftDetail(shiftId);
 

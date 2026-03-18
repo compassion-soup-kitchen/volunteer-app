@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import {
@@ -30,6 +31,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StaffDashboard() {
+  await connection();
   const session = await auth();
   const firstName = session?.user?.name?.split(" ")[0] || "there";
 

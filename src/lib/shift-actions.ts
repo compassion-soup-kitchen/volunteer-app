@@ -1,5 +1,6 @@
 "use server";
 
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -49,6 +50,7 @@ export type ShiftFilters = {
 export async function getAvailableShifts(
   filters?: ShiftFilters
 ): Promise<ShiftWithDetails[]> {
+  await connection();
   const session = await auth();
   if (!session?.user?.id) return [];
 
@@ -233,6 +235,7 @@ export async function cancelShiftSignup(
 export async function getStaffShifts(
   filters?: ShiftFilters
 ): Promise<StaffShift[]> {
+  await connection();
   const session = await auth();
   if (
     !session?.user?.id ||

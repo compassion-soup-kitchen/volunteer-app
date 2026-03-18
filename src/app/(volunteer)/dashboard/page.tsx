@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import {
   Card,
@@ -32,6 +33,7 @@ export const metadata: Metadata = {
 };
 
 export default async function VolunteerDashboard() {
+  await connection();
   const session = await auth();
   const firstName = session?.user?.name?.split(" ")[0] || "there";
   const [appStatus, dashboardData, trainingSessions, pendingResigns] = await Promise.all([

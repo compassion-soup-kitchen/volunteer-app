@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +48,7 @@ const DAYS_SHORT: Record<string, string> = {
 };
 
 export default async function ProfilePage() {
+  await connection();
   const session = await auth();
   const [profile, trainingHistory] = await Promise.all([
     getVolunteerProfile(),

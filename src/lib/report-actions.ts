@@ -1,5 +1,6 @@
 "use server";
 
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import {
@@ -208,6 +209,7 @@ export async function getHoursByServiceArea(
 export async function getMonthlyTrends(
   filters?: ReportFilters
 ): Promise<MonthlyTrend[]> {
+  await connection();
   const session = await requireStaff();
   if (!session) return [];
 

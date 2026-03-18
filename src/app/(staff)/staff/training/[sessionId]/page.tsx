@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export default async function TrainingDetailPage({
 }: {
   params: Promise<{ sessionId: string }>;
 }) {
+  await connection();
   const { sessionId } = await params;
   const session = await getTrainingDetail(sessionId);
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -271,6 +272,7 @@ export async function markBulkTrainingAttendance(
 // ─── Volunteer Actions ──────────────────────────────────
 
 export async function getAvailableTraining(): Promise<VolunteerTrainingSession[]> {
+  await connection();
   const session = await auth();
   if (!session?.user?.id) return [];
 

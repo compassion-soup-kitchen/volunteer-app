@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { getApplicationsList } from "@/lib/staff-actions";
 import { ApplicationsList } from "./applications-list";
 
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ApplicationsPage() {
+  await connection();
   const applications = await getApplicationsList();
 
   return (

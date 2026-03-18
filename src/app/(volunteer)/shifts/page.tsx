@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { getAvailableShifts } from "@/lib/shift-actions";
 import { getServiceAreas } from "@/lib/application-actions";
 import { getUserApplicationStatus } from "@/lib/application-actions";
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ShiftsPage() {
+  await connection();
   const [shifts, serviceAreas, appStatus] = await Promise.all([
     getAvailableShifts(),
     getServiceAreas(),

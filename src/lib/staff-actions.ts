@@ -1,5 +1,6 @@
 "use server";
 
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -33,6 +34,7 @@ export type DashboardStats = {
 };
 
 export async function getStaffDashboardStats(): Promise<DashboardStats | null> {
+  await connection();
   const session = await requireStaff();
   if (!session) return null;
 

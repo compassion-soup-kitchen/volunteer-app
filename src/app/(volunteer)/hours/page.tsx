@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

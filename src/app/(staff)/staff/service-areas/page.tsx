@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getServiceAreasWithStats } from "@/lib/service-area-actions";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ServiceAreasPage() {
+  await connection();
   const session = await auth();
 
   // Admin only

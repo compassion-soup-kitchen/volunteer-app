@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { getVolunteersList } from "@/lib/staff-actions";
 import { VolunteerDirectory } from "./volunteer-directory";
 
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function VolunteersPage() {
+  await connection();
   const volunteers = await getVolunteersList();
 
   return (

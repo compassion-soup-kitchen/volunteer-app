@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { getApplicationDetail } from "@/lib/staff-actions";
 import { ApplicationReview } from "./application-review";
@@ -15,6 +16,7 @@ export default async function ApplicationDetailPage({
 }: {
   params: Promise<{ applicationId: string }>;
 }) {
+  await connection();
   const { applicationId } = await params;
   const application = await getApplicationDetail(applicationId);
 
