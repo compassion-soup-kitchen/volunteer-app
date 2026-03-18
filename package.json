@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma db push --force-reset && npx tsx prisma/seed.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
