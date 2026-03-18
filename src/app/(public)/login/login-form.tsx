@@ -31,10 +31,9 @@ export function LoginForm() {
 
   return (
     <>
-      {process.env.NODE_ENV !== "production" && (
-        <div className="mb-4 rounded-md border border-dashed border-muted-foreground/30 bg-muted/50 p-3">
+      <div className="mb-4 rounded-md border border-dashed border-muted-foreground/30 bg-muted/50 p-3">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
-            Dev accounts (click to fill)
+            Demo accounts (click to fill)
           </p>
           <div className="flex gap-2">
             {DEV_ACCOUNTS.map((account) => (
@@ -50,7 +49,6 @@ export function LoginForm() {
             ))}
           </div>
         </div>
-      )}
 
       <form action={action} className="space-y-4">
         {state?.error && (

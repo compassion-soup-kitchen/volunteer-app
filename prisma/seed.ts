@@ -12,7 +12,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("🌱 Seeding database...");
 
   // Create admin user
   const adminPassword = await bcrypt.hash("admin123!", 12);
@@ -26,7 +26,7 @@ async function main() {
       role: "ADMIN",
     },
   });
-  console.log(`Admin user: ${admin.email} (password: admin123!)`);
+  console.log(`🔑 Admin user: ${admin.email} (password: admin123!)`);
 
   // Create coordinator user
   const coordPassword = await bcrypt.hash("coord123!", 12);
@@ -40,7 +40,7 @@ async function main() {
       role: "COORDINATOR",
     },
   });
-  console.log(`Coordinator user: ${coordinator.email} (password: coord123!)`);
+  console.log(`📋 Coordinator user: ${coordinator.email} (password: coord123!)`);
 
   // Create volunteer user (approved, with profile)
   const volPassword = await bcrypt.hash("volunteer123!", 12);
@@ -54,7 +54,7 @@ async function main() {
       role: "VOLUNTEER",
     },
   });
-  console.log(`Volunteer user: ${volunteer.email} (password: volunteer123!)`);
+  console.log(`🙋 Volunteer user: ${volunteer.email} (password: volunteer123!)`);
 
   // Create default service areas
   const serviceAreas = [
@@ -72,7 +72,7 @@ async function main() {
       create: area,
     });
   }
-  console.log(`Created ${serviceAreas.length} service areas`);
+  console.log(`🏠 Created ${serviceAreas.length} service areas`);
 
   // Create agreement templates
   await prisma.agreementTemplate.upsert({
@@ -116,7 +116,7 @@ async function main() {
     },
   });
 
-  console.log("Created agreement templates");
+  console.log("📝 Created agreement templates");
 
   // Create volunteer profile for Aroha
   const kitchenArea = await prisma.serviceArea.findUnique({ where: { name: "Kitchen & Meals" } });
@@ -179,7 +179,7 @@ async function main() {
       ],
     });
 
-    console.log("Created volunteer profile, application, and agreements for Aroha");
+    console.log("💚 Created volunteer profile, application, and agreements for Aroha");
 
     // ─── Shifts ───────────────────────────────────────────
     const today = new Date();
@@ -391,7 +391,7 @@ async function main() {
       },
     });
 
-    console.log("Created shifts and signups for Aroha");
+    console.log("📅 Created shifts and signups for Aroha");
 
     // ─── Additional Volunteers (for attendance testing) ───
 
@@ -524,7 +524,7 @@ async function main() {
       });
     }
 
-    console.log("Created additional volunteers: Hemi, Mere, Tāne");
+    console.log("👥 Created additional volunteers: Hemi, Mere, Tāne");
 
     // ─── Past shift with UNMARKED signups (for testing attendance) ─
 
@@ -551,7 +551,7 @@ async function main() {
       });
     }
 
-    console.log("Created past shift with 4 unmarked signups (yesterday)");
+    console.log("⏰ Created past shift with 4 unmarked signups (yesterday)");
 
     // Today's shift with signups
     const todayShift = await prisma.shift.create({
@@ -576,7 +576,7 @@ async function main() {
       });
     }
 
-    console.log("Created today's shift with 3 signups");
+    console.log("🌤️ Created today's shift with 3 signups");
 
     // Signups on upcoming shifts from other volunteers too
     await prisma.shiftSignup.create({
@@ -624,7 +624,7 @@ async function main() {
       },
     });
 
-    console.log("Created additional signups across shifts");
+    console.log("✍️ Created additional signups across shifts");
 
     // ─── Training Sessions ────────────────────────────────
 
@@ -687,7 +687,7 @@ async function main() {
       },
     });
 
-    console.log("Created training sessions and attendance");
+    console.log("🎓 Created training sessions and attendance");
 
     // ─── Announcements ────────────────────────────────────
 
@@ -711,10 +711,10 @@ async function main() {
       },
     });
 
-    console.log("Created announcements");
+    console.log("📢 Created announcements");
   }
 
-  console.log("Seed complete.");
+  console.log("✅ Seed complete — ka pai!");
 }
 
 main()
