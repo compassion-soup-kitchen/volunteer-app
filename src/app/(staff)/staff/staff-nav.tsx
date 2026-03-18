@@ -13,16 +13,10 @@ import {
   RiCalendarLine,
   RiLogoutBoxLine,
   RiMenuLine,
+  RiMapPinLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-
-const sidebarItems = [
-  { href: "/staff/dashboard", label: "Dashboard", icon: RiDashboardLine },
-  { href: "/staff/applications", label: "Applications", icon: RiFileListLine },
-  { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
-  { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
-];
 
 export function StaffNav({
   user,
@@ -31,6 +25,16 @@ export function StaffNav({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const sidebarItems = [
+    { href: "/staff/dashboard", label: "Dashboard", icon: RiDashboardLine },
+    { href: "/staff/applications", label: "Applications", icon: RiFileListLine },
+    { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
+    { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
+    ...(user.role === "ADMIN"
+      ? [{ href: "/staff/service-areas", label: "Service Areas", icon: RiMapPinLine }]
+      : []),
+  ];
 
   return (
     <>
@@ -86,7 +90,7 @@ export function StaffNav({
         <nav className="p-3">
           <ul className="space-y-1">
             {sidebarItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <li key={item.href}>
                   <Link

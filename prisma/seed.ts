@@ -247,6 +247,56 @@ async function main() {
       },
     });
 
+    const eventsArea = await prisma.serviceArea.findUnique({ where: { name: "Events & Fundraising" } });
+
+    await prisma.shift.create({
+      data: {
+        serviceAreaId: kitchenArea!.id,
+        date: toDate(4),
+        startTime: "06:00",
+        endTime: "10:00",
+        capacity: 5,
+        notes: "Early morning baking — bread and scones for the day",
+        createdById: coordinator.id,
+      },
+    });
+
+    await prisma.shift.create({
+      data: {
+        serviceAreaId: gardenArea!.id,
+        date: toDate(7),
+        startTime: "08:00",
+        endTime: "12:00",
+        capacity: 6,
+        notes: "Seasonal planting and compost turning",
+        createdById: coordinator.id,
+      },
+    });
+
+    await prisma.shift.create({
+      data: {
+        serviceAreaId: eventsArea!.id,
+        date: toDate(10),
+        startTime: "14:00",
+        endTime: "18:00",
+        capacity: 10,
+        notes: "Community kai event setup — extra hands needed!",
+        createdById: coordinator.id,
+      },
+    });
+
+    await prisma.shift.create({
+      data: {
+        serviceAreaId: clothingArea!.id,
+        date: toDate(8),
+        startTime: "09:00",
+        endTime: "12:00",
+        capacity: 4,
+        notes: "Donated clothing sorting and quality check",
+        createdById: coordinator.id,
+      },
+    });
+
     // ─── Shift Signups ────────────────────────────────────
 
     // Past shifts — attended (gives Aroha volunteer hours)
