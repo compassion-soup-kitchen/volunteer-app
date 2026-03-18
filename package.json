@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node -e \"console.log('DIRECT_DATABASE_URL set:', !!process.env.DIRECT_DATABASE_URL, 'DATABASE_URL set:', !!process.env.DATABASE_URL)\" && prisma generate && prisma db push --force-reset && npx tsx prisma/seed.ts && next build",
+    "build": "prisma generate && prisma db push --force-reset && npx tsx prisma/seed.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
