@@ -101,11 +101,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.56 0.021 213.5);
-  --chart-1: oklch(0.78 0.12 18);
-  --chart-2: oklch(0.62 0.22 18);
-  --chart-3: oklch(0.52 0.22 18);
-  --chart-4: oklch(0.45 0.19 18);
-  --chart-5: oklch(0.38 0.16 18);
+  --chart-1: oklch(0.82 0.14 18);
+  --chart-2: oklch(0.72 0.20 18);
+  --chart-3: oklch(0.62 0.22 18);
+  --chart-4: oklch(0.55 0.19 18);
+  --chart-5: oklch(0.48 0.16 18);
   --sidebar: oklch(0.218 0.008 223.9);
   --sidebar-foreground: oklch(0.987 0.002 197.1);
   --sidebar-primary: oklch(0.62 0.22 18);
