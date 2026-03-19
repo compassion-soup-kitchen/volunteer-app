@@ -18,7 +18,7 @@ import {
   RiMailLine,
   RiPhoneLine,
   RiInstagramLine,
-  RiStarLine,
+  RiCrossLine,
   RiFacebookCircleLine,
 } from "@remixicon/react";
 import Image from "next/image";
@@ -606,7 +606,7 @@ export default function Home() {
                 Aroha
               </span>
               <span className="flex items-center gap-1">
-                <RiStarLine className="size-3.5" />
+                <RiCrossLine className="size-3.5" />
                 Whakapono
               </span>
             </div>
