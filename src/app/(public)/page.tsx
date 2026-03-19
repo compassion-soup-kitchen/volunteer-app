@@ -18,6 +18,7 @@ import {
   RiMailLine,
   RiPhoneLine,
   RiInstagramLine,
+  RiStarLine,
   RiFacebookCircleLine,
 } from "@remixicon/react";
 import Image from "next/image";
@@ -595,9 +596,20 @@ export default function Home() {
                 </a>
               </p>
             </div>
-            <p className="text-xs italic text-muted-foreground">
-              Manaakitanga &middot; Aroha &middot; Whakapono
-            </p>
+            <div className="flex items-center gap-3 text-xs italic text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <RiHandHeartLine className="size-3.5" />
+                Manaakitanga
+              </span>
+              <span className="flex items-center gap-1">
+                <RiHeartLine className="size-3.5" />
+                Aroha
+              </span>
+              <span className="flex items-center gap-1">
+                <RiStarLine className="size-3.5" />
+                Whakapono
+              </span>
+            </div>
           </div>
         </div>
       </footer>
