@@ -52,7 +52,7 @@ export function VolunteerNav({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
+                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors",
                     isActive
                       ? "bg-primary/10 text-primary font-medium"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -92,9 +92,9 @@ export function VolunteerNav({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-3 py-1.5 text-xs transition-colors",
+                  "flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 text-xs transition-colors",
                   isActive
-                    ? "text-primary"
+                    ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
