@@ -578,10 +578,23 @@ export default function Home() {
           <Separator className="my-8" />
 
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-xs text-muted-foreground">
-              &copy; 2025 Compassion Soup Kitchen &mdash;
-              Te Pūaroha. All rights reserved.
-            </p>
+            <div className="space-y-1 text-center sm:text-left">
+              <p className="text-xs text-muted-foreground">
+                &copy; 2025 Compassion Soup Kitchen &mdash;
+                Te Pūaroha. All rights reserved.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Registered Charity{" "}
+                <a
+                  href="https://www.register.charities.govt.nz/Charity/CC10246"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2 transition-colors hover:text-foreground"
+                >
+                  CC 10246
+                </a>
+              </p>
+            </div>
             <p className="text-xs italic text-muted-foreground">
               Manaakitanga &middot; Aroha &middot; Whakapono
             </p>
