@@ -54,7 +54,7 @@ export function StaffNav({
   return (
     <>
       {/* Top bar */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm lg:pl-60">
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Button
@@ -66,7 +66,7 @@ export function StaffNav({
             >
               <RiMenuLine className="size-5" />
             </Button>
-            <Link href="/staff/dashboard" className="flex items-center gap-2 lg:hidden">
+            <Link href="/staff/dashboard" className="flex items-center gap-2">
               <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-7" />
               <span className="text-sm font-semibold tracking-tight">
                 Te Pūaroha
