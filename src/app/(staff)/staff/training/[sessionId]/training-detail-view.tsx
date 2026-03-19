@@ -85,9 +85,9 @@ function isToday(date: Date): boolean {
 function statusBadge(status: string) {
   switch (status) {
     case "REGISTERED":
-      return <Badge className="bg-blue-600">Registered</Badge>;
+      return <Badge className="bg-blue-600/15 text-blue-700 dark:text-blue-400">Registered</Badge>;
     case "ATTENDED":
-      return <Badge className="bg-green-600">Attended</Badge>;
+      return <Badge className="bg-green-600/15 text-green-700 dark:text-green-400">Attended</Badge>;
     case "NO_SHOW":
       return <Badge variant="destructive">No show</Badge>;
     case "CANCELLED":
@@ -164,7 +164,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
           <div className="flex items-start justify-between">
             <CardTitle className="text-lg">{session.title}</CardTitle>
             {past && <Badge variant="secondary">Past</Badge>}
-            {today && <Badge className="bg-blue-600">Today</Badge>}
+            {today && <Badge className="bg-blue-600/15 text-blue-700 dark:text-blue-400">Today</Badge>}
           </div>
           <CardDescription>
             Created by {session.createdBy.name || "Unknown"}

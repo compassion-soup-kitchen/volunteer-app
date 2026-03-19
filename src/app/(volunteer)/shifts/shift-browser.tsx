@@ -211,7 +211,7 @@ export function ShiftBrowser({
                           </CardDescription>
                         </div>
                         {isSignedUp && (
-                          <Badge className="bg-primary shrink-0">
+                          <Badge className="shrink-0">
                             <RiCheckLine className="mr-1 size-3" />
                             Signed up
                           </Badge>

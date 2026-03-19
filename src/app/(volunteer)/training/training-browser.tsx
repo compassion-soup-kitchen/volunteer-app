@@ -130,7 +130,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                     )}
                   </div>
                   {isRegistered && (
-                    <Badge className="bg-green-600 shrink-0">
+                    <Badge className="bg-green-600/15 text-green-700 dark:text-green-400 shrink-0">
                       <RiCheckLine className="mr-1 size-3" />
                       Registered
                     </Badge>

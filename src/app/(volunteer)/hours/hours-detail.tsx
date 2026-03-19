@@ -249,7 +249,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                   </p>
                 </div>
                 {milestone.reached && (
-                  <Badge className="bg-yellow-500 text-xs">Achieved</Badge>
+                  <Badge className="bg-yellow-500/15 text-yellow-700 dark:text-yellow-400">Achieved</Badge>
                 )}
               </div>
             ))}

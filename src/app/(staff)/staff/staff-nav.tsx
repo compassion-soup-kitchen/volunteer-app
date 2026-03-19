@@ -30,14 +30,24 @@ export function StaffNav({
 
   const sidebarItems = [
     { href: "/staff/dashboard", label: "Dashboard", icon: RiDashboardLine },
-    { href: "/staff/applications", label: "Applications", icon: RiFileListLine },
+    {
+      href: "/staff/applications",
+      label: "Applications",
+      icon: RiFileListLine,
+    },
     { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
     { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
     { href: "/staff/training", label: "Training", icon: RiGraduationCapLine },
     { href: "/staff/documents", label: "Documents", icon: RiFileTextLine },
     { href: "/staff/reports", label: "Reports", icon: RiBarChartBoxLine },
     ...(user.role === "ADMIN"
-      ? [{ href: "/staff/service-areas", label: "Service Areas", icon: RiMapPinLine }]
+      ? [
+          {
+            href: "/staff/service-areas",
+            label: "Service Areas",
+            icon: RiMapPinLine,
+          },
+        ]
       : []),
   ];
 
@@ -56,9 +66,6 @@ export function StaffNav({
             >
               <RiMenuLine className="size-5" />
             </Button>
-            <span className="text-sm text-muted-foreground">
-              {user.role === "ADMIN" ? "Administrator" : "Coordinator"}
-            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden text-sm text-muted-foreground sm:inline">
@@ -93,7 +100,8 @@ export function StaffNav({
         <nav className="p-3">
           <ul className="space-y-1">
             {sidebarItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <li key={item.href}>
                   <Link
