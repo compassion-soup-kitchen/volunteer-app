@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RiSunLine, RiMoonLine, RiComputerLine } from "@remixicon/react";
+import { RiSunLine, RiMoonLine, RiContrast2Line } from "@remixicon/react";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -41,7 +41,7 @@ export function ThemeToggle() {
         >
           {theme === "light" && <RiSunLine className="size-4" />}
           {theme === "dark" && <RiMoonLine className="size-4" />}
-          {theme === "system" && <RiComputerLine className="size-4" />}
+          {theme === "system" && <RiContrast2Line className="size-4" />}
         </Button>
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
