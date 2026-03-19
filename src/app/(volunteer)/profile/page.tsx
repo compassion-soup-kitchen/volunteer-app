@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   RiUserLine,
   RiPhoneLine,
@@ -23,7 +22,6 @@ import {
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
 import { getVolunteerTrainingHistory } from "@/lib/training-actions";
-import { ProfileEditForm } from "./profile-edit-form";
 
 export const metadata: Metadata = {
   title: "My Profile | Te Pūaroha",
@@ -110,13 +108,21 @@ export default async function ProfilePage() {
             </p>
           </div>
         </div>
-        <Badge
-          variant={
-            profile.status === "ACTIVE" ? "default" : "secondary"
-          }
-        >
-          {STATUS_LABELS[profile.status] || profile.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={
+              profile.status === "ACTIVE" ? "default" : "secondary"
+            }
+          >
+            {STATUS_LABELS[profile.status] || profile.status}
+          </Badge>
+          <Button variant="outline" size="sm" className="gap-1.5" asChild>
+            <Link href="/profile/edit">
+              <RiEditLine className="size-3.5" />
+              Edit
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Contact Details */}
@@ -382,9 +388,6 @@ export default async function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Edit Section */}
-      <Separator />
-      <ProfileEditForm profile={profile} />
     </div>
   );
 }

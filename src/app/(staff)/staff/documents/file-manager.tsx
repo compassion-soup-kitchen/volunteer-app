@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -59,11 +54,7 @@ const TYPE_COLORS: Record<string, string> = {
   SIGNED_AGREEMENT: "text-amber-600 border-amber-200",
 };
 
-export function FileManager({
-  documents,
-}: {
-  documents: UploadedDocument[];
-}) {
+export function FileManager({ documents }: { documents: UploadedDocument[] }) {
   const [uploading, startUpload] = useTransition();
   const [deleting, startDelete] = useTransition();
   const [downloading, setDownloading] = useState<string | null>(null);

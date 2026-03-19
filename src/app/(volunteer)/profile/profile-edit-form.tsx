@@ -35,7 +35,6 @@ interface ProfileEditFormProps {
 }
 
 export function ProfileEditForm({ profile }: ProfileEditFormProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [phone, setPhone] = useState(profile.phone || "");
@@ -54,7 +53,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
     setEcPhone(profile.emergencyContactPhone || "");
     setEcRelationship(profile.emergencyContactRelationship || "");
     setBio(profile.bio || "");
-    setIsEditing(false);
+    window.history.back();
   }
 
   function handleSave() {
@@ -72,24 +71,9 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         toast.error(result.error);
       } else {
         toast.success("Profile updated");
-        setIsEditing(false);
+        window.history.back();
       }
     });
-  }
-
-  if (!isEditing) {
-    return (
-      <div className="flex justify-center">
-        <Button
-          variant="outline"
-          onClick={() => setIsEditing(true)}
-          className="gap-1.5"
-        >
-          <RiEditLine className="size-4" />
-          Edit Profile
-        </Button>
-      </div>
-    );
   }
 
   return (
