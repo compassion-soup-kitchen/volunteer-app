@@ -26,11 +26,11 @@ const TYPE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-const TYPE_COLORS: Record<string, string> = {
-  INDUCTION: "bg-blue-600/15 text-blue-700 dark:text-blue-400",
-  DE_ESCALATION: "bg-amber-600/15 text-amber-700 dark:text-amber-400",
-  HEALTH_SAFETY: "bg-green-600/15 text-green-700 dark:text-green-400",
-  OTHER: "bg-gray-600/15 text-gray-700 dark:text-gray-400",
+const TYPE_VARIANTS: Record<string, "info" | "amber" | "success" | "neutral"> = {
+  INDUCTION: "info",
+  DE_ESCALATION: "amber",
+  HEALTH_SAFETY: "success",
+  OTHER: "neutral",
 };
 
 function formatDate(date: Date): string {
@@ -104,7 +104,7 @@ function SessionCard({
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex items-center gap-2">
               <h3 className="font-medium truncate">{session.title}</h3>
-              <Badge className={TYPE_COLORS[session.type] || "bg-gray-600/15 text-gray-700 dark:text-gray-400"}>
+              <Badge variant={TYPE_VARIANTS[session.type] || "neutral"}>
                 {TYPE_LABELS[session.type] || session.type}
               </Badge>
               {past && <Badge variant="secondary">Past</Badge>}

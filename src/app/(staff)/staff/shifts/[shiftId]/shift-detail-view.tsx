@@ -76,9 +76,9 @@ function isToday(date: Date): boolean {
 function statusBadge(status: string) {
   switch (status) {
     case "SIGNED_UP":
-      return <Badge className="bg-blue-600/15 text-blue-700 dark:text-blue-400">Signed up</Badge>;
+      return <Badge variant="info">Signed up</Badge>;
     case "ATTENDED":
-      return <Badge className="bg-green-600/15 text-green-700 dark:text-green-400">Attended</Badge>;
+      return <Badge variant="success">Attended</Badge>;
     case "NO_SHOW":
       return <Badge variant="destructive">No show</Badge>;
     case "CANCELLED":
@@ -158,7 +158,7 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
               <Badge variant="secondary">Past</Badge>
             )}
             {today && (
-              <Badge className="bg-blue-600/15 text-blue-700 dark:text-blue-400">Today</Badge>
+              <Badge variant="info">Today</Badge>
             )}
           </div>
           <CardDescription>

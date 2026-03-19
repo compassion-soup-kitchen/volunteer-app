@@ -2,12 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -176,13 +171,13 @@ export function ReportDashboard({
     }
   }
 
-  const hasFilters = fromDate || toDate || (areaId !== "all");
+  const hasFilters = fromDate || toDate || areaId !== "all";
 
   return (
     <div className="space-y-6">
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="">
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full space-y-1.5 sm:w-auto sm:min-w-40">
               <Label htmlFor="from-date" className="text-xs">
@@ -467,7 +462,9 @@ export function ReportDashboard({
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Inactive</span>
-                  <Badge variant="outline">{onboarding.inactiveVolunteers}</Badge>
+                  <Badge variant="outline">
+                    {onboarding.inactiveVolunteers}
+                  </Badge>
                 </div>
                 {onboarding.avgDaysToApproval !== null && (
                   <div className="mt-3 rounded-md bg-muted/50 p-3 text-center">

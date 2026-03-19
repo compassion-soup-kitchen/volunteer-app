@@ -115,7 +115,7 @@ export default async function VolunteerDashboard() {
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle>Welcome to the Whānau!</CardTitle>
-                  <Badge className="bg-green-600/15 text-green-700 dark:text-green-400">Approved</Badge>
+                  <Badge variant="success">Approved</Badge>
                 </div>
                 <CardDescription>
                   Your application has been approved. You can now sign up for
