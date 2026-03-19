@@ -66,6 +66,12 @@ export function StaffNav({
             >
               <RiMenuLine className="size-5" />
             </Button>
+            <Link href="/staff/dashboard" className="flex items-center gap-2 lg:hidden">
+              <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-7" />
+              <span className="text-sm font-semibold tracking-tight">
+                Te Pūaroha
+              </span>
+            </Link>
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden text-sm text-muted-foreground sm:inline">
