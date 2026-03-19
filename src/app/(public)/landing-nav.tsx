@@ -54,7 +54,7 @@ export function LandingNav() {
           >
             Contact
           </a>
-          <ThemeToggle />
+          <div className="mx-1 h-4 w-px bg-border" />
           <a href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Sign In
           </a>
@@ -64,6 +64,7 @@ export function LandingNav() {
               <RiArrowRightLine data-icon="inline-end" className="size-3.5" />
             </a>
           </Button>
+          <ThemeToggle />
         </div>
 
         {/* Mobile menu toggle */}
