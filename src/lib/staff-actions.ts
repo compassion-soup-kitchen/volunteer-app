@@ -48,7 +48,7 @@ export async function getStaffDashboardStats(): Promise<DashboardStats | null> {
   const [activeVolunteers, pendingApplications, shiftsThisWeek, attendedSignups] =
     await Promise.all([
       db.volunteerProfile.count({
-        where: { status: "ACTIVE" },
+        where: { status: "ACTIVE", user: { status: "ACTIVE" } },
       }),
       db.application.count({
         where: { status: "PENDING" },
@@ -341,6 +341,9 @@ export type VolunteerListItem = {
   user: {
     name: string | null;
     email: string;
+    status: string;
+    archivedAt: Date | null;
+    archivedReason: string | null;
   };
   interests: { id: string; name: string }[];
   _count: {
@@ -350,6 +353,8 @@ export type VolunteerListItem = {
 
 export type VolunteerFilters = {
   status?: string;
+  // User account status: "ACTIVE" (default), "ARCHIVED", or "ALL"
+  userStatus?: "ACTIVE" | "ARCHIVED" | "ALL";
   search?: string;
 };
 
@@ -366,11 +371,25 @@ export async function getVolunteersList(
     where.status = filters.status;
   }
 
+  // Default to ACTIVE accounts unless explicitly requested otherwise
+  const userStatus = filters?.userStatus ?? "ACTIVE";
+  if (userStatus !== "ALL") {
+    where.user = { status: userStatus };
+  }
+
   const volunteers = await db.volunteerProfile.findMany({
     where,
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     include: {
-      user: { select: { name: true, email: true } },
+      user: {
+        select: {
+          name: true,
+          email: true,
+          status: true,
+          archivedAt: true,
+          archivedReason: true,
+        },
+      },
       interests: { select: { id: true, name: true } },
       _count: {
         select: {
@@ -417,6 +436,77 @@ export async function updateVolunteerStatus(
     return { success: true };
   } catch (e) {
     console.error("Update volunteer status error:", e);
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+// ─── Archive / Restore Volunteer Account ─────────────
+
+export async function archiveVolunteer(
+  volunteerId: string,
+  reason?: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireStaff();
+  if (!session) return { error: "Not authorised." };
+
+  const db = getDb();
+  const profile = await db.volunteerProfile.findUnique({
+    where: { id: volunteerId },
+    select: { userId: true },
+  });
+
+  if (!profile) return { error: "Volunteer not found." };
+
+  try {
+    await db.user.update({
+      where: { id: profile.userId },
+      data: {
+        status: "ARCHIVED",
+        archivedAt: new Date(),
+        archivedReason: reason?.trim() || null,
+        archivedById: session.user!.id,
+      },
+    });
+
+    revalidatePath("/staff/volunteers");
+    revalidatePath("/staff/dashboard");
+    return { success: true };
+  } catch (e) {
+    console.error("Archive volunteer error:", e);
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+export async function restoreVolunteer(
+  volunteerId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireStaff();
+  if (!session) return { error: "Not authorised." };
+
+  const db = getDb();
+  const profile = await db.volunteerProfile.findUnique({
+    where: { id: volunteerId },
+    select: { userId: true },
+  });
+
+  if (!profile) return { error: "Volunteer not found." };
+
+  try {
+    await db.user.update({
+      where: { id: profile.userId },
+      data: {
+        status: "ACTIVE",
+        archivedAt: null,
+        archivedReason: null,
+        archivedById: null,
+      },
+    });
+
+    revalidatePath("/staff/volunteers");
+    revalidatePath("/staff/dashboard");
+    return { success: true };
+  } catch (e) {
+    console.error("Restore volunteer error:", e);
     return { error: "Something went wrong. Please try again." };
   }
 }

@@ -15,28 +15,41 @@ enum Role {
   ADMIN
 }
 
+enum UserStatus {
+  ACTIVE
+  ARCHIVED
+}
+
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          Role      @default(PUBLIC)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String     @id @default(cuid())
+  name           String?
+  email          String     @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           Role       @default(PUBLIC)
+  status         UserStatus @default(ACTIVE)
+  archivedAt     DateTime?
+  archivedReason String?
+  archivedById   String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   accounts Account[]
   sessions Session[]
 
   volunteerProfile     VolunteerProfile?
-  reviewedApplications Application[]        @relation("ReviewedBy")
+  reviewedApplications Application[]       @relation("ReviewedBy")
   createdShifts        Shift[]
-  markedAttendance     ShiftSignup[]        @relation("AttendanceMarkedBy")
+  markedAttendance     ShiftSignup[]       @relation("AttendanceMarkedBy")
+  recordedShiftMeals   Shift[]             @relation("MealsRecordedBy")
   createdTraining      TrainingSession[]
   createdAnnouncements Announcement[]
-  uploadedDocuments    Document[]           @relation("UploadedBy")
-  updatedAgreements    AgreementTemplate[]  @relation("AgreementTemplateUpdatedBy")
+  uploadedDocuments    Document[]          @relation("UploadedBy")
+  updatedAgreements    AgreementTemplate[] @relation("AgreementTemplateUpdatedBy")
+  reAckSetAgreements   AgreementTemplate[] @relation("AgreementTemplateReAckSetBy")
+  archivedBy           User?               @relation("UserArchivedBy", fields: [archivedById], references: [id])
+  archivedUsers        User[]              @relation("UserArchivedBy")
 }
 
 model Account {
@@ -185,8 +198,12 @@ model AgreementTemplate {
   version       String        @default("1.0")
   updatedAt     DateTime      @updatedAt
   updatedById   String?
+  requiresReAck Boolean       @default(false)
+  reAckSetAt    DateTime?
+  reAckSetById  String?
 
-  updatedBy User? @relation("AgreementTemplateUpdatedBy", fields: [updatedById], references: [id])
+  updatedBy  User? @relation("AgreementTemplateUpdatedBy", fields: [updatedById], references: [id])
+  reAckSetBy User? @relation("AgreementTemplateReAckSetBy", fields: [reAckSetById], references: [id])
 }
 
 // ─── Operations ───────────────────────────────────────
@@ -203,19 +220,23 @@ model ServiceArea {
 }
 
 model Shift {
-  id            String   @id @default(cuid())
-  serviceAreaId String
-  date          DateTime @db.Date
-  startTime     String
-  endTime       String
-  capacity      Int
-  notes         String?
-  createdById   String
-  createdAt     DateTime @default(now())
+  id                String    @id @default(cuid())
+  serviceAreaId     String
+  date              DateTime  @db.Date
+  startTime         String
+  endTime           String
+  capacity          Int
+  notes             String?
+  createdById       String
+  createdAt         DateTime  @default(now())
+  mealsServed       Int?
+  mealsRecordedAt   DateTime?
+  mealsRecordedById String?
 
-  serviceArea ServiceArea   @relation(fields: [serviceAreaId], references: [id])
-  createdBy   User          @relation(fields: [createdById], references: [id])
-  signups     ShiftSignup[]
+  serviceArea     ServiceArea   @relation(fields: [serviceAreaId], references: [id])
+  createdBy       User          @relation(fields: [createdById], references: [id])
+  mealsRecordedBy User?         @relation("MealsRecordedBy", fields: [mealsRecordedById], references: [id])
+  signups         ShiftSignup[]
 }
 
 enum SignupStatus {

@@ -35,14 +35,29 @@ import {
   RiCheckLine,
   RiUserLine,
   RiShieldCheckLine,
+  RiArchive2Line,
+  RiArrowGoBackLine,
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
   getVolunteersList,
   updateVolunteerStatus,
+  archiveVolunteer,
+  restoreVolunteer,
   type VolunteerListItem,
 } from "@/lib/staff-actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All statuses" },
@@ -93,31 +108,57 @@ interface VolunteerDirectoryProps {
   initialVolunteers: VolunteerListItem[];
 }
 
+const ACCOUNT_OPTIONS: { value: "ACTIVE" | "ARCHIVED" | "ALL"; label: string }[] =
+  [
+    { value: "ACTIVE", label: "Active accounts" },
+    { value: "ARCHIVED", label: "Archived only" },
+    { value: "ALL", label: "All accounts" },
+  ];
+
 export function VolunteerDirectory({
   initialVolunteers,
 }: VolunteerDirectoryProps) {
   const [volunteers, setVolunteers] = useState(initialVolunteers);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [accountFilter, setAccountFilter] = useState<"ACTIVE" | "ARCHIVED" | "ALL">(
+    "ACTIVE"
+  );
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [archiveTarget, setArchiveTarget] = useState<VolunteerListItem | null>(
+    null
+  );
+  const [archiveReason, setArchiveReason] = useState("");
+  const [archiving, setArchiving] = useState(false);
 
-  function handleFilterChange(status: string) {
-    setStatusFilter(status);
+  function reload(next: {
+    status?: string;
+    account?: "ACTIVE" | "ARCHIVED" | "ALL";
+    search?: string;
+  }) {
     startTransition(async () => {
-      const result = await getVolunteersList({ status, search });
+      const result = await getVolunteersList({
+        status: next.status ?? statusFilter,
+        userStatus: next.account ?? accountFilter,
+        search: next.search ?? search,
+      });
       setVolunteers(result);
     });
   }
 
+  function handleFilterChange(status: string) {
+    setStatusFilter(status);
+    reload({ status });
+  }
+
+  function handleAccountFilterChange(value: "ACTIVE" | "ARCHIVED" | "ALL") {
+    setAccountFilter(value);
+    reload({ account: value });
+  }
+
   function handleSearch(value: string) {
     setSearch(value);
-    startTransition(async () => {
-      const result = await getVolunteersList({
-        status: statusFilter,
-        search: value,
-      });
-      setVolunteers(result);
-    });
+    reload({ search: value });
   }
 
   async function handleStatusChange(
@@ -140,13 +181,34 @@ export function VolunteerDirectory({
       ]?.toLowerCase()}.`
     );
 
-    startTransition(async () => {
-      const refreshed = await getVolunteersList({
-        status: statusFilter,
-        search,
-      });
-      setVolunteers(refreshed);
-    });
+    reload({});
+  }
+
+  async function handleArchiveConfirm() {
+    if (!archiveTarget) return;
+    setArchiving(true);
+    const result = await archiveVolunteer(archiveTarget.id, archiveReason);
+    setArchiving(false);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      `${archiveTarget.user.name || "Volunteer"} archived. Their hours stay in reporting.`
+    );
+    setArchiveTarget(null);
+    setArchiveReason("");
+    reload({});
+  }
+
+  async function handleRestore(volunteer: VolunteerListItem) {
+    const result = await restoreVolunteer(volunteer.id);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(`${volunteer.user.name || "Volunteer"} restored.`);
+    reload({});
   }
 
   return (
@@ -168,6 +230,23 @@ export function VolunteerDirectory({
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={accountFilter}
+          onValueChange={(v) =>
+            handleAccountFilterChange(v as "ACTIVE" | "ARCHIVED" | "ALL")
+          }
+        >
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ACCOUNT_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
@@ -211,10 +290,18 @@ export function VolunteerDirectory({
                 </TableHeader>
                 <TableBody>
                   {volunteers.map((vol) => (
-                    <TableRow key={vol.id}>
+                    <TableRow
+                      key={vol.id}
+                      className={vol.user.status === "ARCHIVED" ? "opacity-60" : ""}
+                    >
                       <TableCell>
-                        <div className="font-medium">
+                        <div className="flex items-center gap-2 font-medium">
                           {vol.user.name || "Unnamed"}
+                          {vol.user.status === "ARCHIVED" && (
+                            <Badge variant="outline" className="text-[10px]">
+                              Archived
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {vol.user.email}
@@ -266,6 +353,8 @@ export function VolunteerDirectory({
                         <StatusMenu
                           volunteer={vol}
                           onStatusChange={handleStatusChange}
+                          onArchive={(v) => setArchiveTarget(v)}
+                          onRestore={handleRestore}
                         />
                       </TableCell>
                     </TableRow>
@@ -278,13 +367,23 @@ export function VolunteerDirectory({
           {/* Mobile cards */}
           <div className="space-y-3 sm:hidden">
             {volunteers.map((vol) => (
-              <Card key={vol.id}>
+              <Card
+                key={vol.id}
+                className={vol.user.status === "ARCHIVED" ? "opacity-60" : ""}
+              >
                 <CardContent className="py-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-medium">
-                        {vol.user.name || "Unnamed"}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">
+                          {vol.user.name || "Unnamed"}
+                        </p>
+                        {vol.user.status === "ARCHIVED" && (
+                          <Badge variant="outline" className="text-[10px]">
+                            Archived
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {vol.user.email}
                       </p>
@@ -292,6 +391,8 @@ export function VolunteerDirectory({
                     <StatusMenu
                       volunteer={vol}
                       onStatusChange={handleStatusChange}
+                      onArchive={(v) => setArchiveTarget(v)}
+                      onRestore={handleRestore}
                     />
                   </div>
 
@@ -330,6 +431,58 @@ export function VolunteerDirectory({
           </div>
         </>
       )}
+
+      <AlertDialog
+        open={archiveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setArchiveTarget(null);
+            setArchiveReason("");
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Archive {archiveTarget?.user.name || "this volunteer"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              They&apos;ll lose access to log in and won&apos;t appear in active rosters.
+              Their past hours and meals served stay in reporting. You can
+              restore them later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="archive-reason" className="text-sm font-medium">
+              Reason (optional)
+            </label>
+            <Textarea
+              id="archive-reason"
+              value={archiveReason}
+              onChange={(e) => setArchiveReason(e.target.value)}
+              placeholder="e.g. Moved away, no longer available"
+              rows={2}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={archiving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleArchiveConfirm}
+              disabled={archiving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {archiving ? (
+                <>
+                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  Archiving...
+                </>
+              ) : (
+                "Archive account"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -337,6 +490,8 @@ export function VolunteerDirectory({
 function StatusMenu({
   volunteer,
   onStatusChange,
+  onArchive,
+  onRestore,
 }: {
   volunteer: VolunteerListItem;
   onStatusChange: (
@@ -347,7 +502,29 @@ function StatusMenu({
       | "AWAITING_VETTING"
       | "APPROVED_FOR_INDUCTION"
   ) => void;
+  onArchive: (vol: VolunteerListItem) => void;
+  onRestore: (vol: VolunteerListItem) => void;
 }) {
+  const isArchived = volunteer.user.status === "ARCHIVED";
+
+  if (isArchived) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon-sm">
+            <RiMoreLine className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onRestore(volunteer)}>
+            <RiArrowGoBackLine className="mr-2 size-4" />
+            Restore account
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
   const availableStatuses = [
     { value: "ACTIVE", label: "Set Active", icon: RiCheckLine },
     {
@@ -385,6 +562,14 @@ function StatusMenu({
             {s.label}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => onArchive(volunteer)}
+          className="text-destructive focus:text-destructive"
+        >
+          <RiArchive2Line className="mr-2 size-4" />
+          Archive account
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
