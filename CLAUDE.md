@@ -16,6 +16,7 @@ The app handles the full volunteer lifecycle: public signup → application revi
 - **Animation**: `motion/react`
 - **Forms/UI**: `react-day-picker`, `recharts`, `sonner` (toasts), `radix-ui`, `class-variance-authority`, `tailwind-merge`
 - **Validation**: `zod`
+- **Testing**: Vitest + React Testing Library + jsdom for unit/component; Playwright (chromium) for E2E
 - **Other**: `bcryptjs` (password hashing), `date-fns`, `next-themes`
 
 ## Skill Usage (REQUIRED)
@@ -162,11 +163,34 @@ Always check role in Server Actions too — never trust the client.
 - Toasts via `sonner` (`toast.success`, `toast.error`).
 - Confirm destructive actions with `<AlertDialog>`.
 
+### Testing
+
+Two suites — keep both green on `main`.
+
+**Unit / component (Vitest)** — `npm test` / `npm run test:ci`
+- Config: `vitest.config.ts` (jsdom env, globals, `@/*` alias). Setup: `vitest.setup.ts` loads `@testing-library/jest-dom/vitest`.
+- Location: co-locate as `*.test.ts` / `*.test.tsx` under `src/`.
+- Components: use `@testing-library/react`. Assert on accessible roles/text, not implementation details.
+- Server Actions: mock `@/lib/db` via `vi.mock("@/lib/db", () => ({ getDb: () => ({ ... }) }))`. Many actions also import `next-auth` (for `AuthError`) and `@/lib/auth` (for `signIn`) — both must be mocked when testing actions. See `src/lib/auth-actions.test.ts` for the pattern.
+- When adding new pure utilities under `src/lib/`, add a sibling `*.test.ts`. For new Server Actions, extract branching/validation logic into pure helpers so it can be unit-tested without mocking.
+
+**E2E (Playwright)** — `npm run e2e` / `npm run e2e:ci`
+- Tests live in `e2e/*.spec.ts`. Config: `playwright.config.ts` runs Chromium against `next start -p 3100` and overrides `NEXTAUTH_URL` + `AUTH_TRUST_HOST` so NextAuth doesn't reject the test host.
+- Requires the production build (`npm run build`) and Chromium (`npx playwright install chromium`) once.
+- Public-only flows are covered today. DB-backed journeys (signup → application → admin approval → first shift) need a seeded test DB before they can land.
+
+**CI** — `.github/workflows/ci.yml` has two jobs:
+1. `ci` — lint → typecheck → test:ci → build (every push/PR)
+2. `e2e` — depends on `ci`; installs Chromium (cached), builds, runs Playwright, uploads `playwright-report/` as an artifact
+
 ## Scripts
 ```
 npm run dev          # next dev
 npm run build        # prisma generate && next build
 npm run lint         # eslint
+npm run typecheck    # tsc --noEmit
+npm test             # vitest (watch mode)
+npm run test:ci      # vitest run (single pass — used in CI)
 npm run db:generate  # prisma generate
 npm run db:push      # prisma db push
 npm run db:seed      # tsx prisma/seed.ts
