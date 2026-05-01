@@ -18,6 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           release-type: node
           package-name: volunteer-app
+
+      - name: Enable auto-merge on release PR
+        if: ${{ steps.release.outputs.pr }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(echo '${{ steps.release.outputs.pr }}' | jq -r '.number')
+          gh pr merge --auto --squash "$PR_NUMBER"
