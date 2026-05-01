@@ -18,11 +18,9 @@ import {
   RiFileListLine,
   RiCalendarLine,
   RiTimeLine,
-  RiArrowRightLine,
   RiUserLine,
   RiCheckLine,
 } from "@remixicon/react";
-import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 

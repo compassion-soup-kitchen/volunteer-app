@@ -414,7 +414,13 @@ export default function Home() {
           <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2.5">
-                <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-9" />
+                <Image
+                  src="/favicon-192x192.png"
+                  alt="Te Pūaroha"
+                  width={36}
+                  height={36}
+                  className="size-9"
+                />
                 <div className="leading-none">
                   <p className="text-base font-semibold tracking-tight">
                     Te Pūaroha

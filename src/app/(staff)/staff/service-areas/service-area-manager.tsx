@@ -53,7 +53,7 @@ interface ServiceAreaManagerProps {
 
 export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
   const [areas, setAreas] = useState(initialAreas);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);

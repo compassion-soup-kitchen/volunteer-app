@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -67,7 +68,14 @@ export function StaffNav({
               <RiMenuLine className="size-5" />
             </Button>
             <Link href="/staff/dashboard" className="flex items-center gap-2">
-              <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-7" />
+              <Image
+                src="/favicon-192x192.png"
+                alt="Te Pūaroha"
+                width={28}
+                height={28}
+                className="size-7"
+                priority
+              />
               <span className="text-sm font-semibold tracking-tight">
                 Te Pūaroha
               </span>
@@ -98,7 +106,13 @@ export function StaffNav({
         )}
       >
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-          <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-8" />
+          <Image
+            src="/favicon-192x192.png"
+            alt="Te Pūaroha"
+            width={32}
+            height={32}
+            className="size-8"
+          />
           <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
             Te Pūaroha
           </span>

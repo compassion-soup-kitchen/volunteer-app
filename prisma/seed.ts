@@ -251,7 +251,7 @@ async function main() {
       },
     });
 
-    const upcomingShift3 = await prisma.shift.create({
+    await prisma.shift.create({
       data: {
         serviceAreaId: kitchenArea!.id,
         date: toDate(9),
