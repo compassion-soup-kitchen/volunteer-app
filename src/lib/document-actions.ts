@@ -16,6 +16,9 @@ export type AgreementOverview = {
   signedCurrentCount: number;
   signedOutdatedCount: number;
   unsignedCount: number;
+  requiresReAck: boolean;
+  reAckSetAt: Date | null;
+  pendingReAckCount: number;
 };
 
 export type AgreementDetail = {
@@ -73,11 +76,13 @@ export async function getAgreementOverview(): Promise<AgreementOverview[]> {
     where: { status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] } },
   });
 
-  // Get all signed agreements grouped
+  // Get all signed agreements grouped (ordered so first per volunteer is latest)
   const signedAgreements = await db.signedAgreement.findMany({
+    orderBy: { signedAt: "desc" },
     select: {
       agreementType: true,
       documentVersion: true,
+      signedAt: true,
       volunteerId: true,
     },
   });
@@ -86,18 +91,37 @@ export async function getAgreementOverview(): Promise<AgreementOverview[]> {
     const signed = signedAgreements.filter(
       (sa) => sa.agreementType === template.agreementType
     );
-    // Deduplicate by volunteer — take latest (we just check version match)
-    const byVolunteer = new Map<string, string | null>();
+    // Deduplicate by volunteer — keep latest signature only
+    const byVolunteer = new Map<
+      string,
+      { documentVersion: string | null; signedAt: Date }
+    >();
     for (const sa of signed) {
-      byVolunteer.set(sa.volunteerId, sa.documentVersion);
+      if (!byVolunteer.has(sa.volunteerId)) {
+        byVolunteer.set(sa.volunteerId, {
+          documentVersion: sa.documentVersion,
+          signedAt: sa.signedAt,
+        });
+      }
     }
 
-    const signedCurrentCount = Array.from(byVolunteer.values()).filter(
-      (v) => v === template.version
+    const latestPerVolunteer = Array.from(byVolunteer.values());
+    const signedCurrentCount = latestPerVolunteer.filter(
+      (v) => v.documentVersion === template.version
     ).length;
-    const signedOutdatedCount = Array.from(byVolunteer.values()).filter(
-      (v) => v && v !== template.version
+    const signedOutdatedCount = latestPerVolunteer.filter(
+      (v) => v.documentVersion && v.documentVersion !== template.version
     ).length;
+
+    // Pending re-ack: admin marked requiresReAck and a volunteer's latest
+    // signature predates the re-ack flag (or they've never signed)
+    const pendingReAckCount =
+      template.requiresReAck && template.reAckSetAt
+        ? totalVolunteers -
+          latestPerVolunteer.filter(
+            (v) => v.signedAt >= template.reAckSetAt!
+          ).length
+        : 0;
 
     return {
       agreementType: template.agreementType,
@@ -108,8 +132,41 @@ export async function getAgreementOverview(): Promise<AgreementOverview[]> {
       signedCurrentCount,
       signedOutdatedCount,
       unsignedCount: totalVolunteers - signedCurrentCount - signedOutdatedCount,
+      requiresReAck: template.requiresReAck,
+      reAckSetAt: template.reAckSetAt,
+      pendingReAckCount,
     };
   });
+}
+
+// ─── Staff: Toggle Re-Acknowledgment Requirement ────────
+
+export async function setAgreementReAckRequired(
+  agreementType: string,
+  required: boolean
+) {
+  const session = await auth();
+  if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
+    throw new Error("Unauthorized");
+  }
+
+  const db = getDb();
+
+  await db.agreementTemplate.update({
+    where: { agreementType: agreementType as any },
+    data: {
+      requiresReAck: required,
+      // Stamp the moment re-ack was required so signatures predating it
+      // count as needing re-sign. Clearing the flag leaves the timestamp
+      // alone — re-enabling later resets it.
+      ...(required ? { reAckSetAt: new Date(), reAckSetById: session.user.id } : {}),
+    },
+  });
+
+  revalidatePath("/staff/documents");
+  revalidatePath("/staff/documents/" + agreementType);
+  revalidatePath("/documents");
+  revalidatePath("/dashboard");
 }
 
 // ─── Staff: Agreement Detail ────────────────────────────
@@ -235,6 +292,16 @@ export async function getVolunteerAgreementStatuses(): Promise<
       (sa) => sa.agreementType === template.agreementType
     );
 
+    // Re-ack is needed if:
+    //   - never signed before, OR
+    //   - admin has flagged this template as requiring re-ack AND the latest
+    //     signature predates the admin's re-ack flag
+    const needsResign =
+      !latest ||
+      (template.requiresReAck &&
+        !!template.reAckSetAt &&
+        latest.signedAt < template.reAckSetAt);
+
     return {
       agreementType: template.agreementType,
       title: template.title,
@@ -243,8 +310,7 @@ export async function getVolunteerAgreementStatuses(): Promise<
       signedVersion: latest?.documentVersion || null,
       signedAt: latest?.signedAt || null,
       signatureData: latest?.signatureData || null,
-      needsResign:
-        !latest || latest.documentVersion !== template.version,
+      needsResign,
     };
   });
 }
@@ -304,7 +370,7 @@ export async function getPendingResignCount(): Promise<number> {
         orderBy: { signedAt: "desc" },
         select: {
           agreementType: true,
-          documentVersion: true,
+          signedAt: true,
         },
       },
     },
@@ -319,7 +385,12 @@ export async function getPendingResignCount(): Promise<number> {
     const latest = profile.signedAgreements.find(
       (sa) => sa.agreementType === template.agreementType
     );
-    if (!latest || latest.documentVersion !== template.version) {
+    if (
+      !latest ||
+      (template.requiresReAck &&
+        !!template.reAckSetAt &&
+        latest.signedAt < template.reAckSetAt)
+    ) {
       count++;
     }
   }

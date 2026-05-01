@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { VolunteerNav } from "./volunteer-nav";
+import { VolunteerFooter } from "./volunteer-footer";
 
 export default async function VolunteerLayout({
   children,
@@ -19,9 +20,12 @@ export default async function VolunteerLayout({
   }
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="flex min-h-dvh flex-col bg-background pb-16 sm:pb-0">
       <VolunteerNav user={session.user} />
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-20 sm:px-6 sm:pb-6">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+        {children}
+      </main>
+      <VolunteerFooter />
     </div>
   );
 }

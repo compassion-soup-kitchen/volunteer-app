@@ -32,6 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!user?.password) return null;
+        if (user.status === "ARCHIVED") return null;
 
         const isValid = await bcrypt.compare(
           credentials.password as string,
@@ -51,6 +52,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user }) {
+      // Block archived users from any provider (Google, Credentials)
+      if (!user?.id) return true;
+      const db = getDb();
+      const dbUser = await db.user.findUnique({
+        where: { id: user.id },
+        select: { status: true },
+      });
+      return dbUser?.status !== "ARCHIVED";
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
