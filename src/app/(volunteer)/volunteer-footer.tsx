@@ -1,4 +1,5 @@
 import { RiArrowRightUpLine } from "@remixicon/react";
+import { APP_VERSION } from "@/lib/version";
 
 const ORG_LINK = "https://www.compassion.org.nz";
 
@@ -54,6 +55,10 @@ export function VolunteerFooter() {
             <RiArrowRightUpLine className="size-3.5" />
           </a>
         </div>
+
+        <p className="mt-6 font-mono text-[10px] tracking-tight text-muted-foreground/60">
+          v{APP_VERSION}
+        </p>
       </div>
     </footer>
   );

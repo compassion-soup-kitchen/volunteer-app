@@ -24,6 +24,7 @@ import {
 import Image from "next/image";
 import * as motion from "motion/react-client";
 import { LandingNav } from "./landing-nav";
+import { APP_VERSION } from "@/lib/version";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -600,6 +601,12 @@ export default function Home() {
                 >
                   CC 10246
                 </a>
+                <span className="mx-2 text-muted-foreground/40" aria-hidden>
+                  ·
+                </span>
+                <span className="font-mono tracking-tight text-muted-foreground/60">
+                  v{APP_VERSION}
+                </span>
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs italic text-muted-foreground">
