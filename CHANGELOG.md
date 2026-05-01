@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.0.0...v1.0.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* **eslint:** pin React version to unblock ESLint 10 upgrade ([13af12b](https://github.com/compassion-soup-kitchen/volunteer-app/commit/13af12bcbfe430d4050b81aba3849cc9cfcd195f))
+
 ## 1.0.0 (2026-05-01)
 
 
