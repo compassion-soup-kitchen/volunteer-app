@@ -1,5 +1,6 @@
 "use server";
 
+import type { AgreementType, DocumentType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getSupabase, DOCUMENTS_BUCKET } from "@/lib/supabase";
@@ -153,7 +154,7 @@ export async function setAgreementReAckRequired(
   const db = getDb();
 
   await db.agreementTemplate.update({
-    where: { agreementType: agreementType as any },
+    where: { agreementType: agreementType as AgreementType },
     data: {
       requiresReAck: required,
       // Stamp the moment re-ack was required so signatures predating it
@@ -182,7 +183,7 @@ export async function getAgreementDetail(
   const db = getDb();
 
   const template = await db.agreementTemplate.findUnique({
-    where: { agreementType: agreementType as any },
+    where: { agreementType: agreementType as AgreementType },
   });
 
   if (!template) return null;
@@ -194,7 +195,7 @@ export async function getAgreementDetail(
       id: true,
       user: { select: { name: true, email: true } },
       signedAgreements: {
-        where: { agreementType: agreementType as any },
+        where: { agreementType: agreementType as AgreementType },
         orderBy: { signedAt: "desc" },
         take: 1,
         select: {
@@ -240,7 +241,7 @@ export async function updateAgreementTemplate(
   const db = getDb();
 
   await db.agreementTemplate.update({
-    where: { agreementType: agreementType as any },
+    where: { agreementType: agreementType as AgreementType },
     data: {
       title: data.title,
       content: data.content,
@@ -334,7 +335,7 @@ export async function resignAgreement(
   if (!profile) throw new Error("No volunteer profile found");
 
   const template = await db.agreementTemplate.findUnique({
-    where: { agreementType: agreementType as any },
+    where: { agreementType: agreementType as AgreementType },
   });
 
   if (!template) throw new Error("Agreement template not found");
@@ -343,7 +344,7 @@ export async function resignAgreement(
   await db.signedAgreement.create({
     data: {
       volunteerId: profile.id,
-      agreementType: agreementType as any,
+      agreementType: agreementType as AgreementType,
       signatureData,
       documentVersion: template.version,
     },
@@ -414,8 +415,6 @@ export async function uploadDocument(formData: FormData) {
   const db = getDb();
   const supabase = getSupabase();
 
-  // Generate a unique path
-  const ext = file.name.split(".").pop() || "pdf";
   const storagePath = `${type.toLowerCase()}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -431,7 +430,7 @@ export async function uploadDocument(formData: FormData) {
 
   await db.document.create({
     data: {
-      type: type as any,
+      type: type as DocumentType,
       fileName: file.name,
       fileUrl: storagePath,
       uploadedById: session.user.id,

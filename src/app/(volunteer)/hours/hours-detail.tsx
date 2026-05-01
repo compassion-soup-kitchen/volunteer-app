@@ -19,7 +19,6 @@ import {
   RiStarFill,
 } from "@remixicon/react";
 import type { VolunteerHoursData } from "@/lib/dashboard-actions";
-import type { Milestone } from "@/lib/milestones";
 
 interface HoursDetailProps {
   data: VolunteerHoursData;

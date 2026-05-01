@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/tooltip";
 import { RiSunLine, RiMoonLine, RiContrast2Line } from "@remixicon/react";
 
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (!mounted) {
     return <Button variant="ghost" size="icon-sm" aria-label="Toggle theme" />;

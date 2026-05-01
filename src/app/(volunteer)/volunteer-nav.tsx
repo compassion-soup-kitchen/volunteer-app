@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -36,7 +37,14 @@ export function VolunteerNav({
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-8" />
+            <Image
+              src="/favicon-192x192.png"
+              alt="Te Pūaroha"
+              width={32}
+              height={32}
+              className="size-8"
+              priority
+            />
             <span className="text-sm font-semibold tracking-tight">
               Te Pūaroha
             </span>

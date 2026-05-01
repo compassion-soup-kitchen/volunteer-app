@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { RegisterForm } from "./register-form";
-import { RiHeartLine } from "@remixicon/react";
+import Image from "next/image";
 import Link from "next/link";
+import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
   title: "Nau mai — Join Us | Te Pūaroha",
@@ -16,7 +16,14 @@ export default function RegisterPage() {
         {/* Brand */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2.5">
-            <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-10" />
+            <Image
+              src="/favicon-192x192.png"
+              alt="Te Pūaroha"
+              width={40}
+              height={40}
+              className="size-10"
+              priority
+            />
             <span className="text-lg font-semibold tracking-tight">
               Te Pūaroha
             </span>

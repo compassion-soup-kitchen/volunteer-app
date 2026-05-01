@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -69,23 +68,6 @@ const STATUS_LABEL: Record<string, string> = {
   INFO_REQUESTED: "Info requested",
 };
 
-const MOJ_LABEL: Record<string, string> = {
-  NOT_STARTED: "Not started",
-  SUBMITTED: "Submitted",
-  CLEARED: "Cleared",
-  FLAGGED: "Flagged",
-};
-
-const MOJ_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  NOT_STARTED: "secondary",
-  SUBMITTED: "default",
-  CLEARED: "outline",
-  FLAGGED: "destructive",
-};
-
 const DAY_LABELS: Record<string, string> = {
   monday: "Mon",
   tuesday: "Tue",
@@ -104,7 +86,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
   const router = useRouter();
   const [notes, setNotes] = useState(application.notes || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [mojStatus, setMojStatus] = useState(application.volunteer.mojStatus);
 
   const vol = application.volunteer;
