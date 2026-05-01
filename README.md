@@ -83,6 +83,38 @@ Visit 👉 [http://localhost:3000](http://localhost:3000)
 
 ---
 
+## 🧪 Testing
+
+Two layers — both run in CI on every push and PR to `main` (`.github/workflows/ci.yml`).
+
+### Unit & component tests — [Vitest](https://vitest.dev)
+
+```bash
+npm test          # 👀 watch mode
+npm run test:ci   # 🚦 single run (used in CI)
+```
+
+- jsdom environment with React Testing Library + `@testing-library/jest-dom` matchers
+- Test files live next to the code they cover: `*.test.ts` / `*.test.tsx` under `src/`
+- Config: `vitest.config.ts` · setup: `vitest.setup.ts`
+- Server actions are tested with mocked Prisma (`vi.mock("@/lib/db", ...)`); we don't stand up a real DB for unit tests
+
+### End-to-end tests — [Playwright](https://playwright.dev)
+
+```bash
+# first-time browser install
+npx playwright install chromium
+
+# build is required because Playwright runs `next start`
+npm run build && npm run e2e
+```
+
+- Tests live in `e2e/*.spec.ts`
+- Config: `playwright.config.ts` — runs Chromium against `next start` on port `3100`
+- Currently covers the public landing → register/login flow; DB-backed journeys to follow once we have a seeded test database
+
+---
+
 ## 📜 Scripts
 
 | Command | What it does |
@@ -91,6 +123,11 @@ Visit 👉 [http://localhost:3000](http://localhost:3000)
 | `npm run build` | 🏗️ Generate Prisma client + production build |
 | `npm run start` | ▶️ Run the production build |
 | `npm run lint` | 🧹 Run ESLint |
+| `npm run typecheck` | 🧠 `tsc --noEmit` |
+| `npm test` | 🧪 Vitest in watch mode |
+| `npm run test:ci` | 🚦 Vitest single run (CI) |
+| `npm run e2e` | 🎭 Playwright E2E tests |
+| `npm run e2e:ci` | 🎭 Playwright E2E (CI) |
 | `npm run db:generate` | ⚙️ Regenerate Prisma client |
 | `npm run db:push` | ⬆️ Push schema to the database |
 | `npm run db:seed` | 🌱 Seed dev data |

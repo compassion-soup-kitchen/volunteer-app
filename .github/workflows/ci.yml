@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Lint, Typecheck, Build
+    name: Lint, Typecheck, Test, Build
     runs-on: ubuntu-latest
 
     env:
@@ -42,4 +42,66 @@ jobs:
 
       - run: npm run typecheck
 
+      - run: npm run test:ci
+
       - run: npm run build
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    needs: ci
+
+    env:
+      DATABASE_URL: postgresql://user:pass@localhost:5432/db?pgbouncer=true
+      DIRECT_DATABASE_URL: postgresql://user:pass@localhost:5432/db
+      NEXTAUTH_URL: http://localhost:3100
+      NEXTAUTH_SECRET: ci-placeholder-secret
+      AUTH_TRUST_HOST: "true"
+      GOOGLE_CLIENT_ID: ci-placeholder
+      GOOGLE_CLIENT_SECRET: ci-placeholder
+      FACEBOOK_CLIENT_ID: ci-placeholder
+      FACEBOOK_CLIENT_SECRET: ci-placeholder
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run db:generate
+
+      - name: Get installed Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - run: npm run build
+
+      - run: npm run e2e:ci
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
