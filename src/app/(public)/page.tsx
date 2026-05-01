@@ -24,6 +24,7 @@ import {
 import Image from "next/image";
 import * as motion from "motion/react-client";
 import { LandingNav } from "./landing-nav";
+import { APP_VERSION } from "@/lib/version";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -414,7 +415,13 @@ export default function Home() {
           <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2.5">
-                <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-9" />
+                <Image
+                  src="/favicon-192x192.png"
+                  alt="Te Pūaroha"
+                  width={36}
+                  height={36}
+                  className="size-9"
+                />
                 <div className="leading-none">
                   <p className="text-base font-semibold tracking-tight">
                     Te Pūaroha
@@ -594,6 +601,12 @@ export default function Home() {
                 >
                   CC 10246
                 </a>
+                <span className="mx-2 text-muted-foreground/40" aria-hidden>
+                  ·
+                </span>
+                <span className="font-mono tracking-tight text-muted-foreground/60">
+                  v{APP_VERSION}
+                </span>
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs italic text-muted-foreground">

@@ -56,7 +56,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export function FileManager({ documents }: { documents: UploadedDocument[] }) {
   const [uploading, startUpload] = useTransition();
-  const [deleting, startDelete] = useTransition();
+  const [, startDelete] = useTransition();
   const [downloading, setDownloading] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [docType, setDocType] = useState("POLICY");

@@ -21,7 +21,6 @@ import {
   RiCalendarLine,
   RiTimeLine,
   RiTeamLine,
-  RiMapPinLine,
   RiCheckLine,
   RiCloseLine,
   RiFilterLine,

@@ -246,7 +246,6 @@ export async function getStaffShifts(
 
   const db = getDb();
 
-  const now = new Date();
   const fromDate = filters?.fromDate ? new Date(filters.fromDate) : undefined;
   const toDate = filters?.toDate ? new Date(filters.toDate) : undefined;
 

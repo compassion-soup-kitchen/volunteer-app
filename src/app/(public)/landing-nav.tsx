@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -16,8 +18,15 @@ export function LandingNav() {
   return (
     <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <a href="/" className="flex items-center gap-2.5">
-          <img src="/favicon-192x192.png" alt="Te Pūaroha" className="size-9" />
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image
+            src="/favicon-192x192.png"
+            alt="Te Pūaroha"
+            width={36}
+            height={36}
+            className="size-9"
+            priority
+          />
           <div className="leading-none">
             <span className="text-base font-semibold tracking-tight">
               Te Pūaroha
@@ -26,7 +35,7 @@ export function LandingNav() {
               Compassion Soup Kitchen
             </span>
           </div>
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
