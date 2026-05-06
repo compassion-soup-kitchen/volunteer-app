@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.0.1...v1.1.0) (2026-05-06)
+
+
+### Features
+
+* add Dockerfile for production build and standalone output configuration ([f9f4b98](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f9f4b989fd3ae2c9c808ff261815de0135adfb9b))
+
 ## [1.0.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.0.0...v1.0.1) (2026-05-01)
 
 
