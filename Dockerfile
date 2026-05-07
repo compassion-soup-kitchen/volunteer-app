@@ -13,12 +13,13 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Prisma CLI + schema for `migrate deploy` at container start.
-# Invoke the CLI via its real entry point — copying `.bin/prisma` doesn't work
-# because Docker dereferences the symlink and the CLI loses its sibling .wasm assets.
+# Prisma CLI for `migrate deploy` at container start.
+# Next's standalone output ships a slim node_modules that prunes the CLI's
+# transitive deps (effect, …); replace it with the full builder node_modules
+# and bring in the schema + the prisma.config.ts that the CLI loads from cwd.
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 EXPOSE 3000
 CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]
