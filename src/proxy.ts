@@ -5,7 +5,7 @@ const publicPaths = ["/", "/login", "/register"];
 
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
-  const isAuth = !!req.auth;
+  const isAuth = !!req.auth?.user;
 
   // Allow public paths and auth API
   if (

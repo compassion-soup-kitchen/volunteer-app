@@ -3,7 +3,11 @@
 import type { AgreementType, DocumentType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { getSupabase, DOCUMENTS_BUCKET } from "@/lib/supabase";
+import {
+  uploadFile,
+  getSignedDownloadUrl,
+  deleteFile,
+} from "@/lib/storage";
 import { revalidatePath } from "next/cache";
 
 // ─── Types ──────────────────────────────────────────────
@@ -413,20 +417,17 @@ export async function uploadDocument(formData: FormData) {
   if (!file || !type) throw new Error("File and type are required");
 
   const db = getDb();
-  const supabase = getSupabase();
 
   const storagePath = `${type.toLowerCase()}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const { error: uploadError } = await supabase.storage
-    .from(DOCUMENTS_BUCKET)
-    .upload(storagePath, buffer, {
-      contentType: file.type,
-      upsert: false,
-    });
-
-  if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+  try {
+    await uploadFile(storagePath, buffer, file.type);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    throw new Error(`Upload failed: ${message}`);
+  }
 
   await db.document.create({
     data: {
@@ -489,13 +490,11 @@ export async function getDocumentDownloadUrl(
 
   if (!doc) return null;
 
-  const supabase = getSupabase();
-  const { data, error } = await supabase.storage
-    .from(DOCUMENTS_BUCKET)
-    .createSignedUrl(doc.fileUrl, 60 * 5); // 5 min expiry
-
-  if (error || !data) return null;
-  return data.signedUrl;
+  try {
+    return await getSignedDownloadUrl(doc.fileUrl, 60 * 5); // 5 min expiry
+  } catch {
+    return null;
+  }
 }
 
 // ─── Staff: Delete Document ─────────────────────────────
@@ -515,8 +514,7 @@ export async function deleteDocument(documentId: string) {
 
   if (!doc) throw new Error("Document not found");
 
-  const supabase = getSupabase();
-  await supabase.storage.from(DOCUMENTS_BUCKET).remove([doc.fileUrl]);
+  await deleteFile(doc.fileUrl);
 
   await db.document.delete({ where: { id: doc.id } });
 

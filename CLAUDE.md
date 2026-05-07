@@ -9,8 +9,8 @@ The app handles the full volunteer lifecycle: public signup → application revi
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Styling**: Tailwind v4 + shadcn/ui (preset `aw5FzQe`, style `radix-lyra`, base `mist`, icon library `remixicon`)
-- **DB**: Prisma 7 ORM → Supabase PostgreSQL (via `@prisma/adapter-pg` + `pg` Pool)
-- **Storage**: Supabase Storage (document uploads)
+- **DB**: Prisma 7 ORM → self-hosted PostgreSQL (Coolify-managed) via `@prisma/adapter-pg` + `pg` Pool. Migrations via `prisma migrate` (history in `prisma/migrations/`); `prisma migrate deploy` runs on container start.
+- **Storage**: Garage (S3-compatible, self-hosted via Coolify) — accessed through the AWS S3 SDK in `src/lib/storage.ts`. Any S3-compatible backend works (Garage, R2, B2, …); only env values change.
 - **Auth**: NextAuth v5 (beta) — Credentials + Google providers, JWT sessions, PrismaAdapter
 - **Email**: Resend (planned)
 - **Animation**: `motion/react`
@@ -124,6 +124,7 @@ prisma/
 
 ### Database
 - Prisma schema at `prisma/schema.prisma` — single source of truth. Run `npm run db:generate` after edits.
+- **Migrations**: history lives in `prisma/migrations/`. After editing the schema, run `npm run db:migrate` to create a new migration locally. Production applies them via `prisma migrate deploy` on container start (see `Dockerfile`).
 - Lazy-init pattern: import `getDb()` from `@/lib/db` (never instantiate PrismaClient elsewhere).
 - All dates stored as UTC; shift `date` is `@db.Date`, times stored as `String` (HH:mm).
 - Cascade deletes on user-owned data (Account, Session, VolunteerProfile, ShiftSignup, TrainingAttendance, etc.).
@@ -192,17 +193,17 @@ npm run typecheck    # tsc --noEmit
 npm test             # vitest (watch mode)
 npm run test:ci      # vitest run (single pass — used in CI)
 npm run db:generate  # prisma generate
-npm run db:push      # prisma db push
+npm run db:migrate   # prisma migrate dev (create + apply migration locally)
+npm run db:deploy    # prisma migrate deploy (apply pending migrations — used in prod / Docker)
 npm run db:seed      # tsx prisma/seed.ts
-npm run db:reset     # force-reset + seed (uses DIRECT_DATABASE_URL)
+npm run db:reset     # prisma migrate reset --force && seed
 npm run db:studio    # prisma studio
 ```
 
 ## Environment
 Required env vars (see `.env.example`):
-- `DATABASE_URL` — Supabase pooled (pgbouncer)
-- `DIRECT_DATABASE_URL` — Supabase direct (for migrations / db:reset)
+- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed)
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` (provider stubbed; not yet wired)
-- Supabase Storage keys (for document uploads)
+- `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` — S3-compatible storage (Garage) for document uploads
