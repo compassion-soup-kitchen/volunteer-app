@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.1.0...v1.2.0) (2026-05-20)
+
+
+### Features
+
+* add Docker HEALTHCHECK using /api/health/ready ([29e2d52](https://github.com/compassion-soup-kitchen/volunteer-app/commit/29e2d52ef03b6451b29a7ba6a6f92370bd6a1fab))
+* add liveness and readiness health check endpoints ([d384769](https://github.com/compassion-soup-kitchen/volunteer-app/commit/d384769fb330d07ab2e36713a18f71e7d7c90fbb))
+* add liveness and readiness health check endpoints ([e97654c](https://github.com/compassion-soup-kitchen/volunteer-app/commit/e97654c9fb16b0dd0356e2052c5207ec701b6c82))
+
+
+### Bug Fixes
+
+* copy pnpm-workspace.yaml into Docker builder ([#31](https://github.com/compassion-soup-kitchen/volunteer-app/issues/31)) ([adc49aa](https://github.com/compassion-soup-kitchen/volunteer-app/commit/adc49aac3aab785db19adb5b063305c3dcdc9e7b))
+* **docker:** bump base image to node:22-alpine for pnpm 11 ([#30](https://github.com/compassion-soup-kitchen/volunteer-app/issues/30)) ([bc99908](https://github.com/compassion-soup-kitchen/volunteer-app/commit/bc999084d9830a0bcc513e324ea759f6a4f99ac5))
+* **docker:** use 127.0.0.1 in healthcheck to bypass IPv6 lookup ([#33](https://github.com/compassion-soup-kitchen/volunteer-app/issues/33)) ([f086da5](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f086da54202b684449342b8bd4ae3d237409a304))
+* pin HOSTNAME=0.0.0.0 in runtime image so healthcheck can connect ([82e9ace](https://github.com/compassion-soup-kitchen/volunteer-app/commit/82e9ace8149fc170c459e99b3f0a84585579874e))
+* pin HOSTNAME=0.0.0.0 so the container healthcheck can connect ([0090b69](https://github.com/compassion-soup-kitchen/volunteer-app/commit/0090b691101502d064d2ff4d5d851fc3a398eca5))
+
 ## [1.1.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.0.1...v1.1.0) (2026-05-07)
 
 
