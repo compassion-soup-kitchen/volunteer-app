@@ -9,6 +9,10 @@ RUN pnpm run build
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+# Next standalone's server.js binds to $HOSTNAME if set; Docker sets it to the
+# container ID by default, which `localhost` can't reach — pin to 0.0.0.0 so
+# the in-container healthcheck (and other intra-container clients) can connect.
+ENV HOSTNAME=0.0.0.0
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
