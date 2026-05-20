@@ -123,8 +123,8 @@ prisma/
 - Always call `revalidatePath` / `revalidateTag` after mutations.
 
 ### Database
-- Prisma schema at `prisma/schema.prisma` — single source of truth. Run `npm run db:generate` after edits.
-- **Migrations**: history lives in `prisma/migrations/`. After editing the schema, run `npm run db:migrate` to create a new migration locally. Production applies them via `prisma migrate deploy` on container start (see `Dockerfile`).
+- Prisma schema at `prisma/schema.prisma` — single source of truth. Run `pnpm run db:generate` after edits.
+- **Migrations**: history lives in `prisma/migrations/`. After editing the schema, run `pnpm run db:migrate` to create a new migration locally. Production applies them via `prisma migrate deploy` on container start (see `Dockerfile`).
 - Lazy-init pattern: import `getDb()` from `@/lib/db` (never instantiate PrismaClient elsewhere).
 - All dates stored as UTC; shift `date` is `@db.Date`, times stored as `String` (HH:mm).
 - Cascade deletes on user-owned data (Account, Session, VolunteerProfile, ShiftSignup, TrainingAttendance, etc.).
@@ -168,16 +168,16 @@ Always check role in Server Actions too — never trust the client.
 
 Two suites — keep both green on `main`.
 
-**Unit / component (Vitest)** — `npm test` / `npm run test:ci`
+**Unit / component (Vitest)** — `pnpm test` / `pnpm run test:ci`
 - Config: `vitest.config.ts` (jsdom env, globals, `@/*` alias). Setup: `vitest.setup.ts` loads `@testing-library/jest-dom/vitest`.
 - Location: co-locate as `*.test.ts` / `*.test.tsx` under `src/`.
 - Components: use `@testing-library/react`. Assert on accessible roles/text, not implementation details.
 - Server Actions: mock `@/lib/db` via `vi.mock("@/lib/db", () => ({ getDb: () => ({ ... }) }))`. Many actions also import `next-auth` (for `AuthError`) and `@/lib/auth` (for `signIn`) — both must be mocked when testing actions. See `src/lib/auth-actions.test.ts` for the pattern.
 - When adding new pure utilities under `src/lib/`, add a sibling `*.test.ts`. For new Server Actions, extract branching/validation logic into pure helpers so it can be unit-tested without mocking.
 
-**E2E (Playwright)** — `npm run e2e` / `npm run e2e:ci`
+**E2E (Playwright)** — `pnpm run e2e` / `pnpm run e2e:ci`
 - Tests live in `e2e/*.spec.ts`. Config: `playwright.config.ts` runs Chromium against `next start -p 3100` and overrides `NEXTAUTH_URL` + `AUTH_TRUST_HOST` so NextAuth doesn't reject the test host.
-- Requires the production build (`npm run build`) and Chromium (`npx playwright install chromium`) once.
+- Requires the production build (`pnpm run build`) and Chromium (`pnpm exec playwright install chromium`) once.
 - Public-only flows are covered today. DB-backed journeys (signup → application → admin approval → first shift) need a seeded test DB before they can land.
 
 **CI** — `.github/workflows/ci.yml` has two jobs:
@@ -186,19 +186,21 @@ Two suites — keep both green on `main`.
 
 ## Scripts
 ```
-npm run dev          # next dev
-npm run build        # prisma generate && next build
-npm run lint         # eslint
-npm run typecheck    # tsc --noEmit
-npm test             # vitest (watch mode)
-npm run test:ci      # vitest run (single pass — used in CI)
-npm run db:generate  # prisma generate
-npm run db:migrate   # prisma migrate dev (create + apply migration locally)
-npm run db:deploy    # prisma migrate deploy (apply pending migrations — used in prod / Docker)
-npm run db:seed      # tsx prisma/seed.ts
-npm run db:reset     # prisma migrate reset --force && seed
-npm run db:studio    # prisma studio
+pnpm run dev          # next dev
+pnpm run build        # prisma generate && next build
+pnpm run lint         # eslint
+pnpm run typecheck    # tsc --noEmit
+pnpm test             # vitest (watch mode)
+pnpm run test:ci      # vitest run (single pass — used in CI)
+pnpm run db:generate  # prisma generate
+pnpm run db:migrate   # prisma migrate dev (create + apply migration locally)
+pnpm run db:deploy    # prisma migrate deploy (apply pending migrations — used in prod / Docker)
+pnpm run db:seed      # tsx prisma/seed.ts
+pnpm run db:reset     # prisma migrate reset --force && seed
+pnpm run db:studio    # prisma studio
 ```
+
+**Package manager**: pnpm (locked via `packageManager` in `package.json`). Enable with `corepack enable` or install globally via `npm i -g pnpm`.
 
 ## Environment
 Required env vars (see `.env.example`):

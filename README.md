@@ -50,12 +50,13 @@ Nau mai, haere mai. This app supports the ~100 volunteers who serve kai, build c
 
 ### Prerequisites
 - Node.js ≥ 20
+- pnpm (enabled via `corepack enable`, or `npm i -g pnpm`)
 - A Supabase project (PostgreSQL + Storage)
 - Google OAuth credentials (optional but recommended)
 
 ### 1️⃣ Install dependencies
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2️⃣ Configure environment
@@ -71,13 +72,13 @@ GOOGLE_CLIENT_SECRET=""
 
 ### 3️⃣ Set up the database
 ```bash
-npm run db:push     # apply schema
-npm run db:seed     # seed dev data
+pnpm run db:push     # apply schema
+pnpm run db:seed     # seed dev data
 ```
 
 ### 4️⃣ Run the dev server
 ```bash
-npm run dev
+pnpm run dev
 ```
 Visit 👉 [http://localhost:3000](http://localhost:3000)
 
@@ -90,8 +91,8 @@ Two layers — both run in CI on every push and PR to `main` (`.github/workflows
 ### Unit & component tests — [Vitest](https://vitest.dev)
 
 ```bash
-npm test          # 👀 watch mode
-npm run test:ci   # 🚦 single run (used in CI)
+pnpm test          # 👀 watch mode
+pnpm run test:ci   # 🚦 single run (used in CI)
 ```
 
 - jsdom environment with React Testing Library + `@testing-library/jest-dom` matchers
@@ -103,10 +104,10 @@ npm run test:ci   # 🚦 single run (used in CI)
 
 ```bash
 # first-time browser install
-npx playwright install chromium
+pnpm exec playwright install chromium
 
 # build is required because Playwright runs `next start`
-npm run build && npm run e2e
+pnpm run build && pnpm run e2e
 ```
 
 - Tests live in `e2e/*.spec.ts`
@@ -119,20 +120,20 @@ npm run build && npm run e2e
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | 🏃 Start the Next.js dev server |
-| `npm run build` | 🏗️ Generate Prisma client + production build |
-| `npm run start` | ▶️ Run the production build |
-| `npm run lint` | 🧹 Run ESLint |
-| `npm run typecheck` | 🧠 `tsc --noEmit` |
-| `npm test` | 🧪 Vitest in watch mode |
-| `npm run test:ci` | 🚦 Vitest single run (CI) |
-| `npm run e2e` | 🎭 Playwright E2E tests |
-| `npm run e2e:ci` | 🎭 Playwright E2E (CI) |
-| `npm run db:generate` | ⚙️ Regenerate Prisma client |
-| `npm run db:push` | ⬆️ Push schema to the database |
-| `npm run db:seed` | 🌱 Seed dev data |
-| `npm run db:reset` | 💥 Force-reset DB and re-seed (uses `DIRECT_DATABASE_URL`) |
-| `npm run db:studio` | 🔍 Open Prisma Studio |
+| `pnpm run dev` | 🏃 Start the Next.js dev server |
+| `pnpm run build` | 🏗️ Generate Prisma client + production build |
+| `pnpm run start` | ▶️ Run the production build |
+| `pnpm run lint` | 🧹 Run ESLint |
+| `pnpm run typecheck` | 🧠 `tsc --noEmit` |
+| `pnpm test` | 🧪 Vitest in watch mode |
+| `pnpm run test:ci` | 🚦 Vitest single run (CI) |
+| `pnpm run e2e` | 🎭 Playwright E2E tests |
+| `pnpm run e2e:ci` | 🎭 Playwright E2E (CI) |
+| `pnpm run db:generate` | ⚙️ Regenerate Prisma client |
+| `pnpm run db:push` | ⬆️ Push schema to the database |
+| `pnpm run db:seed` | 🌱 Seed dev data |
+| `pnpm run db:reset` | 💥 Force-reset DB and re-seed (uses `DIRECT_DATABASE_URL`) |
+| `pnpm run db:studio` | 🔍 Open Prisma Studio |
 
 ---
 
