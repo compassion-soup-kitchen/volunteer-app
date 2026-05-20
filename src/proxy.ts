@@ -7,10 +7,11 @@ export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
   const isAuth = !!req.auth?.user;
 
-  // Allow public paths and auth API
+  // Allow public paths, auth API, and health checks
   if (
     publicPaths.some((p) => pathname === p) ||
-    pathname.startsWith("/api/auth")
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/health")
   ) {
     // Redirect authenticated users away from login/register
     if (isAuth && (pathname === "/login" || pathname === "/register")) {
