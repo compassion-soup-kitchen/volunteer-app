@@ -28,7 +28,10 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 EXPOSE 3000
 
+# Use 127.0.0.1 rather than `localhost`: Alpine's busybox wget resolves
+# `localhost` to `[::1]` (IPv6) first, but Next.js binds to 0.0.0.0 (IPv4 only),
+# so an IPv6 connect fails with "connection refused" and wget does not retry IPv4.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/ready || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health/ready || exit 1
 
 CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]
