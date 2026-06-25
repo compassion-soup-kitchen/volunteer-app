@@ -32,6 +32,14 @@ export function DatePicker({
   fromDate,
   toDate,
 }: DatePickerProps) {
+  // react-day-picker v10 removed `fromDate`/`toDate`. Translate our range into
+  // navigation/dropdown bounds (`startMonth`/`endMonth`) plus `disabled`
+  // matchers so out-of-range days stay visible but unselectable.
+  const disabledMatchers = [
+    ...(fromDate ? [{ before: fromDate }] : []),
+    ...(toDate ? [{ after: toDate }] : []),
+  ];
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -54,8 +62,9 @@ export function DatePicker({
           captionLayout="dropdown"
           selected={value}
           onSelect={onChange}
-          fromDate={fromDate}
-          toDate={toDate}
+          startMonth={fromDate}
+          endMonth={toDate}
+          disabled={disabledMatchers.length ? disabledMatchers : undefined}
           defaultMonth={value}
           autoFocus
         />
