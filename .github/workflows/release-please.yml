@@ -21,3 +21,6 @@ jobs:
         with:
           release-type: node
           package-name: volunteer-app
+          # The app moved into apps/web in the monorepo; release-please now
+          # manages apps/web/package.json + apps/web/CHANGELOG.md.
+          path: apps/web

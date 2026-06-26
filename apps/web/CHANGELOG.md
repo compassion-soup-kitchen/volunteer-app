@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.2.1...v1.3.0) (2026-06-26)
+
+
+### Features
+
+* add a living /styleguide route ([1193a48](https://github.com/compassion-soup-kitchen/volunteer-app/commit/1193a48183c06988575dcf17e3b4cf4603872e46))
+
+
+### Bug Fixes
+
+* reverse the wordmark to white in dark mode ([dc7f24d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/dc7f24d10d2f9524d1aba94e5bf245d548760edb))
+
 ## [1.2.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.2.0...v1.2.1) (2026-06-25)
 
 
