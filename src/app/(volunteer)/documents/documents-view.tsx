@@ -92,7 +92,7 @@ export function DocumentsView({
           >
             <CardHeader className="flex-row items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
                   <RiFileTextLine className="size-4 text-primary" />
                 </div>
                 <div>
