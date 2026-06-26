@@ -5,5 +5,5 @@ import { cn } from "@/lib/utils";
  * Pair bilingually, e.g. <Eyebrow>Pānui · News</Eyebrow>.
  */
 export function Eyebrow({ className, ...props }: React.ComponentProps<"p">) {
-  return <p className={cn("eyebrow", className)} {...props} />;
+  return <p className={cn("eyebrow text-muted-foreground", className)} {...props} />;
 }

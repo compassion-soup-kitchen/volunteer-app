@@ -15,6 +15,7 @@ interface SectionHeadingProps extends Omit<React.ComponentProps<"div">, "title">
   /** Show the short red underline rule beneath the heading. */
   rule?: boolean;
   size?: keyof typeof sizeClasses;
+  align?: "left" | "center";
 }
 
 /**
@@ -26,12 +27,13 @@ export function SectionHeading({
   as: Tag = "h2",
   rule = true,
   size = "md",
+  align = "left",
   className,
   children,
   ...props
 }: SectionHeadingProps) {
   return (
-    <div className={cn("space-y-3", className)} {...props}>
+    <div className={cn("space-y-3", align === "center" && "text-center", className)} {...props}>
       {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
       <Tag
         className={cn(
@@ -41,7 +43,12 @@ export function SectionHeading({
       >
         {children}
       </Tag>
-      {rule ? <span aria-hidden className="block h-0.5 w-16 rounded-full bg-primary" /> : null}
+      {rule ? (
+        <span
+          aria-hidden
+          className={cn("block h-0.5 w-16 rounded-full bg-primary", align === "center" && "mx-auto")}
+        />
+      ) : null}
     </div>
   );
 }

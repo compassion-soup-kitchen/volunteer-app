@@ -1,75 +1,51 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  RiArrowRightLine,
-  RiMenuLine,
-  RiCloseLine,
-} from "@remixicon/react";
+import { RiArrowRightLine, RiMenuLine, RiCloseLine } from "@remixicon/react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Wordmark } from "@/components/brand/wordmark";
+
+const links = [
+  { href: "#about", label: "Our Story" },
+  { href: "#volunteer", label: "Volunteer" },
+  { href: "#impact", label: "Impact" },
+  { href: "#contact", label: "Contact" },
+];
 
 export function LandingNav() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image
-            src="/favicon-192x192.png"
-            alt="Te Pūaroha"
-            width={36}
-            height={36}
-            className="size-9"
-            priority
-          />
-          <div className="leading-none">
-            <span className="text-base font-semibold tracking-tight">
-              Te Pūaroha
-            </span>
-            <span className="ml-1.5 hidden text-sm text-muted-foreground sm:inline">
-              Compassion Soup Kitchen
-            </span>
-          </div>
+        <Link href="/" aria-label="Te Pūaroha home" className="shrink-0">
+          <Wordmark className="h-6 sm:h-7" />
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden items-center gap-6 md:flex">
-          <a
-            href="#about"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Our Story
-          </a>
-          <a
-            href="#volunteer"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Volunteer
-          </a>
-          <a
-            href="#impact"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Impact
-          </a>
-          <a
-            href="#contact"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Contact
-          </a>
+        <div className="hidden items-center gap-7 md:flex">
+          {links.map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {l.label}
+            </a>
+          ))}
           <div className="mx-1 h-4 w-px bg-border" />
-          <a href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Sign In
+          <a
+            href="/login"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Sign in
           </a>
           <Button size="sm" asChild>
             <a href="/register">
-              Sign Up
+              Sign up
               <RiArrowRightLine data-icon="inline-end" className="size-3.5" />
             </a>
           </Button>
@@ -84,59 +60,37 @@ export function LandingNav() {
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
-          {menuOpen ? (
-            <RiCloseLine className="size-5" />
-          ) : (
-            <RiMenuLine className="size-5" />
-          )}
+          {menuOpen ? <RiCloseLine className="size-5" /> : <RiMenuLine className="size-5" />}
         </Button>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="border-t border-border/50 bg-background px-6 py-4 md:hidden">
+        <div className="border-t border-border/60 bg-background px-6 py-4 md:hidden">
           <div className="flex flex-col gap-3">
-            <a
-              href="#about"
-              className="text-base text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMenuOpen(false)}
-            >
-              Our Story
-            </a>
-            <a
-              href="#volunteer"
-              className="text-base text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMenuOpen(false)}
-            >
-              Volunteer
-            </a>
-            <a
-              href="#impact"
-              className="text-base text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMenuOpen(false)}
-            >
-              Impact
-            </a>
-            <a
-              href="#contact"
-              className="text-base text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMenuOpen(false)}
-            >
-              Contact
-            </a>
+            {links.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setMenuOpen(false)}
+              >
+                {l.label}
+              </a>
+            ))}
             <div className="flex items-center justify-between">
               <span className="text-base text-muted-foreground">Theme</span>
               <ThemeToggle />
             </div>
             <Separator />
-            <Button size="sm" className="w-full" asChild>
-              <a href="/register">Sign Up</a>
+            <Button className="w-full" asChild>
+              <a href="/register">Sign up</a>
             </Button>
             <a
               href="/login"
               className="text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              Already have an account? Sign In
+              Already have an account? Sign in
             </a>
           </div>
         </div>

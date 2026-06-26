@@ -184,13 +184,14 @@
   }
 }
 
-/* Eyebrow label — tiny uppercase letter-spaced section marker (brand signature) */
+/* Eyebrow label — tiny uppercase letter-spaced section marker (brand signature).
+   Colour is left to a text-* utility (default applied by the Eyebrow component) so
+   callers can override it (e.g. text-primary on a hero, text-paper on dark panels). */
 @utility eyebrow {
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--muted-foreground);
 }
 
 /* Tabular figures for rosters, hours, data columns */

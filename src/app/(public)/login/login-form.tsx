@@ -31,17 +31,17 @@ export function LoginForm() {
 
   return (
     <>
-      <div className="mb-4 rounded-md border border-dashed border-muted-foreground/30 bg-muted/50 p-3">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">
-            Demo accounts (click to fill)
+      <div className="mb-6 rounded-2xl border border-border bg-secondary/60 p-4">
+          <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Demo accounts · click to fill
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {DEV_ACCOUNTS.map((account) => (
               <button
                 key={account.email}
                 type="button"
                 onClick={() => fillCredentials(account.email, account.password)}
-                className="flex items-center gap-1.5 rounded-md bg-background px-2.5 py-1.5 text-xs font-medium text-foreground ring-1 ring-border transition-colors hover:bg-accent"
+                className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-foreground ring-1 ring-border transition-colors hover:bg-accent hover:ring-primary/30"
               >
                 <account.icon className="size-3.5 text-muted-foreground" />
                 {account.label}
