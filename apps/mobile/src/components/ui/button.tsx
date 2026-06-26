@@ -1,10 +1,14 @@
+import { Host } from '@expo/ui';
+import { Button as SwiftUIButton, ProgressView } from '@expo/ui/swift-ui';
+import { buttonStyle, controlSize, disabled as disabledModifier, frame, tint } from '@expo/ui/swift-ui/modifiers';
+import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
 import { ActivityIndicator, type GestureResponderEvent, Pressable, type PressableProps, View } from 'react-native';
 
 import { type ColorTokens, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-import { Icon, type IconName } from './icon';
+import { Icon, type IconName, sfSymbol } from './icon';
 import { Text } from './text';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
@@ -34,6 +38,13 @@ function palette(variant: Variant, c: ColorTokens) {
   }
 }
 
+/** SwiftUI button style + tint per variant — the authentic iOS 26 Liquid Glass controls. */
+function swiftStyle(variant: Variant): 'glass' | 'glassProminent' | 'borderless' {
+  if (variant === 'primary' || variant === 'destructive') return 'glassProminent';
+  if (variant === 'secondary') return 'glass';
+  return 'borderless';
+}
+
 export function Button({
   title,
   variant = 'primary',
@@ -47,20 +58,60 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const { colors } = useTheme();
-  const p = palette(variant, colors);
-  const isDisabled = disabled || loading;
-  // Loading keeps the full-strength look (just a spinner); only a true disabled
-  // button drops to a flat neutral state — cleaner than dimming with opacity.
-  const inert = disabled && !loading;
-  const fg = inert ? colors.textTertiary : p.fg;
-  const height = size === 'lg' ? 54 : 44;
 
-  function handlePress(e: GestureResponderEvent) {
+  function fireHaptic() {
     if (haptic && process.env.EXPO_OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+  }
+  function handlePress(e: GestureResponderEvent) {
+    fireHaptic();
     onPress?.(e);
   }
+
+  const isDisabled = disabled || loading;
+
+  // iOS 26: render the real SwiftUI Liquid Glass button.
+  if (isLiquidGlassAvailable()) {
+    const tintColor = variant === 'destructive' ? colors.destructive : variant === 'secondary' ? undefined : colors.primary;
+    const h = size === 'lg' ? 54 : 44;
+    const modifiers = [
+      buttonStyle(swiftStyle(variant)),
+      controlSize(size === 'lg' ? 'large' : 'regular'),
+      ...(tintColor ? [tint(tintColor)] : []),
+      // Fill the host: SwiftUI only expands greedily with .infinity, not a finite max.
+      frame(fullWidth ? { maxWidth: Infinity, maxHeight: Infinity } : { minHeight: h }),
+      disabledModifier(isDisabled),
+    ];
+
+    return (
+      <Host
+        matchContents={!fullWidth}
+        style={fullWidth ? { width: '100%', height: h } : { alignSelf: 'flex-start' }}>
+        {loading ? (
+          <SwiftUIButton modifiers={modifiers} onPress={() => {}}>
+            <ProgressView />
+          </SwiftUIButton>
+        ) : (
+          <SwiftUIButton
+            label={title}
+            systemImage={icon ? (sfSymbol(icon) as never) : undefined}
+            onPress={() => {
+              fireHaptic();
+              (onPress as (() => void) | undefined)?.();
+            }}
+            modifiers={modifiers}
+          />
+        )}
+      </Host>
+    );
+  }
+
+  // Android / pre-iOS-26: solid themed button.
+  const p = palette(variant, colors);
+  const inert = disabled && !loading;
+  const fg = inert ? colors.textTertiary : p.fg;
+  const height = size === 'lg' ? 54 : 44;
 
   return (
     <Pressable
@@ -77,7 +128,7 @@ export function Button({
           justifyContent: 'center',
           gap: Spacing.sm,
           paddingHorizontal: Spacing.xxl,
-          borderRadius: Radius.pill,
+          borderRadius: Radius.button,
           borderCurve: 'continuous',
           backgroundColor: inert ? colors.surfaceMuted : pressed ? p.pressedBg : p.bg,
           borderWidth: variant === 'secondary' && !inert ? 1 : 0,

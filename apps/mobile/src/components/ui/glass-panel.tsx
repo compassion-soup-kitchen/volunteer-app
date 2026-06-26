@@ -26,7 +26,9 @@ export function GlassPanel({ children, style, isInteractive }: GlassPanelProps) 
 
   if (isLiquidGlassAvailable()) {
     return (
-      <GlassView isInteractive={isInteractive} style={[rim, style]}>
+      // Force dark glass regardless of system appearance — the auth backdrop is
+      // always dark, and the content on it (fields, labels) is light.
+      <GlassView colorScheme="dark" isInteractive={isInteractive} style={[rim, style]}>
         {children}
       </GlassView>
     );

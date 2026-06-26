@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
 import { serviceAreaMeta } from '@/components/meta';
-import { Card, Divider, Icon, IconChip, Text } from '@/components/ui';
+import { Card, Icon, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { formatLongDate, formatTimeRange, relativeDay } from '@/lib/format';
 import type { RosterShift } from '@/types/models';
@@ -16,20 +16,12 @@ export function NextShiftCard({ shift, onPress }: { shift: RosterShift; onPress:
       elevated
       accessibilityLabel={`Your next shift, ${relativeDay(shift.date)}`}
       style={{ gap: Spacing.lg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-        <IconChip icon={area.icon} tone={area.tone} size={56} />
-        <View style={{ flex: 1, gap: 3 }}>
-          <Text variant="overline" color="primary">
-            Tō rōhita · Your next shift
-          </Text>
-          <Text variant="titleXl">{relativeDay(shift.date)}</Text>
-          <Text variant="caption" color="textSecondary">
-            {formatLongDate(shift.date)}
-          </Text>
-        </View>
+      <View style={{ gap: 3 }}>
+        <Text variant="overline" color="primary">
+          Tō rōhita · Your next shift
+        </Text>
+        <Text variant="titleXl">{formatLongDate(shift.date)}</Text>
       </View>
-
-      <Divider />
 
       <View style={{ gap: Spacing.sm }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

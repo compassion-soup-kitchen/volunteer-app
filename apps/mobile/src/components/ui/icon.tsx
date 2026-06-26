@@ -30,6 +30,7 @@ const SF_SYMBOLS: Partial<Record<IconName, string>> = {
   checkmark: 'checkmark',
   'checkmark-circle': 'checkmark.circle.fill',
   'chevron-forward': 'chevron.right',
+  close: 'xmark',
   'close-circle-outline': 'xmark.circle',
   compass: 'safari',
   'create-outline': 'square.and.pencil',
@@ -58,6 +59,11 @@ const SF_SYMBOLS: Partial<Record<IconName, string>> = {
   'time-outline': 'clock',
   trophy: 'trophy.fill',
 };
+
+/** The SF Symbol an icon name maps to, if any (for native systemImage usage). */
+export function sfSymbol(name: IconName): string | undefined {
+  return SF_SYMBOLS[name];
+}
 
 /**
  * App icon, tied to the theme. Renders the native SF Symbol on iOS and falls

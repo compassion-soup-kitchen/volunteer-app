@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
-import { RefreshControl, ScrollView, type StyleProp, View, type ViewStyle } from 'react-native';
+import { RefreshControl, ScrollView, type StyleProp, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Kowhaiwhai } from '@/components/brand';
 import { Layout, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -16,29 +17,35 @@ export type ScreenProps = {
   insetTop?: boolean;
   /** Extra bottom padding (e.g. to clear a sticky footer) */
   bottomInset?: number;
+  /** Float a large, faint kōwhaiwhai motif behind the page (hero screens) */
+  motif?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
 };
 
 /**
  * Standard screen wrapper: themed paper background, deterministic safe-area
  * insets, a comfortable max reading width centred on large screens, and
- * optional pull-to-refresh.
+ * optional pull-to-refresh. Pass `motif` to bleed a soft kōwhaiwhai watermark
+ * off the top-right, echoing the marketing site's editorial pages.
  */
 export function Screen({
   children,
   scroll = true,
   refreshing,
   onRefresh,
-  gap = Spacing.lg,
+  gap = Spacing.xxxl,
   insetTop = true,
   bottomInset = 0,
+  motif = false,
   contentStyle,
 }: ScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
 
   const paddingTop = (insetTop ? insets.top : 0) + Spacing.sm;
-  const paddingBottom = Spacing.huge + bottomInset;
+  // Clear the home indicator AND the floating native tab bar (which overlays content on iOS 26).
+  const paddingBottom = insets.bottom + Spacing.huge + Spacing.md + bottomInset;
 
   const column = (
     <View style={[{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center', gap }, contentStyle]}>
@@ -46,17 +53,28 @@ export function Screen({
     </View>
   );
 
+  // A fixed, faint kōwhaiwhai bleeding off the upper-right edge, behind content.
+  const watermark = motif ? (
+    <Kowhaiwhai
+      width={width * 0.86}
+      tint={colors.borderStrong}
+      opacity={0.5}
+      style={{ position: 'absolute', top: insets.top + Spacing.huge, right: -width * 0.3 }}
+    />
+  ) : null;
+
   if (!scroll) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop, paddingHorizontal: Layout.screenPadding }}>
+        {watermark}
         {column}
       </View>
     );
   }
 
-  return (
+  const list = (
     <ScrollView
-      style={{ backgroundColor: colors.background }}
+      style={{ backgroundColor: motif ? 'transparent' : colors.background }}
       contentInsetAdjustmentBehavior="never"
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -74,5 +92,14 @@ export function Screen({
       }>
       {column}
     </ScrollView>
+  );
+
+  if (!motif) return list;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {watermark}
+      {list}
+    </View>
   );
 }
