@@ -182,7 +182,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
             </div>
             <div className="flex items-center gap-3 text-sm">
               <RiTimeLine className="size-4 text-muted-foreground" />
-              <span className="font-mono">
+              <span className="tabular-nums">
                 {session.startTime}–{session.endTime}
               </span>
             </div>

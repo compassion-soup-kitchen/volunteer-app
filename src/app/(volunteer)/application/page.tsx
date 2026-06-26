@@ -23,6 +23,7 @@ import {
   getServiceAreas,
   getUserApplicationStatus,
 } from "@/lib/application-actions";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Volunteer Application | Te Pūaroha",
@@ -76,14 +77,12 @@ export default async function ApplicationPage() {
 
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Volunteer Application
-          </h1>
-          <p className="text-muted-foreground">
-            Tēnā koe — your application status
-          </p>
-        </div>
+        <PageHeader
+          backHref="/dashboard"
+          eyebrow="Te tono · Application"
+          title="Volunteer application"
+          description="Tēnā koe, your application status"
+        />
 
         <Card>
           <CardHeader className="text-center">
@@ -131,14 +130,11 @@ export default async function ApplicationPage() {
   // No application yet — show form
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-24">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Volunteer Application
-        </h1>
-        <p className="text-muted-foreground">
-          Tēnā koe — thank you for your interest in volunteering with us
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Te tono · Application"
+        title="Volunteer application"
+        description="Tēnā koe, thank you for your interest in volunteering with us"
+      />
 
       <ApplicationForm serviceAreas={serviceAreas} />
     </div>

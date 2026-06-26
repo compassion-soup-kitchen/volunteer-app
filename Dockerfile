@@ -1,14 +1,18 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
 
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+# Next standalone's server.js binds to $HOSTNAME if set; Docker sets it to the
+# container ID by default, which `localhost` can't reach — pin to 0.0.0.0 so
+# the in-container healthcheck (and other intra-container clients) can connect.
+ENV HOSTNAME=0.0.0.0
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
@@ -24,7 +28,10 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 EXPOSE 3000
 
+# Use 127.0.0.1 rather than `localhost`: Alpine's busybox wget resolves
+# `localhost` to `[::1]` (IPv6) first, but Next.js binds to 0.0.0.0 (IPv4 only),
+# so an IPv6 connect fails with "connection refused" and wget does not retry IPv4.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/ready || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health/ready || exit 1
 
 CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]

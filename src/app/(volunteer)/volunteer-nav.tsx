@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Wordmark } from "@/components/brand/wordmark";
 import {
   RiDashboardLine,
   RiCalendarLine,
@@ -36,18 +36,8 @@ export function VolunteerNav({
       {/* Top bar */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Image
-              src="/favicon-192x192.png"
-              alt="Te Pūaroha"
-              width={32}
-              height={32}
-              className="size-8"
-              priority
-            />
-            <span className="text-sm font-semibold tracking-tight">
-              Te Pūaroha
-            </span>
+          <Link href="/dashboard" aria-label="Te Pūaroha dashboard">
+            <Wordmark className="h-6" />
           </Link>
 
           {/* Desktop nav links */}
@@ -60,9 +50,9 @@ export function VolunteerNav({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors",
+                    "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary font-medium"
+                      ? "bg-primary/10 font-medium text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
@@ -100,9 +90,9 @@ export function VolunteerNav({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-3 py-1.5 text-xs transition-colors",
+                  "flex flex-col items-center gap-0.5 rounded-2xl px-4 py-1.5 text-xs transition-colors",
                   isActive
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary/10 font-medium text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >

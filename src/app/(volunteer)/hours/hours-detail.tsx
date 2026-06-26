@@ -45,12 +45,12 @@ export function HoursDetail({ data }: HoursDetailProps) {
         <Card>
           <CardContent className="pt-5">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10">
                 <RiTimeLine className="size-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">This Month</p>
-                <p className="font-mono text-2xl font-bold">
+                <p className="font-serif text-3xl font-light tabular-nums">
                   {data.hoursThisMonth}h
                 </p>
               </div>
@@ -61,12 +61,12 @@ export function HoursDetail({ data }: HoursDetailProps) {
         <Card>
           <CardContent className="pt-5">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-md bg-green-600/10">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-green-600/10">
                 <RiBarChartLine className="size-5 text-green-600" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Hours</p>
-                <p className="font-mono text-2xl font-bold">
+                <p className="font-serif text-3xl font-light tabular-nums">
                   {data.totalHours}h
                 </p>
               </div>
@@ -77,12 +77,12 @@ export function HoursDetail({ data }: HoursDetailProps) {
         <Card>
           <CardContent className="pt-5">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-md bg-blue-600/10">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-blue-600/10">
                 <RiCalendarCheckLine className="size-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Shifts</p>
-                <p className="font-mono text-2xl font-bold">
+                <p className="font-serif text-3xl font-light tabular-nums">
                   {data.totalShifts}
                 </p>
               </div>
@@ -93,12 +93,12 @@ export function HoursDetail({ data }: HoursDetailProps) {
         <Card>
           <CardContent className="pt-5">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-md bg-yellow-500/10">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-yellow-500/10">
                 <RiTrophyLine className="size-5 text-yellow-600" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Milestones</p>
-                <p className="font-mono text-2xl font-bold">
+                <p className="font-serif text-3xl font-light tabular-nums">
                   {data.milestones.filter((m) => m.reached).length}/
                   {data.milestones.length}
                 </p>
@@ -140,7 +140,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                         <span className="font-medium">
                           {area.serviceAreaName}
                         </span>
-                        <span className="font-mono text-muted-foreground">
+                        <span className="tabular-nums text-muted-foreground">
                           {area.hours}h
                           <span className="ml-1.5 text-xs">
                             ({area.shifts} shift
@@ -188,7 +188,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                         {month.shifts} shift{month.shifts !== 1 ? "s" : ""}
                       </p>
                     </div>
-                    <span className="font-mono text-lg font-semibold">
+                    <span className="font-serif text-xl font-light tabular-nums">
                       {month.hours}h
                     </span>
                   </div>
@@ -220,7 +220,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                 <span className="text-muted-foreground">
                   Progress to {nextMilestone.label}
                 </span>
-                <span className="font-mono font-medium">
+                <span className="tabular-nums font-medium">
                   {data.totalHours}h / {nextMilestone.hours}h
                 </span>
               </div>
@@ -240,7 +240,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
               >
                 <MilestoneIcon reached={milestone.reached} />
                 <div className="text-center">
-                  <p className="font-mono text-sm font-bold">
+                  <p className="font-serif text-base font-normal tabular-nums">
                     {milestone.label}
                   </p>
                   <p className="text-xs capitalize text-muted-foreground">

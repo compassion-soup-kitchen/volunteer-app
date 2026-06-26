@@ -49,7 +49,7 @@ export function DocumentsOverview({
         <Card key={agreement.agreementType}>
           <CardHeader className="flex-row items-start justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
                 <RiFileTextLine className="size-4 text-primary" />
               </div>
               <div>
@@ -75,7 +75,7 @@ export function DocumentsOverview({
               <div className="flex items-center gap-1.5">
                 <RiCheckLine className="size-3.5 text-green-600" />
                 <span className="text-sm">
-                  <span className="font-mono font-medium">
+                  <span className="tabular-nums font-medium">
                     {agreement.signedCurrentCount}
                   </span>{" "}
                   current
@@ -85,7 +85,7 @@ export function DocumentsOverview({
                 <div className="flex items-center gap-1.5">
                   <RiAlertLine className="size-3.5 text-amber-600" />
                   <span className="text-sm">
-                    <span className="font-mono font-medium">
+                    <span className="tabular-nums font-medium">
                       {agreement.signedOutdatedCount}
                     </span>{" "}
                     outdated
@@ -96,7 +96,7 @@ export function DocumentsOverview({
                 <div className="flex items-center gap-1.5">
                   <RiCloseLine className="size-3.5 text-muted-foreground" />
                   <span className="text-sm">
-                    <span className="font-mono font-medium">
+                    <span className="tabular-nums font-medium">
                       {agreement.unsignedCount}
                     </span>{" "}
                     not signed

@@ -12,8 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RiInformationLine, RiArrowRightLine, RiArrowLeftLine } from "@remixicon/react";
+import { RiInformationLine, RiArrowRightLine } from "@remixicon/react";
 import Link from "next/link";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Browse Shifts | Te Pūaroha",
@@ -31,23 +32,12 @@ export default async function ShiftsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="hidden sm:block">
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/dashboard">
-              <RiArrowLeftLine className="size-4" />
-            </Link>
-          </Button>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Available Shifts
-          </h1>
-          <p className="text-muted-foreground">
-            Browse and sign up for upcoming mahi
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/dashboard"
+        eyebrow="Ngā wāhi mahi · Roster"
+        title="Available shifts"
+        description="Browse and sign up for upcoming mahi"
+      />
 
       {!isApproved && (
         <Card className="border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/10">
