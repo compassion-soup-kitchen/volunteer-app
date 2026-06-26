@@ -64,6 +64,7 @@ export default function ShiftsScreen() {
       ) : groups.length === 0 ? (
         <EmptyState
           icon="calendar-outline"
+          illustration="cafe"
           tone="brand"
           title="No shifts right now"
           message="Check back soon — new shifts are added each week."
@@ -71,7 +72,7 @@ export default function ShiftsScreen() {
       ) : (
         groups.map((group) => (
           <View key={group.date} style={{ gap: Spacing.md }}>
-            <Text variant="label" color="textSecondary">
+            <Text variant="overline" color="textTertiary">
               {relativeDay(group.date)}
             </Text>
             {group.items.map((shift) => (

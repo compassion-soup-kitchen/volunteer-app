@@ -1,9 +1,7 @@
 import { View } from 'react-native';
 
-import { Icon } from '@/components/ui/icon';
+import { Kowhaiwhai, Wordmark } from '@/components/brand';
 import { Text } from '@/components/ui/text';
-import { Shadows } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 
 export type AuthHeroProps = {
   overline: string;
@@ -11,24 +9,21 @@ export type AuthHeroProps = {
   subtitle?: string;
 };
 
-/** Brand mark + welcome copy shared by the sign-in and register screens. */
+/** Brand wordmark + welcome copy shared by the sign-in and register screens. */
 export function AuthHero({ overline, title, subtitle }: AuthHeroProps) {
-  const { colors } = useTheme();
   return (
-    <View style={{ alignItems: 'center', gap: 16 }}>
-      <View
-        style={{
-          width: 76,
-          height: 76,
-          borderRadius: 999,
-          backgroundColor: colors.primary,
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: Shadows.primary,
-        }}>
-        <Icon name="heart" size={36} raw={colors.primaryForeground} />
+    <View style={{ alignItems: 'center', gap: 18 }}>
+      {/* Wordmark with the kōwhaiwhai motif breathing softly behind it */}
+      <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 10 }}>
+        <View
+          pointerEvents="none"
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+          <Kowhaiwhai width={236} color="primary" opacity={0.08} />
+        </View>
+        <Wordmark height={30} />
       </View>
-      <View style={{ alignItems: 'center', gap: 4 }}>
+
+      <View style={{ alignItems: 'center', gap: 6 }}>
         <Text variant="overline" color="primary">
           {overline}
         </Text>
@@ -36,7 +31,7 @@ export function AuthHero({ overline, title, subtitle }: AuthHeroProps) {
           {title}
         </Text>
         {subtitle ? (
-          <Text variant="body" color="textSecondary" center style={{ maxWidth: 300 }}>
+          <Text variant="body" color="textSecondary" center style={{ maxWidth: 320 }}>
             {subtitle}
           </Text>
         ) : null}
