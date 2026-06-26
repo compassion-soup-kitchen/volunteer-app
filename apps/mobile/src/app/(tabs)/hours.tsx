@@ -85,7 +85,7 @@ export default function HoursScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching}>
-      <PageHeader overline="Tō mahi" title="Your hours" subtitle="Every hour is aroha in action." />
+      <PageHeader overline="Tō mahi" title="Your hours" subtitle="Every hour is aroha in action." illustration="heart" />
 
       {isLoading || !data ? (
         <View style={{ gap: Spacing.lg }}>

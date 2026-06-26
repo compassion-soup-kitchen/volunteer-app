@@ -83,7 +83,12 @@ export default function ShiftDetailScreen() {
   if (!shift) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center' }}>
-        <EmptyState icon="help-circle-outline" title="Shift not found" message="This shift may have been removed." />
+        <EmptyState
+          icon="help-circle-outline"
+          illustration="candle"
+          title="Shift not found"
+          message="This shift may have been removed."
+        />
       </View>
     );
   }

@@ -42,7 +42,7 @@ export default function ShiftsScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching}>
-      <PageHeader overline="Te rārangi mahi" title="Shifts" subtitle="Find a shift and lend a hand." />
+      <PageHeader overline="Te rārangi mahi" title="Shifts" subtitle="Find a shift and lend a hand." illustration="coffee" />
 
       {/* Service-area filters */}
       <ScrollView
