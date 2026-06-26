@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
+import { Kowhaiwhai } from '@/components/brand';
 import { NextShiftCard } from '@/components/next-shift-card';
 import { ShiftCard } from '@/components/shift-card';
 import { MilestoneProgress } from '@/components/milestone-progress';
@@ -71,9 +72,10 @@ export default function DashboardScreen() {
               onPress={() => router.push({ pathname: '/shift/[id]', params: { id: data.nextShift!.id } })}
             />
           ) : (
-            <Card>
+            <Card elevated>
               <EmptyState
                 icon="calendar-outline"
+                illustration="give"
                 tone="brand"
                 title="No shift on the horizon"
                 message="Browse the roster and find a time that suits you."
@@ -85,7 +87,7 @@ export default function DashboardScreen() {
 
           {alsoComingUp.length > 0 ? (
             <View style={{ gap: Spacing.md }}>
-              <Text variant="label" color="textSecondary">
+              <Text variant="overline" color="textTertiary">
                 Also coming up
               </Text>
               {alsoComingUp.map((s) => (
@@ -130,7 +132,13 @@ export default function DashboardScreen() {
           {/* Impact */}
           <View style={{ gap: Spacing.md }}>
             <SectionHeader overline="Tō mahi" title="Your impact" />
-            <Card style={{ gap: Spacing.lg }}>
+            <Card elevated style={{ gap: Spacing.lg, overflow: 'hidden' }}>
+              <Kowhaiwhai
+                width={172}
+                color="primary"
+                opacity={0.05}
+                style={{ position: 'absolute', right: -34, top: -26 }}
+              />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
                 <IconChip icon="restaurant" tone="brand" size={52} />
                 <View style={{ flex: 1, gap: 2 }}>
@@ -139,7 +147,7 @@ export default function DashboardScreen() {
                     plates of kai shared on your shifts
                   </Text>
                   {data.mealsThisMonth > 0 ? (
-                    <Text variant="caption" color="success" style={{ fontWeight: '700' }}>
+                    <Text variant="caption" color="success" weight="bold">
                       +{data.mealsThisMonth} this month
                     </Text>
                   ) : null}

@@ -161,6 +161,7 @@ export default function ShiftDetailScreen() {
           backgroundColor: colors.surface,
           borderTopWidth: 1,
           borderTopColor: colors.border,
+          boxShadow: '0px -6px 20px rgba(43,33,18,0.07)',
         }}>
         <View style={{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center' }}>
           {isSignedUp ? (

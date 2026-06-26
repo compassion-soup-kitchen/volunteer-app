@@ -30,11 +30,11 @@ export function SectionHeader({ overline, title, actionLabel, onAction }: Sectio
           accessibilityRole="button"
           onPress={onAction}
           hitSlop={8}
-          style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 2, opacity: pressed ? 0.6 : 1 }]}>
-          <Text variant="label" color="primary">
+          style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 1, opacity: pressed ? 0.55 : 1 }]}>
+          <Text variant="label" color="accent">
             {actionLabel}
           </Text>
-          <Icon name="chevron-forward" size={16} color="primary" />
+          <Icon name="chevron-forward" size={16} color="accent" />
         </Pressable>
       ) : null}
     </View>

@@ -100,7 +100,7 @@ export default function RegisterScreen() {
               </Text>
               <Link href="/login" asChild>
                 <Pressable hitSlop={8}>
-                  <Text variant="callout" color="primary" style={{ fontWeight: '700' }}>
+                  <Text variant="callout" color="accent" weight="bold">
                     Sign in
                   </Text>
                 </Pressable>

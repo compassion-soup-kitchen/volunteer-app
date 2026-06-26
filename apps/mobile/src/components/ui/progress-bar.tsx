@@ -8,7 +8,7 @@ export type ProgressBarProps = {
   value: number;
   height?: number;
   /** Theme colour token for the fill (defaults to brand primary) */
-  tint?: 'primary' | 'success' | 'navy';
+  tint?: 'primary' | 'success' | 'navy' | 'accent' | 'warning';
 };
 
 export function ProgressBar({ value, height = 8, tint = 'primary' }: ProgressBarProps) {

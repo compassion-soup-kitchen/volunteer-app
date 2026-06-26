@@ -13,7 +13,7 @@ import { getVolunteerProfile, updateVolunteerProfile } from '@/services/profile-
 function HeaderButton({ label, onPress, bold, disabled }: { label: string; onPress: () => void; bold?: boolean; disabled?: boolean }) {
   return (
     <Pressable onPress={onPress} disabled={disabled} hitSlop={10} style={{ opacity: disabled ? 0.4 : 1 }}>
-      <Text variant="callout" color="primary" style={bold ? { fontWeight: '700' } : undefined}>
+      <Text variant="callout" color="primary" weight={bold ? 'bold' : 'medium'}>
         {label}
       </Text>
     </Pressable>

@@ -109,7 +109,7 @@ export default function LoginScreen() {
               </Text>
               <Link href="/register" asChild>
                 <Pressable hitSlop={8}>
-                  <Text variant="callout" color="primary" style={{ fontWeight: '700' }}>
+                  <Text variant="callout" color="accent" weight="bold">
                     Create an account
                   </Text>
                 </Pressable>

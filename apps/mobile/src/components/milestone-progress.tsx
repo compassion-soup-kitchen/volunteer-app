@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { Illustration } from '@/components/brand';
 import { IconChip, ProgressBar, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { formatDuration } from '@/lib/format';
@@ -27,20 +28,23 @@ export function MilestoneProgress({ milestones, totalHours }: { milestones: Mile
       </View>
 
       {next ? (
-        <View style={{ gap: 6 }}>
-          <ProgressBar value={progress} />
+        <View style={{ gap: 7 }}>
+          <ProgressBar value={progress} tint="warning" height={10} />
           <Text variant="caption" color="textSecondary">
             {formatDuration(remaining)} of mahi until{' '}
-            <Text variant="caption" color="primary" style={{ fontWeight: '700' }}>
+            <Text variant="caption" color="primary" weight="bold">
               {next.term}
             </Text>{' '}
             ({next.label})
           </Text>
         </View>
       ) : (
-        <Text variant="caption" color="success" style={{ fontWeight: '700' }}>
-          Every milestone reached — tino pai!
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+          <Illustration name="rata" height={30} color="success" />
+          <Text variant="caption" color="success" weight="bold" style={{ flex: 1 }}>
+            Every milestone reached — tino pai!
+          </Text>
+        </View>
       )}
     </View>
   );

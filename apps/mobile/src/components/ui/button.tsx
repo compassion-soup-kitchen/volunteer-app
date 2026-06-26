@@ -24,13 +24,13 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
 function palette(variant: Variant, c: ColorTokens) {
   switch (variant) {
     case 'primary':
-      return { bg: c.primary, fg: c.primaryForeground, border: 'transparent', shadow: Shadows.primary };
+      return { bg: c.primary, pressedBg: c.primaryPressed, fg: c.primaryForeground, border: 'transparent', shadow: Shadows.primary };
     case 'destructive':
-      return { bg: c.destructive, fg: c.destructiveForeground, border: 'transparent', shadow: Shadows.none };
+      return { bg: c.destructive, pressedBg: c.onDestructiveTint, fg: c.destructiveForeground, border: 'transparent', shadow: Shadows.none };
     case 'secondary':
-      return { bg: c.surface, fg: c.text, border: c.borderStrong, shadow: Shadows.sm };
+      return { bg: c.surface, pressedBg: c.surfacePressed, fg: c.text, border: c.borderStrong, shadow: Shadows.sm };
     case 'ghost':
-      return { bg: 'transparent', fg: c.primary, border: 'transparent', shadow: Shadows.none };
+      return { bg: 'transparent', pressedBg: c.primaryTint, fg: c.primary, border: 'transparent', shadow: Shadows.none };
   }
 }
 
@@ -49,6 +49,10 @@ export function Button({
   const { colors } = useTheme();
   const p = palette(variant, colors);
   const isDisabled = disabled || loading;
+  // Loading keeps the full-strength look (just a spinner); only a true disabled
+  // button drops to a flat neutral state — cleaner than dimming with opacity.
+  const inert = disabled && !loading;
+  const fg = inert ? colors.textTertiary : p.fg;
   const height = size === 'lg' ? 54 : 44;
 
   function handlePress(e: GestureResponderEvent) {
@@ -72,16 +76,16 @@ export function Button({
           alignItems: 'center',
           justifyContent: 'center',
           gap: Spacing.sm,
-          paddingHorizontal: Spacing.xl,
-          borderRadius: Radius.md,
+          paddingHorizontal: Spacing.xxl,
+          borderRadius: Radius.pill,
           borderCurve: 'continuous',
-          backgroundColor: p.bg,
-          borderWidth: variant === 'secondary' ? 1 : 0,
+          backgroundColor: inert ? colors.surfaceMuted : pressed ? p.pressedBg : p.bg,
+          borderWidth: variant === 'secondary' && !inert ? 1 : 0,
           borderColor: p.border,
-          boxShadow: pressed ? Shadows.none : p.shadow,
+          boxShadow: inert || pressed ? Shadows.none : p.shadow,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
-          opacity: isDisabled ? 0.5 : pressed ? 0.92 : 1,
-          transform: [{ scale: pressed && !isDisabled ? 0.985 : 1 }],
+          opacity: loading ? 0.92 : 1,
+          transform: [{ scale: pressed && !isDisabled ? 0.97 : 1 }],
         },
       ]}
       {...rest}>
@@ -89,8 +93,8 @@ export function Button({
         <ActivityIndicator color={p.fg} />
       ) : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-          {icon ? <Icon name={icon} size={size === 'lg' ? 20 : 18} raw={p.fg} /> : null}
-          <Text variant={size === 'lg' ? 'bodyStrong' : 'label'} style={{ color: p.fg }}>
+          {icon ? <Icon name={icon} size={size === 'lg' ? 20 : 18} raw={fg} /> : null}
+          <Text variant={size === 'lg' ? 'bodyStrong' : 'label'} style={{ color: fg }}>
             {title}
           </Text>
         </View>

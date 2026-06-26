@@ -1,11 +1,25 @@
 import { Text as RNText, type TextProps } from 'react-native';
 
-import { type ThemeColor, Typography, type TypographyVariant } from '@/constants/theme';
+import { FontFamily, type ThemeColor, Typography, type TypographyVariant } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+/** DM Sans weight families — used to add inline emphasis to text variants. */
+const weightFamily = {
+  regular: FontFamily.text,
+  medium: FontFamily.textMedium,
+  semibold: FontFamily.textSemiBold,
+  bold: FontFamily.textBold,
+} as const;
 
 export type TextComponentProps = TextProps & {
   variant?: TypographyVariant;
   color?: ThemeColor;
+  /**
+   * Override the DM Sans weight for emphasis (e.g. a bold word inside a
+   * caption). With custom fonts, `fontWeight` is not synthesised — always use
+   * this instead of a raw `fontWeight` style.
+   */
+  weight?: keyof typeof weightFamily;
   center?: boolean;
 };
 
@@ -16,6 +30,7 @@ export type TextComponentProps = TextProps & {
 export function Text({
   variant = 'body',
   color = 'text',
+  weight,
   center,
   style,
   ...rest
@@ -23,7 +38,13 @@ export function Text({
   const { colors } = useTheme();
   return (
     <RNText
-      style={[Typography[variant], { color: colors[color] }, center && { textAlign: 'center' }, style]}
+      style={[
+        Typography[variant],
+        weight ? { fontFamily: weightFamily[weight] } : null,
+        { color: colors[color] },
+        center && { textAlign: 'center' },
+        style,
+      ]}
       {...rest}
     />
   );

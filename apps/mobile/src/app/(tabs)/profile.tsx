@@ -81,7 +81,7 @@ export default function ProfileScreen() {
       ) : (
         <>
           {/* Identity */}
-          <Card style={{ gap: Spacing.lg }}>
+          <Card elevated style={{ gap: Spacing.lg }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
               <Avatar name={data.name} size={64} />
               <View style={{ flex: 1, gap: 3 }}>
