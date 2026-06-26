@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.2.0...v1.2.1) (2026-06-25)
+
+
+### Bug Fixes
+
+* migrate Calendar/DatePicker to react-day-picker v10 API ([753b89b](https://github.com/compassion-soup-kitchen/volunteer-app/commit/753b89b86e9eb616d29fbac1fe37b257c46898bf))
+
 ## [1.2.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.1.0...v1.2.0) (2026-05-20)
 
 
