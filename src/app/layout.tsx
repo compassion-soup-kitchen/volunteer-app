@@ -1,16 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// UI / body — Mona Sans (the parent brand's grotesque), self-hosted variable font.
+const monaSans = localFont({
+  src: "./fonts/MonaSans.woff2",
+  variable: "--font-mona",
+  display: "swap",
+  weight: "200 900",
 });
 
+// Display / voice — Fraunces, a free editorial serif standing in for GT Alpina.
+// opsz axis + auto optical sizing gives the high-contrast elegance at large sizes.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["opsz"],
+});
+
+// Mono — tabular figures / code contexts.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -37,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${monaSans.variable} ${fraunces.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <body className="antialiased">
