@@ -4,18 +4,34 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, SectionHeader, Text, TextField } from '@/components/ui';
-import { Layout, Spacing } from '@/constants/theme';
+import { Button, Card, Icon, type IconName, SectionHeader, TextField } from '@/components/ui';
+import { type ThemeColor, Layout, Spacing } from '@/constants/theme';
 import { qk } from '@/lib/query-keys';
 import { useToast } from '@/providers/toast-provider';
 import { getVolunteerProfile, updateVolunteerProfile } from '@/services/profile-service';
 
-function HeaderButton({ label, onPress, bold, disabled }: { label: string; onPress: () => void; bold?: boolean; disabled?: boolean }) {
+function HeaderIconButton({
+  icon,
+  onPress,
+  color = 'primary',
+  disabled,
+  label,
+}: {
+  icon: IconName;
+  onPress: () => void;
+  color?: ThemeColor;
+  disabled?: boolean;
+  label: string;
+}) {
   return (
-    <Pressable onPress={onPress} disabled={disabled} hitSlop={10} style={{ opacity: disabled ? 0.4 : 1 }}>
-      <Text variant="callout" color="primary" weight={bold ? 'bold' : 'medium'}>
-        {label}
-      </Text>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={{ opacity: disabled ? 0.4 : 1 }}>
+      <Icon name={icon} size={26} color={color} />
     </Pressable>
   );
 }
@@ -74,8 +90,10 @@ export default function EditProfileScreen() {
       <Stack.Screen
         options={{
           title: 'Edit profile',
-          headerLeft: () => <HeaderButton label="Cancel" onPress={() => router.back()} />,
-          headerRight: () => <HeaderButton label="Save" bold disabled={save.isPending} onPress={() => save.mutate()} />,
+          headerLeft: () => <HeaderIconButton icon="close" label="Cancel" color="textSecondary" onPress={() => router.back()} />,
+          headerRight: () => (
+            <HeaderIconButton icon="checkmark" label="Save" color="primary" disabled={save.isPending} onPress={() => save.mutate()} />
+          ),
         }}
       />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}>

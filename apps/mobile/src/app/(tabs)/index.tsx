@@ -2,12 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
-import { Kowhaiwhai } from '@/components/brand';
+import { Kowhaiwhai, Logo } from '@/components/brand';
 import { NextShiftCard } from '@/components/next-shift-card';
 import { ShiftCard } from '@/components/shift-card';
 import { MilestoneProgress } from '@/components/milestone-progress';
 import {
-  Avatar,
   Badge,
   Card,
   Divider,
@@ -50,12 +49,12 @@ export default function DashboardScreen() {
   const alsoComingUp = data?.upcomingShifts.slice(1) ?? [];
 
   return (
-    <Screen onRefresh={refetch} refreshing={isRefetching}>
+    <Screen onRefresh={refetch} refreshing={isRefetching} motif>
       <PageHeader
         overline={greeting()}
         title={`Kia ora, ${firstName}`}
         subtitle={formatLongDate(todayIso)}
-        right={<Avatar name={user?.name ?? 'Volunteer'} />}
+        right={<Logo size={44} />}
       />
 
       {isLoading || !data ? (
@@ -87,9 +86,7 @@ export default function DashboardScreen() {
 
           {alsoComingUp.length > 0 ? (
             <View style={{ gap: Spacing.md }}>
-              <Text variant="overline" color="textTertiary">
-                Also coming up
-              </Text>
+              <SectionHeader overline="Kei te heke mai" title="Also coming up" divider />
               {alsoComingUp.map((s) => (
                 <ShiftCard
                   key={s.id}
@@ -111,6 +108,7 @@ export default function DashboardScreen() {
               <SectionHeader
                 overline="Hei āwhina mai"
                 title="Shifts you can fill"
+                divider
                 actionLabel="All shifts"
                 onAction={() => router.push('/shifts')}
               />
@@ -131,7 +129,7 @@ export default function DashboardScreen() {
 
           {/* Impact */}
           <View style={{ gap: Spacing.md }}>
-            <SectionHeader overline="Tō mahi" title="Your impact" />
+            <SectionHeader overline="Tō mahi" title="Your impact" divider />
             <Card elevated style={{ gap: Spacing.lg, overflow: 'hidden' }}>
               <Kowhaiwhai
                 width={172}
@@ -182,6 +180,7 @@ export default function DashboardScreen() {
               <SectionHeader
                 overline="Ako"
                 title="Training ahead"
+                divider
                 actionLabel="All training"
                 onAction={() => router.push('/training')}
               />

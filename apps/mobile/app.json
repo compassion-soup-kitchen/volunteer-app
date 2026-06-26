@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "primaryColor": "#de0832",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/app.icon",
       "supportsTablet": true,
       "bundleIdentifier": "nz.org.compassion.volunteer"
     },

@@ -65,7 +65,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <Screen onRefresh={refetch} refreshing={isRefetching}>
+    <Screen onRefresh={refetch} refreshing={isRefetching} motif>
       <PageHeader overline="Tō kōtaha" title="Profile" illustration="dove" />
 
       {isLoading || !data ? (
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
           {/* About */}
           {data.bio ? (
             <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Ko wai au" title="About me" />
+              <SectionHeader overline="Ko wai au" title="About me" divider />
               <Card style={{ gap: Spacing.md }}>
                 <Text variant="body">{data.bio}</Text>
                 {data.skills.length > 0 ? (
@@ -125,7 +125,7 @@ export default function ProfileScreen() {
           {/* Interests */}
           {data.interests.length > 0 ? (
             <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Ngā wāhanga" title="Where I help" />
+              <SectionHeader overline="Ngā wāhanga" title="Where I help" divider />
               <Card>
                 <Pills items={data.interests.map((i) => i.name)} tone="brand" />
               </Card>
@@ -134,7 +134,7 @@ export default function ProfileScreen() {
 
           {/* Contact */}
           <View style={{ gap: Spacing.md }}>
-            <SectionHeader overline="Whakapā mai" title="Contact details" />
+            <SectionHeader overline="Whakapā mai" title="Contact details" divider />
             <Card style={{ gap: Spacing.lg }}>
               {data.phone ? <InfoRow icon="call-outline" label="Phone" value={data.phone} /> : null}
               {data.phone && data.address ? <Divider /> : null}
@@ -145,7 +145,7 @@ export default function ProfileScreen() {
           {/* Emergency contact */}
           {data.emergencyContactName ? (
             <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Pāpātanga ohotata" title="Emergency contact" />
+              <SectionHeader overline="Pāpātanga ohotata" title="Emergency contact" divider />
               <Card style={{ gap: Spacing.lg }}>
                 <InfoRow icon="person-outline" label="Name" value={data.emergencyContactName} />
                 {data.emergencyContactPhone ? (
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
           {/* Training history */}
           {data.trainingHistory.length > 0 ? (
             <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Kua oti" title="Training completed" />
+              <SectionHeader overline="Kua oti" title="Training completed" divider />
               <Card style={{ gap: Spacing.lg }}>
                 {data.trainingHistory.map((item, i) => {
                   const meta = trainingTypeMeta(item.type);
