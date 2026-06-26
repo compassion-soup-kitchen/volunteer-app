@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { RiArrowLeftLine } from "@remixicon/react";
 import { getVolunteerHoursData } from "@/lib/dashboard-actions";
 import { HoursDetail } from "./hours-detail";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "My Hours | Te Pūaroha",
@@ -46,23 +44,12 @@ async function HoursContent() {
 export default function HoursPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="hidden sm:block">
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/dashboard">
-              <RiArrowLeftLine className="size-4" />
-            </Link>
-          </Button>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Ngā Hāora — Your Hours
-          </h1>
-          <p className="text-muted-foreground">
-            Track your volunteer mahi and milestones
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/dashboard"
+        eyebrow="Ngā hāora · Your hours"
+        title="Your hours"
+        description="Track your volunteer mahi and milestones"
+      />
 
       <Suspense fallback={<HoursSkeleton />}>
         <HoursContent />

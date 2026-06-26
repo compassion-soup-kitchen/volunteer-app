@@ -20,7 +20,7 @@ export function VolunteerFooter() {
         />
 
         {/* Values — the visual hero */}
-        <p className="text-base font-semibold tracking-tight sm:text-lg">
+        <p className="font-serif text-2xl font-light tracking-tight sm:text-3xl">
           {values.map((v, i) => (
             <span key={v.maori}>
               <span>{v.maori}</span>

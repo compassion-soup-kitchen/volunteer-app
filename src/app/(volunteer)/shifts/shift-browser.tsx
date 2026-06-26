@@ -27,6 +27,7 @@ import {
   RiLoader4Line,
 } from "@remixicon/react";
 import { toast } from "sonner";
+import { Illustration } from "@/components/brand/illustration";
 import {
   signUpForShift,
   cancelShiftSignup,
@@ -164,14 +165,16 @@ export function ShiftBrowser({
       {/* Shift list grouped by date */}
       {grouped.size === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <RiCalendarLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-            <p className="text-sm font-medium text-muted-foreground">
-              No upcoming shifts available
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
-              Check back soon — new shifts are added regularly
-            </p>
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <Illustration name="cafe" size={96} />
+            <div>
+              <p className="font-serif text-lg font-normal">
+                No shifts open right now
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Check back soon, e hoa. New mahi is added regularly.
+              </p>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -201,7 +204,7 @@ export function ShiftBrowser({
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <CardTitle className="text-base">
+                          <CardTitle className="font-serif text-lg font-normal">
                             {shift.serviceArea.name}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-1.5 mt-1">
@@ -236,7 +239,7 @@ export function ShiftBrowser({
                             {shift.signupCount}/{shift.capacity} spots filled
                           </span>
                           {!isFull && (
-                            <span className="text-green-600 dark:text-green-400">
+                            <span className="font-medium text-success">
                               · {spotsLeft} left
                             </span>
                           )}
