@@ -11,14 +11,18 @@ export function NextShiftCard({ shift, onPress }: { shift: RosterShift; onPress:
   const area = serviceAreaMeta(shift.serviceArea.id);
 
   return (
-    <Card onPress={onPress} accessibilityLabel={`Your next shift, ${relativeDay(shift.date)}`} style={{ gap: Spacing.lg }}>
+    <Card
+      onPress={onPress}
+      elevated
+      accessibilityLabel={`Your next shift, ${relativeDay(shift.date)}`}
+      style={{ gap: Spacing.lg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-        <IconChip icon={area.icon} tone={area.tone} size={52} />
-        <View style={{ flex: 1, gap: 2 }}>
+        <IconChip icon={area.icon} tone={area.tone} size={56} />
+        <View style={{ flex: 1, gap: 3 }}>
           <Text variant="overline" color="primary">
             Tō rōhita · Your next shift
           </Text>
-          <Text variant="title">{relativeDay(shift.date)}</Text>
+          <Text variant="titleXl">{relativeDay(shift.date)}</Text>
           <Text variant="caption" color="textSecondary">
             {formatLongDate(shift.date)}
           </Text>
@@ -48,11 +52,11 @@ export function NextShiftCard({ shift, onPress }: { shift: RosterShift; onPress:
         ) : null}
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
-        <Text variant="label" color="primary">
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+        <Text variant="label" color="accent">
           View shift details
         </Text>
-        <Icon name="chevron-forward" size={16} color="primary" />
+        <Icon name="chevron-forward" size={16} color="accent" />
       </View>
     </Card>
   );

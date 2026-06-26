@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import { Text } from './text';
@@ -24,7 +25,15 @@ export function Avatar({ name, size = 44, tone = 'navy' }: AvatarProps) {
       accessibilityRole="image"
       accessibilityLabel={name}
       style={{ width: size, height: size, borderRadius: 999, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
-      <Text variant="body" style={{ color: fg, fontWeight: '700', fontSize: Math.round(size * 0.36), lineHeight: Math.round(size * 0.4) }}>
+      <Text
+        variant="body"
+        style={{
+          color: fg,
+          fontFamily: FontFamily.display,
+          fontSize: Math.round(size * 0.38),
+          lineHeight: Math.round(size * 0.42),
+          letterSpacing: 0.2,
+        }}>
         {initialsOf(name) || '★'}
       </Text>
     </View>

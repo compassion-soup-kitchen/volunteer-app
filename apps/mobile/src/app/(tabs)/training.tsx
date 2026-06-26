@@ -69,6 +69,7 @@ export default function TrainingScreen() {
       ) : !data || data.length === 0 ? (
         <EmptyState
           icon="school-outline"
+          illustration="book"
           tone="navy"
           title="No training scheduled"
           message="New sessions are added regularly — check back soon."

@@ -16,7 +16,7 @@
     "android": {
       "package": "nz.org.compassion.volunteer",
       "adaptiveIcon": {
-        "backgroundColor": "#f1f3f1",
+        "backgroundColor": "#f6f3ec",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -32,9 +32,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f1f3f1",
+          "backgroundColor": "#f6f3ec",
           "dark": {
-            "backgroundColor": "#16181a"
+            "backgroundColor": "#181611"
           },
           "android": {
             "image": "./assets/images/splash-icon.png",

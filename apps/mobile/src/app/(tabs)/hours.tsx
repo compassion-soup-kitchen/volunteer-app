@@ -95,6 +95,7 @@ export default function HoursScreen() {
       ) : data.totalShifts === 0 ? (
         <EmptyState
           icon="time-outline"
+          illustration="heart"
           tone="brand"
           title="No hours just yet"
           message="Your hours will appear here after your first shift."
@@ -102,16 +103,16 @@ export default function HoursScreen() {
       ) : (
         <>
           {/* Hero */}
-          <Card style={{ gap: Spacing.lg }}>
+          <Card elevated style={{ gap: Spacing.lg }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-              <IconChip icon="time" tone="brand" size={52} />
+              <IconChip icon="time" tone="brand" size={56} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="statLg">{data.totalHours}</Text>
                 <Text variant="caption" color="textSecondary">
                   volunteer hours all up
                 </Text>
                 {data.hoursThisMonth > 0 ? (
-                  <Text variant="caption" color="success" style={{ fontWeight: '700' }}>
+                  <Text variant="caption" color="success" weight="bold">
                     +{data.hoursThisMonth} this month
                   </Text>
                 ) : null}

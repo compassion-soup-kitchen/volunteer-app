@@ -1,7 +1,7 @@
 import { type ColorTokens } from '@/constants/theme';
 
 /** Semantic accent tones shared by badges, icon chips and stat blocks. */
-export type Tone = 'brand' | 'success' | 'warning' | 'navy' | 'neutral';
+export type Tone = 'brand' | 'success' | 'warning' | 'navy' | 'accent' | 'neutral';
 
 export function toneColors(tone: Tone, c: ColorTokens): { bg: string; fg: string } {
   switch (tone) {
@@ -13,6 +13,8 @@ export function toneColors(tone: Tone, c: ColorTokens): { bg: string; fg: string
       return { bg: c.warningTint, fg: c.onWarningTint };
     case 'navy':
       return { bg: c.navyTint, fg: c.onNavyTint };
+    case 'accent':
+      return { bg: c.accentTint, fg: c.onAccentTint };
     case 'neutral':
       return { bg: c.surfaceMuted, fg: c.textSecondary };
   }
