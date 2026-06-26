@@ -66,7 +66,7 @@ export default function ProfileScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching}>
-      <PageHeader overline="Tō kōtaha" title="Profile" />
+      <PageHeader overline="Tō kōtaha" title="Profile" illustration="dove" />
 
       {isLoading || !data ? (
         <Card style={{ gap: Spacing.md }}>

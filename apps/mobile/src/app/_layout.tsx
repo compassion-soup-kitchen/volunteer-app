@@ -4,12 +4,13 @@ import {
   BricolageGrotesque_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/bricolage-grotesque';
+import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
-  DMSans_400Regular,
-  DMSans_500Medium,
-  DMSans_600SemiBold,
-  DMSans_700Bold,
-} from '@expo-google-fonts/dm-sans';
+  MonaSans_400Regular,
+  MonaSans_500Medium,
+  MonaSans_600SemiBold,
+  MonaSans_700Bold,
+} from '@expo-google-fonts/mona-sans';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -91,11 +92,13 @@ export default function RootLayout() {
     BricolageGrotesque_600SemiBold,
     BricolageGrotesque_700Bold,
     BricolageGrotesque_800ExtraBold,
-    // Text / UI — DM Sans
-    DMSans_400Regular,
-    DMSans_500Medium,
-    DMSans_600SemiBold,
-    DMSans_700Bold,
+    // Accent — Fraunces (editorial serif on big titles)
+    Fraunces_600SemiBold,
+    // Text / UI — Mona Sans
+    MonaSans_400Regular,
+    MonaSans_500Medium,
+    MonaSans_600SemiBold,
+    MonaSans_700Bold,
   });
   // Render once fonts load, or fall back to system fonts if they fail.
   const fontsReady = loaded || Boolean(error);

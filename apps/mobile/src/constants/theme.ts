@@ -161,10 +161,10 @@ export type ThemeColor = keyof ColorTokens;
 /* -------------------------------------------------------------------------- */
 
 /**
- * Bricolage Grotesque (loaded via `@expo-google-fonts/bricolage-grotesque`)
- * carries the brand's bold, warm, editorial display voice — the same face used
- * across compassion.org.nz, where headings sit at the ExtraBold (800) weight.
- * DM Sans handles all UI/body text for clean native legibility.
+ * Fraunces (loaded via `@expo-google-fonts/fraunces`) is the editorial serif
+ * accent on the big titles — a free stand-in for the brand's GT Alpina.
+ * Bricolage Grotesque carries the smaller UI headings and big stats, and
+ * Mona Sans handles all UI/body text for clean native legibility.
  *
  * With custom fonts in React Native, `fontWeight` is not reliably synthesised —
  * each weight must reference its own loaded family. These names map 1:1 to the
@@ -175,11 +175,13 @@ export const FontFamily = {
   display: 'BricolageGrotesque_700Bold',
   displaySemiBold: 'BricolageGrotesque_600SemiBold',
   displayBold: 'BricolageGrotesque_800ExtraBold',
-  /** Text — DM Sans */
-  text: 'DMSans_400Regular',
-  textMedium: 'DMSans_500Medium',
-  textSemiBold: 'DMSans_600SemiBold',
-  textBold: 'DMSans_700Bold',
+  /** Accent — Fraunces, the editorial serif for big titles (a free stand-in for the brand's GT Alpina) */
+  accent: 'Fraunces_600SemiBold',
+  /** Text — Mona Sans */
+  text: 'MonaSans_400Regular',
+  textMedium: 'MonaSans_500Medium',
+  textSemiBold: 'MonaSans_600SemiBold',
+  textBold: 'MonaSans_700Bold',
 } as const;
 
 const mono = Platform.select({ ios: 'ui-monospace', android: 'monospace', default: 'monospace' });
@@ -210,10 +212,11 @@ type TextStyleToken = {
 };
 
 export const Typography: Record<TypographyVariant, TextStyleToken> = {
-  // Display — Bricolage Grotesque, ExtraBold for the headline punch (line-heights snapped to a 4pt grid)
-  display: { fontSize: 36, lineHeight: 40, fontFamily: FontFamily.displayBold, letterSpacing: -0.8 },
-  titleXl: { fontSize: 28, lineHeight: 32, fontFamily: FontFamily.displayBold, letterSpacing: -0.6 },
-  title: { fontSize: 22, lineHeight: 28, fontFamily: FontFamily.displayBold, letterSpacing: -0.4 },
+  // Editorial titles — Fraunces serif accent (line-heights snapped to a 4pt grid); serifs want looser tracking than the grotesque
+  display: { fontSize: 36, lineHeight: 40, fontFamily: FontFamily.accent, letterSpacing: -0.5 },
+  titleXl: { fontSize: 28, lineHeight: 32, fontFamily: FontFamily.accent, letterSpacing: -0.3 },
+  title: { fontSize: 22, lineHeight: 28, fontFamily: FontFamily.accent, letterSpacing: -0.2 },
+  // Smaller headings stay Bricolage Grotesque for crisp UI legibility
   heading: { fontSize: 18, lineHeight: 24, fontFamily: FontFamily.displaySemiBold, letterSpacing: -0.2 },
   // Text — DM Sans
   subheading: { fontSize: 16, lineHeight: 22, fontFamily: FontFamily.textSemiBold, letterSpacing: -0.1 },
