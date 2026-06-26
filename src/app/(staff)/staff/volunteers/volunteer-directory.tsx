@@ -343,7 +343,7 @@ export function VolunteerDirectory({
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono text-sm" style={{ textAlign: "right" }}>
+                      <TableCell className="tabular-nums text-sm" style={{ textAlign: "right" }}>
                         {vol._count.shiftSignups}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground" style={{ textAlign: "right" }}>
@@ -423,7 +423,7 @@ export function VolunteerDirectory({
 
                   <div className="mt-2 flex items-center justify-end gap-4 text-xs text-muted-foreground">
                     <span>Joined {format(vol.createdAt, "d MMM yyyy")}</span>
-                    <span className="font-mono">{vol._count.shiftSignups} shifts</span>
+                    <span className="tabular-nums">{vol._count.shiftSignups} shifts</span>
                   </div>
                 </CardContent>
               </Card>

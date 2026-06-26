@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getVolunteersList } from "@/lib/staff-actions";
 import { VolunteerDirectory } from "./volunteer-directory";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Volunteers | Te Pūaroha",
@@ -13,12 +14,11 @@ export default async function VolunteersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Volunteers</h1>
-        <p className="text-muted-foreground">
-          Manage your volunteer whānau — te whānau kaimahi tūao
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Te whānau · Volunteers"
+        title="Volunteers"
+        description="Manage your volunteer whānau"
+      />
 
       <VolunteerDirectory initialVolunteers={volunteers} />
     </div>

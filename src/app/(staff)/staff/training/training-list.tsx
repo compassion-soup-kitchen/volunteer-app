@@ -116,7 +116,7 @@ function SessionCard({
               </span>
               <span className="flex items-center gap-1.5">
                 <RiTimeLine className="size-3.5" />
-                <span className="font-mono">{session.startTime}–{session.endTime}</span>
+                <span className="tabular-nums">{session.startTime}–{session.endTime}</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <RiTeamLine className="size-3.5" />
