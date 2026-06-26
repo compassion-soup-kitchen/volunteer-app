@@ -112,10 +112,6 @@ export default function LoginScreen() {
               ) : null}
 
               <Button title="Sign in" icon="log-in-outline" loading={loading} onPress={onSubmit} />
-
-              <Text variant="caption" center style={{ color: ON_GLASS_FAINT }}>
-                Preview build — sign in with any email and password.
-              </Text>
             </GlassPanel>
 
             {/* Divider */}
