@@ -124,7 +124,7 @@ export default function LoginScreen() {
             </View>
 
             {/* Google — interactive liquid glass button */}
-            <GlassPanel isInteractive style={{ borderRadius: Radius.pill }}>
+            <GlassPanel isInteractive style={{ borderRadius: Radius.button }}>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => toast.show('Google sign-in is coming soon.')}

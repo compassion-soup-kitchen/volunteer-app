@@ -24,16 +24,16 @@ import { Platform } from 'react-native';
 
 const palette = {
   light: {
-    /** App canvas — warm "paper" cream */
-    background: '#f6f3ec',
-    /** A faint green-grey well, for inset / alternating zones */
-    backgroundSunken: '#e9ebe4',
-    /** Raised surfaces: cards, sheets, inputs — crisp white floats on the paper */
-    surface: '#ffffff',
-    /** Quietly recessed surfaces and fills (faint green-grey) */
-    surfaceMuted: '#edeee7',
+    /** App canvas — clean white, matching the marketing site */
+    background: '#ffffff',
+    /** A faint warm-grey well, for inset / alternating zones */
+    backgroundSunken: '#eeece6',
+    /** Raised surfaces: cards, sheets, inputs — a soft off-white on the white canvas */
+    surface: '#f5f3ee',
+    /** Quietly recessed surfaces and fills */
+    surfaceMuted: '#edeae3',
     /** Pressed / selected surface */
-    surfacePressed: '#e3e6dd',
+    surfacePressed: '#e6e3da',
 
     /** Primary text — warm green-black "ink" */
     text: '#23231d',
@@ -249,16 +249,17 @@ export const Spacing = {
 } as const;
 
 /**
- * Corner radii. Even progression so nested shapes feel concentric:
- * inputs/chips-of-icons md(14), standard cards lg(18), hero cards xl(24),
- * buttons / pills / badges pill.
+ * Corner radii from the brand design tokens: interactive elements (buttons,
+ * inputs, pills) share the tight 6.71 corner; cards use 10.065. Truly circular
+ * shapes (avatars, progress tracks) round via their own height, not these.
  */
 export const Radius = {
+  button: 6.71,
   sm: 12,
-  md: 14,
-  lg: 18,
-  xl: 24,
-  pill: 999,
+  md: 6.71,
+  lg: 10.065,
+  xl: 10.065,
+  pill: 6.71,
 } as const;
 
 export const Layout = {

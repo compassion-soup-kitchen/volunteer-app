@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { type ReactNode } from 'react';
 import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
 
-import { Radius, Shadows, Spacing } from '@/constants/theme';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import { type Tone, toneColors } from './tones';
@@ -11,9 +11,9 @@ export type CardProps = {
   children: ReactNode;
   onPress?: () => void;
   padding?: number;
-  /** Use a quieter, recessed surface (for nested blocks) */
+  /** Use a quieter, recessed surface fill (for nested blocks) */
   muted?: boolean;
-  /** Hero / feature card: larger radius and a softer lifted shadow */
+  /** Hero / feature card: a slightly larger radius */
   elevated?: boolean;
   /** Tinted callout card in a semantic tone (brand/navy/accent/success…) */
   tone?: Tone;
@@ -23,15 +23,15 @@ export type CardProps = {
 };
 
 /**
- * The app's surface primitive: a rounded, gently elevated card that floats on
- * the warm paper canvas. Pass `onPress` to make it an accessible,
- * press-responsive tappable surface; `elevated` for hero cards; `tone` for a
- * tinted callout.
+ * The app's surface primitive — an open, editorial container. The neutral
+ * surface is transparent so content sits directly on the page (no fill, border,
+ * shadow or padding); `tone` and `muted` still paint a fill for deliberate
+ * callouts. Tappable cards get a soft press highlight.
  */
 export function Card({
   children,
   onPress,
-  padding = Spacing.lg,
+  padding = 0,
   muted,
   elevated,
   tone,
@@ -39,21 +39,16 @@ export function Card({
   style,
   accessibilityLabel,
 }: CardProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const tint = tone ? toneColors(tone, colors) : null;
 
-  const backgroundColor = tint ? tint.bg : muted ? colors.surfaceMuted : colors.surface;
-  const borderColor = tint ? 'transparent' : colors.border;
-  const shadow = tint || muted ? Shadows.none : isDark ? Shadows.none : elevated ? Shadows.md : Shadows.sm;
+  const backgroundColor = tint ? tint.bg : muted ? colors.surfaceMuted : 'transparent';
 
   const base: ViewStyle = {
     backgroundColor,
     borderRadius: radius ?? (elevated ? Radius.xl : Radius.lg),
     borderCurve: 'continuous',
-    borderWidth: tint ? 0 : 1,
-    borderColor,
     padding,
-    boxShadow: shadow,
   };
 
   if (!onPress) {
@@ -70,12 +65,9 @@ export function Card({
       }}
       style={({ pressed }) => [
         base,
-        pressed && {
-          backgroundColor: tint ? tint.bg : colors.surfacePressed,
-          boxShadow: Shadows.none,
-          transform: [{ scale: 0.98 }],
-          opacity: tint ? 0.92 : 1,
-        },
+        // Filled callouts darken slightly; open cards just dim — no heavy box.
+        pressed && (tint ? { opacity: 0.92 } : { opacity: 0.55 }),
+        pressed && { transform: [{ scale: 0.98 }] },
         style,
       ]}>
       {children}

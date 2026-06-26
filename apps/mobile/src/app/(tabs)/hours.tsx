@@ -84,7 +84,7 @@ export default function HoursScreen() {
   const maxAreaHours = Math.max(...(data?.byServiceArea.map((a) => a.hours) ?? [1]), 1);
 
   return (
-    <Screen onRefresh={refetch} refreshing={isRefetching}>
+    <Screen onRefresh={refetch} refreshing={isRefetching} motif>
       <PageHeader overline="Tō mahi" title="Your hours" subtitle="Every hour is aroha in action." illustration="heart" />
 
       {isLoading || !data ? (
