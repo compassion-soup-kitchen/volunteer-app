@@ -10,6 +10,7 @@ import {
   getReportServiceAreas,
 } from "@/lib/report-actions";
 import { ReportDashboard } from "./report-dashboard";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Pūrongo — Reports | Te Pūaroha Staff",
@@ -71,14 +72,11 @@ export default function StaffReportsPage(props: {
 }) {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Pūrongo — Reports
-        </h1>
-        <p className="text-muted-foreground">
-          Volunteer hours, attendance, and onboarding insights
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Pūrongo · Reports"
+        title="Reports"
+        description="Volunteer hours, attendance, and onboarding insights"
+      />
 
       <Suspense fallback={<ReportsSkeleton />}>
         <ReportsContent searchParams={props.searchParams} />

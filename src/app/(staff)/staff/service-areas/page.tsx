@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getServiceAreasWithStats } from "@/lib/service-area-actions";
 import { ServiceAreaManager } from "./service-area-manager";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Service Areas | Te Pūaroha",
@@ -22,12 +23,11 @@ export default async function ServiceAreasPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Service Areas</h1>
-        <p className="text-muted-foreground">
-          Manage the kaupapa areas volunteers can contribute to
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Ngā wāhi · Service areas"
+        title="Service areas"
+        description="Manage the kaupapa areas volunteers can contribute to"
+      />
 
       <ServiceAreaManager initialAreas={serviceAreas} />
     </div>

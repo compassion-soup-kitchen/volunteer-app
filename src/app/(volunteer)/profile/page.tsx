@@ -17,11 +17,11 @@ import {
   RiShieldCheckLine,
   RiEditLine,
   RiArrowRightLine,
-  RiArrowLeftLine,
   RiGraduationCapLine,
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
 import { getVolunteerTrainingHistory } from "@/lib/training-actions";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "My Profile | Te Pūaroha",
@@ -57,12 +57,11 @@ export default async function ProfilePage() {
   if (!profile) {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
-          <p className="text-muted-foreground">
-            Kia ora, {session?.user?.name?.split(" ")[0] || "there"}
-          </p>
-        </div>
+        <PageHeader
+          eyebrow="Tō kōtaha · Profile"
+          title="My profile"
+          description={`Kia ora, ${session?.user?.name?.split(" ")[0] || "there"}`}
+        />
 
         <Card className="border-primary/20 bg-primary/[0.03]">
           <CardHeader>
@@ -92,44 +91,31 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-24">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:block">
-            <Button variant="ghost" size="icon-sm" asChild>
-              <Link href="/dashboard">
-                <RiArrowLeftLine className="size-4" />
+      <PageHeader
+        backHref="/dashboard"
+        eyebrow="Tō kōtaha · Profile"
+        title="My profile"
+        description={`Kia ora, ${session?.user?.name?.split(" ")[0] || "there"}`}
+        actions={
+          <>
+            <Badge variant={profile.status === "ACTIVE" ? "default" : "secondary"}>
+              {STATUS_LABELS[profile.status] || profile.status}
+            </Badge>
+            <Button variant="outline" size="sm" className="gap-1.5" asChild>
+              <Link href="/profile/edit">
+                <RiEditLine className="size-3.5" />
+                Edit
               </Link>
             </Button>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
-            <p className="text-muted-foreground">
-              Kia ora, {session?.user?.name?.split(" ")[0] || "there"}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge
-            variant={
-              profile.status === "ACTIVE" ? "default" : "secondary"
-            }
-          >
-            {STATUS_LABELS[profile.status] || profile.status}
-          </Badge>
-          <Button variant="outline" size="sm" className="gap-1.5" asChild>
-            <Link href="/profile/edit">
-              <RiEditLine className="size-3.5" />
-              Edit
-            </Link>
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Contact Details */}
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/10">
               <RiUserLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Contact Details</CardTitle>
@@ -171,7 +157,7 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/10">
               <RiAlarmWarningLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Emergency Contact</CardTitle>
@@ -188,7 +174,7 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/10">
               <RiCalendarLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Availability</CardTitle>
@@ -222,7 +208,7 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/10">
               <RiHeartLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Areas of Interest</CardTitle>
@@ -247,7 +233,7 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/10">
               <RiToolsLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Skills & About</CardTitle>
@@ -274,7 +260,7 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/10">
               <RiGraduationCapLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Whakangungu — Training</CardTitle>
@@ -341,7 +327,7 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/10">
               <RiShieldCheckLine className="size-4 text-primary" />
             </div>
             <CardTitle className="text-base">Signed Agreements</CardTitle>

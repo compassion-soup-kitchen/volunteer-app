@@ -23,6 +23,7 @@ import {
 } from "@remixicon/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Staff Dashboard | Te Pūaroha",
@@ -35,14 +36,11 @@ export default async function StaffDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Kia ora, {firstName}
-        </h1>
-        <p className="text-muted-foreground">
-          Staff dashboard — manage volunteers and operations
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Whakahaere · Operations"
+        title={`Kia ora, ${firstName}`}
+        description="Staff dashboard, manage volunteers and operations"
+      />
 
       <Suspense fallback={<StatsSkeleton />}>
         <StatsCards />
@@ -107,7 +105,7 @@ async function StatsCards() {
               <CardHeader className="pb-2">
                 <CardDescription>{card.label}</CardDescription>
                 <CardTitle className="flex items-baseline gap-2">
-                  <span className="font-mono text-2xl">
+                  <span className="font-serif text-3xl font-light tabular-nums">
                     {card.value}{card.suffix}
                   </span>
                   <card.icon className="size-4 text-muted-foreground" />

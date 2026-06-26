@@ -210,7 +210,7 @@ export function StaffShiftList({
                         </div>
                       </TableCell>
                       <TableCell>{shift.serviceArea.name}</TableCell>
-                      <TableCell className="font-mono text-sm">
+                      <TableCell className="tabular-nums text-sm">
                         {shift.startTime}–{shift.endTime}
                       </TableCell>
                       <TableCell>

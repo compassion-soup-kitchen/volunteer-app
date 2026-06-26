@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Wordmark } from "@/components/brand/wordmark";
 import {
   RiDashboardLine,
   RiTeamLine,
@@ -67,18 +67,8 @@ export function StaffNav({
             >
               <RiMenuLine className="size-5" />
             </Button>
-            <Link href="/staff/dashboard" className="flex items-center gap-2">
-              <Image
-                src="/favicon-192x192.png"
-                alt="Te Pūaroha"
-                width={28}
-                height={28}
-                className="size-7"
-                priority
-              />
-              <span className="text-sm font-semibold tracking-tight">
-                Te Pūaroha
-              </span>
+            <Link href="/staff/dashboard" aria-label="Te Pūaroha dashboard" className="lg:hidden">
+              <Wordmark className="h-6" />
             </Link>
           </div>
           <div className="flex items-center gap-2">
@@ -101,21 +91,14 @@ export function StaffNav({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-dvh w-60 border-r border-border bg-sidebar transition-transform lg:translate-x-0",
+          "fixed left-0 top-0 z-50 h-dvh w-60 border-r border-sidebar-border bg-sidebar transition-transform lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-          <Image
-            src="/favicon-192x192.png"
-            alt="Te Pūaroha"
-            width={32}
-            height={32}
-            className="size-8"
-          />
-          <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
-            Te Pūaroha
-          </span>
+        <div className="flex h-14 items-center border-b border-sidebar-border px-5">
+          <Link href="/staff/dashboard" aria-label="Te Pūaroha dashboard">
+            <Wordmark className="h-6" />
+          </Link>
         </div>
         <nav className="p-3">
           <ul className="space-y-1">
@@ -128,9 +111,9 @@ export function StaffNav({
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                      "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
                       isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                     )}
                   >

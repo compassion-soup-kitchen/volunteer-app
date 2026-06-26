@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { RiArrowLeftLine } from "@remixicon/react";
 import { getTrainingDetail } from "@/lib/training-actions";
 import { TrainingDetailView } from "./training-detail-view";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Training Detail | Te Pūaroha Staff",
@@ -26,16 +24,11 @@ export default async function TrainingDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon-sm" asChild>
-          <Link href="/staff/training">
-            <RiArrowLeftLine className="size-4" />
-          </Link>
-        </Button>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {session.title}
-        </h1>
-      </div>
+      <PageHeader
+        backHref="/staff/training"
+        eyebrow="Whakangungu · Training"
+        title={session.title}
+      />
       <TrainingDetailView session={session} />
     </div>
   );

@@ -7,6 +7,7 @@ import {
 } from "@/lib/document-actions";
 import { DocumentsOverview } from "./documents-overview";
 import { FileManager } from "./file-manager";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Documents | Te Pūaroha Staff",
@@ -35,18 +36,15 @@ async function FilesContent() {
 export default function StaffDocumentsPage() {
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Tuhinga — Documents
-        </h1>
-        <p className="text-muted-foreground">
-          Manage agreements, policies, and training materials
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Tuhinga · Documents"
+        title="Documents"
+        description="Manage agreements, policies, and training materials"
+      />
 
       {/* Agreements Section */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Agreements</h2>
+        <h2 className="font-serif text-xl font-normal">Agreements</h2>
         <Suspense fallback={<DocumentsSkeleton />}>
           <AgreementsContent />
         </Suspense>
@@ -54,7 +52,7 @@ export default function StaffDocumentsPage() {
 
       {/* Uploaded Files Section */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Uploaded Files</h2>
+        <h2 className="font-serif text-xl font-normal">Uploaded files</h2>
         <Suspense fallback={<DocumentsSkeleton />}>
           <FilesContent />
         </Suspense>

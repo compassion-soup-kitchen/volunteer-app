@@ -173,7 +173,7 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
             </div>
             <div className="flex items-center gap-3 text-sm">
               <RiTimeLine className="size-4 text-muted-foreground" />
-              <span className="font-mono">
+              <span className="tabular-nums">
                 {shift.startTime}–{shift.endTime}
               </span>
             </div>

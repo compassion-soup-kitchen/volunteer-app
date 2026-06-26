@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RiArrowLeftLine } from "@remixicon/react";
 import { getAgreementDetail } from "@/lib/document-actions";
 import { AgreementDetailView } from "./agreement-detail";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Agreement Detail | Te Pūaroha Staff",
@@ -42,21 +40,12 @@ export default async function AgreementDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon-sm" asChild>
-          <Link href="/staff/documents">
-            <RiArrowLeftLine className="size-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Agreement Detail
-          </h1>
-          <p className="text-muted-foreground">
-            Edit template and track signing status
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/staff/documents"
+        eyebrow="Tuhinga · Agreement"
+        title="Agreement detail"
+        description="Edit template and track signing status"
+      />
       <Suspense fallback={<DetailSkeleton />}>
         <DetailContent agreementType={agreementType} />
       </Suspense>

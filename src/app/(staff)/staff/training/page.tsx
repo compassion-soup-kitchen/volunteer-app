@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RiAddLine } from "@remixicon/react";
 import { getStaffTrainingSessions } from "@/lib/training-actions";
 import { TrainingList } from "./training-list";
+import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
   title: "Training Sessions | Te Pūaroha Staff",
@@ -29,22 +30,19 @@ async function TrainingContent() {
 export default function StaffTrainingPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Whakangungu — Training
-          </h1>
-          <p className="text-muted-foreground">
-            Manage training sessions for volunteers
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/staff/training/new">
-            <RiAddLine className="mr-2 size-4" />
-            New Session
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Whakangungu · Training"
+        title="Training"
+        description="Manage training sessions for volunteers"
+        actions={
+          <Button asChild>
+            <Link href="/staff/training/new">
+              <RiAddLine className="size-4" />
+              New session
+            </Link>
+          </Button>
+        }
+      />
       <Suspense fallback={<TrainingListSkeleton />}>
         <TrainingContent />
       </Suspense>

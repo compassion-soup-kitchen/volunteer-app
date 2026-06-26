@@ -28,6 +28,7 @@ import {
   RiShieldCheckLine,
 } from "@remixicon/react";
 import Link from "next/link";
+import { Kowhaiwhai } from "@/components/brand/kowhaiwhai";
 import { getUserApplicationStatus } from "@/lib/application-actions";
 import { getDashboardData } from "@/lib/dashboard-actions";
 import { getAvailableTraining } from "@/lib/training-actions";
@@ -109,11 +110,14 @@ export default async function VolunteerDashboard() {
   return (
     <div className="space-y-6">
       {/* Greeting */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Kia ora, {firstName}
-        </h1>
-        <p className="text-sm text-muted-foreground">{formatToday()}</p>
+      <div className="relative overflow-hidden">
+        <Kowhaiwhai className="pointer-events-none absolute -right-12 -top-14 hidden w-64 opacity-[0.05] sm:block" />
+        <div className="relative space-y-1">
+          <h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">
+            Kia ora, {firstName}
+          </h1>
+          <p className="text-sm text-muted-foreground">{formatToday()}</p>
+        </div>
       </div>
 
       {/* No application yet */}
@@ -272,7 +276,7 @@ export default async function VolunteerDashboard() {
                     <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                       {nextShiftDate.toLocaleDateString("en-NZ", { month: "short" })}
                     </span>
-                    <span className="font-mono text-4xl font-bold leading-none text-foreground">
+                    <span className="font-serif text-4xl font-light leading-none tabular-nums text-foreground">
                       {nextShiftDate.getDate()}
                     </span>
                     <span className="mt-1 text-xs text-muted-foreground">
@@ -286,7 +290,7 @@ export default async function VolunteerDashboard() {
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Your next mahi
                       </p>
-                      <p className="text-lg font-semibold leading-tight">
+                      <p className="font-serif text-xl font-normal leading-tight">
                         {nextShift.serviceArea}
                       </p>
                       <p className="text-sm text-muted-foreground">
@@ -361,7 +365,7 @@ export default async function VolunteerDashboard() {
           <CardHeader>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
                   <RiAlertLine className="size-5 text-primary" />
                 </div>
                 <div>
@@ -441,7 +445,7 @@ export default async function VolunteerDashboard() {
                         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           Meals shared
                         </p>
-                        <p className="font-mono text-3xl font-bold leading-tight text-foreground">
+                        <p className="font-serif text-4xl font-light leading-none tabular-nums text-foreground">
                           {dashboardData.totalMeals.toLocaleString("en-NZ")}
                         </p>
                       </div>
@@ -451,7 +455,7 @@ export default async function VolunteerDashboard() {
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
                           This month
                         </p>
-                        <p className="font-mono text-lg font-semibold">
+                        <p className="font-serif text-xl font-light tabular-nums">
                           +{dashboardData.mealsThisMonth.toLocaleString("en-NZ")}
                         </p>
                       </div>
@@ -468,7 +472,7 @@ export default async function VolunteerDashboard() {
                         Hours
                       </p>
                     </div>
-                    <p className="mt-1 font-mono text-2xl font-bold">
+                    <p className="mt-1 font-serif text-3xl font-light tabular-nums">
                       {dashboardData.totalHours}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -482,7 +486,7 @@ export default async function VolunteerDashboard() {
                         Shifts
                       </p>
                     </div>
-                    <p className="mt-1 font-mono text-2xl font-bold">
+                    <p className="mt-1 font-serif text-3xl font-light tabular-nums">
                       {dashboardData.totalShifts}
                     </p>
                     <p className="text-xs text-muted-foreground">attended</p>
@@ -551,7 +555,7 @@ export default async function VolunteerDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
+                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10">
                   <RiGraduationCapLine className="size-5 text-primary" />
                 </div>
                 <div>
@@ -638,7 +642,7 @@ export default async function VolunteerDashboard() {
               </ul>
             ) : (
               <div className="flex items-start gap-3 py-2">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-muted">
                   <RiMegaphoneLine className="size-5 text-muted-foreground" />
                 </div>
                 <div>
@@ -658,7 +662,7 @@ export default async function VolunteerDashboard() {
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
                 <RiShieldCheckLine className="size-5 text-primary" />
               </div>
               <div>
@@ -679,14 +683,14 @@ export default async function VolunteerDashboard() {
       </Card>
 
       {/* Other Ways to Support */}
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/[0.06] via-primary/[0.02] to-transparent">
+      <Card className="border-primary/20 bg-primary/[0.04]">
         <CardContent className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/15">
               <RiHandHeartLine className="size-6 text-primary" />
             </div>
             <div>
-              <p className="text-base font-semibold">Other ways to tautoko</p>
+              <p className="font-serif text-lg font-normal">Other ways to tautoko</p>
               <p className="text-sm text-muted-foreground">
                 Donate kai, support a drive, or share the kaupapa with your whānau.
               </p>

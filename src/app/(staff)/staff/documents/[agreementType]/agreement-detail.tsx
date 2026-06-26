@@ -122,7 +122,7 @@ export function AgreementDetailView({
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={12}
-                  className="font-mono text-sm"
+                  className="tabular-nums text-sm"
                 />
               </div>
               <div className="flex gap-2">

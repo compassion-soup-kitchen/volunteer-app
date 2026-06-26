@@ -258,7 +258,7 @@ export function ReportDashboard({
                   <p className="text-xs font-medium text-muted-foreground">
                     Total Hours
                   </p>
-                  <p className="text-2xl font-bold">{summary.totalHours}</p>
+                  <p className="font-serif text-3xl font-light tabular-nums">{summary.totalHours}</p>
                 </div>
                 <RiTimeLine className="size-5 text-muted-foreground/40" />
               </div>
@@ -271,7 +271,7 @@ export function ReportDashboard({
                   <p className="text-xs font-medium text-muted-foreground">
                     Total Shifts
                   </p>
-                  <p className="text-2xl font-bold">{summary.totalShifts}</p>
+                  <p className="font-serif text-3xl font-light tabular-nums">{summary.totalShifts}</p>
                 </div>
                 <RiCalendarLine className="size-5 text-muted-foreground/40" />
               </div>
@@ -284,7 +284,7 @@ export function ReportDashboard({
                   <p className="text-xs font-medium text-muted-foreground">
                     Unique Volunteers
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className="font-serif text-3xl font-light tabular-nums">
                     {summary.uniqueVolunteers}
                   </p>
                 </div>
@@ -299,7 +299,7 @@ export function ReportDashboard({
                   <p className="text-xs font-medium text-muted-foreground">
                     Attendance Rate
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className="font-serif text-3xl font-light tabular-nums">
                     {summary.overallAttendanceRate}%
                   </p>
                 </div>
@@ -411,7 +411,7 @@ export function ReportDashboard({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-md border border-border p-3 text-center">
-                  <p className="text-2xl font-bold">
+                  <p className="font-serif text-3xl font-light tabular-nums">
                     {onboarding.totalApplications}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -419,7 +419,7 @@ export function ReportDashboard({
                   </p>
                 </div>
                 <div className="rounded-md border border-border p-3 text-center">
-                  <p className="text-2xl font-bold">
+                  <p className="font-serif text-3xl font-light tabular-nums">
                     {onboarding.activeVolunteers}
                   </p>
                   <p className="text-xs text-muted-foreground">
