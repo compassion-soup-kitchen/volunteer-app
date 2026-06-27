@@ -12,6 +12,7 @@ export const qk = {
   shift: (id: string) => ['shift', id] as const,
   schedule: ['schedule'] as const,
   training: ['training'] as const,
+  trainingOverview: ['training', 'overview'] as const,
   hours: ['hours'] as const,
   profile: ['profile'] as const,
 };
