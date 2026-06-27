@@ -1,5 +1,13 @@
-import { type ReactNode } from 'react';
-import { RefreshControl, ScrollView, type StyleProp, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { type ReactNode, useState } from 'react';
+import {
+  type LayoutChangeEvent,
+  RefreshControl,
+  type StyleProp,
+  useWindowDimensions,
+  View,
+  type ViewStyle,
+} from 'react-native';
+import Animated, { useAnimatedRef, useAnimatedStyle, useScrollViewOffset } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Kowhaiwhai } from '@/components/brand';
@@ -19,7 +27,11 @@ export type ScreenProps = {
   bottomInset?: number;
   /** Float a large, faint kōwhaiwhai motif behind the page (hero screens) */
   motif?: boolean;
-  /** Full-bleed element rendered above the padded content column (e.g. a video hero) */
+  /**
+   * A full-bleed hero rendered at the top of the page. It scrolls away with the
+   * content like a normal banner, but holds its position on overscroll (pull-down)
+   * for a parallax effect. See HomeVideoHeader.
+   */
   header?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
 };
@@ -46,6 +58,22 @@ export function Screen({
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
+  // Track the live scroll offset so a hero `header` can hold its position on
+  // overscroll for a parallax effect.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollOffset = useScrollViewOffset(scrollRef);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  // Parallax hero: the header scrolls away with the page normally, but stays put
+  // on overscroll (pull-down) so the page bounces beneath it. The native-tabs
+  // scroll view carries a top content inset equal to the safe area, so its resting
+  // offset is `-insets.top`; `+ insets.top` normalises that to 0 at rest.
+  // `Math.min(0, …)` keeps the transform at 0 while scrolling up (the header
+  // travels with the content) and only counter-translates when pulled below rest.
+  const heroStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: Math.min(0, scrollOffset.value + insets.top) }],
+  }));
+
   const paddingTop = (insetTop ? insets.top : 0) + Spacing.sm;
   // Clear the home indicator AND the floating native tab bar (which overlays content on iOS 26).
   const paddingBottom = insets.bottom + Spacing.huge + Spacing.md + bottomInset;
@@ -57,14 +85,22 @@ export function Screen({
   );
 
   // Horizontal gutters + top spacing live on this wrapper so an optional
-  // full-bleed `header` can sit above it and run edge-to-edge. The tab scene
-  // already reserves the top safe area, so a header band naturally begins just
-  // below the Dynamic Island; the column below the header just needs breathing room.
+  // full-bleed `header` can sit above it and run edge-to-edge.
   const padded = (
     <View style={{ paddingTop: header ? Spacing.xl : paddingTop, paddingHorizontal: Layout.screenPadding }}>
       {column}
     </View>
   );
+
+  // The hero flows at the top of the page and scrolls away with the content; the
+  // transform only holds it in place on overscroll for a parallax stretch.
+  const heroHeader = header ? (
+    <Animated.View
+      style={heroStyle}
+      onLayout={(e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height)}>
+      {header}
+    </Animated.View>
+  ) : null;
 
   // A fixed, faint kōwhaiwhai bleeding off the upper-right edge, behind content.
   const watermark = motif ? (
@@ -80,14 +116,18 @@ export function Screen({
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {watermark}
-        {header}
+        {heroHeader}
         {padded}
       </View>
     );
   }
 
+  // Surface the refresh spinner just below a hero so it isn't hidden behind it.
+  const refreshOffset = header ? insets.top + headerHeight : insetTop ? insets.top : 0;
+
   const list = (
-    <ScrollView
+    <Animated.ScrollView
+      ref={scrollRef}
       style={{ backgroundColor: motif ? 'transparent' : colors.background }}
       contentInsetAdjustmentBehavior="never"
       automaticallyAdjustContentInsets={false}
@@ -99,15 +139,15 @@ export function Screen({
           <RefreshControl
             refreshing={Boolean(refreshing)}
             onRefresh={onRefresh}
-            progressViewOffset={insetTop ? insets.top : 0}
+            progressViewOffset={refreshOffset}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
         ) : undefined
       }>
-      {header}
+      {heroHeader}
       {padded}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 
   if (!motif) return list;

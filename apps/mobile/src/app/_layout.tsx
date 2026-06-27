@@ -77,6 +77,16 @@ function RootNavigator() {
           sheetAllowedDetents: 'fitToContents',
         }}
       />
+      <Stack.Screen
+        name="training/[id]"
+        options={{
+          headerShown: false,
+          presentation: 'formSheet',
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+          sheetAllowedDetents: 'fitToContents',
+        }}
+      />
       <Stack.Screen name="schedule" options={{ title: 'My schedule' }} />
       <Stack.Screen name="news" options={{ title: 'Notices' }} />
       <Stack.Screen name="onboarding" options={{ title: 'Welcome' }} />

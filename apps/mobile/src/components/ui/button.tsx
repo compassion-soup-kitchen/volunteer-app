@@ -131,10 +131,12 @@ export function Button({
       ...(tintColor ? [tint(tintColor)] : []),
       disabledModifier(isDisabled),
     ];
-    // The width must live on the button's *label*, applied before the button
-    // style — a bordered/glass style sizes itself to its label's frame, so
-    // `.frame(maxWidth: .infinity)` on the button itself does nothing.
-    const labelModifiers = fullWidth ? [frame({ maxWidth: Infinity })] : [];
+    // Sizing must live on the button's *label*, applied before the button style —
+    // a bordered/glass style sizes itself to its label's frame, so `.frame()` on
+    // the button itself does nothing. Filling both axes makes the label span the
+    // Host's fixed `h`, so an icon (HStack) and a text-only label resolve to the
+    // same height — otherwise the taller icon label produces a taller button.
+    const labelModifiers = fullWidth ? [frame({ maxWidth: Infinity, maxHeight: Infinity })] : [];
 
     return (
       <Host
