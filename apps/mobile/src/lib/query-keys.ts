@@ -9,6 +9,7 @@ export const qk = {
   shifts: (areaId?: string) => ['shifts', areaId ?? 'all'] as const,
   shiftsAll: ['shifts'] as const,
   shift: (id: string) => ['shift', id] as const,
+  schedule: ['schedule'] as const,
   training: ['training'] as const,
   hours: ['hours'] as const,
   profile: ['profile'] as const,

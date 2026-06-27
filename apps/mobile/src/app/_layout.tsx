@@ -1,16 +1,16 @@
 import {
-  BricolageGrotesque_600SemiBold,
-  BricolageGrotesque_700Bold,
-  BricolageGrotesque_800ExtraBold,
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
   useFonts,
-} from '@expo-google-fonts/bricolage-grotesque';
-import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
+} from '@expo-google-fonts/hanken-grotesk';
 import {
-  MonaSans_400Regular,
-  MonaSans_500Medium,
-  MonaSans_600SemiBold,
-  MonaSans_700Bold,
-} from '@expo-google-fonts/mona-sans';
+  Newsreader_400Regular,
+  Newsreader_400Regular_Italic,
+  Newsreader_500Medium,
+  Newsreader_600SemiBold,
+} from '@expo-google-fonts/newsreader';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -57,7 +57,18 @@ function RootNavigator() {
       }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="shift/[id]" options={{ title: 'Shift detail' }} />
+      <Stack.Screen
+        name="shift/[id]"
+        options={{
+          headerShown: false,
+          presentation: 'formSheet',
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+          sheetAllowedDetents: 'fitToContents',
+        }}
+      />
+      <Stack.Screen name="schedule" options={{ title: 'My schedule' }} />
+      <Stack.Screen name="onboarding" options={{ title: 'Welcome' }} />
       <Stack.Screen name="profile/edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
     </Stack>
   );
@@ -88,17 +99,16 @@ function SplashGate({ fontsReady, children }: { fontsReady: boolean; children: R
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    // Display — Bricolage Grotesque (the compassion.org.nz headline face)
-    BricolageGrotesque_600SemiBold,
-    BricolageGrotesque_700Bold,
-    BricolageGrotesque_800ExtraBold,
-    // Accent — Fraunces (editorial serif on big titles)
-    Fraunces_600SemiBold,
-    // Text / UI — Mona Sans
-    MonaSans_400Regular,
-    MonaSans_500Medium,
-    MonaSans_600SemiBold,
-    MonaSans_700Bold,
+    // Serif — Newsreader (editorial titles, headings & figures)
+    Newsreader_400Regular,
+    Newsreader_400Regular_Italic,
+    Newsreader_500Medium,
+    Newsreader_600SemiBold,
+    // Text / UI — Hanken Grotesk
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
   });
   // Render once fonts load, or fall back to system fonts if they fail.
   const fontsReady = loaded || Boolean(error);

@@ -3,13 +3,12 @@
  *
  * Single source of truth for colour, type, spacing, radius and elevation.
  *
- * The system is drawn directly from the Compassion Aotearoa brand
- * (compassion.org.nz): the Pūaroha red, Aubert navy and a sky-blue accent, set
- * on warm "paper" backgrounds with a green-tinted ink. Recessed surfaces lean
- * subtly green-grey to echo the brand's green-paper. The display voice is
- * Bricolage Grotesque (the marketing site's headline face) over DM Sans for
- * text — bold, warm and editorial, never clinical or corporate. Te Reo Māori is
- * woven through the product.
+ * The system is an editorial, mission-forward reading of the Compassion
+ * Aotearoa brand: the Pūaroha red set on a warm "paper" canvas, with a deep
+ * cocoa ink, soft taupe support tones and crisp hairline borders. The voice is
+ * Newsreader — a literary serif — on the big titles and figures, over Hanken
+ * Grotesk for all UI and body text: warm and human, never clinical or
+ * corporate. Te Reo Māori is woven through the product.
  *
  * Colours are defined per theme (light/dark) with matching keys so the
  * `useTheme()` hook can return a flat, fully-typed palette. Every foreground /
@@ -24,129 +23,139 @@ import { Platform } from 'react-native';
 
 const palette = {
   light: {
-    /** App canvas — clean white, matching the marketing site */
-    background: '#ffffff',
-    /** A faint warm-grey well, for inset / alternating zones */
-    backgroundSunken: '#eeece6',
-    /** Raised surfaces: cards, sheets, inputs — a soft off-white on the white canvas */
-    surface: '#f5f3ee',
-    /** Quietly recessed surfaces and fills */
-    surfaceMuted: '#edeae3',
+    /** App canvas — warm cream "paper" */
+    background: '#FBF7F2',
+    /** A faint warm well, for inset / alternating zones and control tracks */
+    backgroundSunken: '#F0E9E1',
+    /** Raised surfaces: cards, sheets, inputs — clean white on the cream canvas */
+    surface: '#ffffff',
+    /** Quietly recessed surfaces and fills (progress tracks, bar charts) */
+    surfaceMuted: '#F0E9E1',
     /** Pressed / selected surface */
-    surfacePressed: '#e6e3da',
+    surfacePressed: '#ECE4DC',
 
-    /** Primary text — warm green-black "ink" */
-    text: '#23231d',
-    /** Secondary / supporting text */
-    textSecondary: '#6a655a',
-    /** Tertiary / hints, timestamps */
-    textTertiary: '#736b5c',
+    /** Primary text — deep cocoa "ink" */
+    text: '#1C1815',
+    /** Secondary / supporting text — warm taupe */
+    textSecondary: '#8A7F76',
+    /** Tertiary / hints, timestamps, inactive */
+    textTertiary: '#A89D94',
 
-    border: '#e7e1d4',
-    borderStrong: '#d6cfbe',
+    border: '#ECE4DC',
+    borderStrong: '#E0D6CB',
 
     /** Brand red — Pūaroha */
-    primary: '#de0832',
+    primary: '#E4002B',
     primaryForeground: '#ffffff',
-    /** Pressed brand red */
-    primaryPressed: '#c00a2d',
+    /** Pressed / inked brand red */
+    primaryPressed: '#B80022',
     /** Soft red wash for active states and brand badges */
-    primaryTint: '#fce7eb',
-    onPrimaryTint: '#ad0826',
+    primaryTint: '#FCEBED',
+    onPrimaryTint: '#B80022',
 
-    /** Aubert navy — secondary brand */
-    navy: '#293e6b',
+    /** Warm taupe — quiet secondary (dark-on-light chips, avatars) */
+    navy: '#5E5347',
     navyForeground: '#ffffff',
-    navyTint: '#e6eaf3',
-    onNavyTint: '#243559',
+    navyTint: '#EDE6DD',
+    onNavyTint: '#5E5347',
 
-    /** Sky blue — brand accent (links, info, highlights). AA-safe as text. */
-    accent: '#0077cc',
+    /** Accent == the single brand red: links and inline actions read as Pūaroha */
+    accent: '#E4002B',
     accentForeground: '#ffffff',
-    accentTint: '#e0f0fc',
-    onAccentTint: '#006bbb',
+    accentTint: '#FCEBED',
+    onAccentTint: '#B80022',
 
-    success: '#2e7d52',
+    success: '#1B7A4B',
     successForeground: '#ffffff',
-    successTint: '#e2f0e8',
-    onSuccessTint: '#1f5f3c',
+    successTint: '#E7F3EC',
+    onSuccessTint: '#176B41',
 
-    warning: '#b26a00',
+    warning: '#B26A00',
     warningForeground: '#ffffff',
-    warningTint: '#f7ecd6',
-    onWarningTint: '#7a4900',
+    warningTint: '#F7ECD6',
+    onWarningTint: '#7A4900',
 
     /** Danger — a deep oxblood, kept clearly distinct from the affirmative brand red */
-    destructive: '#99161b',
+    destructive: '#99161B',
     destructiveForeground: '#ffffff',
-    destructiveTint: '#f9e3e2',
-    onDestructiveTint: '#7c1014',
+    destructiveTint: '#F7E4E2',
+    onDestructiveTint: '#7C1014',
+
+    /** Deep "ink" surface — dark feature cards (quote hero, stat strips) */
+    inkSurface: '#1C1815',
+    onInk: '#FBF7F2',
+    onInkMuted: 'rgba(251,247,242,0.66)',
 
     /** Focus ring */
-    ring: '#0077cc',
+    ring: '#E4002B',
     /** Modal / sheet scrim */
-    scrim: 'rgba(35,35,29,0.5)',
+    scrim: 'rgba(28,24,21,0.5)',
 
-    /** Report / chart ramp — red → navy → blue → green → amber */
-    chart1: '#de0832',
-    chart2: '#293e6b',
-    chart3: '#0077cc',
-    chart4: '#2e7d52',
-    chart5: '#e0922e',
+    /** Report / chart ramp — red → ochre → taupe → green → stone */
+    chart1: '#E4002B',
+    chart2: '#C8761F',
+    chart3: '#5E5347',
+    chart4: '#1B7A4B',
+    chart5: '#C3B7AC',
   },
   dark: {
-    background: '#181611',
-    backgroundSunken: '#100e0a',
-    surface: '#26231b',
-    surfaceMuted: '#302b22',
-    surfacePressed: '#3a342a',
+    /** A warm, near-black cocoa — the cream palette inverted, never cold */
+    background: '#171310',
+    backgroundSunken: '#0F0C09',
+    surface: '#241F1A',
+    surfaceMuted: '#2F2922',
+    surfacePressed: '#3A332A',
 
-    text: '#f3efe5',
-    textSecondary: '#b4ab9b',
-    textTertiary: '#8e8676',
+    text: '#FBF7F2',
+    textSecondary: '#B7AC9F',
+    textTertiary: '#8A7F72',
 
-    border: 'rgba(255,255,255,0.13)',
-    borderStrong: 'rgba(255,255,255,0.20)',
+    border: 'rgba(255,255,255,0.11)',
+    borderStrong: 'rgba(255,255,255,0.18)',
 
-    primary: '#e22847',
+    primary: '#FF3355',
     primaryForeground: '#ffffff',
-    primaryPressed: '#c41f3b',
-    primaryTint: 'rgba(226,40,71,0.20)',
-    onPrimaryTint: '#ff8e9f',
+    primaryPressed: '#E4002B',
+    primaryTint: 'rgba(255,51,85,0.18)',
+    onPrimaryTint: '#FF94A4',
 
-    navy: '#8098d6',
-    navyForeground: '#0c1226',
-    navyTint: 'rgba(128,152,214,0.18)',
-    onNavyTint: '#b3c2e8',
+    navy: '#C9BCAC',
+    navyForeground: '#1C1815',
+    navyTint: 'rgba(201,188,172,0.16)',
+    onNavyTint: '#D8CDBE',
 
-    accent: '#3aabff',
-    accentForeground: '#06243a',
-    accentTint: 'rgba(58,171,255,0.18)',
-    onAccentTint: '#8fcdff',
+    accent: '#FF3355',
+    accentForeground: '#ffffff',
+    accentTint: 'rgba(255,51,85,0.18)',
+    onAccentTint: '#FF94A4',
 
-    success: '#54b585',
-    successForeground: '#08231a',
-    successTint: 'rgba(84,181,133,0.18)',
-    onSuccessTint: '#88daad',
+    success: '#56B585',
+    successForeground: '#0A2318',
+    successTint: 'rgba(86,181,133,0.18)',
+    onSuccessTint: '#8ADCAE',
 
-    warning: '#e0a44c',
+    warning: '#E0A44C',
     warningForeground: '#241803',
     warningTint: 'rgba(224,164,76,0.18)',
-    onWarningTint: '#f1c489',
+    onWarningTint: '#F1C489',
 
-    destructive: '#ff6a72',
+    destructive: '#FF6A72',
     destructiveForeground: '#1a1814',
     destructiveTint: 'rgba(255,106,114,0.18)',
-    onDestructiveTint: '#ff9aa1',
+    onDestructiveTint: '#FF9AA1',
 
-    ring: '#3aabff',
+    inkSurface: '#0F0C09',
+    onInk: '#FBF7F2',
+    onInkMuted: 'rgba(251,247,242,0.66)',
+
+    ring: '#FF3355',
     scrim: 'rgba(0,0,0,0.62)',
 
-    chart1: '#e22847',
-    chart2: '#8098d6',
-    chart3: '#3aabff',
-    chart4: '#54b585',
-    chart5: '#e0a44c',
+    chart1: '#FF3355',
+    chart2: '#E0A44C',
+    chart3: '#C9BCAC',
+    chart4: '#56B585',
+    chart5: '#8A7F72',
   },
 } as const;
 
@@ -161,27 +170,31 @@ export type ThemeColor = keyof ColorTokens;
 /* -------------------------------------------------------------------------- */
 
 /**
- * Fraunces (loaded via `@expo-google-fonts/fraunces`) is the editorial serif
- * accent on the big titles — a free stand-in for the brand's GT Alpina.
- * Bricolage Grotesque carries the smaller UI headings and big stats, and
- * Mona Sans handles all UI/body text for clean native legibility.
+ * Newsreader (loaded via `@expo-google-fonts/newsreader`) is the editorial
+ * serif voice on the big titles, card headings and figures — literary and warm.
+ * Hanken Grotesk carries every UI control and body string for clean native
+ * legibility.
  *
  * With custom fonts in React Native, `fontWeight` is not reliably synthesised —
  * each weight must reference its own loaded family. These names map 1:1 to the
  * fonts registered in `app/_layout.tsx`.
  */
 export const FontFamily = {
-  /** Display — Bricolage Grotesque */
-  display: 'BricolageGrotesque_700Bold',
-  displaySemiBold: 'BricolageGrotesque_600SemiBold',
-  displayBold: 'BricolageGrotesque_800ExtraBold',
-  /** Accent — Fraunces, the editorial serif for big titles (a free stand-in for the brand's GT Alpina) */
-  accent: 'Fraunces_600SemiBold',
-  /** Text — Mona Sans */
-  text: 'MonaSans_400Regular',
-  textMedium: 'MonaSans_500Medium',
-  textSemiBold: 'MonaSans_600SemiBold',
-  textBold: 'MonaSans_700Bold',
+  /** Serif display — Newsreader, the editorial title & numeral voice */
+  serif: 'Newsreader_500Medium',
+  serifRegular: 'Newsreader_400Regular',
+  serifSemiBold: 'Newsreader_600SemiBold',
+  serifItalic: 'Newsreader_400Regular_Italic',
+  /** Back-compat aliases used across the kit (now resolved onto the new families) */
+  accent: 'Newsreader_500Medium',
+  display: 'HankenGrotesk_700Bold',
+  displaySemiBold: 'HankenGrotesk_600SemiBold',
+  displayBold: 'HankenGrotesk_700Bold',
+  /** Text / UI — Hanken Grotesk */
+  text: 'HankenGrotesk_400Regular',
+  textMedium: 'HankenGrotesk_500Medium',
+  textSemiBold: 'HankenGrotesk_600SemiBold',
+  textBold: 'HankenGrotesk_700Bold',
 } as const;
 
 const mono = Platform.select({ ios: 'ui-monospace', android: 'monospace', default: 'monospace' });
@@ -212,24 +225,23 @@ type TextStyleToken = {
 };
 
 export const Typography: Record<TypographyVariant, TextStyleToken> = {
-  // Editorial titles — Fraunces serif accent (line-heights snapped to a 4pt grid); serifs want looser tracking than the grotesque
-  display: { fontSize: 36, lineHeight: 40, fontFamily: FontFamily.accent, letterSpacing: -0.5 },
-  titleXl: { fontSize: 28, lineHeight: 32, fontFamily: FontFamily.accent, letterSpacing: -0.3 },
-  title: { fontSize: 22, lineHeight: 28, fontFamily: FontFamily.accent, letterSpacing: -0.2 },
-  // Smaller headings stay Bricolage Grotesque for crisp UI legibility
-  heading: { fontSize: 18, lineHeight: 24, fontFamily: FontFamily.displaySemiBold, letterSpacing: -0.2 },
-  // Text — DM Sans
+  // Editorial titles & headings — Newsreader serif. Tight, literary, never shouty.
+  titleXl: { fontSize: 33, lineHeight: 37, fontFamily: FontFamily.serif, letterSpacing: -0.3 },
+  display: { fontSize: 25, lineHeight: 30, fontFamily: FontFamily.serif, letterSpacing: -0.2 },
+  title: { fontSize: 22, lineHeight: 28, fontFamily: FontFamily.serif, letterSpacing: -0.2 },
+  heading: { fontSize: 18, lineHeight: 23, fontFamily: FontFamily.serif, letterSpacing: -0.1 },
+  // Text — Hanken Grotesk
   subheading: { fontSize: 16, lineHeight: 22, fontFamily: FontFamily.textSemiBold, letterSpacing: -0.1 },
-  body: { fontSize: 16, lineHeight: 24, fontFamily: FontFamily.text },
-  bodyStrong: { fontSize: 16, lineHeight: 24, fontFamily: FontFamily.textSemiBold },
-  callout: { fontSize: 15, lineHeight: 20, fontFamily: FontFamily.textMedium },
+  body: { fontSize: 15, lineHeight: 22, fontFamily: FontFamily.text },
+  bodyStrong: { fontSize: 15, lineHeight: 22, fontFamily: FontFamily.textSemiBold },
+  callout: { fontSize: 14, lineHeight: 20, fontFamily: FontFamily.textMedium },
   label: { fontSize: 14, lineHeight: 18, fontFamily: FontFamily.textSemiBold },
   caption: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.textMedium },
-  overline: { fontSize: 12, lineHeight: 16, fontFamily: FontFamily.textBold, letterSpacing: 1.1, textTransform: 'uppercase' },
-  // Data — Bricolage for big stats, system mono for fine print
-  stat: { fontSize: 30, lineHeight: 34, fontFamily: FontFamily.display, letterSpacing: -0.6, fontVariant: ['tabular-nums'] },
-  statLg: { fontSize: 42, lineHeight: 46, fontFamily: FontFamily.displayBold, letterSpacing: -1.2, fontVariant: ['tabular-nums'] },
-  mono: { fontSize: 13, lineHeight: 18, fontFamily: mono, fontVariant: ['tabular-nums'] },
+  overline: { fontSize: 12, lineHeight: 16, fontFamily: FontFamily.textSemiBold, letterSpacing: 1, textTransform: 'uppercase' },
+  // Data — Newsreader for big figures, system mono for fine print
+  stat: { fontSize: 22, lineHeight: 24, fontFamily: FontFamily.serif, letterSpacing: -0.2, fontVariant: ['tabular-nums'] },
+  statLg: { fontSize: 48, lineHeight: 50, fontFamily: FontFamily.serif, letterSpacing: -0.6, fontVariant: ['tabular-nums'] },
+  mono: { fontSize: 11, lineHeight: 15, fontFamily: mono, fontVariant: ['tabular-nums'] },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -249,17 +261,17 @@ export const Spacing = {
 } as const;
 
 /**
- * Corner radii from the brand design tokens: interactive elements (buttons,
- * inputs, pills) share the tight 6.71 corner; cards use 10.065. Truly circular
- * shapes (avatars, progress tracks) round via their own height, not these.
+ * Generous, soft corner radii — the editorial design leans on rounded white
+ * cards (16–20), pill chips/badges (11) and comfortable buttons (14). Truly
+ * circular shapes (avatars, progress tracks) round via their own height.
  */
 export const Radius = {
-  button: 6.71,
+  button: 14,
   sm: 12,
-  md: 6.71,
-  lg: 10.065,
-  xl: 10.065,
-  pill: 6.71,
+  md: 13,
+  lg: 16,
+  xl: 20,
+  pill: 11,
 } as const;
 
 export const Layout = {
@@ -273,15 +285,16 @@ export const Layout = {
 /* -------------------------------------------------------------------------- */
 /*  Elevation (CSS boxShadow — never legacy RN shadow props)                   */
 /*  Warm-tinted shadows so cards feel like paper on paper, not cold glass.     */
+/*  The design is border-led; elevation stays soft and restrained.            */
 /* -------------------------------------------------------------------------- */
 
 export const Shadows = {
   none: 'none',
-  sm: '0px 1px 2px rgba(43,33,18,0.05)',
-  md: '0px 4px 14px rgba(43,33,18,0.07)',
-  lg: '0px 14px 34px rgba(43,33,18,0.10)',
+  sm: '0px 1px 2px rgba(28,18,12,0.05)',
+  md: '0px 6px 20px -10px rgba(28,18,12,0.12)',
+  lg: '0px 24px 50px -24px rgba(28,18,12,0.18)',
   /** For the single hero CTA per screen — a soft brand glow, not a heavy halo */
-  primary: '0px 8px 20px rgba(222,8,50,0.22)',
+  primary: '0px 10px 24px -12px rgba(228,0,43,0.35)',
 } as const;
 
 export const Duration = {

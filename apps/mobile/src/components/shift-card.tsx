@@ -1,9 +1,10 @@
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { DateBlock } from '@/components/date-block';
 import { serviceAreaMeta } from '@/components/meta';
-import { Badge, type BadgeTone, Card, Icon, type IconName, Text } from '@/components/ui';
+import { type BadgeTone, Icon, type IconName, Text, toneColors } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange } from '@/lib/format';
 
 export type ShiftCardProps = {
@@ -18,14 +19,21 @@ export type ShiftCardProps = {
   onPress?: () => void;
 };
 
-/** Tappable shift summary used in the dashboard and the shifts browser. */
+/** Cardless, tappable shift summary used in the dashboard lists. */
 export function ShiftCard({ areaId, areaName, date, startTime, endTime, badge, meta, notes, onPress }: ShiftCardProps) {
+  const { colors } = useTheme();
   const area = serviceAreaMeta(areaId);
+  const statusColor = badge ? toneColors(badge.tone, colors).fg : undefined;
 
   return (
-    <Card onPress={onPress} accessibilityLabel={`${areaName}, ${formatTimeRange(startTime, endTime)}`} style={{ gap: Spacing.md }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-        <DateBlock date={date} tone={area.tone} />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${areaName}, ${formatTimeRange(startTime, endTime)}`}
+      onPress={onPress}
+      style={({ pressed }) => ({ gap: Spacing.sm, opacity: pressed ? 0.6 : 1 })}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.lg }}>
+        <DateBlock date={date} />
+        <View style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border }} />
 
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -50,8 +58,15 @@ export function ShiftCard({ areaId, areaName, date, startTime, endTime, badge, m
           ) : null}
         </View>
 
-        <View style={{ alignItems: 'flex-end', gap: Spacing.sm }}>
-          {badge ? <Badge label={badge.label} tone={badge.tone} icon={badge.icon} /> : null}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+          {badge ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              {badge.icon ? <Icon name={badge.icon} size={13} raw={statusColor} /> : null}
+              <Text variant="caption" weight="bold" style={{ color: statusColor }}>
+                {badge.label}
+              </Text>
+            </View>
+          ) : null}
           {onPress ? <Icon name="chevron-forward" size={18} color="textTertiary" /> : null}
         </View>
       </View>
@@ -61,6 +76,6 @@ export function ShiftCard({ areaId, areaName, date, startTime, endTime, badge, m
           {notes}
         </Text>
       ) : null}
-    </Card>
+    </Pressable>
   );
 }
