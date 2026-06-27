@@ -48,6 +48,12 @@ export async function getAvailableTraining(): Promise<TrainingSessionWithDetails
   return db.training.filter((t) => !isPast(t.date)).sort(byDateTime).map(toDetails);
 }
 
+export async function getTrainingById(id: string): Promise<TrainingSessionWithDetails | null> {
+  await delay(140);
+  const t = db.training.find((x) => x.id === id);
+  return t ? toDetails(t) : null;
+}
+
 /**
  * The full Training-tab payload: the volunteer's readiness against the required
  * curriculum, their booked sessions, what's open to register for, and their
