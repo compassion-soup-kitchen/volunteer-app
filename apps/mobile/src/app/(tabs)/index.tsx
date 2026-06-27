@@ -229,7 +229,11 @@ export default function DashboardScreen() {
                 onAction={notices.length > topNotices.length ? () => router.push('/news') : undefined}
               />
               {topNotices.map((item) => (
-                <AnnouncementCard key={item.id} item={item} onPress={() => router.push('/news')} />
+                <AnnouncementCard
+                  key={item.id}
+                  item={item}
+                  onPress={() => router.push({ pathname: '/notice/[id]', params: { id: item.id } })}
+                />
               ))}
             </View>
           ) : null}
