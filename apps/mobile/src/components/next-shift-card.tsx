@@ -1,54 +1,39 @@
 import { View } from 'react-native';
 
-import { serviceAreaMeta } from '@/components/meta';
+import { DateBlock } from '@/components/date-block';
 import { Card, Icon, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { formatLongDate, formatTimeRange, relativeDay } from '@/lib/format';
+import { useTheme } from '@/hooks/use-theme';
+import { formatTimeRange, relativeDay } from '@/lib/format';
 import type { RosterShift } from '@/types/models';
 
-/** The dashboard hero card: the volunteer's very next rostered shift. */
+/**
+ * The dashboard's compact "next shift" card: a red mission rail, a stacked
+ * day pill (weekday over the serif date) and the shift summary — the very next
+ * time the volunteer is rostered on.
+ */
 export function NextShiftCard({ shift, onPress }: { shift: RosterShift; onPress: () => void }) {
-  const area = serviceAreaMeta(shift.serviceArea.id);
+  const { colors } = useTheme();
 
   return (
     <Card
       onPress={onPress}
-      elevated
+      padding={0}
       accessibilityLabel={`Your next shift, ${relativeDay(shift.date)}`}
-      style={{ gap: Spacing.lg }}>
-      <View style={{ gap: 3 }}>
-        <Text variant="overline" color="primary">
-          Tō rōhita · Your next shift
-        </Text>
-        <Text variant="titleXl">{formatLongDate(shift.date)}</Text>
-      </View>
-
-      <View style={{ gap: Spacing.sm }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Icon name={area.icon} size={16} color="textSecondary" />
-          <Text variant="bodyStrong">{shift.serviceArea.name}</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Icon name="time-outline" size={16} color="textSecondary" />
-          <Text variant="body" color="textSecondary">
+      style={{ flexDirection: 'row', alignItems: 'stretch', overflow: 'hidden' }}>
+      <View style={{ width: 4, backgroundColor: colors.primary }} />
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.lg, padding: Spacing.lg }}>
+        <DateBlock date={shift.date} />
+        <View style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border }} />
+        <View style={{ flex: 1, gap: 3 }}>
+          <Text variant="subheading" numberOfLines={1}>
+            {shift.serviceArea.name}
+          </Text>
+          <Text variant="caption" color="textSecondary" numberOfLines={1}>
             {formatTimeRange(shift.startTime, shift.endTime)}
           </Text>
         </View>
-        {shift.notes ? (
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-            <Icon name="document-text-outline" size={16} color="textSecondary" />
-            <Text variant="body" color="textSecondary" style={{ flex: 1 }}>
-              {shift.notes}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-        <Text variant="label" color="accent">
-          View shift details
-        </Text>
-        <Icon name="chevron-forward" size={16} color="accent" />
+        <Icon name="chevron-forward" size={18} color="textTertiary" />
       </View>
     </Card>
   );

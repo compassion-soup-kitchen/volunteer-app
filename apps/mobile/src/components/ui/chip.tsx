@@ -27,12 +27,12 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: 1,
-          backgroundColor: selected ? colors.primaryTint : colors.surface,
+          backgroundColor: selected ? colors.primary : colors.surface,
           borderColor: selected ? colors.primary : colors.border,
           opacity: pressed ? 0.85 : 1,
         },
       ]}>
-      <Text variant="label" style={{ color: selected ? colors.onPrimaryTint : colors.textSecondary }}>
+      <Text variant="label" style={{ color: selected ? colors.primaryForeground : colors.textSecondary }}>
         {label}
       </Text>
     </Pressable>
