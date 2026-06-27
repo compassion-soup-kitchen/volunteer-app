@@ -1,5 +1,12 @@
-import { type LayoutChangeEvent, type ReactNode, useState } from 'react';
-import { RefreshControl, type StyleProp, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { type ReactNode, useState } from 'react';
+import {
+  type LayoutChangeEvent,
+  RefreshControl,
+  type StyleProp,
+  useWindowDimensions,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import Animated, { useAnimatedRef, useAnimatedStyle, useScrollViewOffset } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

@@ -1,6 +1,7 @@
+import { useFocusEffect } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { type ReactNode, useCallback, useEffect } from 'react';
+import { AppState, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Layout, Spacing } from '@/constants/theme';
@@ -41,6 +42,23 @@ export function HomeVideoHeader({ children }: { children: ReactNode }) {
     p.audioMixingMode = 'mixWithOthers';
     p.play();
   });
+
+  // `loop` keeps the footage running, but iOS pauses the player when the screen
+  // loses focus or the app backgrounds, and expo-video doesn't auto-resume. Nudge
+  // it back to playing whenever the tab regains focus (tab switch, sheet dismiss)…
+  useFocusEffect(
+    useCallback(() => {
+      player.play();
+    }, [player]),
+  );
+
+  // …and whenever the app returns to the foreground.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') player.play();
+    });
+    return () => sub.remove();
+  }, [player]);
 
   const bg = hexToRgb(colors.background);
   // Visible band height, plus the top safe area we bleed up into behind the island.
