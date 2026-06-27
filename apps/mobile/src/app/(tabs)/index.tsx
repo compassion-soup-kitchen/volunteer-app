@@ -36,11 +36,12 @@ import type { RosterShift } from '@/types/models';
 const VENUE = 'Compassion Soup Kitchen · Tory St, Te Aro';
 const VENUE_QUERY = 'Compassion Soup Kitchen, Tory Street, Wellington';
 
+/** Time-of-day Te Reo greeting — kept distinct from the "Kia ora, {name}" headline. */
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return 'Ata mārie';
-  if (h < 18) return 'Kia ora';
-  return 'Pō mārie';
+  if (h < 12) return 'Mōrena'; // good morning
+  if (h < 18) return 'Ahiahi mārie'; // good afternoon
+  return 'Pō mārie'; // good evening
 }
 
 /** A situational one-liner that reflects the volunteer's actual roster state. */
