@@ -21,9 +21,9 @@ export type ScreenProps = {
   /** Float a large, faint kōwhaiwhai motif behind the page (hero screens) */
   motif?: boolean;
   /**
-   * A full-bleed hero rendered behind the content. It stays pinned to the top of
-   * the screen (fixed/parallax) while the content sheet scrolls up and over it,
-   * rather than scrolling away with the page. See HomeVideoHeader.
+   * A full-bleed hero rendered at the top of the page. It scrolls away with the
+   * content like a normal banner, but holds its position on overscroll (pull-down)
+   * for a parallax effect. See HomeVideoHeader.
    */
   header?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
@@ -51,18 +51,20 @@ export function Screen({
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
-  // Track the live scroll offset so a hero `header` can be counter-translated and
-  // stay pinned to the top while the content sheet scrolls over it.
+  // Track the live scroll offset so a hero `header` can hold its position on
+  // overscroll for a parallax effect.
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollViewOffset(scrollRef);
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  // Pinned hero: counter-translate by the distance scrolled from rest so it reads
-  // as a fixed/parallax backdrop. The native-tabs scroll view carries a top
-  // content inset equal to the safe area, so its resting offset is `-insets.top`;
-  // adding it back makes the transform 0 at rest and grows as the page scrolls.
+  // Parallax hero: the header scrolls away with the page normally, but stays put
+  // on overscroll (pull-down) so the page bounces beneath it. The native-tabs
+  // scroll view carries a top content inset equal to the safe area, so its resting
+  // offset is `-insets.top`; `+ insets.top` normalises that to 0 at rest.
+  // `Math.min(0, …)` keeps the transform at 0 while scrolling up (the header
+  // travels with the content) and only counter-translates when pulled below rest.
   const heroStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: scrollOffset.value + insets.top }],
+    transform: [{ translateY: Math.min(0, scrollOffset.value + insets.top) }],
   }));
 
   const paddingTop = (insetTop ? insets.top : 0) + Spacing.sm;
@@ -75,23 +77,17 @@ export function Screen({
     </View>
   );
 
-  // Horizontal gutters + top spacing live on this wrapper. With a hero `header`
-  // the sheet must be opaque so it occludes the pinned backdrop as it scrolls
-  // over it; otherwise it rides on the themed paper canvas as before.
+  // Horizontal gutters + top spacing live on this wrapper so an optional
+  // full-bleed `header` can sit above it and run edge-to-edge.
   const padded = (
-    <View
-      style={{
-        paddingTop: header ? Spacing.xl : paddingTop,
-        paddingHorizontal: Layout.screenPadding,
-        backgroundColor: header ? colors.background : undefined,
-      }}>
+    <View style={{ paddingTop: header ? Spacing.xl : paddingTop, paddingHorizontal: Layout.screenPadding }}>
       {column}
     </View>
   );
 
-  // A pinned hero sits behind the content layer; everything below it flows after
-  // its layout footprint, and the transform keeps it visually fixed on screen.
-  const pinnedHeader = header ? (
+  // The hero flows at the top of the page and scrolls away with the content; the
+  // transform only holds it in place on overscroll for a parallax stretch.
+  const heroHeader = header ? (
     <Animated.View
       style={heroStyle}
       onLayout={(e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height)}>
@@ -113,7 +109,7 @@ export function Screen({
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {watermark}
-        {pinnedHeader}
+        {heroHeader}
         {padded}
       </View>
     );
@@ -142,7 +138,7 @@ export function Screen({
           />
         ) : undefined
       }>
-      {pinnedHeader}
+      {heroHeader}
       {padded}
     </Animated.ScrollView>
   );

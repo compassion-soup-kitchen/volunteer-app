@@ -189,7 +189,7 @@ export default function DashboardScreen() {
             <View style={{ gap: Spacing.md }}>
               <SectionHeader overline="He maumahara" title="Don't forget" />
               <Card
-                onPress={() => router.push('/training')}
+                onPress={() => router.push({ pathname: '/training/[id]', params: { id: nextTraining.id } })}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
                 <IconChip icon="school" tone="navy" size={44} />
                 <View style={{ flex: 1, gap: 2 }}>
