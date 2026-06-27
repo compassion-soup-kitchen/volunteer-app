@@ -1,21 +1,24 @@
 import { View } from 'react-native';
 
+import { CapacityMeter, availability, spotsLabel } from '@/components/capacity-meter';
+import { DateBlock } from '@/components/date-block';
 import { trainingTypeMeta } from '@/components/meta';
-import { Badge, Button, Card, Icon, IconChip, Text } from '@/components/ui';
+import { Badge, Button, Card, Icon, type IconName, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange, relativeDay } from '@/lib/format';
-import type { TrainingSessionWithDetails } from '@/types/models';
+import type { TrainingListItem } from '@/types/models';
 
 export type TrainingCardProps = {
-  session: TrainingSessionWithDetails;
+  session: TrainingListItem;
   pending: boolean;
-  onToggle: () => void;
+  onRegister: () => void;
 };
 
-function Row({ icon, text }: { icon: 'time-outline' | 'location-outline' | 'people-outline'; text: string }) {
+function InfoRow({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <Icon name={icon} size={15} color="textTertiary" />
+      <Icon name={icon} size={14} color="textTertiary" />
       <Text variant="caption" color="textSecondary" style={{ flex: 1 }}>
         {text}
       </Text>
@@ -23,47 +26,58 @@ function Row({ icon, text }: { icon: 'time-outline' | 'location-outline' | 'peop
   );
 }
 
-export function TrainingCard({ session, pending, onToggle }: TrainingCardProps) {
+/**
+ * One open training session in the browse list. Reads the way a volunteer
+ * decides: *when* (the serif date block), *what* (type + title, with a Required
+ * flag when it's an outstanding core module), then the warm one-line "why",
+ * *where/when* in detail, and finally how full it is beside the action. Shares
+ * the date block and seat meter with the Shifts tab so the two browse
+ * experiences feel like one app.
+ */
+export function TrainingCard({ session, pending, onRegister }: TrainingCardProps) {
+  const { colors } = useTheme();
   const meta = trainingTypeMeta(session.type);
-  const registered = session.userAttendanceStatus === 'REGISTERED';
-  const spotsLeft = session.capacity - session.registeredCount;
-  const isFull = spotsLeft <= 0 && !registered;
+  const { full, scarce } = availability(session.registeredCount, session.capacity);
 
   return (
     <Card style={{ gap: Spacing.md }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-        <IconChip icon={meta.icon} tone={meta.tone} size={44} />
-        <View style={{ flex: 1, gap: 4 }}>
-          <Badge label={meta.label} tone={meta.tone} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.lg }}>
+        <DateBlock date={session.date} />
+        <View style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border }} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' }}>
+            <Badge label={meta.label} tone={meta.tone} />
+            {session.recommended ? <Badge label="Required" tone="warning" icon="alert-circle" /> : null}
+            {session.refresher ? <Badge label="Refresher" tone="neutral" /> : null}
+          </View>
           <Text variant="heading" numberOfLines={2}>
             {session.title}
           </Text>
         </View>
       </View>
 
-      <Text variant="body" color="textSecondary" numberOfLines={3}>
+      <Text variant="body" color="textSecondary" numberOfLines={2}>
         {session.description}
       </Text>
 
       <View style={{ gap: 6 }}>
-        <Row icon="time-outline" text={`${relativeDay(session.date)} · ${formatTimeRange(session.startTime, session.endTime)}`} />
-        {session.location ? <Row icon="location-outline" text={session.location} /> : null}
-        <Row
-          icon="people-outline"
-          text={`${session.registeredCount} of ${session.capacity} registered${isFull ? ' · full' : ''}`}
-        />
+        <InfoRow icon="time-outline" text={`${relativeDay(session.date)} · ${formatTimeRange(session.startTime, session.endTime)}`} />
+        {session.location ? <InfoRow icon="location-outline" text={session.location} /> : null}
       </View>
 
-      {registered ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
-          <Badge label="You're registered" tone="success" icon="checkmark-circle" />
-          <Button title="Cancel" variant="ghost" size="md" fullWidth={false} loading={pending} onPress={onToggle} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 }}>
+          <CapacityMeter taken={session.registeredCount} capacity={session.capacity} />
+          <Text variant="caption" weight="bold" color={full ? 'textTertiary' : scarce ? 'primary' : 'textSecondary'}>
+            {spotsLabel(session.registeredCount, session.capacity)}
+          </Text>
         </View>
-      ) : isFull ? (
-        <Button title="Session full" variant="secondary" size="md" disabled onPress={() => {}} />
-      ) : (
-        <Button title="Register" icon="add" size="md" loading={pending} onPress={onToggle} />
-      )}
+        {full ? (
+          <Badge label="Full" tone="neutral" />
+        ) : (
+          <Button title="Register" icon="add" size="md" fullWidth={false} loading={pending} onPress={onRegister} />
+        )}
+      </View>
     </Card>
   );
 }

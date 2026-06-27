@@ -134,6 +134,48 @@ export interface TrainingHistoryItem {
   status: AttendanceStatus;
 }
 
+/** Where a volunteer stands on a single required (core) training module. */
+export type TrainingModuleState = 'COMPLETE' | 'BOOKED' | 'NOT_STARTED';
+
+export interface TrainingModule {
+  type: TrainingType;
+  label: string;
+  state: TrainingModuleState;
+  /** Completed-on date (COMPLETE) or the booked session date (BOOKED). */
+  date: string | null;
+}
+
+/** The volunteer's overall standing against the required training curriculum. */
+export interface TrainingReadiness {
+  total: number;
+  complete: number;
+  booked: number;
+  /** True once every core module is complete. */
+  fullyTrained: boolean;
+  modules: TrainingModule[];
+}
+
+/** An available/registered session, tagged with how it relates to the curriculum. */
+export interface TrainingListItem extends TrainingSessionWithDetails {
+  /** Part of the required core curriculum. */
+  core: boolean;
+  /** Core, not yet completed and not yet booked — an outstanding requirement. */
+  recommended: boolean;
+  /** The volunteer has completed this type before — this session is a refresher. */
+  refresher: boolean;
+}
+
+/** Everything the Training tab needs in one shaped payload. */
+export interface TrainingOverview {
+  readiness: TrainingReadiness;
+  /** Upcoming sessions the volunteer is registered for, soonest first. */
+  registered: TrainingListItem[];
+  /** Upcoming sessions open to register for, soonest first. */
+  available: TrainingListItem[];
+  /** Sessions attended in the past, most recent first. */
+  completed: TrainingHistoryItem[];
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Dashboard + hours                                                          */
 /* -------------------------------------------------------------------------- */
