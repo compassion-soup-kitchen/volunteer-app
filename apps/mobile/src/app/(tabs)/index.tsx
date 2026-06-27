@@ -25,13 +25,12 @@ import {
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { countdownLabel, formatTimeRange, relativeDay } from '@/lib/format';
+import { formatTimeRange, relativeDay } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
 import { getAnnouncements } from '@/services/announcements-service';
 import { getDashboardData } from '@/services/dashboard-service';
 import { getAvailableTraining } from '@/services/training-service';
-import type { RosterShift } from '@/types/models';
 
 /** Where shifts happen — used for the hero location line and the directions link. */
 const VENUE = 'Compassion Soup Kitchen · Tory St, Te Aro';
@@ -60,15 +59,6 @@ function greeting(): string {
   if (h < 12) return 'Mōrena'; // good morning
   if (h < 18) return 'Ahiahi mārie'; // good afternoon
   return 'Pō mārie'; // good evening
-}
-
-/** A situational one-liner that reflects the volunteer's actual roster state. */
-function statusLine(next: RosterShift | null): string {
-  if (!next) return "You're free this week — find a time to lend a hand.";
-  const { label } = countdownLabel(next.date);
-  if (label === 'Today') return "You're on today — ka rawe!";
-  if (label === 'Tomorrow') return "You're rostered on tomorrow.";
-  return `You're rostered on ${relativeDay(next.date)}.`;
 }
 
 function openDirections() {
@@ -152,16 +142,13 @@ export default function DashboardScreen() {
         <HomeVideoHeader>
           <UtilityBar onVideo hasUnread={notices.length > 0} onNotices={() => router.push('/news')} />
 
-          {/* Greeting — personal, situational, floating on the footage */}
+          {/* Greeting — personal, floating on the footage */}
           <View>
             <Text variant="overline" style={{ color: ON_VIDEO_DIM, ...HERO_SHADOW }}>
               {greeting()}
             </Text>
             <Text variant="display" style={{ color: ON_VIDEO, ...HERO_SHADOW }}>
               Kia ora, {firstName}
-            </Text>
-            <Text variant="body" style={{ color: ON_VIDEO_DIM, ...HERO_SHADOW }}>
-              {statusLine(data?.nextShift ?? null)}
             </Text>
           </View>
         </HomeVideoHeader>

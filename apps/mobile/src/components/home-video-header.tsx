@@ -1,6 +1,7 @@
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Layout, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -18,15 +19,21 @@ function hexToRgb(hex: string): string {
 
 /**
  * A full-bleed looping video band at the top of the dashboard. The footage runs
- * edge-to-edge under the status bar, with an ink scrim for text legibility and a
- * gradient that dissolves the bottom of the video into the page's paper canvas —
- * so it reads as a soft, atmospheric header rather than a hard-edged banner.
- * Overlaid content (wordmark, greeting) is passed as children in light text.
- * Sits just below the Dynamic Island — the top safe area is reserved by the
- * Screen, so the island floats over the paper canvas above this band.
+ * edge-to-edge and is anchored to the very top of the screen — it bleeds up
+ * behind the status bar and Dynamic Island so the island appears to float over
+ * the moving footage. An ink scrim keeps text legible and a gradient dissolves
+ * the bottom of the video into the page's paper canvas, so it reads as a soft,
+ * atmospheric header rather than a hard-edged banner. Overlaid content (wordmark,
+ * greeting) is passed as children in light text and padded clear of the island.
+ *
+ * The enclosing Screen renders this band as the first item in a full-screen
+ * ScrollView whose content is inset below the safe area. We negate that inset
+ * with `marginTop` and add it back to the height + inner padding, so the video
+ * fills the area under the island while the greeting stays exactly in place.
  */
 export function HomeVideoHeader({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const player = useVideoPlayer(HOME_VIDEO, (p) => {
     p.loop = true;
@@ -36,10 +43,11 @@ export function HomeVideoHeader({ children }: { children: ReactNode }) {
   });
 
   const bg = hexToRgb(colors.background);
-  const height = 218;
+  // Visible band height, plus the top safe area we bleed up into behind the island.
+  const height = 218 + insets.top;
 
   return (
-    <View style={{ height, width: '100%', backgroundColor: colors.inkSurface }}>
+    <View style={{ height, marginTop: -insets.top, width: '100%', backgroundColor: colors.inkSurface }}>
       {/* Media + scrims are clipped to the header; the content layer is not, so
           the greeting's drop shadow can render in full without being cropped. */}
       <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} pointerEvents="none">
@@ -66,7 +74,7 @@ export function HomeVideoHeader({ children }: { children: ReactNode }) {
       <View
         style={{
           flex: 1,
-          paddingTop: Spacing.lg,
+          paddingTop: insets.top + Spacing.lg,
           paddingBottom: Spacing.xxl,
           paddingHorizontal: Layout.screenPadding,
           justifyContent: 'space-between',

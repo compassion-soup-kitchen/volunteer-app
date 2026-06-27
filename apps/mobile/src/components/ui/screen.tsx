@@ -1,5 +1,6 @@
-import { type ReactNode } from 'react';
-import { RefreshControl, ScrollView, type StyleProp, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { type LayoutChangeEvent, type ReactNode, useState } from 'react';
+import { RefreshControl, type StyleProp, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import Animated, { useAnimatedRef, useAnimatedStyle, useScrollViewOffset } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Kowhaiwhai } from '@/components/brand';
@@ -19,7 +20,11 @@ export type ScreenProps = {
   bottomInset?: number;
   /** Float a large, faint kōwhaiwhai motif behind the page (hero screens) */
   motif?: boolean;
-  /** Full-bleed element rendered above the padded content column (e.g. a video hero) */
+  /**
+   * A full-bleed hero rendered behind the content. It stays pinned to the top of
+   * the screen (fixed/parallax) while the content sheet scrolls up and over it,
+   * rather than scrolling away with the page. See HomeVideoHeader.
+   */
   header?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
 };
@@ -46,6 +51,20 @@ export function Screen({
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
+  // Track the live scroll offset so a hero `header` can be counter-translated and
+  // stay pinned to the top while the content sheet scrolls over it.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollOffset = useScrollViewOffset(scrollRef);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  // Pinned hero: counter-translate by the distance scrolled from rest so it reads
+  // as a fixed/parallax backdrop. The native-tabs scroll view carries a top
+  // content inset equal to the safe area, so its resting offset is `-insets.top`;
+  // adding it back makes the transform 0 at rest and grows as the page scrolls.
+  const heroStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scrollOffset.value + insets.top }],
+  }));
+
   const paddingTop = (insetTop ? insets.top : 0) + Spacing.sm;
   // Clear the home indicator AND the floating native tab bar (which overlays content on iOS 26).
   const paddingBottom = insets.bottom + Spacing.huge + Spacing.md + bottomInset;
@@ -56,15 +75,29 @@ export function Screen({
     </View>
   );
 
-  // Horizontal gutters + top spacing live on this wrapper so an optional
-  // full-bleed `header` can sit above it and run edge-to-edge. The tab scene
-  // already reserves the top safe area, so a header band naturally begins just
-  // below the Dynamic Island; the column below the header just needs breathing room.
+  // Horizontal gutters + top spacing live on this wrapper. With a hero `header`
+  // the sheet must be opaque so it occludes the pinned backdrop as it scrolls
+  // over it; otherwise it rides on the themed paper canvas as before.
   const padded = (
-    <View style={{ paddingTop: header ? Spacing.xl : paddingTop, paddingHorizontal: Layout.screenPadding }}>
+    <View
+      style={{
+        paddingTop: header ? Spacing.xl : paddingTop,
+        paddingHorizontal: Layout.screenPadding,
+        backgroundColor: header ? colors.background : undefined,
+      }}>
       {column}
     </View>
   );
+
+  // A pinned hero sits behind the content layer; everything below it flows after
+  // its layout footprint, and the transform keeps it visually fixed on screen.
+  const pinnedHeader = header ? (
+    <Animated.View
+      style={heroStyle}
+      onLayout={(e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height)}>
+      {header}
+    </Animated.View>
+  ) : null;
 
   // A fixed, faint kōwhaiwhai bleeding off the upper-right edge, behind content.
   const watermark = motif ? (
@@ -80,14 +113,18 @@ export function Screen({
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {watermark}
-        {header}
+        {pinnedHeader}
         {padded}
       </View>
     );
   }
 
+  // Surface the refresh spinner just below a hero so it isn't hidden behind it.
+  const refreshOffset = header ? insets.top + headerHeight : insetTop ? insets.top : 0;
+
   const list = (
-    <ScrollView
+    <Animated.ScrollView
+      ref={scrollRef}
       style={{ backgroundColor: motif ? 'transparent' : colors.background }}
       contentInsetAdjustmentBehavior="never"
       automaticallyAdjustContentInsets={false}
@@ -99,15 +136,15 @@ export function Screen({
           <RefreshControl
             refreshing={Boolean(refreshing)}
             onRefresh={onRefresh}
-            progressViewOffset={insetTop ? insets.top : 0}
+            progressViewOffset={refreshOffset}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
         ) : undefined
       }>
-      {header}
+      {pinnedHeader}
       {padded}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 
   if (!motif) return list;
