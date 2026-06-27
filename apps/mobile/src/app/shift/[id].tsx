@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CapacityMeter, availability } from '@/components/capacity-meter';
 import { Badge, Button, Card, EmptyState, Icon, type IconName, Text } from '@/components/ui';
 import { FontFamily, Layout, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -161,9 +162,9 @@ export default function ShiftDetailScreen() {
     );
   }
 
-  const spotsLeft = shift.capacity - shift.signupCount;
+  const { left: spotsLeft, full, scarce } = availability(shift.signupCount, shift.capacity);
   const isSignedUp = shift.userSignupStatus === 'SIGNED_UP';
-  const isFull = spotsLeft <= 0 && !isSignedUp;
+  const isFull = full && !isSignedUp;
 
   async function share() {
     if (!shift) return;
@@ -204,7 +205,10 @@ export default function ShiftDetailScreen() {
           ) : isFull ? (
             <Badge label="Full" tone="neutral" />
           ) : (
-            <Badge label={`${spotsLeft} ${spotsLeft === 1 ? 'spot' : 'spots'} left`} tone="brand" />
+            <Badge
+              label={scarce ? `Only ${spotsLeft} left` : `${spotsLeft} spots left`}
+              tone="brand"
+            />
           )}
         </View>
 
@@ -212,7 +216,13 @@ export default function ShiftDetailScreen() {
         <View style={{ gap: 13, marginTop: Spacing.xl }}>
           <FactRow icon="calendar-outline" value={`${formatLongDate(shift.date)} · ${formatTimeRange(shift.startTime, shift.endTime)}`} />
           <FactRow icon="location-outline" value={VENUE} />
-          <FactRow icon="people-outline" value={`${shift.signupCount} of ${shift.capacity} ngā tūao signed up`} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+            <Icon name="people-outline" size={19} color="primary" />
+            <Text variant="callout" color="text" style={{ flex: 1 }}>
+              {`${shift.signupCount} of ${shift.capacity} ngā tūao signed up`}
+            </Text>
+            <CapacityMeter taken={shift.signupCount} capacity={shift.capacity} size={9} />
+          </View>
         </View>
 
         {/* What you'll do */}
