@@ -1,86 +1,85 @@
 import { useQuery } from '@tanstack/react-query';
 import { View } from 'react-native';
 
-import { serviceAreaMeta } from '@/components/meta';
-import { MilestoneProgress } from '@/components/milestone-progress';
+import { AreaLedger, ImpactTrend, MilestoneJourney } from '@/components/impact';
 import {
   Card,
   EmptyState,
   Icon,
+  IconChip,
   PageHeader,
-  ProgressBar,
   Screen,
   SectionHeader,
   SkeletonCard,
   Text,
 } from '@/components/ui';
+import { type IconName } from '@/components/ui/icon';
+import { type Tone } from '@/components/ui/tones';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { formatDuration } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
 import { getVolunteerHoursData } from '@/services/hours-service';
-import type { HoursByArea, HoursByMonth } from '@/types/models';
 
-/** Hours-by-month bars; the most recent month is picked out in brand red. */
-function MonthBars({ data }: { data: HoursByMonth[] }) {
+/** A translucent momentum pill on the dark hero — surfaces this month's mahi. */
+function MomentumPill({ label }: { label: string }) {
   const { colors } = useTheme();
-  const max = Math.max(...data.map((m) => m.hours), 1);
   return (
-    <View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.sm, height: 84 }}>
-        {data.map((m, i) => {
-          const current = i === data.length - 1;
-          return (
-            <View
-              key={m.month}
-              style={{
-                flex: 1,
-                height: `${Math.max(6, (m.hours / max) * 100)}%`,
-                backgroundColor: current ? colors.primary : colors.surfaceMuted,
-                borderTopLeftRadius: Radius.sm,
-                borderTopRightRadius: Radius.sm,
-              }}
-            />
-          );
-        })}
-      </View>
-      <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm }}>
-        {data.map((m, i) => (
-          <Text
-            key={m.month}
-            variant="overline"
-            center
-            color={i === data.length - 1 ? 'primary' : 'textTertiary'}
-            style={{ flex: 1, fontSize: 10, letterSpacing: 0.4 }}>
-            {m.label.slice(0, 3)}
-          </Text>
-        ))}
-      </View>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        alignSelf: 'flex-start',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: Radius.pill,
+        backgroundColor: 'rgba(255,255,255,0.14)',
+      }}>
+      <Icon name="caret-up" size={12} raw={colors.onInk} />
+      <Text variant="caption" weight="bold" style={{ color: colors.onInk }}>
+        {label}
+      </Text>
     </View>
   );
 }
 
-function AreaRow({ area, max }: { area: HoursByArea; max: number }) {
-  const meta = serviceAreaMeta(area.serviceAreaId);
+/** One mission-outcome figure (meals / shifts) with a this-month delta. */
+function OutcomeCard({
+  icon,
+  tone,
+  value,
+  label,
+  thisMonth,
+  unit,
+}: {
+  icon: IconName;
+  tone: Tone;
+  value: string;
+  label: string;
+  thisMonth: number;
+  unit: string;
+}) {
   return (
-    <View style={{ gap: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-          <Icon name={meta.icon} size={16} color="textSecondary" />
-          <Text variant="bodyStrong" numberOfLines={1}>
-            {area.serviceAreaName}
-          </Text>
-        </View>
-        <Text variant="mono" color="textSecondary">
-          {area.hours}h
+    <Card style={{ flex: 1, gap: Spacing.md }}>
+      <IconChip icon={icon} tone={tone} size={36} />
+      <View style={{ gap: 2 }}>
+        <Text variant="stat">{value}</Text>
+        <Text variant="caption" color="textSecondary">
+          {label}
         </Text>
       </View>
-      <ProgressBar value={area.hours / max} />
-      <Text variant="caption" color="textTertiary">
-        {area.shifts} {area.shifts === 1 ? 'shift' : 'shifts'}
-        {area.meals > 0 ? ` · ${area.meals} meals` : ''}
-      </Text>
-    </View>
+      {thisMonth > 0 ? (
+        <Text variant="caption" color="success" weight="bold">
+          +{thisMonth.toLocaleString()} {unit} this month
+        </Text>
+      ) : (
+        <Text variant="caption" color="textTertiary">
+          None yet this month
+        </Text>
+      )}
+    </Card>
   );
 }
 
@@ -94,11 +93,14 @@ export default function HoursScreen() {
     queryFn: getVolunteerHoursData,
   });
 
-  const maxAreaHours = Math.max(...(data?.byServiceArea.map((a) => a.hours) ?? [1]), 1);
-
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching}>
-      <PageHeader overline="Tō pānga" title="Your impact" subtitle="The good you've done." illustration="heart" />
+      <PageHeader
+        overline="Tō pānga"
+        title="Your impact"
+        subtitle="The mahi you've given, and the good it's done."
+        illustration="heart"
+      />
 
       {isLoading || !data ? (
         <View style={{ gap: Spacing.lg }}>
@@ -115,8 +117,8 @@ export default function HoursScreen() {
         />
       ) : (
         <>
-          {/* Time given — dark hero */}
-          <Card tone="ink" elevated padding={Spacing.xl} style={{ overflow: 'hidden' }}>
+          {/* HERO — lifetime time given, with this-month momentum */}
+          <Card tone="ink" elevated padding={Spacing.xl} style={{ overflow: 'hidden', gap: Spacing.md }}>
             <View
               style={{
                 position: 'absolute',
@@ -128,9 +130,12 @@ export default function HoursScreen() {
                 backgroundColor: 'rgba(228,0,43,0.22)',
               }}
             />
-            <Text variant="overline" style={{ color: colors.onInkMuted, letterSpacing: 1.4 }}>
-              Time given
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.md }}>
+              <Text variant="overline" style={{ color: colors.onInkMuted, letterSpacing: 1.4 }}>
+                Tō wā · Time given
+              </Text>
+              {data.hoursThisMonth > 0 ? <MomentumPill label={`${formatDuration(data.hoursThisMonth)} this month`} /> : null}
+            </View>
             <Text
               style={{
                 fontFamily: FontFamily.serif,
@@ -138,45 +143,50 @@ export default function HoursScreen() {
                 lineHeight: 56,
                 letterSpacing: -0.6,
                 color: colors.onInk,
-                marginTop: Spacing.sm,
               }}>
               {data.totalHours}
               <Text style={{ fontFamily: FontFamily.serif, fontSize: 22, color: colors.onInkMuted }}> hrs</Text>
             </Text>
-            <Text variant="caption" style={{ color: colors.onInkMuted, marginTop: 6 }}>
-              Since you joined
+            <Text variant="caption" style={{ color: colors.onInkMuted }}>
+              Across {data.totalShifts} {data.totalShifts === 1 ? 'shift' : 'shifts'} since you joined
             </Text>
           </Card>
 
-          {/* Meals / shifts */}
+          {/* JOURNEY — promoted high; the motivational spine */}
+          <MilestoneJourney milestones={data.milestones} totalHours={data.totalHours} />
+
+          {/* OUTCOMES — what the time produced */}
           <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-            <Card style={{ flex: 1, gap: 6 }}>
-              <Text style={{ fontFamily: FontFamily.serif, fontSize: 26, lineHeight: 28, color: colors.text, letterSpacing: -0.3 }}>
-                {data.totalMeals.toLocaleString()}
-              </Text>
-              <Text variant="caption" color="textSecondary">
-                Meals served
-              </Text>
-            </Card>
-            <Card style={{ flex: 1, gap: 6 }}>
-              <Text style={{ fontFamily: FontFamily.serif, fontSize: 26, lineHeight: 28, color: colors.text, letterSpacing: -0.3 }}>
-                {data.totalShifts}
-              </Text>
-              <Text variant="caption" color="textSecondary">
-                Shifts done
-              </Text>
-            </Card>
+            <OutcomeCard
+              icon="restaurant"
+              tone="brand"
+              value={data.totalMeals.toLocaleString()}
+              label="Meals served"
+              thisMonth={data.mealsThisMonth}
+              unit="meals"
+            />
+            <OutcomeCard
+              icon="checkmark-circle"
+              tone="navy"
+              value={`${data.totalShifts}`}
+              label="Shifts done"
+              thisMonth={data.shiftsThisMonth}
+              unit={data.shiftsThisMonth === 1 ? 'shift' : 'shifts'}
+            />
           </View>
 
-          {/* Hours by month */}
-          {data.byMonth.length > 0 ? (
-            <Card style={{ gap: Spacing.lg }}>
-              <Text variant="heading">Hours by month</Text>
-              <MonthBars data={data.byMonth} />
-            </Card>
+          {/* TREND — monthly rhythm */}
+          {data.byMonth.length > 1 ? <ImpactTrend data={data.byMonth} /> : null}
+
+          {/* BREAKDOWN — where the time goes */}
+          {data.byServiceArea.length > 0 ? (
+            <View style={{ gap: Spacing.md }}>
+              <SectionHeader overline="Ngā wāhanga" title="Where your time goes" />
+              <AreaLedger areas={data.byServiceArea} totalHours={data.totalHours} />
+            </View>
           ) : null}
 
-          {/* Thank you */}
+          {/* GRATITUDE — a warm close */}
           <Card
             plain
             padding={Spacing.lg}
@@ -187,23 +197,6 @@ export default function HoursScreen() {
               Thank you, {firstName} — your time keeps the kitchen warm.
             </Text>
           </Card>
-
-          {/* Milestones */}
-          <Card>
-            <MilestoneProgress milestones={data.milestones} totalHours={data.totalHours} />
-          </Card>
-
-          {/* By area */}
-          {data.byServiceArea.length > 0 ? (
-            <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Ngā wāhanga" title="By area" />
-              <Card style={{ gap: Spacing.lg }}>
-                {data.byServiceArea.map((area) => (
-                  <AreaRow key={area.serviceAreaId} area={area} max={maxAreaHours} />
-                ))}
-              </Card>
-            </View>
-          ) : null}
         </>
       )}
     </Screen>
