@@ -68,6 +68,7 @@ function RootNavigator() {
         }}
       />
       <Stack.Screen name="schedule" options={{ title: 'My schedule' }} />
+      <Stack.Screen name="news" options={{ title: 'Notices' }} />
       <Stack.Screen name="onboarding" options={{ title: 'Welcome' }} />
       <Stack.Screen name="profile/edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
     </Stack>

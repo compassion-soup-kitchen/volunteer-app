@@ -19,6 +19,8 @@ export type ScreenProps = {
   bottomInset?: number;
   /** Float a large, faint kōwhaiwhai motif behind the page (hero screens) */
   motif?: boolean;
+  /** Full-bleed element rendered above the padded content column (e.g. a video hero) */
+  header?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
 };
 
@@ -37,6 +39,7 @@ export function Screen({
   insetTop = true,
   bottomInset = 0,
   motif = false,
+  header,
   contentStyle,
 }: ScreenProps) {
   const { colors } = useTheme();
@@ -53,6 +56,16 @@ export function Screen({
     </View>
   );
 
+  // Horizontal gutters + top spacing live on this wrapper so an optional
+  // full-bleed `header` can sit above it and run edge-to-edge. The tab scene
+  // already reserves the top safe area, so a header band naturally begins just
+  // below the Dynamic Island; the column below the header just needs breathing room.
+  const padded = (
+    <View style={{ paddingTop: header ? Spacing.xl : paddingTop, paddingHorizontal: Layout.screenPadding }}>
+      {column}
+    </View>
+  );
+
   // A fixed, faint kōwhaiwhai bleeding off the upper-right edge, behind content.
   const watermark = motif ? (
     <Kowhaiwhai
@@ -65,9 +78,10 @@ export function Screen({
 
   if (!scroll) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, paddingTop, paddingHorizontal: Layout.screenPadding }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         {watermark}
-        {column}
+        {header}
+        {padded}
       </View>
     );
   }
@@ -76,9 +90,10 @@ export function Screen({
     <ScrollView
       style={{ backgroundColor: motif ? 'transparent' : colors.background }}
       contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingTop, paddingBottom, paddingHorizontal: Layout.screenPadding }}
+      contentContainerStyle={{ paddingBottom }}
       refreshControl={
         onRefresh ? (
           <RefreshControl
@@ -90,7 +105,8 @@ export function Screen({
           />
         ) : undefined
       }>
-      {column}
+      {header}
+      {padded}
     </ScrollView>
   );
 

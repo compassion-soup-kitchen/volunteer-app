@@ -135,6 +135,26 @@ export interface TrainingHistoryItem {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Communication                                                              */
+/* -------------------------------------------------------------------------- */
+
+export type AnnouncementAudience = 'ALL' | 'VOLUNTEERS' | 'COORDINATORS';
+
+/** A team notice ("pānui") shown in the volunteer's feed. Mirrors the web `Announcement` model. */
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  audience: AnnouncementAudience;
+  /** Display name of the staff member who posted it */
+  authorName: string;
+  /** ISO datetime the notice was published */
+  publishedAt: string;
+  /** Pinned notices float to the top and read as time-sensitive */
+  pinned: boolean;
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Dashboard + hours                                                          */
 /* -------------------------------------------------------------------------- */
 
