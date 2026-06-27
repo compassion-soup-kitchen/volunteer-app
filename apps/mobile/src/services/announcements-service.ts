@@ -23,3 +23,10 @@ export async function getAnnouncements(): Promise<Announcement[]> {
       return b.publishedAt.localeCompare(a.publishedAt);
     });
 }
+
+/** A single notice, or `null` if it's gone or not visible to volunteers. */
+export async function getAnnouncementById(id: string): Promise<Announcement | null> {
+  await delay(140);
+  const a = db.announcements.find((x) => x.id === id);
+  return a && VISIBLE.has(a.audience) ? a : null;
+}
