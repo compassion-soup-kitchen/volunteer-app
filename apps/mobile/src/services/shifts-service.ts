@@ -49,6 +49,48 @@ export async function getAvailableShifts(filters?: ShiftFilters): Promise<ShiftW
     .map(toDetails);
 }
 
+export type ScheduleStatus = 'CONFIRMED' | 'ATTENDED' | 'NO_SHOW';
+
+export interface ScheduleEntry {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  areaName: string;
+  status: ScheduleStatus;
+}
+
+function toScheduleEntry(s: ShiftRecord, status: ScheduleStatus): ScheduleEntry {
+  return {
+    id: s.id,
+    date: s.date,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    areaName: areaById(s.serviceAreaId)?.name ?? 'Shift',
+    status,
+  };
+}
+
+/** The volunteer's own roster, split into upcoming bookings and past shifts. */
+export async function getMySchedule(): Promise<{ upcoming: ScheduleEntry[]; past: ScheduleEntry[] }> {
+  await delay();
+
+  const upcoming = db.shifts
+    .filter((s) => db.mySignups[s.id]?.status === 'SIGNED_UP' && !isPast(s.date))
+    .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
+    .map((s) => toScheduleEntry(s, 'CONFIRMED'));
+
+  const past = db.shifts
+    .filter((s) => {
+      const mine = db.mySignups[s.id];
+      return mine && (mine.status === 'ATTENDED' || mine.status === 'NO_SHOW');
+    })
+    .sort((a, b) => (b.date + b.startTime).localeCompare(a.date + a.startTime))
+    .map((s) => toScheduleEntry(s, db.mySignups[s.id].status === 'NO_SHOW' ? 'NO_SHOW' : 'ATTENDED'));
+
+  return { upcoming, past };
+}
+
 export async function getShiftById(id: string): Promise<ShiftWithDetails | null> {
   await delay(180);
   const s = db.shifts.find((x) => x.id === id);

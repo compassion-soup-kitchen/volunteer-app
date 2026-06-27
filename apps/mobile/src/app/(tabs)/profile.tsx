@@ -103,6 +103,18 @@ export default function ProfileScreen() {
             <Button title="Edit profile" variant="secondary" icon="create-outline" onPress={() => router.push('/profile/edit')} />
           </Card>
 
+          {/* Onboarding */}
+          <Card onPress={() => router.push('/onboarding')} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+            <Icon name="compass" size={22} color="primary" />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text variant="subheading">Volunteer onboarding</Text>
+              <Text variant="caption" color="textSecondary">
+                Your steps to your first shift
+              </Text>
+            </View>
+            <Icon name="chevron-forward" size={18} color="textTertiary" />
+          </Card>
+
           {/* About */}
           {data.bio ? (
             <View style={{ gap: Spacing.md }}>
