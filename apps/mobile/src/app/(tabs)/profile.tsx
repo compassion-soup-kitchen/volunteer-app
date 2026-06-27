@@ -1,56 +1,149 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Alert, View } from 'react-native';
+import { Alert, Linking, Pressable, View } from 'react-native';
 
-import { trainingTypeMeta } from '@/components/meta';
+import { Wordmark } from '@/components/brand';
+import { serviceAreaMeta } from '@/components/meta';
+import { ProfileIdentity } from '@/components/profile-identity';
+import { TrainingRecord } from '@/components/training-record';
 import {
-  Avatar,
   Badge,
-  Button,
   Card,
   Divider,
   Icon,
   type IconName,
-  PageHeader,
+  IconChip,
   Screen,
   SectionHeader,
   Skeleton,
+  SkeletonCard,
   Text,
 } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
-import { formatMonthYear, formatShiftDate } from '@/lib/format';
+import { toneColors } from '@/components/ui/tones';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
 import { getVolunteerProfile } from '@/services/profile-service';
+import type { ServiceArea, VolunteerStatus } from '@/types/models';
 
-function InfoRow({ icon, label, value }: { icon: IconName; label: string; value: string }) {
+/** A volunteer who hasn't reached ACTIVE/INACTIVE is still working through onboarding. */
+function isOnboarding(status: VolunteerStatus): boolean {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md }}>
-      <Icon name={icon} size={20} color="textSecondary" />
-      <View style={{ flex: 1 }}>
+    status === 'APPLICATION_SUBMITTED' ||
+    status === 'AWAITING_VETTING' ||
+    status === 'APPROVED_FOR_INDUCTION'
+  );
+}
+
+/** A labelled detail line. When `href` is set the whole row taps through (e.g. to dial). */
+function DetailRow({
+  icon,
+  label,
+  value,
+  href,
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  const body = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+      <IconChip icon={icon} tone="neutral" size={38} />
+      <View style={{ flex: 1, gap: 1 }}>
         <Text variant="caption" color="textTertiary">
           {label}
         </Text>
-        <Text variant="body" selectable>
+        <Text variant="bodyStrong" selectable={!href} numberOfLines={2}>
           {value}
         </Text>
       </View>
+      {href ? <Icon name="call-outline" size={18} color="primary" /> : null}
+    </View>
+  );
+
+  if (!href) return body;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Call ${value}`}
+      onPress={() => Linking.openURL(href)}
+      style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+      {body}
+    </Pressable>
+  );
+}
+
+/** A gentle prompt to fill in missing-but-important data, tapping through to edit. */
+function AddPrompt({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, opacity: pressed ? 0.6 : 1 },
+      ]}>
+      <IconChip icon="add" tone="brand" size={38} />
+      <Text variant="bodyStrong" color="primary" style={{ flex: 1 }}>
+        {label}
+      </Text>
+      <Icon name="chevron-forward" size={18} color="textTertiary" />
+    </Pressable>
+  );
+}
+
+/** A service area the volunteer helps in, as a colour-coded pill (icon + name). */
+function AreaPill({ area }: { area: ServiceArea }) {
+  const { colors } = useTheme();
+  const meta = serviceAreaMeta(area.id);
+  const tint = toneColors(meta.tone, colors);
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 7,
+        backgroundColor: tint.bg,
+        paddingLeft: 11,
+        paddingRight: 14,
+        paddingVertical: 8,
+        borderRadius: Radius.pill,
+        borderCurve: 'continuous',
+      }}>
+      <Icon name={meta.icon} size={15} raw={tint.fg} />
+      <Text variant="callout" style={{ color: tint.fg, fontFamily: FontFamily.textSemiBold }}>
+        {area.name}
+      </Text>
     </View>
   );
 }
 
-function Pills({ items, tone }: { items: string[]; tone: 'brand' | 'navy' | 'neutral' }) {
+function ProfileSkeleton() {
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
-      {items.map((item) => (
-        <Badge key={item} label={item} tone={tone} />
-      ))}
+    <View style={{ gap: Spacing.xxxl }}>
+      <Card elevated padding={Spacing.xl} style={{ gap: Spacing.lg }}>
+        <Skeleton height={12} width="42%" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.lg }}>
+          <Skeleton height={72} width={72} radius={999} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <Skeleton height={20} width="70%" />
+            <Skeleton height={12} width="50%" />
+            <Skeleton height={12} width="60%" />
+          </View>
+        </View>
+        <Skeleton height={62} width="100%" radius={Radius.lg} />
+      </Card>
+      <SkeletonCard />
+      <SkeletonCard />
     </View>
   );
 }
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { signOut } = useAuth();
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: qk.profile,
@@ -64,148 +157,166 @@ export default function ProfileScreen() {
     ]);
   }
 
+  const goEdit = () => router.push('/profile/edit');
+
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching} motif>
-      <PageHeader overline="Tō kōtaha" title="Profile" illustration="dove" />
-
       {isLoading || !data ? (
-        <Card style={{ gap: Spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-            <Skeleton height={64} width={64} radius={999} />
-            <View style={{ flex: 1, gap: 8 }}>
-              <Skeleton height={18} width="60%" />
-              <Skeleton height={12} width="80%" />
-            </View>
-          </View>
-        </Card>
+        <ProfileSkeleton />
       ) : (
         <>
-          {/* Identity */}
-          <Card elevated style={{ gap: Spacing.lg }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-              <Avatar name={data.name} size={64} />
-              <View style={{ flex: 1, gap: 3 }}>
-                <Text variant="title" numberOfLines={1}>
-                  {data.name}
+          <ProfileIdentity profile={data} onEdit={goEdit} />
+
+          {/* Still onboarding? Surface the path to a first shift; hidden once active. */}
+          {isOnboarding(data.status) ? (
+            <Card
+              tone="brand"
+              onPress={() => router.push('/onboarding')}
+              accessibilityLabel="Finish your onboarding"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+              <Icon name="compass" size={24} raw={colors.onPrimaryTint} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text variant="subheading" style={{ color: colors.onPrimaryTint }}>
+                  Finish your onboarding
                 </Text>
-                <Text variant="caption" color="textSecondary" selectable>
-                  {data.email}
-                </Text>
-                <Text variant="caption" color="textTertiary">
-                  Volunteering since {formatMonthYear(data.memberSince)}
+                <Text variant="caption" style={{ color: colors.onPrimaryTint, opacity: 0.85 }}>
+                  A few steps left before your first shift
                 </Text>
               </View>
-            </View>
-            <View style={{ flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' }}>
-              <Badge label="Active volunteer" tone="success" icon="checkmark-circle" />
-              <Badge label="MoJ cleared" tone="navy" icon="shield-checkmark" />
-            </View>
-            <Button title="Edit profile" variant="secondary" icon="create-outline" onPress={() => router.push('/profile/edit')} />
-          </Card>
-
-          {/* Onboarding */}
-          <Card onPress={() => router.push('/onboarding')} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-            <Icon name="compass" size={22} color="primary" />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text variant="subheading">Volunteer onboarding</Text>
-              <Text variant="caption" color="textSecondary">
-                Your steps to your first shift
-              </Text>
-            </View>
-            <Icon name="chevron-forward" size={18} color="textTertiary" />
-          </Card>
-
-          {/* About */}
-          {data.bio ? (
-            <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Ko wai au" title="About me" divider />
-              <Card style={{ gap: Spacing.md }}>
-                <Text variant="body">{data.bio}</Text>
-                {data.skills.length > 0 ? (
-                  <>
-                    <Divider />
-                    <Text variant="label" color="textSecondary">
-                      Skills
-                    </Text>
-                    <Pills items={data.skills} tone="neutral" />
-                  </>
-                ) : null}
-              </Card>
-            </View>
+              <Icon name="chevron-forward" size={18} raw={colors.onPrimaryTint} />
+            </Card>
           ) : null}
 
-          {/* Interests */}
-          {data.interests.length > 0 ? (
-            <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Ngā wāhanga" title="Where I help" divider />
-              <Card>
-                <Pills items={data.interests.map((i) => i.name)} tone="brand" />
-              </Card>
-            </View>
-          ) : null}
-
-          {/* Contact */}
-          <View style={{ gap: Spacing.md }}>
-            <SectionHeader overline="Whakapā mai" title="Contact details" divider />
+          {/* Your details — the reachability + safety data the kitchen relies on */}
+          <View style={{ gap: Spacing.lg }}>
+            <SectionHeader overline="Whakapā mai · Reach me" title="Your details" divider />
             <Card style={{ gap: Spacing.lg }}>
-              {data.phone ? <InfoRow icon="call-outline" label="Phone" value={data.phone} /> : null}
+              {data.phone ? <DetailRow icon="call-outline" label="Phone" value={data.phone} /> : null}
               {data.phone && data.address ? <Divider /> : null}
-              {data.address ? <InfoRow icon="location-outline" label="Address" value={data.address} /> : null}
+              {data.address ? (
+                <DetailRow icon="location-outline" label="Address" value={data.address} />
+              ) : null}
+              {!data.phone && !data.address ? (
+                <AddPrompt label="Add your contact details" onPress={goEdit} />
+              ) : null}
             </Card>
           </View>
 
-          {/* Emergency contact */}
-          {data.emergencyContactName ? (
-            <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Pāpātanga ohotata" title="Emergency contact" divider />
-              <Card style={{ gap: Spacing.lg }}>
-                <InfoRow icon="person-outline" label="Name" value={data.emergencyContactName} />
-                {data.emergencyContactPhone ? (
-                  <>
-                    <Divider />
-                    <InfoRow icon="call-outline" label="Phone" value={data.emergencyContactPhone} />
-                  </>
-                ) : null}
-                {data.emergencyContactRelationship ? (
-                  <>
-                    <Divider />
-                    <InfoRow icon="heart-outline" label="Relationship" value={data.emergencyContactRelationship} />
-                  </>
-                ) : null}
-              </Card>
+          {/* Emergency contact — safety-critical, kept its own clearly-flagged block */}
+          <View style={{ gap: Spacing.lg }}>
+            <SectionHeader overline="Pāpātanga ohotata · Emergency" title="In case of emergency" divider />
+            <Card style={{ gap: Spacing.lg }}>
+              {data.emergencyContactName ? (
+                <>
+                  <DetailRow icon="person-outline" label="Name" value={data.emergencyContactName} />
+                  {data.emergencyContactPhone ? (
+                    <>
+                      <Divider />
+                      <DetailRow
+                        icon="call-outline"
+                        label="Phone"
+                        value={data.emergencyContactPhone}
+                        href={`tel:${data.emergencyContactPhone.replace(/\s+/g, '')}`}
+                      />
+                    </>
+                  ) : null}
+                  {data.emergencyContactRelationship ? (
+                    <>
+                      <Divider />
+                      <DetailRow
+                        icon="heart-outline"
+                        label="Relationship"
+                        value={data.emergencyContactRelationship}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <AddPrompt label="Add an emergency contact" onPress={goEdit} />
+              )}
+            </Card>
+          </View>
+
+          {/* Where I help — service areas, colour-coded to aid rostering */}
+          {data.interests.length > 0 ? (
+            <View style={{ gap: Spacing.lg }}>
+              <SectionHeader overline="Ngā wāhanga · Service" title="Where I help" divider />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+                {data.interests.map((area) => (
+                  <AreaPill key={area.id} area={area} />
+                ))}
+              </View>
             </View>
           ) : null}
 
-          {/* Training history */}
+          {/* Credentials — completed training, the compliance lens on this person */}
           {data.trainingHistory.length > 0 ? (
-            <View style={{ gap: Spacing.md }}>
-              <SectionHeader overline="Kua oti" title="Training completed" divider />
-              <Card style={{ gap: Spacing.lg }}>
-                {data.trainingHistory.map((item, i) => {
-                  const meta = trainingTypeMeta(item.type);
-                  return (
-                    <View key={item.id} style={{ gap: Spacing.lg }}>
-                      {i > 0 ? <Divider /> : null}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-                        <Icon name={meta.icon} size={20} color="textSecondary" />
-                        <View style={{ flex: 1, gap: 2 }}>
-                          <Text variant="bodyStrong" numberOfLines={1}>
-                            {item.title}
-                          </Text>
-                          <Text variant="caption" color="textTertiary">
-                            {formatShiftDate(item.date)}
-                          </Text>
-                        </View>
-                        <Badge label="Attended" tone="success" icon="checkmark" />
-                      </View>
+            <View style={{ gap: Spacing.lg }}>
+              <SectionHeader
+                overline="Kua oti · Completed"
+                title="Credentials"
+                divider
+              />
+              <TrainingRecord items={data.trainingHistory} />
+            </View>
+          ) : null}
+
+          {/* About me — the softer, social note, kept low in the hierarchy */}
+          {data.bio || data.skills.length > 0 ? (
+            <View style={{ gap: Spacing.lg }}>
+              <SectionHeader overline="Ko wai au · About" title="About me" divider />
+              <Card style={{ gap: Spacing.md }}>
+                {data.bio ? <Text variant="body">{data.bio}</Text> : null}
+                {data.bio && data.skills.length > 0 ? <Divider /> : null}
+                {data.skills.length > 0 ? (
+                  <>
+                    <Text variant="overline" color="textTertiary">
+                      Skills
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+                      {data.skills.map((skill) => (
+                        <Badge key={skill} label={skill} tone="neutral" />
+                      ))}
                     </View>
-                  );
-                })}
+                  </>
+                ) : null}
               </Card>
             </View>
           ) : null}
 
-          <Button title="Sign out" variant="secondary" icon="log-out-outline" onPress={confirmSignOut} />
+          {/* Account — sign out kept subtle and apart, then a finished brand sign-off */}
+          <View style={{ gap: Spacing.xl, marginTop: Spacing.xs }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Sign out"
+              onPress={confirmSignOut}
+              style={({ pressed }) => [
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: Spacing.sm,
+                  height: 52,
+                  borderRadius: Radius.button,
+                  borderCurve: 'continuous',
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: pressed ? colors.surfacePressed : colors.surface,
+                },
+              ]}>
+              <Icon name="log-out-outline" size={18} raw={colors.destructive} />
+              <Text variant="bodyStrong" style={{ color: colors.destructive }}>
+                Sign out
+              </Text>
+            </Pressable>
+
+            <View style={{ alignItems: 'center', gap: Spacing.sm, paddingTop: Spacing.xs }}>
+              <Wordmark height={17} color="textTertiary" />
+              <Text variant="caption" color="textTertiary" center>
+                Te Pūaroha · Wellington{'\n'}Made with aroha
+              </Text>
+            </View>
+          </View>
         </>
       )}
     </Screen>

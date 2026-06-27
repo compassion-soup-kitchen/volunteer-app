@@ -2,7 +2,7 @@
  * Date and time formatting helpers. Dates are `YYYY-MM-DD`, times are `HH:mm`.
  */
 
-import { differenceInCalendarDays, format, parseISO } from 'date-fns';
+import { differenceInCalendarDays, differenceInMonths, differenceInYears, format, parseISO } from 'date-fns';
 
 function parseDate(date: string): Date {
   return parseISO(date);
@@ -73,6 +73,26 @@ export function formatRelativeTime(iso: string): string {
   if (days === 1) return 'Yesterday';
   if (days < 7) return `${days}d ago`;
   return formatShiftDate(iso);
+}
+
+/**
+ * Warm tenure label from a join date: `8 days`, `4 months`, `1 year 2 months`.
+ * Grounds the profile identity without leaning on the Impact tab's figures.
+ */
+export function formatTenure(date: string): string {
+  const start = parseDate(date);
+  const now = new Date();
+  const years = differenceInYears(now, start);
+  const totalMonths = differenceInMonths(now, start);
+
+  if (years >= 1) {
+    const months = totalMonths - years * 12;
+    const y = `${years} ${years === 1 ? 'year' : 'years'}`;
+    return months > 0 ? `${y} ${months} ${months === 1 ? 'month' : 'months'}` : y;
+  }
+  if (totalMonths >= 1) return `${totalMonths} ${totalMonths === 1 ? 'month' : 'months'}`;
+  const days = Math.max(0, differenceInCalendarDays(now, start));
+  return `${days} ${days === 1 ? 'day' : 'days'}`;
 }
 
 /** Splits an `HH:mm`–`HH:mm` shift into whole/fractional hours, e.g. `4h`, `2h 30m`. */
