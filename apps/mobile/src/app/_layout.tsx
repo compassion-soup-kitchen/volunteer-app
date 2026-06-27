@@ -57,7 +57,16 @@ function RootNavigator() {
       }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="shift/[id]" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+      <Stack.Screen
+        name="shift/[id]"
+        options={{
+          headerShown: false,
+          presentation: 'formSheet',
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+          sheetAllowedDetents: 'fitToContents',
+        }}
+      />
       <Stack.Screen name="schedule" options={{ title: 'My schedule' }} />
       <Stack.Screen name="onboarding" options={{ title: 'Welcome' }} />
       <Stack.Screen name="profile/edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
