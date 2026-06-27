@@ -35,8 +35,8 @@ export default function TabsLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="hours">
-        <NativeTabs.Trigger.Icon sf="sparkles" md="auto_awesome" />
-        <NativeTabs.Trigger.Label>Hours</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'heart', selected: 'heart.fill' }} md="favorite" />
+        <NativeTabs.Trigger.Label>Impact</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">

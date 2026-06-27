@@ -12,6 +12,7 @@
  */
 
 import type {
+  Announcement,
   AttendanceStatus,
   ServiceArea,
   SessionUser,
@@ -30,6 +31,13 @@ function isoDate(offsetDays: number): string {
   const d = new Date(TODAY);
   d.setDate(d.getDate() + offsetDays);
   return d.toISOString().slice(0, 10);
+}
+
+/** A full ISO datetime `hoursAgo` before now — for announcement timestamps. */
+function isoTimeAgo(hoursAgo: number): string {
+  const d = new Date(TODAY);
+  d.setHours(d.getHours() - hoursAgo);
+  return d.toISOString();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -96,6 +104,7 @@ interface MockDb {
   training: TrainingRecord[];
   myTraining: Record<string, MyTraining>;
   pastTraining: TrainingHistoryItem[];
+  announcements: Announcement[];
   profile: ProfileRecord;
 }
 
@@ -223,6 +232,46 @@ const pastTraining: TrainingHistoryItem[] = [
   { id: 'tr-h2', type: 'HEALTH_SAFETY', title: 'Food safety basics', date: isoDate(-100), status: 'ATTENDED' },
 ];
 
+// Team pānui — coordinator notices the volunteer sees on opening the app.
+const announcements: Announcement[] = [
+  {
+    id: 'an-1',
+    title: 'Kia ora — we need two more for Friday dinner',
+    body: "We're a little short for this Friday's dinner service (5–8pm). If you can lend a hand, please pick up a spot from the roster — ngā mihi nui to those who already have.",
+    audience: 'VOLUNTEERS',
+    authorName: 'Hana Wīremu',
+    publishedAt: isoTimeAgo(3),
+    pinned: true,
+  },
+  {
+    id: 'an-2',
+    title: 'New winter menu starts Monday',
+    body: 'The kitchen has refreshed the menu for the colder months — heartier soups through the week and a roast on Sundays. Come hungry; there may be taste-testing.',
+    audience: 'ALL',
+    authorName: 'Te Pūaroha kitchen',
+    publishedAt: isoTimeAgo(27),
+    pinned: false,
+  },
+  {
+    id: 'an-3',
+    title: 'A record month — thank you, whānau',
+    body: 'Together we served more than 3,000 meals last month. Every hour you give keeps the kitchen warm and our manuhiri cared for. Mauri ora!',
+    audience: 'ALL',
+    authorName: 'Wikitōria Grace',
+    publishedAt: isoTimeAgo(50),
+    pinned: false,
+  },
+  {
+    id: 'an-4',
+    title: 'Rhine St carpark closed Mon–Wed',
+    body: 'The carpark is being resealed early next week. Please use street parking and allow a few extra minutes to get settled before your shift.',
+    audience: 'VOLUNTEERS',
+    authorName: 'Hana Wīremu',
+    publishedAt: isoTimeAgo(74),
+    pinned: false,
+  },
+];
+
 export const db: MockDb = {
   session: null,
   serviceAreas,
@@ -231,6 +280,7 @@ export const db: MockDb = {
   training,
   myTraining: { 'tr-2': { id: 'ta-1', status: 'REGISTERED' } },
   pastTraining,
+  announcements,
   profile: {
     id: 'vol-aroha',
     phone: '021 555 0142',

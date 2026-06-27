@@ -5,6 +5,7 @@
 
 export const qk = {
   dashboard: ['dashboard'] as const,
+  announcements: ['announcements'] as const,
   serviceAreas: ['service-areas'] as const,
   shifts: (areaId?: string) => ['shifts', areaId ?? 'all'] as const,
   shiftsAll: ['shifts'] as const,

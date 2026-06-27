@@ -46,6 +46,35 @@ export function relativeDay(date: string): string {
   return formatShiftDate(date);
 }
 
+/**
+ * Urgency label for an upcoming date: Today / Tomorrow / In N days / Next week /
+ * date. `imminent` is true for today and tomorrow, so the UI can lift the
+ * emphasis on time-sensitive shifts.
+ */
+export function countdownLabel(date: string): { label: string; imminent: boolean } {
+  const diff = differenceInCalendarDays(parseDate(date), new Date());
+  if (diff <= 0) return { label: 'Today', imminent: true };
+  if (diff === 1) return { label: 'Tomorrow', imminent: true };
+  if (diff < 7) return { label: `In ${diff} days`, imminent: false };
+  if (diff < 14) return { label: 'Next week', imminent: false };
+  return { label: formatShiftDate(date), imminent: false };
+}
+
+/** Warm relative timestamp for notices: Just now / 5m ago / 3h ago / Yesterday / date. */
+export function formatRelativeTime(iso: string): string {
+  const then = parseISO(iso);
+  const now = new Date();
+  const mins = Math.round((now.getTime() - then.getTime()) / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = differenceInCalendarDays(now, then);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  return formatShiftDate(iso);
+}
+
 /** Splits an `HH:mm`–`HH:mm` shift into whole/fractional hours, e.g. `4h`, `2h 30m`. */
 export function formatDuration(hours: number): string {
   const whole = Math.floor(hours);
