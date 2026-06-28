@@ -10,6 +10,15 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
+    # Expo (apps/mobile) pins these native packages to the installed SDK.
+    # Bumping them outside `expo install` causes JSI/Hermes ABI mismatches
+    # that crash the app at launch, so leave them to SDK upgrades.
+    ignore:
+      - dependency-name: "expo"
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
     groups:
       minor-and-patch:
         update-types:
