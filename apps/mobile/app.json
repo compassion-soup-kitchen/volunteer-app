@@ -7,11 +7,14 @@
     "icon": "./assets/images/icon.png",
     "scheme": "compassionvolunteer",
     "userInterfaceStyle": "automatic",
-    "primaryColor": "#de0832",
+    "primaryColor": "#E4002B",
     "ios": {
       "icon": "./assets/app.icon",
       "supportsTablet": true,
-      "bundleIdentifier": "nz.org.compassion.volunteer"
+      "bundleIdentifier": "nz.org.compassion.volunteer",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "nz.org.compassion.volunteer",
@@ -48,6 +51,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "31426826-e7b0-4427-b69c-e1df422780e9"
+      }
+    },
+    "owner": "malinmw"
   }
 }
