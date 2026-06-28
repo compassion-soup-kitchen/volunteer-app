@@ -11,7 +11,10 @@
     "ios": {
       "icon": "./assets/app.icon",
       "supportsTablet": true,
-      "bundleIdentifier": "nz.org.compassion.volunteer"
+      "bundleIdentifier": "nz.org.compassion.volunteer",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "nz.org.compassion.volunteer",
