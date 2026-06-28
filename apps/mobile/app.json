@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "compassionvolunteer",
     "userInterfaceStyle": "automatic",
-    "primaryColor": "#de0832",
+    "primaryColor": "#E4002B",
     "ios": {
       "icon": "./assets/app.icon",
       "supportsTablet": true,
