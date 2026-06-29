@@ -1,10 +1,30 @@
-# Compassion Soup Kitchen — Volunteer App
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# Compassion Soup Kitchen - Volunteer App
 
 ## Project
 Volunteer management app for Compassion Soup Kitchen (Te Pūaroha), Wellington, NZ.
 ~100 volunteers. Mobile-first for volunteers, desktop for staff (coordinators/admins).
 
 The app handles the full volunteer lifecycle: public signup → application review → MoJ vetting → induction → active rostering → attendance, training, hours tracking, document management, and announcements.
+
+## Monorepo Layout
+
+This is a **pnpm + Turborepo monorepo**. The detailed sections below describe **`apps/web`** unless noted — all `src/...` and `prisma/...` paths in this file are relative to `apps/web/`.
+
+```
+apps/
+├── web/      # Next.js 16 staff + volunteer web app (the primary product — most of this doc)
+└── mobile/   # Expo SDK 56 React Native app for volunteers (mock-first; see apps/mobile/AGENTS.md)
+packages/     # Shared workspace packages (currently none beyond a placeholder)
+```
+
+- **Workspaces**: `pnpm-workspace.yaml` globs `apps/*` + `packages/*`. Task running via `turbo.json` (`build` depends on `^build` + `db:generate`; `e2e` depends on `build`).
+- **React is pinned workspace-wide to `19.2.3`** (`overrides` in `pnpm-workspace.yaml`) — mobile's `react-native-renderer` (Expo SDK 56 / RN 0.85.3) requires an exact match, and the hoisted single `react` would otherwise pull web's newer version into mobile and crash it at launch. Do not bump `react`/`react-dom` in one app only.
+- **Root scripts** (`package.json`) fan out via Turbo across all apps: `pnpm run dev | build | lint | typecheck | test | test:ci | e2e | e2e:ci`.
+- **Use Turbo for any task with deps.** `build`, `typecheck`, `lint`, `test`, and `test:ci` depend directly on `db:generate` (and `build` + `typecheck` additionally on `^build`, i.e. workspace-package builds); `e2e`/`e2e:ci` depend on `build`, which transitively pulls in `db:generate`. Those deps only run when **Turbo** is the runner. Use `pnpm run build` (all apps) or `turbo run build --filter=web` (web only). The `pnpm web <script>` / `pnpm mobile <script>` shortcuts expand to `pnpm --filter <app> run <script>`, which call the package script **directly and bypass Turbo** — so `pnpm web typecheck`, `pnpm web lint`, `pnpm web test`, and `pnpm web test:ci` silently skip `db:generate` (stale Prisma types), and `pnpm web e2e` / `pnpm web e2e:ci` skip the `build` dep (stale or absent `.next/`). (`pnpm web build` is safe from stale types because its script embeds `prisma generate &&`, but it still skips Turbo caching and the `^build` workspace-package dep.) The shortcuts are otherwise fine for dep-free scripts: `pnpm web dev`, `pnpm web db:studio`, etc.
 
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
@@ -36,6 +56,7 @@ Other useful skills in this repo:
 ## File Structure
 
 ```
+apps/web/
 src/
 ├── app/
 │   ├── layout.tsx                    # Root: Geist fonts, ThemeProvider, SessionProvider, TooltipProvider, Toaster
@@ -86,7 +107,7 @@ src/
 ├── lib/
 │   ├── auth.ts                       # NextAuth config (Google + Credentials, JWT, role on session)
 │   ├── db.ts                         # Lazy-init Prisma client (PrismaPg adapter, Pool max=1)
-│   ├── supabase.ts                   # Supabase client (Storage)
+│   ├── storage.ts                    # S3-compatible storage client (Garage) — uploads/presigned URLs
 │   ├── utils.ts                      # `cn()` helper (clsx + tailwind-merge)
 │   ├── milestones.ts                 # Volunteer milestone definitions
 │   ├── auth-actions.ts               # Server Actions: login, register, logout
@@ -185,6 +206,7 @@ Two suites — keep both green on `main`.
 2. `e2e` — depends on `ci`; installs Chromium (cached), builds, runs Playwright, uploads `playwright-report/` as an artifact
 
 ## Scripts
+Run these **inside `apps/web`**. From the repo root, dep-heavy scripts (`build`, `typecheck`, `lint`, `test`, `test:ci`, `e2e`, `e2e:ci`) must go through Turbo (`pnpm run <script>` or `turbo run <script> --filter=web`), **not** the `pnpm web <script>` shortcut — e.g. `pnpm web e2e` is just `playwright test` with no build step, so it would run against a stale or absent `.next/` build. See the Turbo-bypass warning in Monorepo Layout.
 ```
 pnpm run dev          # next dev
 pnpm run build        # prisma generate && next build
@@ -202,9 +224,16 @@ pnpm run db:studio    # prisma studio
 
 **Package manager**: pnpm (locked via `packageManager` in `package.json`). Enable with `corepack enable` or install globally via `npm i -g pnpm`.
 
+## Mobile App (`apps/mobile`)
+
+Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: group `(auth)` (`login.tsx`, `register.tsx`); group `(tabs)` (`index.tsx`, `shifts.tsx`, `hours.tsx`, `training.tsx`, `profile.tsx`); top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; dynamic dirs `shift/`, `training/`, `notice/` (each a `[id].tsx`); and static nested dir `profile/` (`edit.tsx`)). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
+
+- **Expo has changed** — `apps/mobile/AGENTS.md` (loaded via the `@AGENTS.md` include in `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
+- Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
+
 ## Environment
-Required env vars (see `.env.example`):
-- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed)
+Required env vars for `apps/web` (see `apps/web/.env.example`):
+- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` (provider stubbed; not yet wired)

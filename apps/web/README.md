@@ -35,8 +35,8 @@ Nau mai, haere mai. This app supports the ~100 volunteers who serve kai, build c
 |---|---|
 | 🖼️ Framework | Next.js 16 (App Router) + React 19 + TypeScript |
 | 🎨 Styling | Tailwind v4 + shadcn/ui (`radix-lyra` style, `mist` base, `remixicon`) |
-| 🗄️ Database | Prisma 7 → Supabase PostgreSQL |
-| 📦 Storage | Supabase Storage (document uploads) |
+| 🗄️ Database | Prisma 7 → self-hosted PostgreSQL (Coolify-managed) |
+| 📦 Storage | Garage (S3-compatible, self-hosted) for document uploads |
 | 🔐 Auth | NextAuth v5 — Credentials + Google, JWT sessions |
 | ✉️ Email | Resend (planned) |
 | ✨ Animation | `motion/react` |
@@ -51,7 +51,7 @@ Nau mai, haere mai. This app supports the ~100 volunteers who serve kai, build c
 ### Prerequisites
 - Node.js ≥ 20
 - pnpm (enabled via `corepack enable`, or `npm i -g pnpm`)
-- A Supabase project (PostgreSQL + Storage)
+- A PostgreSQL database and an S3-compatible bucket (e.g. Garage) — see `.env.example`
 - Google OAuth credentials (optional but recommended)
 
 ### 1️⃣ Install dependencies
@@ -62,8 +62,7 @@ pnpm install
 ### 2️⃣ Configure environment
 Copy `.env.example` → `.env.local` and fill in:
 ```bash
-DATABASE_URL="postgresql://...?pgbouncer=true"   # Supabase pooled
-DIRECT_DATABASE_URL="postgresql://..."           # Supabase direct (migrations)
+DATABASE_URL="postgresql://..."                  # self-hosted PostgreSQL
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET=""                               # npx auth secret
 GOOGLE_CLIENT_ID=""
@@ -72,7 +71,7 @@ GOOGLE_CLIENT_SECRET=""
 
 ### 3️⃣ Set up the database
 ```bash
-pnpm run db:push     # apply schema
+pnpm run db:migrate  # create + apply migration
 pnpm run db:seed     # seed dev data
 ```
 
@@ -130,9 +129,10 @@ pnpm run build && pnpm run e2e
 | `pnpm run e2e` | 🎭 Playwright E2E tests |
 | `pnpm run e2e:ci` | 🎭 Playwright E2E (CI) |
 | `pnpm run db:generate` | ⚙️ Regenerate Prisma client |
-| `pnpm run db:push` | ⬆️ Push schema to the database |
+| `pnpm run db:migrate` | ⬆️ Create + apply a migration (local dev) |
+| `pnpm run db:deploy` | 🚀 Apply pending migrations (prod / Docker) |
 | `pnpm run db:seed` | 🌱 Seed dev data |
-| `pnpm run db:reset` | 💥 Force-reset DB and re-seed (uses `DIRECT_DATABASE_URL`) |
+| `pnpm run db:reset` | 💥 Force-reset DB and re-seed |
 | `pnpm run db:studio` | 🔍 Open Prisma Studio |
 
 ---
