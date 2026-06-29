@@ -12,9 +12,9 @@ test.describe("Landing page", () => {
     await expect(
       page.getByRole("link", { name: /get the app/i }).first(),
     ).toHaveAttribute("href", "#download");
-    await expect(
-      page.getByRole("link", { name: /download on the app store/i }).first(),
-    ).toBeVisible();
+    // Store badge — role-agnostic: a <button> while the store URL is a
+    // placeholder, a link once a real listing URL is wired in.
+    await expect(page.getByText("App Store").first()).toBeVisible();
   });
 
   test("navigates from landing to /register", async ({ page }) => {
