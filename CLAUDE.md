@@ -206,7 +206,7 @@ Two suites — keep both green on `main`.
 2. `e2e` — depends on `ci`; installs Chromium (cached), builds, runs Playwright, uploads `playwright-report/` as an artifact
 
 ## Scripts
-Run these **inside `apps/web`**. From the repo root, dep-heavy scripts (`build`, `typecheck`, `lint`, `test`) must go through Turbo (`pnpm run <script>` or `turbo run <script> --filter=web`), **not** the `pnpm web <script>` shortcut — see the Turbo-bypass warning in Monorepo Layout.
+Run these **inside `apps/web`**. From the repo root, dep-heavy scripts (`build`, `typecheck`, `lint`, `test`, `test:ci`, `e2e`, `e2e:ci`) must go through Turbo (`pnpm run <script>` or `turbo run <script> --filter=web`), **not** the `pnpm web <script>` shortcut — e.g. `pnpm web e2e` is just `playwright test` with no build step, so it would run against a stale or absent `.next/` build. See the Turbo-bypass warning in Monorepo Layout.
 ```
 pnpm run dev          # next dev
 pnpm run build        # prisma generate && next build
