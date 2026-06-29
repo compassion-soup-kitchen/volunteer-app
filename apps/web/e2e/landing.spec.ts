@@ -5,12 +5,16 @@ test.describe("Landing page", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", { name: /every meal is an act/i }),
+      page.getByRole("heading", { name: /volunteer with us/i }),
     ).toBeVisible();
 
+    // App download is the primary CTA.
     await expect(
-      page.getByRole("link", { name: /become a volunteer/i }).first(),
-    ).toHaveAttribute("href", "/register");
+      page.getByRole("link", { name: /get the app/i }).first(),
+    ).toHaveAttribute("href", "#download");
+    await expect(
+      page.getByRole("link", { name: /download on the app store/i }).first(),
+    ).toBeVisible();
   });
 
   test("navigates from landing to /register", async ({ page }) => {
@@ -28,7 +32,7 @@ test.describe("Landing page", () => {
   test("navigates from landing to /login", async ({ page }) => {
     await page.goto("/");
     await page
-      .getByRole("link", { name: /see upcoming shifts/i })
+      .getByRole("link", { name: /^sign in$/i })
       .first()
       .click();
     await expect(page).toHaveURL(/\/login$/);
