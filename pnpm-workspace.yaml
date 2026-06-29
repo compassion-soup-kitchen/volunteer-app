@@ -2,6 +2,15 @@ packages:
   - apps/*
   - packages/*
 
+# React Native (apps/mobile) requires `react` to exactly match the bundled
+# `react-native-renderer` (19.2.3 for Expo SDK 56 / RN 0.85.3). The monorepo
+# hoists a single shared react, so pin it for the whole workspace — otherwise
+# the web app's newer react is bundled into mobile and it crashes at launch
+# with "Incompatible React versions".
+overrides:
+  react: 19.2.3
+  react-dom: 19.2.3
+
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true

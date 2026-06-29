@@ -13,12 +13,18 @@ updates:
     # Expo (apps/mobile) pins these native packages to the installed SDK.
     # Bumping them outside `expo install` causes JSI/Hermes ABI mismatches
     # that crash the app at launch, so leave them to SDK upgrades.
+    # react / react-dom must EXACTLY match react-native's bundled renderer
+    # (19.2.3 for SDK 56), and the monorepo hoists one shared copy — a newer
+    # react bundled into mobile crashes at launch ("Incompatible React
+    # versions"). They're pinned via pnpm overrides; only move them on SDK bumps.
     ignore:
       - dependency-name: "expo"
       - dependency-name: "expo-*"
       - dependency-name: "@expo/*"
       - dependency-name: "react-native"
       - dependency-name: "react-native-*"
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
     groups:
       minor-and-patch:
         update-types:
