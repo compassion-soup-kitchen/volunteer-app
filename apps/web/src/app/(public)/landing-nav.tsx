@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { RiArrowRightLine, RiMenuLine, RiCloseLine } from "@remixicon/react";
+import { RiSmartphoneLine, RiMenuLine, RiCloseLine } from "@remixicon/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Wordmark } from "@/components/brand/wordmark";
 
 const links = [
-  { href: "#about", label: "Our Story" },
-  { href: "#volunteer", label: "Volunteer" },
-  { href: "#impact", label: "Impact" },
+  { href: "#app", label: "The app" },
+  { href: "#features", label: "Features" },
+  { href: "#story", label: "Our story" },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -44,9 +44,9 @@ export function LandingNav() {
             Sign in
           </a>
           <Button size="sm" asChild>
-            <a href="/register">
-              Sign up
-              <RiArrowRightLine data-icon="inline-end" className="size-3.5" />
+            <a href="#download">
+              <RiSmartphoneLine data-icon="inline-start" className="size-3.5" />
+              Get the app
             </a>
           </Button>
           <ThemeToggle />
@@ -84,13 +84,16 @@ export function LandingNav() {
             </div>
             <Separator />
             <Button className="w-full" asChild>
-              <a href="/register">Sign up</a>
+              <a href="#download" onClick={() => setMenuOpen(false)}>
+                <RiSmartphoneLine data-icon="inline-start" className="size-4" />
+                Get the app
+              </a>
             </Button>
             <a
               href="/login"
               className="text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              Already have an account? Sign in
+              Already a volunteer? Sign in
             </a>
           </div>
         </div>
