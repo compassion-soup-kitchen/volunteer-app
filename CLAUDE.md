@@ -226,15 +226,15 @@ pnpm run db:studio    # prisma studio
 
 ## Mobile App (`apps/mobile`)
 
-Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: groups `(auth)` + `(tabs)`; top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; and dynamic dirs `shift/`, `training/`, `notice/`, `profile/`). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
+Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: groups `(auth)` + `(tabs)`; top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; dynamic dirs `shift/`, `training/`, `notice/` (each a `[id].tsx`); and static nested dir `profile/` (`edit.tsx`)). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
 
 - **Expo has changed** — `apps/mobile/AGENTS.md` (loaded via the `@AGENTS.md` include in `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
 - Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
 
 ## Environment
-Required env vars for `apps/web` (see `apps/web/.env.example`):
+Environment variables for `apps/web` (see `apps/web/.env.example`). All below are required for local dev **except** `DIRECT_DATABASE_URL`:
 - `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed).
-- `DIRECT_DATABASE_URL` — non-pooled direct connection; set in CI alongside the pgbouncer-mode `DATABASE_URL` but **not currently consumed** by any code path (`prisma.config.ts` reads only `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`). Not required for local development. (Note: `apps/web/README.md` still references it for `db:reset`, but that text is stale from the prior Supabase setup.)
+- `DIRECT_DATABASE_URL` — non-pooled direct connection; set in CI alongside the pgbouncer-mode `DATABASE_URL` but **not currently consumed** by any code path (`prisma.config.ts` reads only `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`). A Supabase-era remnant — not required for local development.
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` (provider stubbed; not yet wired)
