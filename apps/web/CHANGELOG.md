@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.3.0...v1.3.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* **mobile:** pin react to 19.2.3 to match RN renderer (fixes launch crash) ([2056507](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2056507d4ea3bcec0a4471d65c7fdf0a8ad0ec62))
+* **mobile:** pin react to 19.2.3 to match RN renderer (fixes TestFlight launch crash) ([0547455](https://github.com/compassion-soup-kitchen/volunteer-app/commit/05474557b704a463c73f62d9474bb860d2aa7ab0))
+
 ## [1.3.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.2.1...v1.3.0) (2026-06-26)
 
 
