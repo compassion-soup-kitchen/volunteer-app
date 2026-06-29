@@ -24,7 +24,7 @@ packages/     # Shared workspace packages (currently none beyond a placeholder)
 - **Workspaces**: `pnpm-workspace.yaml` globs `apps/*` + `packages/*`. Task running via `turbo.json` (`build` depends on `^build` + `db:generate`; `e2e` depends on `build`).
 - **React is pinned workspace-wide to `19.2.3`** (`overrides` in `pnpm-workspace.yaml`) — mobile's `react-native-renderer` (Expo SDK 56 / RN 0.85.3) requires an exact match, and the hoisted single `react` would otherwise pull web's newer version into mobile and crash it at launch. Do not bump `react`/`react-dom` in one app only.
 - **Root scripts** (`package.json`) fan out via Turbo across all apps: `pnpm run dev | build | lint | typecheck | test | test:ci | e2e | e2e:ci`.
-- **Use Turbo for any task with deps.** `build`, `typecheck`, `lint`, `test`, and `test:ci` depend directly on `db:generate` (and `build` additionally on `^build`); `e2e`/`e2e:ci` depend on `build`, which transitively pulls in `db:generate`. Those deps only run when **Turbo** is the runner. Use `pnpm run build` (all apps) or `turbo run build --filter=web` (web only). The `pnpm web <script>` / `pnpm mobile <script>` shortcuts expand to `pnpm --filter <app> run <script>`, which call the package script **directly and bypass Turbo** — so `pnpm web build` silently skips `db:generate` and you get stale Prisma types (and `pnpm web typecheck`/`lint`/`test` likewise skip it). The shortcuts are safe only for dep-free scripts: `pnpm web dev`, `pnpm web db:studio`, etc.
+- **Use Turbo for any task with deps.** `build`, `typecheck`, `lint`, `test`, and `test:ci` depend directly on `db:generate` (and `build` + `typecheck` additionally on `^build`, i.e. workspace-package builds); `e2e`/`e2e:ci` depend on `build`, which transitively pulls in `db:generate`. Those deps only run when **Turbo** is the runner. Use `pnpm run build` (all apps) or `turbo run build --filter=web` (web only). The `pnpm web <script>` / `pnpm mobile <script>` shortcuts expand to `pnpm --filter <app> run <script>`, which call the package script **directly and bypass Turbo** — so `pnpm web build` silently skips `db:generate` and you get stale Prisma types (and `pnpm web typecheck`/`lint`/`test` likewise skip it). The shortcuts are safe only for dep-free scripts: `pnpm web dev`, `pnpm web db:studio`, etc.
 
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
@@ -206,7 +206,7 @@ Two suites — keep both green on `main`.
 2. `e2e` — depends on `ci`; installs Chromium (cached), builds, runs Playwright, uploads `playwright-report/` as an artifact
 
 ## Scripts
-Run these **inside `apps/web`** (or from root as `pnpm web <script>`):
+Run these **inside `apps/web`**. From the repo root, dep-heavy scripts (`build`, `typecheck`, `lint`, `test`) must go through Turbo (`pnpm run <script>` or `turbo run <script> --filter=web`), **not** the `pnpm web <script>` shortcut — see the Turbo-bypass warning in Monorepo Layout.
 ```
 pnpm run dev          # next dev
 pnpm run build        # prisma generate && next build
