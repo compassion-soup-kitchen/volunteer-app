@@ -1,0 +1,51 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Review
+    runs-on: ubuntu-latest
+    # Skip drafts and Dependabot PRs (auto-merged separately).
+    if: github.event.pull_request.draft == false && github.actor != 'dependabot[bot]'
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review this pull request for the Compassion Soup Kitchen volunteer app.
+            Use `gh pr diff ${{ github.event.pull_request.number }}` to read the changes,
+            and `gh pr view ${{ github.event.pull_request.number }}` for context.
+
+            Focus on:
+            - Correctness bugs and logic errors
+            - Security issues, especially auth/role checks in Server Actions and `proxy.ts`
+            - Adherence to project conventions in CLAUDE.md (Server Components, Server
+              Actions over API routes, zod validation, revalidatePath after mutations,
+              semantic theme tokens instead of hardcoded colors, centralised CVA variants)
+            - Missing test coverage for new utilities or Server Action logic
+
+            Be concise and specific. Reference `file:line`. Only raise high-confidence,
+            material issues - skip nitpicks and style preferences already enforced by lint.
+            Post your review as inline comments on the PR using `gh`.
+          claude_args: |
+            --allowedTools "Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh api:*)"
