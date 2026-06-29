@@ -23,8 +23,8 @@ packages/     # Shared workspace packages (currently none beyond a placeholder)
 
 - **Workspaces**: `pnpm-workspace.yaml` globs `apps/*` + `packages/*`. Task running via `turbo.json` (`build` depends on `^build` + `db:generate`; `e2e` depends on `build`).
 - **React is pinned workspace-wide to `19.2.3`** (`overrides` in `pnpm-workspace.yaml`) — mobile's `react-native-renderer` (Expo SDK 56 / RN 0.85.3) requires an exact match, and the hoisted single `react` would otherwise pull web's newer version into mobile and crash it at launch. Do not bump `react`/`react-dom` in one app only.
-- **Root scripts** (`package.json`) fan out via Turbo across all apps: `pnpm run dev | build | lint | typecheck | test | test:ci | e2e | e2e:ci`. Target one app with `pnpm web <script>` or `pnpm mobile <script>` (e.g. `pnpm web dev`), or `pnpm --filter web run <script>`.
-- The per-app command tables (web `## Scripts`, mobile below) list scripts you run **inside that app**; from the repo root prefer the `pnpm web …` / `pnpm mobile …` shortcuts so Turbo handles task deps (e.g. `db:generate` before `build`).
+- **Root scripts** (`package.json`) fan out via Turbo across all apps: `pnpm run dev | build | lint | typecheck | test | test:ci | e2e | e2e:ci`.
+- **Use Turbo for any task with deps.** `build`, `typecheck`, `lint`, `test`, `test:ci`, and `e2e` all depend on `db:generate` (and `build`/`e2e` additionally on `^build`/`build`) — those deps only run when **Turbo** is the runner. Use `pnpm run build` (all apps) or `turbo run build --filter=web` (web only). The `pnpm web <script>` / `pnpm mobile <script>` shortcuts expand to `pnpm --filter <app> run <script>`, which call the package script **directly and bypass Turbo** — so `pnpm web build` silently skips `db:generate` and you get stale Prisma types (and `pnpm web typecheck`/`lint`/`test` likewise skip it). The shortcuts are safe only for dep-free scripts: `pnpm web dev`, `pnpm web db:studio`, etc.
 
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
@@ -226,14 +226,15 @@ pnpm run db:studio    # prisma studio
 
 ## Mobile App (`apps/mobile`)
 
-Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: `(auth)`, `(tabs)`, plus `shift/`, `training/`, `notice/`, `profile/`). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
+Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: groups `(auth)` + `(tabs)`; top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; and dynamic dirs `shift/`, `training/`, `notice/`, `profile/`). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
 
-- **Expo has changed** — `apps/mobile/AGENTS.md` (re-exported as `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
+- **Expo has changed** — `apps/mobile/AGENTS.md` (loaded via the `@AGENTS.md` include in `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
 - Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
 
 ## Environment
 Required env vars for `apps/web` (see `apps/web/.env.example`):
-- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). (CI also sets `DIRECT_DATABASE_URL` for a non-pooled connection.)
+- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed).
+- `DIRECT_DATABASE_URL` — non-pooled direct connection. Required locally and in CI — used by `db:reset` and migrations (see `apps/web/README.md`). Note: `apps/web/.env.example` currently omits it (worth fixing).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` (provider stubbed; not yet wired)
