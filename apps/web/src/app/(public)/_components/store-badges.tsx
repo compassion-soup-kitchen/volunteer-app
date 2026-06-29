@@ -40,6 +40,9 @@ export function GooglePlayBadge({ className }: { className?: string }) {
       aria-label="Get it on Google Play"
       className={cn(badgeBase, className)}
     >
+      {/* Google Play's official four-colour mark — fixed third-party brand
+          colours, deliberately not themed (must render exactly per Google's
+          brand guidelines, same as the Apple glyph above is monochrome). */}
       <svg viewBox="0 0 24 24" className="size-6 shrink-0" aria-hidden>
         <path d="M3.6 2.3c-.24.25-.38.64-.38 1.15v17.1c0 .51.14.9.38 1.15l.06.05L13.2 12.3v-.22L3.66 2.25z" fill="#00D6FF" />
         <path d="M16.4 15.5l-3.2-3.2v-.22l3.2-3.2.07.04 3.79 2.15c1.08.61 1.08 1.62 0 2.24l-3.79 2.15z" fill="#FFC900" />

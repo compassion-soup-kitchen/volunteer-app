@@ -113,6 +113,21 @@
   --sidebar-accent-foreground: #a8071f;
   --sidebar-border: #e2e4e2;
   --sidebar-ring: #293e6b;
+
+  /* Device chrome — the phone-mockup bezel on marketing surfaces. Decorative
+     hardware, intentionally theme-independent (a device shell is dark in both
+     themes), so it's defined once here and cascades into .dark. */
+  --device-bezel-top: #2a2622;
+  --device-bezel-bottom: #100d0b;
+  --device-screen: #fbf7f2; /* the mobile app's warm "paper" canvas */
+  --device-shadow:
+    0 30px 60px -28px rgb(28 18 12 / 0.45),
+    0 0 0 1px rgb(28 18 12 / 0.6),
+    inset 0 0 0 2px rgb(255 255 255 / 0.06);
+  --device-shadow-glow:
+    0 40px 80px -30px rgb(28 18 12 / 0.55),
+    0 0 0 1px rgb(28 18 12 / 0.6),
+    inset 0 0 0 2px rgb(255 255 255 / 0.06);
 }
 
 .dark {

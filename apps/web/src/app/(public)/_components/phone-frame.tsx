@@ -24,13 +24,11 @@ export function PhoneShot({
     <div
       className={cn("relative w-full max-w-[300px] rounded-[2.75rem] p-[9px]", className)}
       style={{
-        background: "linear-gradient(155deg, #2a2622, #100d0b)",
-        boxShadow: glow
-          ? "0 40px 80px -30px rgba(28,18,12,0.55), 0 0 0 1px rgba(28,18,12,0.6), inset 0 0 0 2px rgba(255,255,255,0.06)"
-          : "0 30px 60px -28px rgba(28,18,12,0.45), 0 0 0 1px rgba(28,18,12,0.6), inset 0 0 0 2px rgba(255,255,255,0.06)",
+        background: "linear-gradient(155deg, var(--device-bezel-top), var(--device-bezel-bottom))",
+        boxShadow: glow ? "var(--device-shadow-glow)" : "var(--device-shadow)",
       }}
     >
-      <div className="relative aspect-[1206/2622] overflow-hidden rounded-[2.2rem] bg-[#FBF7F2]">
+      <div className="relative aspect-[1206/2622] overflow-hidden rounded-[2.2rem] bg-[var(--device-screen)]">
         <Image
           src={src}
           alt={alt}
