@@ -17,7 +17,6 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://user:pass@localhost:5432/db?pgbouncer=true
-      DIRECT_DATABASE_URL: postgresql://user:pass@localhost:5432/db
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: ci-placeholder-secret
       GOOGLE_CLIENT_ID: ci-placeholder
@@ -54,7 +53,6 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://user:pass@localhost:5432/db?pgbouncer=true
-      DIRECT_DATABASE_URL: postgresql://user:pass@localhost:5432/db
       NEXTAUTH_URL: http://localhost:3100
       NEXTAUTH_SECRET: ci-placeholder-secret
       AUTH_TRUST_HOST: "true"

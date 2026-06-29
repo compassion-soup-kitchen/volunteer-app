@@ -232,9 +232,8 @@ Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-
 - Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
 
 ## Environment
-Environment variables for `apps/web` (see `apps/web/.env.example`). All below are required for local dev **except** `DIRECT_DATABASE_URL`:
-- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed).
-- `DIRECT_DATABASE_URL` — non-pooled direct connection; set in CI alongside the pgbouncer-mode `DATABASE_URL` but **not currently consumed** by any code path (`prisma.config.ts` reads only `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`). A Supabase-era remnant — not required for local development.
+Required env vars for `apps/web` (see `apps/web/.env.example`):
+- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` (provider stubbed; not yet wired)
