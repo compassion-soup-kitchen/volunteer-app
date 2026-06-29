@@ -1,10 +1,30 @@
-# Compassion Soup Kitchen — Volunteer App
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# Compassion Soup Kitchen - Volunteer App
 
 ## Project
 Volunteer management app for Compassion Soup Kitchen (Te Pūaroha), Wellington, NZ.
 ~100 volunteers. Mobile-first for volunteers, desktop for staff (coordinators/admins).
 
 The app handles the full volunteer lifecycle: public signup → application review → MoJ vetting → induction → active rostering → attendance, training, hours tracking, document management, and announcements.
+
+## Monorepo Layout
+
+This is a **pnpm + Turborepo monorepo**. The detailed sections below describe **`apps/web`** unless noted — all `src/...` and `prisma/...` paths in this file are relative to `apps/web/`.
+
+```
+apps/
+├── web/      # Next.js 16 staff + volunteer web app (the primary product — most of this doc)
+└── mobile/   # Expo SDK 56 React Native app for volunteers (mock-first; see apps/mobile/AGENTS.md)
+packages/     # Shared workspace packages (currently none beyond a placeholder)
+```
+
+- **Workspaces**: `pnpm-workspace.yaml` globs `apps/*` + `packages/*`. Task running via `turbo.json` (`build` depends on `^build` + `db:generate`; `e2e` depends on `build`).
+- **React is pinned workspace-wide to `19.2.3`** (`overrides` in `pnpm-workspace.yaml`) — mobile's `react-native-renderer` (Expo SDK 56 / RN 0.85.3) requires an exact match, and the hoisted single `react` would otherwise pull web's newer version into mobile and crash it at launch. Do not bump `react`/`react-dom` in one app only.
+- **Root scripts** (`package.json`) fan out via Turbo across all apps: `pnpm run dev | build | lint | typecheck | test | test:ci | e2e | e2e:ci`. Target one app with `pnpm web <script>` or `pnpm mobile <script>` (e.g. `pnpm web dev`), or `pnpm --filter web run <script>`.
+- The per-app command tables (web `## Scripts`, mobile below) list scripts you run **inside that app**; from the repo root prefer the `pnpm web …` / `pnpm mobile …` shortcuts so Turbo handles task deps (e.g. `db:generate` before `build`).
 
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
@@ -36,6 +56,7 @@ Other useful skills in this repo:
 ## File Structure
 
 ```
+apps/web/
 src/
 ├── app/
 │   ├── layout.tsx                    # Root: Geist fonts, ThemeProvider, SessionProvider, TooltipProvider, Toaster
@@ -86,7 +107,7 @@ src/
 ├── lib/
 │   ├── auth.ts                       # NextAuth config (Google + Credentials, JWT, role on session)
 │   ├── db.ts                         # Lazy-init Prisma client (PrismaPg adapter, Pool max=1)
-│   ├── supabase.ts                   # Supabase client (Storage)
+│   ├── storage.ts                    # S3-compatible storage client (Garage) — uploads/presigned URLs
 │   ├── utils.ts                      # `cn()` helper (clsx + tailwind-merge)
 │   ├── milestones.ts                 # Volunteer milestone definitions
 │   ├── auth-actions.ts               # Server Actions: login, register, logout
@@ -185,6 +206,7 @@ Two suites — keep both green on `main`.
 2. `e2e` — depends on `ci`; installs Chromium (cached), builds, runs Playwright, uploads `playwright-report/` as an artifact
 
 ## Scripts
+Run these **inside `apps/web`** (or from root as `pnpm web <script>`):
 ```
 pnpm run dev          # next dev
 pnpm run build        # prisma generate && next build
@@ -202,9 +224,16 @@ pnpm run db:studio    # prisma studio
 
 **Package manager**: pnpm (locked via `packageManager` in `package.json`). Enable with `corepack enable` or install globally via `npm i -g pnpm`.
 
+## Mobile App (`apps/mobile`)
+
+Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: `(auth)`, `(tabs)`, plus `shift/`, `training/`, `notice/`, `profile/`). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
+
+- **Expo has changed** — `apps/mobile/AGENTS.md` (re-exported as `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
+- Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
+
 ## Environment
-Required env vars (see `.env.example`):
-- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed)
+Required env vars for `apps/web` (see `apps/web/.env.example`):
+- `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). (CI also sets `DIRECT_DATABASE_URL` for a non-pooled connection.)
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` (provider stubbed; not yet wired)
