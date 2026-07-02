@@ -47,7 +47,7 @@ export default function RegisterScreen() {
             <AuthHero
               overline="Tono mai"
               title="Join the whānau"
-              subtitle="Create your account to start volunteering with us."
+              subtitle="Create your account, then tell us a little about yourself - it takes about five minutes."
             />
 
             <Card style={{ gap: Spacing.lg }}>

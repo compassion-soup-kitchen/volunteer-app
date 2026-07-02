@@ -278,6 +278,63 @@ export type ProfileUpdate = Partial<
 >;
 
 /* -------------------------------------------------------------------------- */
+/*  Volunteer application (registration)                                       */
+/* -------------------------------------------------------------------------- */
+
+export const AVAILABILITY_DAYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+export type AvailabilityDay = (typeof AVAILABILITY_DAYS)[number];
+
+export const AVAILABILITY_SLOTS = ['morning', 'afternoon', 'evening'] as const;
+export type AvailabilitySlot = (typeof AVAILABILITY_SLOTS)[number];
+
+/** Weekly availability: day → time slots the volunteer can generally help. */
+export type Availability = Partial<Record<AvailabilityDay, AvailabilitySlot[]>>;
+
+export type AgreementType = 'CODE_OF_CONDUCT' | 'SAFEGUARDING';
+
+export interface AgreementSignature {
+  type: AgreementType;
+  /**
+   * The captured signature. On mobile this is the applicant's typed full
+   * name (a typed signature); the web app sends a drawn-signature data URL.
+   */
+  signatureData: string;
+}
+
+/** Payload for `submitApplication` - mirrors the web `ApplicationFormData`. */
+export interface ApplicationSubmission {
+  phone: string;
+  address: string;
+  /** ISO `YYYY-MM-DD`, or empty when not provided (optional field). */
+  dateOfBirth: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  emergencyContactRelationship: string;
+  availability: Availability;
+  serviceAreaIds: string[];
+  skills: string[];
+  bio: string;
+  agreements: AgreementSignature[];
+}
+
+/** The signed-in user's application, or `null` before they have applied. */
+export interface MyApplication {
+  status: ApplicationStatus;
+  /** ISO datetime the application was submitted */
+  submittedAt: string;
+  /** Coordinator notes shown when more info is requested or it was declined */
+  notes?: string | null;
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Action results                                                             */
 /* -------------------------------------------------------------------------- */
 

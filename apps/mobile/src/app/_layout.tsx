@@ -57,6 +57,7 @@ function RootNavigator() {
       }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="apply" options={{ headerShown: false }} />
       <Stack.Screen
         name="shift/[id]"
         options={{

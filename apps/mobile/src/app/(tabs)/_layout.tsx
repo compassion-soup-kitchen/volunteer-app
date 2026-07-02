@@ -17,6 +17,10 @@ export default function TabsLayout() {
   // Auth gate — unauthenticated users go to the sign-in flow.
   if (!user) return <Redirect href="/login" />;
 
+  // Applicants (PUBLIC) haven't been approved yet — they complete and track
+  // their volunteer application instead of seeing the volunteer tabs.
+  if (user.role === 'PUBLIC') return <Redirect href="/apply" />;
+
   return (
     <NativeTabs tintColor={tabTint} minimizeBehavior="never">
       <NativeTabs.Trigger name="index">

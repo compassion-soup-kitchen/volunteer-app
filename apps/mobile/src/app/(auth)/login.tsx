@@ -1,27 +1,27 @@
 import { Link } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AuthGlassField } from '@/components/auth-glass-field';
-import { AuthVideoBackground } from '@/components/auth-video-background';
 import { Kowhaiwhai, Wordmark } from '@/components/brand';
-import { Button, GlassPanel, Icon, Text } from '@/components/ui';
-import { Layout, Radius, Spacing } from '@/constants/theme';
+import { Button, Card, Icon, Text, TextField } from '@/components/ui';
+import { Duration, Layout, Radius, Shadows, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/providers/auth-provider';
 import { useToast } from '@/providers/toast-provider';
 
-/** Light-on-glass colours for the always-dark, video-backed sign-in. */
-const ON_GLASS = '#ffffff';
-const ON_GLASS_DIM = 'rgba(255,255,255,0.74)';
-const ON_GLASS_FAINT = 'rgba(255,255,255,0.5)';
-const ON_GLASS_ERROR = '#ff9aa1';
-const HAIRLINE = 'rgba(255,255,255,0.22)';
-const HERO_SHADOW = { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 12 } as const;
+/** How far the sign-in card rises into the ink masthead, breaking the seam. */
+const CARD_OVERLAP = 44;
+
+const enter = (delay: number) =>
+  FadeInDown.duration(Duration.slow).delay(delay).reduceMotion(ReduceMotion.System);
 
 export default function LoginScreen() {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { signIn } = useAuth();
   const toast = useToast();
 
@@ -40,91 +40,107 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#100e0a' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* The masthead is ink in both themes, so the status bar is always light. */}
       <StatusBar style="light" />
-      <AuthVideoBackground />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'center',
-            gap: Spacing.xl,
-            paddingHorizontal: Layout.screenPadding,
-            paddingTop: insets.top + Spacing.huge,
-            paddingBottom: insets.bottom + Spacing.xl,
-          }}>
-          <View style={{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center', gap: Spacing.xl }}>
-            {/* Hero — light text floats directly on the footage */}
-            <View style={{ alignItems: 'center', gap: 16 }}>
-              <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 10 }}>
-                <View
-                  pointerEvents="none"
-                  style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-                  <Kowhaiwhai width={236} color="primaryForeground" opacity={0.14} />
-                </View>
-                <Wordmark height={30} color="primaryForeground" />
-              </View>
-              <View style={{ alignItems: 'center', gap: 6 }}>
-                <Text variant="overline" style={{ color: ON_GLASS_DIM, ...HERO_SHADOW }}>
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + Spacing.xl }}>
+          {/* Ink masthead - the mission-quote panel language at full bleed: deep
+              cocoa, a Pūaroha-red kōwhaiwhai trace flowing off the edge, the koru
+              wordmark and a serif welcome set like an editorial cover. */}
+          <View
+            style={{
+              backgroundColor: colors.inkSurface,
+              paddingTop: insets.top + Spacing.xxl,
+              paddingBottom: Spacing.huge + CARD_OVERLAP,
+              paddingHorizontal: Layout.screenPadding,
+              overflow: 'hidden',
+            }}>
+            <Kowhaiwhai
+              width={width * 0.92}
+              tint="#E4002B"
+              opacity={0.26}
+              style={{ position: 'absolute', top: -Spacing.xxxl, right: -width * 0.3 }}
+            />
+            <Animated.View
+              entering={FadeIn.duration(Duration.slow).reduceMotion(ReduceMotion.System)}
+              style={{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center', gap: Spacing.xxxl }}>
+              <Wordmark height={28} color="onInk" />
+              <View style={{ gap: Spacing.sm }}>
+                <Text variant="overline" color="onInkMuted">
                   Nau mai, haere mai
                 </Text>
-                <Text variant="titleXl" center style={{ color: ON_GLASS, ...HERO_SHADOW }}>
-                  Welcome back
+                <Text variant="titleXl" color="onInk" style={{ maxWidth: 300 }}>
+                  Welcome back to the kitchen.
                 </Text>
-                <Text variant="body" center style={{ color: ON_GLASS_DIM, maxWidth: 320, ...HERO_SHADOW }}>
+                <Text variant="body" color="onInkMuted" style={{ maxWidth: 320 }}>
                   Sign in to see your roster and the mahi ahead.
                 </Text>
               </View>
-            </View>
+            </Animated.View>
+          </View>
 
-            {/* Liquid glass sign-in card */}
-            <GlassPanel style={{ borderRadius: Radius.xl, padding: Spacing.xl, gap: Spacing.lg }}>
-              <AuthGlassField
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                textContentType="emailAddress"
-                returnKeyType="next"
-              />
-              <AuthGlassField
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Your password"
-                secure
-                autoComplete="password"
-                textContentType="password"
-                returnKeyType="go"
-                onSubmitEditing={onSubmit}
-              />
+          {/* Paper - the form card breaks the masthead seam. */}
+          <View
+            style={{
+              flex: 1,
+              marginTop: -CARD_OVERLAP,
+              paddingHorizontal: Layout.screenPadding,
+              width: '100%',
+              maxWidth: Layout.maxContentWidth,
+              alignSelf: 'center',
+              gap: Spacing.xl,
+            }}>
+            <Animated.View entering={enter(80)}>
+              <Card elevated padding={Spacing.xl} style={{ gap: Spacing.lg, boxShadow: Shadows.lg }}>
+                <TextField
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@email.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  textContentType="emailAddress"
+                  returnKeyType="next"
+                />
+                <TextField
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Your password"
+                  secure
+                  autoComplete="password"
+                  textContentType="password"
+                  returnKeyType="go"
+                  onSubmitEditing={onSubmit}
+                />
 
-              {error ? (
-                <Text variant="caption" selectable style={{ color: ON_GLASS_ERROR }}>
-                  {error}
+                {error ? (
+                  <Text variant="caption" color="destructive" selectable>
+                    {error}
+                  </Text>
+                ) : null}
+
+                <Button title="Sign in" icon="log-in-outline" loading={loading} onPress={onSubmit} />
+              </Card>
+            </Animated.View>
+
+            <Animated.View entering={enter(160)} style={{ gap: Spacing.xl }}>
+              {/* Divider */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                <Text variant="caption" color="textTertiary">
+                  or
                 </Text>
-              ) : null}
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+              </View>
 
-              <Button title="Sign in" icon="log-in-outline" loading={loading} onPress={onSubmit} />
-            </GlassPanel>
-
-            {/* Divider */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: HAIRLINE }} />
-              <Text variant="caption" style={{ color: ON_GLASS_FAINT }}>
-                or
-              </Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: HAIRLINE }} />
-            </View>
-
-            {/* Google — interactive liquid glass button */}
-            <GlassPanel isInteractive style={{ borderRadius: Radius.button }}>
+              {/* Google */}
               <Pressable
                 accessibilityRole="button"
                 onPress={() => toast.show('Google sign-in is coming soon.')}
@@ -135,28 +151,39 @@ export default function LoginScreen() {
                   justifyContent: 'center',
                   gap: Spacing.sm,
                   paddingHorizontal: Spacing.xxl,
-                  opacity: pressed ? 0.8 : 1,
+                  borderRadius: Radius.button,
+                  borderCurve: 'continuous',
+                  borderWidth: 1,
+                  borderColor: colors.borderStrong,
+                  backgroundColor: pressed ? colors.surfacePressed : colors.surface,
+                  boxShadow: pressed ? Shadows.none : Shadows.sm,
                 })}>
-                <Icon name="logo-google" size={20} raw={ON_GLASS} />
-                <Text variant="bodyStrong" style={{ color: ON_GLASS }}>
-                  Continue with Google
-                </Text>
+                <Icon name="logo-google" size={20} color="text" />
+                <Text variant="bodyStrong">Continue with Google</Text>
               </Pressable>
-            </GlassPanel>
 
-            {/* Register */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
-              <Text variant="callout" style={{ color: ON_GLASS_DIM }}>
-                New to the kitchen?
+              {/* Register */}
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
+                <Text variant="callout" color="textSecondary">
+                  New to the kitchen?
+                </Text>
+                <Link href="/register" asChild>
+                  <Pressable hitSlop={8}>
+                    <Text variant="callout" color="accent" weight="bold">
+                      Create an account
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+            </Animated.View>
+
+            {/* Colophon - pinned to the foot of the page on tall screens */}
+            <View style={{ flex: 1 }} />
+            <Animated.View entering={enter(240)}>
+              <Text variant="caption" color="textTertiary" center>
+                Te Pūaroha · Compassion Soup Kitchen · Pōneke Wellington
               </Text>
-              <Link href="/register" asChild>
-                <Pressable hitSlop={8}>
-                  <Text variant="callout" weight="bold" style={{ color: ON_GLASS }}>
-                    Create an account
-                  </Text>
-                </Pressable>
-              </Link>
-            </View>
+            </Animated.View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -13,7 +13,9 @@
 
 import type {
   Announcement,
+  ApplicationSubmission,
   AttendanceStatus,
+  MyApplication,
   ServiceArea,
   SessionUser,
   SignupStatus,
@@ -96,8 +98,19 @@ interface ProfileRecord {
   interestIds: string[];
 }
 
+/** A submitted volunteer application awaiting staff review. */
+export interface ApplicationRecord extends MyApplication {
+  data: ApplicationSubmission;
+}
+
 interface MockDb {
   session: SessionUser | null;
+  /**
+   * The signed-in user's volunteer application. `null` for the seeded
+   * volunteer (long since approved) and for fresh applicants who haven't
+   * submitted yet; set by `submitApplication`.
+   */
+  application: ApplicationRecord | null;
   serviceAreas: ServiceArea[];
   shifts: ShiftRecord[];
   mySignups: Record<string, MySignup>;
@@ -274,6 +287,7 @@ const announcements: Announcement[] = [
 
 export const db: MockDb = {
   session: null,
+  application: null,
   serviceAreas,
   shifts: [...attended, ...roster, ...upcoming],
   mySignups: seedSignups(),
