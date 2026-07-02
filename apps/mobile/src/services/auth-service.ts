@@ -8,7 +8,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 
-import { db, SEED_USER } from '@/data/mock-db';
+import { db, nextId, SEED_USER } from '@/data/mock-db';
 import type { SessionUser } from '@/types/models';
 
 import { delay } from './client';
@@ -20,7 +20,7 @@ async function persist(user: SessionUser | null): Promise<void> {
     if (user) await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(user));
     else await SecureStore.deleteItemAsync(SESSION_KEY);
   } catch {
-    // Web / unsupported platforms — session stays in memory only.
+    // Web / unsupported platforms - session stays in memory only.
   }
 }
 
@@ -64,8 +64,11 @@ export async function register(name: string, email: string, password: string): P
   if (!e || !e.includes('@')) return { error: 'Please enter a valid email address.' };
   if (password.length < 8) return { error: 'Use at least 8 characters for your password.' };
 
-  const user: SessionUser = { ...SEED_USER, name: n, email: e };
+  // New accounts start as PUBLIC applicants - the app routes them into the
+  // volunteer application until staff approve them (mirrors the web flow).
+  const user: SessionUser = { id: nextId('usr'), name: n, email: e, role: 'PUBLIC' };
   db.session = user;
+  db.application = null;
   await persist(user);
   return { user };
 }

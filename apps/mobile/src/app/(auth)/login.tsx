@@ -49,7 +49,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + Spacing.xl }}>
-          {/* Ink masthead — the mission-quote panel language at full bleed: deep
+          {/* Ink masthead - the mission-quote panel language at full bleed: deep
               cocoa, a Pūaroha-red kōwhaiwhai trace flowing off the edge, the koru
               wordmark and a serif welcome set like an editorial cover. */}
           <View
@@ -84,7 +84,7 @@ export default function LoginScreen() {
             </Animated.View>
           </View>
 
-          {/* Paper — the form card breaks the masthead seam. */}
+          {/* Paper - the form card breaks the masthead seam. */}
           <View
             style={{
               flex: 1,
@@ -177,7 +177,7 @@ export default function LoginScreen() {
               </View>
             </Animated.View>
 
-            {/* Colophon — pinned to the foot of the page on tall screens */}
+            {/* Colophon - pinned to the foot of the page on tall screens */}
             <View style={{ flex: 1 }} />
             <Animated.View entering={enter(240)}>
               <Text variant="caption" color="textTertiary" center>

@@ -17,4 +17,5 @@ export const qk = {
   trainingSession: (id: string) => ['training', 'session', id] as const,
   hours: ['hours'] as const,
   profile: ['profile'] as const,
+  application: ['application'] as const,
 };
