@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native';
 
-import { Badge, Card, Icon, Text } from '@/components/ui';
+import { Badge, Card, formatDateNZ, Icon, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { AVAILABILITY_DAYS, type ServiceArea } from '@/types/models';
 
@@ -83,7 +83,7 @@ export function StepReview({
       <ReviewSection title="Contact" onEdit={() => goToStep(0)}>
         <Row label="Phone" value={draft.phone || 'Not provided'} />
         <Row label="Address" value={draft.address || 'Not provided'} />
-        <Row label="Date of birth" value={draft.dateOfBirth || 'Not provided'} />
+        <Row label="Date of birth" value={formatDateNZ(draft.dateOfBirth) ?? 'Not provided'} />
       </ReviewSection>
 
       <ReviewSection title="Emergency contact" onEdit={() => goToStep(1)}>

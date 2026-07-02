@@ -1,9 +1,11 @@
 import { View } from 'react-native';
 
-import { TextField } from '@/components/ui';
+import { DateField, TextField } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 
 import type { ApplicationDraft } from './draft';
+
+const DOB_MIN = new Date(1920, 0, 1);
 
 export function StepContact({
   draft,
@@ -35,12 +37,13 @@ export function StepContact({
         textContentType="fullStreetAddress"
         error={errors.address}
       />
-      <TextField
+      <DateField
         label="Date of birth"
         value={draft.dateOfBirth}
-        onChangeText={(dateOfBirth) => patch({ dateOfBirth })}
-        placeholder="DD/MM/YYYY"
-        keyboardType="numbers-and-punctuation"
+        onChange={(dateOfBirth) => patch({ dateOfBirth })}
+        placeholder="Select your date of birth"
+        minimumDate={DOB_MIN}
+        maximumDate={new Date()}
         error={errors.dateOfBirth}
         hint="Optional - helps us match you with appropriate mahi."
       />

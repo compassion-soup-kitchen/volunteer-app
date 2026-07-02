@@ -8,7 +8,7 @@ import { useToast } from '@/providers/toast-provider';
 import { submitApplication } from '@/services/application-service';
 import type { ServiceArea } from '@/types/models';
 
-import { type ApplicationDraft, dobToIso, draftToSubmission, EMPTY_DRAFT } from './draft';
+import { type ApplicationDraft, draftToSubmission, EMPTY_DRAFT } from './draft';
 import { StepAgreements } from './step-agreements';
 import { StepAvailability } from './step-availability';
 import { StepContact } from './step-contact';
@@ -31,8 +31,6 @@ function validateStep(step: number, draft: ApplicationDraft): Record<string, str
     case 'contact':
       if (!draft.phone.trim()) errors.phone = 'Please add a phone number.';
       if (!draft.address.trim()) errors.address = 'Please add your address.';
-      if (draft.dateOfBirth.trim() && !dobToIso(draft.dateOfBirth))
-        errors.dateOfBirth = 'Please use DD/MM/YYYY, or leave it blank.';
       break;
     case 'emergency':
       if (!draft.emergencyContactName.trim()) errors.emergencyContactName = 'Please add a name.';

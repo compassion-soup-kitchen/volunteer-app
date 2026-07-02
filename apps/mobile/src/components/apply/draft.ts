@@ -4,7 +4,7 @@ import type { ApplicationSubmission, Availability } from '@/types/models';
 export interface ApplicationDraft {
   phone: string;
   address: string;
-  /** As typed, `DD/MM/YYYY` (optional). */
+  /** ISO `YYYY-MM-DD` from the date picker, or empty (optional). */
   dateOfBirth: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
@@ -36,23 +36,11 @@ export const EMPTY_DRAFT: ApplicationDraft = {
   safeguardingSignature: '',
 };
 
-/** `DD/MM/YYYY` → ISO `YYYY-MM-DD`, or null when the input doesn't parse. */
-export function dobToIso(input: string): string | null {
-  const m = input.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  const [, d, mo, y] = m;
-  const day = Number(d);
-  const month = Number(mo);
-  const year = Number(y);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
 export function draftToSubmission(draft: ApplicationDraft): ApplicationSubmission {
   return {
     phone: draft.phone.trim(),
     address: draft.address.trim(),
-    dateOfBirth: dobToIso(draft.dateOfBirth) ?? '',
+    dateOfBirth: draft.dateOfBirth,
     emergencyContactName: draft.emergencyContactName.trim(),
     emergencyContactPhone: draft.emergencyContactPhone.trim(),
     emergencyContactRelationship: draft.emergencyContactRelationship.trim(),
