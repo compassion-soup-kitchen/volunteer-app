@@ -5,7 +5,6 @@ export { Card } from './card';
 export { Chip } from './chip';
 export { Divider } from './divider';
 export { EmptyState } from './empty-state';
-export { GlassPanel } from './glass-panel';
 export { Icon, type IconName } from './icon';
 export { IconChip } from './icon-chip';
 export { PageHeader } from './page-header';
