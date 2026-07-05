@@ -1,5 +1,3 @@
-import { startOfDay } from "date-fns";
-
 /** The fields of a shift that decide whether volunteers get a push. */
 export type ShiftNotificationDetails = {
   date: Date;
@@ -11,8 +9,9 @@ export type ShiftNotificationDetails = {
 /**
  * Whether an edit moved the when/where of a shift volunteers still care
  * about. Capacity and notes tweaks don't count, and neither do shifts on
- * past days — but a shift later today does (`Shift.date` is date-only, so
- * it must be compared against the start of today, not the current time).
+ * past days — but a shift later today does. `Shift.date` is date-only,
+ * encoded as midnight UTC, so "today" is anchored to the UTC day boundary
+ * rather than the server's timezone (which must not change the outcome).
  */
 export function shouldNotifyShiftChange(
   existing: ShiftNotificationDetails,
@@ -25,5 +24,8 @@ export function shouldNotifyShiftChange(
     updated.endTime !== existing.endTime ||
     updated.serviceAreaId !== existing.serviceAreaId;
 
-  return detailsChanged && updated.date >= startOfDay(now);
+  const todayUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  return detailsChanged && updated.date >= todayUtc;
 }
