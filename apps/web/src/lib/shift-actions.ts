@@ -243,23 +243,23 @@ export async function updateShift(
 
   const db = getDb();
 
-  const existing = await db.shift.findUnique({
-    where: { id: shiftId },
-    select: {
-      date: true,
-      startTime: true,
-      endTime: true,
-      serviceAreaId: true,
-      signups: {
-        where: { status: "SIGNED_UP" },
-        select: { volunteer: { select: { userId: true } } },
-      },
-    },
-  });
-
-  if (!existing) return { error: "Shift not found." };
-
   try {
+    const existing = await db.shift.findUnique({
+      where: { id: shiftId },
+      select: {
+        date: true,
+        startTime: true,
+        endTime: true,
+        serviceAreaId: true,
+        signups: {
+          where: { status: "SIGNED_UP" },
+          select: { volunteer: { select: { userId: true } } },
+        },
+      },
+    });
+
+    if (!existing) return { error: "Shift not found." };
+
     const updated = await db.shift.update({
       where: { id: shiftId },
       data: {
