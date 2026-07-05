@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
+import { shouldNotifyShiftChange } from "@/lib/shift-notifications";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -272,18 +273,9 @@ export async function updateShift(
       include: { serviceArea: { select: { name: true } } },
     });
 
-    // Let signed-up volunteers know when the when/where of their shift moved
-    // (capacity and notes tweaks aren't worth a ping).
-    const detailsChanged =
-      updated.date.getTime() !== existing.date.getTime() ||
-      updated.startTime !== existing.startTime ||
-      updated.endTime !== existing.endTime ||
-      updated.serviceAreaId !== existing.serviceAreaId;
-
     if (
-      detailsChanged &&
       existing.signups.length > 0 &&
-      updated.date >= new Date()
+      shouldNotifyShiftChange(existing, updated, new Date())
     ) {
       const userIds = existing.signups.map((s) => s.volunteer.userId);
       after(() =>
