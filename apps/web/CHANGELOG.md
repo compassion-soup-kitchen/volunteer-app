@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.3.1...v1.4.0) (2026-07-05)
+
+
+### Features
+
+* **api:** serve the mobile app from the web app via /api/v1 ([11c38c3](https://github.com/compassion-soup-kitchen/volunteer-app/commit/11c38c37b985d535c163030df55a6838e2e7c05f))
+
 ## [1.3.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.3.0...v1.3.1) (2026-06-29)
 
 
