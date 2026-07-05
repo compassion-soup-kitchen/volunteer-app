@@ -5,6 +5,20 @@ import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+import {
+  cancelTrainingRegistrationAsUser,
+  getAvailableTrainingForUser,
+  getTrainingHistoryForUser,
+  registerForTrainingAsUser,
+  type TrainingHistoryItem,
+  type VolunteerTrainingSession,
+} from "@/lib/data/volunteer-training";
+
+export type {
+  VolunteerTrainingSession,
+  TrainingHistoryItem,
+} from "@/lib/data/volunteer-training";
+
 // ─── Types ──────────────────────────────────────────────
 
 export type StaffTrainingSession = {
@@ -26,21 +40,6 @@ export type StaffTrainingSession = {
       user: { name: string | null; email: string };
     };
   }[];
-};
-
-export type VolunteerTrainingSession = {
-  id: string;
-  type: string;
-  title: string;
-  description: string | null;
-  date: Date;
-  startTime: string;
-  endTime: string;
-  capacity: number;
-  location: string | null;
-  registeredCount: number;
-  userAttendanceId: string | null;
-  userAttendanceStatus: string | null;
 };
 
 export type CreateTrainingData = {
@@ -276,51 +275,7 @@ export async function getAvailableTraining(): Promise<VolunteerTrainingSession[]
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  const db = getDb();
-
-  const profile = await db.volunteerProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  const now = new Date();
-
-  const sessions = await db.trainingSession.findMany({
-    where: {
-      date: { gte: now },
-    },
-    include: {
-      attendances: {
-        where: { status: { in: ["REGISTERED", "ATTENDED"] } },
-        select: {
-          id: true,
-          volunteerId: true,
-          status: true,
-        },
-      },
-    },
-    orderBy: [{ date: "asc" }, { startTime: "asc" }],
-  });
-
-  return sessions.map((ts) => {
-    const userAttendance = profile
-      ? ts.attendances.find((a) => a.volunteerId === profile.id)
-      : null;
-
-    return {
-      id: ts.id,
-      type: ts.type,
-      title: ts.title,
-      description: ts.description,
-      date: ts.date,
-      startTime: ts.startTime,
-      endTime: ts.endTime,
-      capacity: ts.capacity,
-      location: ts.location,
-      registeredCount: ts.attendances.length,
-      userAttendanceId: userAttendance?.id ?? null,
-      userAttendanceStatus: userAttendance?.status ?? null,
-    };
-  });
+  return getAvailableTrainingForUser(session.user.id);
 }
 
 export async function registerForTraining(
@@ -331,68 +286,7 @@ export async function registerForTraining(
     return { error: "You must be signed in." };
   }
 
-  const db = getDb();
-
-  const profile = await db.volunteerProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-  if (!profile || profile.status !== "ACTIVE") {
-    return {
-      error: "Your application must be approved before registering for training.",
-    };
-  }
-
-  const ts = await db.trainingSession.findUnique({
-    where: { id: sessionId },
-    include: {
-      attendances: {
-        where: { status: { in: ["REGISTERED", "ATTENDED"] } },
-      },
-    },
-  });
-
-  if (!ts) return { error: "Training session not found." };
-  if (ts.date < new Date()) return { error: "This session has already passed." };
-  if (ts.attendances.length >= ts.capacity) {
-    return { error: "This session is full." };
-  }
-
-  const existing = await db.trainingAttendance.findUnique({
-    where: {
-      sessionId_volunteerId: {
-        sessionId,
-        volunteerId: profile.id,
-      },
-    },
-  });
-
-  if (existing && existing.status === "REGISTERED") {
-    return { error: "You are already registered for this session." };
-  }
-
-  try {
-    if (existing && existing.status === "CANCELLED") {
-      await db.trainingAttendance.update({
-        where: { id: existing.id },
-        data: { status: "REGISTERED" },
-      });
-    } else {
-      await db.trainingAttendance.create({
-        data: {
-          sessionId,
-          volunteerId: profile.id,
-          status: "REGISTERED",
-        },
-      });
-    }
-
-    revalidatePath("/training");
-    revalidatePath("/dashboard");
-    revalidatePath("/profile");
-    return { success: true };
-  } catch {
-    return { error: "Something went wrong. Please try again." };
-  }
+  return registerForTrainingAsUser(session.user.id, sessionId);
 }
 
 export async function cancelTrainingRegistration(
@@ -403,81 +297,14 @@ export async function cancelTrainingRegistration(
     return { error: "You must be signed in." };
   }
 
-  const db = getDb();
-
-  const profile = await db.volunteerProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-  if (!profile) return { error: "Profile not found." };
-
-  const attendance = await db.trainingAttendance.findUnique({
-    where: {
-      sessionId_volunteerId: {
-        sessionId,
-        volunteerId: profile.id,
-      },
-    },
-    include: { session: true },
-  });
-
-  if (!attendance || attendance.status !== "REGISTERED") {
-    return { error: "No active registration found for this session." };
-  }
-
-  if (attendance.session.date < new Date()) {
-    return { error: "Cannot cancel a session that has already passed." };
-  }
-
-  try {
-    await db.trainingAttendance.update({
-      where: { id: attendance.id },
-      data: { status: "CANCELLED" },
-    });
-
-    revalidatePath("/training");
-    revalidatePath("/dashboard");
-    revalidatePath("/profile");
-    return { success: true };
-  } catch {
-    return { error: "Something went wrong. Please try again." };
-  }
+  return cancelTrainingRegistrationAsUser(session.user.id, sessionId);
 }
 
 // ─── Training History (for profile) ─────────────────────
-
-export type TrainingHistoryItem = {
-  id: string;
-  type: string;
-  title: string;
-  date: Date;
-  status: string;
-};
 
 export async function getVolunteerTrainingHistory(): Promise<TrainingHistoryItem[]> {
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  const db = getDb();
-  const profile = await db.volunteerProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-  if (!profile) return [];
-
-  const attendances = await db.trainingAttendance.findMany({
-    where: { volunteerId: profile.id },
-    include: {
-      session: {
-        select: { id: true, type: true, title: true, date: true },
-      },
-    },
-    orderBy: { session: { date: "desc" } },
-  });
-
-  return attendances.map((a) => ({
-    id: a.id,
-    type: a.session.type,
-    title: a.session.title,
-    date: a.session.date,
-    status: a.status,
-  }));
+  return getTrainingHistoryForUser(session.user.id);
 }

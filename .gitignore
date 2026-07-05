@@ -45,6 +45,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!**/.env.example
+# mobile .env holds only the public API base URL - committed on purpose
+!apps/mobile/.env
 
 # vercel
 .vercel

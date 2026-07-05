@@ -34,9 +34,9 @@ describe("getMilestones", () => {
     expect(result.every((m) => m.reached)).toBe(true);
   });
 
-  it("preserves label and emoji from the source milestone", () => {
+  it("preserves label and term from the source milestone", () => {
     const [first] = getMilestones(0);
     expect(first.label).toBe("10 Hours");
-    expect(first.emoji).toBe("whetu");
+    expect(first.term).toBe("Whetū");
   });
 });

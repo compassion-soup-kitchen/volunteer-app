@@ -291,7 +291,7 @@ export default async function VolunteerDashboard() {
                         Your next mahi
                       </p>
                       <p className="font-serif text-xl font-normal leading-tight">
-                        {nextShift.serviceArea}
+                        {nextShift.serviceArea.name}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {formatTimeRange(nextShift.startTime, nextShift.endTime)}
@@ -322,7 +322,7 @@ export default async function VolunteerDashboard() {
                           key={shift.id}
                           className="flex items-center justify-between gap-2 text-sm"
                         >
-                          <span className="font-medium">{shift.serviceArea}</span>
+                          <span className="font-medium">{shift.serviceArea.name}</span>
                           <span className="text-muted-foreground">
                             {formatShiftDate(shift.date)}
                             {" · "}
@@ -395,7 +395,7 @@ export default async function VolunteerDashboard() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
-                        {shift.serviceArea}
+                        {shift.serviceArea.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatShiftDate(shift.date)}

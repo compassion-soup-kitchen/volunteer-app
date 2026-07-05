@@ -243,8 +243,8 @@ export function HoursDetail({ data }: HoursDetailProps) {
                   <p className="font-serif text-base font-normal tabular-nums">
                     {milestone.label}
                   </p>
-                  <p className="text-xs capitalize text-muted-foreground">
-                    {milestone.emoji}
+                  <p className="text-xs text-muted-foreground">
+                    {milestone.term}
                   </p>
                 </div>
                 {milestone.reached && (
