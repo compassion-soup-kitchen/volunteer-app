@@ -1,8 +1,9 @@
 "use server";
 
-import { connection } from "next/server";
+import { after, connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { sendPushToUsers } from "@/lib/push";
 import { revalidatePath } from "next/cache";
 import {
   startOfWeek,
@@ -319,6 +320,16 @@ export async function reviewApplication(
       }
       // INFO_REQUESTED doesn't change profile status
     });
+
+    if (decision === "APPROVED") {
+      after(() =>
+        sendPushToUsers([application.volunteer.userId], {
+          title: "Your application is approved 🎉",
+          body: "Nau mai, haere mai! We'd love to have you on the team — your induction details are on the way.",
+          data: { url: "/onboarding" },
+        })
+      );
+    }
 
     revalidatePath("/staff/applications");
     revalidatePath("/staff/dashboard");

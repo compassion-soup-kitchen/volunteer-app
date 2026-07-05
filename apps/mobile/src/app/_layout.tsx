@@ -19,6 +19,7 @@ import { type ReactNode, useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PushNotifications } from '@/components/push-notifications';
 import { Colors, type ThemeName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
@@ -144,6 +145,7 @@ export default function RootLayout() {
               <ToastProvider>
                 <SplashGate fontsReady={fontsReady}>
                   <RootNavigator />
+                  <PushNotifications />
                 </SplashGate>
               </ToastProvider>
             </ThemedRoot>

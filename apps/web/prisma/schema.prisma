@@ -50,6 +50,22 @@ model User {
   reAckSetAgreements   AgreementTemplate[] @relation("AgreementTemplateReAckSetBy")
   archivedBy           User?               @relation("UserArchivedBy", fields: [archivedById], references: [id])
   archivedUsers        User[]              @relation("UserArchivedBy")
+  pushTokens           PushToken[]
+}
+
+// A mobile device registered for Expo push notifications. One row per
+// device; the token moves to whichever user last signed in on that device.
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Account {
