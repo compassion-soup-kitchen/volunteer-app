@@ -51,6 +51,9 @@ yarn-error.log*
 
 # env files
 .env*
+# mobile .env holds only the public API base URL - EAS builds need it so the
+# bundled app points at production
+!apps/mobile/.env
 
 # vercel
 .vercel
