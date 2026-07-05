@@ -1,3 +1,19 @@
+const shiftDayFormat = new Intl.DateTimeFormat("en-NZ", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+});
+
+/**
+ * "Friday, 10 July" — formatted on the UTC day the date-only value
+ * encodes, so the text can't drift from the UTC boundary check below if
+ * the server's timezone ever changes.
+ */
+export function formatShiftDay(date: Date): string {
+  return shiftDayFormat.format(date);
+}
+
 /** The fields of a shift that decide whether volunteers get a push. */
 export type ShiftNotificationDetails = {
   date: Date;

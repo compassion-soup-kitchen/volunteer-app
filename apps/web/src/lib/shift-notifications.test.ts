@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatShiftDay,
   shouldNotifyShiftChange,
   type ShiftNotificationDetails,
 } from "@/lib/shift-notifications";
@@ -18,6 +19,14 @@ const shift = (
 
 // Mid-morning on the 6th, UTC.
 const now = new Date("2026-07-06T09:30:00.000Z");
+
+describe("formatShiftDay", () => {
+  it("formats the UTC day the date encodes, regardless of server timezone", () => {
+    expect(formatShiftDay(new Date("2026-07-10T00:00:00.000Z"))).toBe(
+      "Friday, 10 July"
+    );
+  });
+});
 
 describe("shouldNotifyShiftChange", () => {
   it("is quiet when nothing volunteers care about changed", () => {

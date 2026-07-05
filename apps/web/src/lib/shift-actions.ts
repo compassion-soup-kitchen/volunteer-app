@@ -1,11 +1,13 @@
 "use server";
 
 import { after, connection } from "next/server";
-import { format } from "date-fns";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
-import { shouldNotifyShiftChange } from "@/lib/shift-notifications";
+import {
+  formatShiftDay,
+  shouldNotifyShiftChange,
+} from "@/lib/shift-notifications";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -281,7 +283,7 @@ export async function updateShift(
       after(() =>
         sendPushToUsers(userIds, {
           title: "Your shift has changed",
-          body: `${updated.serviceArea.name} is now ${format(updated.date, "EEEE d MMMM")}, ${updated.startTime}–${updated.endTime}.`,
+          body: `${updated.serviceArea.name} is now ${formatShiftDay(updated.date)}, ${updated.startTime}–${updated.endTime}.`,
           data: { url: `/shift/${shiftId}` },
         })
       );
