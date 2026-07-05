@@ -53,13 +53,18 @@ model User {
   pushTokens           PushToken[]
 }
 
+enum Platform {
+  IOS
+  ANDROID
+}
+
 // A mobile device registered for Expo push notifications. One row per
 // device; the token moves to whichever user last signed in on that device.
 model PushToken {
   id        String   @id @default(cuid())
   userId    String
   token     String   @unique
-  platform  String
+  platform  Platform
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

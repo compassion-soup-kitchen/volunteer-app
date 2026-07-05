@@ -1,9 +1,12 @@
+-- CreateEnum
+CREATE TYPE "Platform" AS ENUM ('IOS', 'ANDROID');
+
 -- CreateTable
 CREATE TABLE "PushToken" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "platform" TEXT NOT NULL,
+    "platform" "Platform" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

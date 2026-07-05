@@ -7,7 +7,11 @@ const registerSchema = z.object({
   token: z
     .string()
     .regex(/^ExponentPushToken\[.+\]$/, "Not a valid Expo push token."),
-  platform: z.enum(["ios", "android"]),
+  // The app sends lowercase (React Native's Platform.OS); the DB enum is
+  // uppercase like every other enum in the schema.
+  platform: z
+    .enum(["ios", "android"])
+    .transform((p) => (p === "ios" ? ("IOS" as const) : ("ANDROID" as const))),
 });
 
 /**

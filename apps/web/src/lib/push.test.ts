@@ -109,6 +109,17 @@ describe("sendPushToUsers", () => {
     });
   });
 
+  it("swallows database errors without throwing", async () => {
+    findMany.mockRejectedValue(new Error("db down"));
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      sendPushToUsers(["u1"], { title: "Hi", body: "there" })
+    ).resolves.toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("swallows network errors without throwing", async () => {
     findMany.mockResolvedValue([{ token: "tok" }]);
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));

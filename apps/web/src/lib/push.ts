@@ -59,10 +59,16 @@ export async function sendPushToUsers(
   if (userIds.length === 0) return;
 
   const db = getDb();
-  const rows = await db.pushToken.findMany({
-    where: { userId: { in: userIds } },
-    select: { token: true },
-  });
+  let rows: { token: string }[];
+  try {
+    rows = await db.pushToken.findMany({
+      where: { userId: { in: userIds } },
+      select: { token: true },
+    });
+  } catch (e) {
+    console.error("Failed to load push tokens:", e);
+    return;
+  }
   if (rows.length === 0) return;
 
   const deadTokens: string[] = [];
