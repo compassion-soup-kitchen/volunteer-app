@@ -1,12 +1,13 @@
 /**
- * Dashboard service (mock). Mirrors `getDashboardData` in the web app.
+ * Dashboard service. Mirrors `getDashboardData` in the web app; against the
+ * real API it fetches `/api/v1/dashboard`.
  */
 
 import { areaById, db, diffHours, isPast, isoDate, signupCount, type ShiftRecord } from '@/data/mock-db';
 import { getMilestones } from '@/lib/milestones';
 import type { DashboardData, OpenShift, RosterShift, ShiftServiceArea } from '@/types/models';
 
-import { delay } from './client';
+import { apiFetch, delay, USE_MOCK } from './client';
 
 function thisMonthKey(): string {
   const now = new Date();
@@ -30,6 +31,8 @@ function toRoster(s: ShiftRecord): RosterShift {
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
+  if (!USE_MOCK) return apiFetch<DashboardData>('/api/v1/dashboard');
+
   await delay();
 
   const month = thisMonthKey();

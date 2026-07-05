@@ -5,20 +5,20 @@ import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-// ─── Types ──────────────────────────────────────────────
+import {
+  cancelShiftSignupAsUser,
+  getAvailableShiftsForUser,
+  signUpForShiftAsUser,
+  type ShiftFilters,
+  type ShiftWithDetails,
+} from "@/lib/data/volunteer-shifts";
 
-export type ShiftWithDetails = {
-  id: string;
-  date: Date;
-  startTime: string;
-  endTime: string;
-  capacity: number;
-  notes: string | null;
-  serviceArea: { id: string; name: string };
-  signupCount: number;
-  userSignupId: string | null; // null if user hasn't signed up
-  userSignupStatus: string | null;
-};
+export type {
+  ShiftWithDetails,
+  ShiftFilters,
+} from "@/lib/data/volunteer-shifts";
+
+// ─── Types ──────────────────────────────────────────────
 
 export type StaffShift = {
   id: string;
@@ -39,12 +39,6 @@ export type StaffShift = {
   }[];
 };
 
-export type ShiftFilters = {
-  serviceAreaId?: string;
-  fromDate?: string; // ISO
-  toDate?: string; // ISO
-};
-
 // ─── Volunteer Actions ──────────────────────────────────
 
 export async function getAvailableShifts(
@@ -54,59 +48,7 @@ export async function getAvailableShifts(
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  const db = getDb();
-
-  // Get volunteer profile for signup status
-  const profile = await db.volunteerProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  const now = new Date();
-  const fromDate = filters?.fromDate ? new Date(filters.fromDate) : now;
-  const toDate = filters?.toDate ? new Date(filters.toDate) : undefined;
-
-  const shifts = await db.shift.findMany({
-    where: {
-      date: {
-        gte: fromDate,
-        ...(toDate ? { lte: toDate } : {}),
-      },
-      ...(filters?.serviceAreaId
-        ? { serviceAreaId: filters.serviceAreaId }
-        : {}),
-    },
-    include: {
-      serviceArea: { select: { id: true, name: true } },
-      signups: {
-        where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
-        select: {
-          id: true,
-          volunteerId: true,
-          status: true,
-        },
-      },
-    },
-    orderBy: [{ date: "asc" }, { startTime: "asc" }],
-  });
-
-  return shifts.map((shift) => {
-    const userSignup = profile
-      ? shift.signups.find((s) => s.volunteerId === profile.id)
-      : null;
-
-    return {
-      id: shift.id,
-      date: shift.date,
-      startTime: shift.startTime,
-      endTime: shift.endTime,
-      capacity: shift.capacity,
-      notes: shift.notes,
-      serviceArea: shift.serviceArea,
-      signupCount: shift.signups.length,
-      userSignupId: userSignup?.id ?? null,
-      userSignupStatus: userSignup?.status ?? null,
-    };
-  });
+  return getAvailableShiftsForUser(session.user.id, filters);
 }
 
 export async function signUpForShift(
@@ -117,70 +59,7 @@ export async function signUpForShift(
     return { error: "You must be signed in." };
   }
 
-  const db = getDb();
-
-  const profile = await db.volunteerProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-  if (!profile || profile.status !== "ACTIVE") {
-    return {
-      error: "Your application must be approved before signing up for shifts.",
-    };
-  }
-
-  // Check shift exists and has capacity
-  const shift = await db.shift.findUnique({
-    where: { id: shiftId },
-    include: {
-      signups: {
-        where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
-      },
-    },
-  });
-
-  if (!shift) return { error: "Shift not found." };
-  if (shift.date < new Date()) return { error: "This shift has already passed." };
-  if (shift.signups.length >= shift.capacity) {
-    return { error: "This shift is full." };
-  }
-
-  // Check for existing signup
-  const existing = await db.shiftSignup.findUnique({
-    where: {
-      shiftId_volunteerId: {
-        shiftId,
-        volunteerId: profile.id,
-      },
-    },
-  });
-
-  if (existing && existing.status === "SIGNED_UP") {
-    return { error: "You are already signed up for this shift." };
-  }
-
-  try {
-    if (existing && existing.status === "CANCELLED") {
-      // Re-sign up
-      await db.shiftSignup.update({
-        where: { id: existing.id },
-        data: { status: "SIGNED_UP", signedUpAt: new Date() },
-      });
-    } else {
-      await db.shiftSignup.create({
-        data: {
-          shiftId,
-          volunteerId: profile.id,
-          status: "SIGNED_UP",
-        },
-      });
-    }
-
-    revalidatePath("/shifts");
-    revalidatePath("/dashboard");
-    return { success: true };
-  } catch {
-    return { error: "Something went wrong. Please try again." };
-  }
+  return signUpForShiftAsUser(session.user.id, shiftId);
 }
 
 export async function cancelShiftSignup(
@@ -191,43 +70,7 @@ export async function cancelShiftSignup(
     return { error: "You must be signed in." };
   }
 
-  const db = getDb();
-
-  const profile = await db.volunteerProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-  if (!profile) return { error: "Profile not found." };
-
-  const signup = await db.shiftSignup.findUnique({
-    where: {
-      shiftId_volunteerId: {
-        shiftId,
-        volunteerId: profile.id,
-      },
-    },
-    include: { shift: true },
-  });
-
-  if (!signup || signup.status !== "SIGNED_UP") {
-    return { error: "No active signup found for this shift." };
-  }
-
-  if (signup.shift.date < new Date()) {
-    return { error: "Cannot cancel a shift that has already passed." };
-  }
-
-  try {
-    await db.shiftSignup.update({
-      where: { id: signup.id },
-      data: { status: "CANCELLED" },
-    });
-
-    revalidatePath("/shifts");
-    revalidatePath("/dashboard");
-    return { success: true };
-  } catch {
-    return { error: "Something went wrong. Please try again." };
-  }
+  return cancelShiftSignupAsUser(session.user.id, shiftId);
 }
 
 // ─── Staff Actions ──────────────────────────────────────

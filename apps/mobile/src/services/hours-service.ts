@@ -1,12 +1,13 @@
 /**
- * Hours service (mock). Mirrors `getVolunteerHoursData` in the web app.
+ * Hours service. Mirrors `getVolunteerHoursData` in the web app; against the
+ * real API it fetches `/api/v1/hours`.
  */
 
 import { areaById, db, diffHours } from '@/data/mock-db';
 import { getMilestones } from '@/lib/milestones';
 import type { HoursByArea, HoursByMonth, VolunteerHoursData } from '@/types/models';
 
-import { delay } from './client';
+import { apiFetch, delay, USE_MOCK } from './client';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -19,6 +20,8 @@ function monthLabel(key: string): string {
 }
 
 export async function getVolunteerHoursData(): Promise<VolunteerHoursData> {
+  if (!USE_MOCK) return apiFetch<VolunteerHoursData>('/api/v1/hours');
+
   await delay();
 
   const now = new Date();

@@ -1,6 +1,7 @@
 /**
- * Shifts service (mock). Mirrors `getAvailableShifts`, `signUpForShift` and
- * `cancelShiftSignup` in the web app.
+ * Shifts service. Mirrors `getAvailableShifts`, `signUpForShift` and
+ * `cancelShiftSignup` in the web app; against the real API it calls
+ * `/api/v1/shifts`, `/api/v1/schedule` and `/api/v1/service-areas`.
  */
 
 import { areaById, db, isPast, nextId, signupCount, type ShiftRecord } from '@/data/mock-db';
@@ -12,9 +13,11 @@ import type {
   ShiftWithDetails,
 } from '@/types/models';
 
-import { delay } from './client';
+import { apiFetch, ApiError, delay, toActionError, USE_MOCK } from './client';
 
 export async function getServiceAreas(): Promise<ServiceArea[]> {
+  if (!USE_MOCK) return apiFetch<ServiceArea[]>('/api/v1/service-areas');
+
   await delay(120);
   return db.serviceAreas;
 }
@@ -41,6 +44,13 @@ function toDetails(s: ShiftRecord): ShiftWithDetails {
 }
 
 export async function getAvailableShifts(filters?: ShiftFilters): Promise<ShiftWithDetails[]> {
+  if (!USE_MOCK) {
+    const query = filters?.serviceAreaId
+      ? `?serviceAreaId=${encodeURIComponent(filters.serviceAreaId)}`
+      : '';
+    return apiFetch<ShiftWithDetails[]>(`/api/v1/shifts${query}`);
+  }
+
   await delay();
   return db.shifts
     .filter((s) => !isPast(s.date))
@@ -73,6 +83,10 @@ function toScheduleEntry(s: ShiftRecord, status: ScheduleStatus): ScheduleEntry 
 
 /** The volunteer's own roster, split into upcoming bookings and past shifts. */
 export async function getMySchedule(): Promise<{ upcoming: ScheduleEntry[]; past: ScheduleEntry[] }> {
+  if (!USE_MOCK) {
+    return apiFetch<{ upcoming: ScheduleEntry[]; past: ScheduleEntry[] }>('/api/v1/schedule');
+  }
+
   await delay();
 
   const upcoming = db.shifts
@@ -92,12 +106,32 @@ export async function getMySchedule(): Promise<{ upcoming: ScheduleEntry[]; past
 }
 
 export async function getShiftById(id: string): Promise<ShiftWithDetails | null> {
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch<ShiftWithDetails>(`/api/v1/shifts/${encodeURIComponent(id)}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
   await delay(180);
   const s = db.shifts.find((x) => x.id === id);
   return s ? toDetails(s) : null;
 }
 
 export async function signUpForShift(shiftId: string): Promise<ActionResult> {
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch<ActionResult>(
+        `/api/v1/shifts/${encodeURIComponent(shiftId)}/signup`,
+        { method: 'POST' },
+      );
+    } catch (err) {
+      return toActionError(err);
+    }
+  }
+
   await delay();
   const shift = db.shifts.find((s) => s.id === shiftId);
   if (!shift) return { error: 'That shift could not be found.' };
@@ -118,6 +152,17 @@ export async function signUpForShift(shiftId: string): Promise<ActionResult> {
 }
 
 export async function cancelShiftSignup(shiftId: string): Promise<ActionResult> {
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch<ActionResult>(
+        `/api/v1/shifts/${encodeURIComponent(shiftId)}/signup`,
+        { method: 'DELETE' },
+      );
+    } catch (err) {
+      return toActionError(err);
+    }
+  }
+
   await delay();
   const shift = db.shifts.find((s) => s.id === shiftId);
   if (!shift) return { error: 'That shift could not be found.' };

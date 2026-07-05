@@ -1,8 +1,7 @@
 "use server";
 
 import { signIn } from "@/lib/auth";
-import { getDb } from "@/lib/db";
-import bcrypt from "bcryptjs";
+import { createUserAccount } from "@/lib/data/users";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 
@@ -69,26 +68,15 @@ export async function register(
     return { error: "Passwords do not match" };
   }
 
-  const db = getDb();
+  const created = await createUserAccount(
+    parsed.data.name,
+    parsed.data.email,
+    parsed.data.password
+  );
 
-  const existing = await db.user.findUnique({
-    where: { email: parsed.data.email },
-  });
-
-  if (existing) {
-    return { error: "An account with this email already exists" };
+  if (created.error) {
+    return { error: created.error };
   }
-
-  const hashedPassword = await bcrypt.hash(parsed.data.password, 12);
-
-  await db.user.create({
-    data: {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      password: hashedPassword,
-      role: "PUBLIC",
-    },
-  });
 
   try {
     await signIn("credentials", {

@@ -1,18 +1,22 @@
 /**
- * Training service (mock). Mirrors `getAvailableTraining`,
- * `registerForTraining` and `cancelTrainingRegistration` in the web app.
+ * Training service. Mirrors `getAvailableTraining`, `registerForTraining` and
+ * `cancelTrainingRegistration` in the web app; against the real API it calls
+ * `/api/v1/training*`. Readiness against the core curriculum is computed here
+ * on the client (see `@/lib/training`) from the session list plus the
+ * volunteer's attendance history, so the backend only serves primitives.
  */
 
 import { db, isPast, nextId, type TrainingRecord } from '@/data/mock-db';
 import { computeReadiness, isCoreTraining } from '@/lib/training';
 import type {
   ActionResult,
+  TrainingHistoryItem,
   TrainingListItem,
   TrainingOverview,
   TrainingSessionWithDetails,
 } from '@/types/models';
 
-import { delay } from './client';
+import { apiFetch, ApiError, delay, toActionError, USE_MOCK } from './client';
 
 /** Chronological by date then start time. */
 function byDateTime(a: { date: string; startTime: string }, b: { date: string; startTime: string }): number {
@@ -43,29 +47,42 @@ function toDetails(t: TrainingRecord): TrainingSessionWithDetails {
   };
 }
 
-export async function getAvailableTraining(): Promise<TrainingSessionWithDetails[]> {
-  await delay();
+function mockUpcoming(): TrainingSessionWithDetails[] {
   return db.training.filter((t) => !isPast(t.date)).sort(byDateTime).map(toDetails);
 }
 
+export async function getAvailableTraining(): Promise<TrainingSessionWithDetails[]> {
+  if (!USE_MOCK) return apiFetch<TrainingSessionWithDetails[]>('/api/v1/training');
+
+  await delay();
+  return mockUpcoming();
+}
+
 export async function getTrainingById(id: string): Promise<TrainingSessionWithDetails | null> {
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch<TrainingSessionWithDetails>(`/api/v1/training/${encodeURIComponent(id)}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
   await delay(140);
   const t = db.training.find((x) => x.id === id);
   return t ? toDetails(t) : null;
 }
 
 /**
- * The full Training-tab payload: the volunteer's readiness against the required
- * curriculum, their booked sessions, what's open to register for, and their
- * completed record. Mirrors the shape a future `getTrainingOverview` server
- * action would return so the screen never changes when the backend lands.
+ * Folds upcoming sessions and the volunteer's attendance history into the
+ * Training-tab payload: readiness against the required curriculum, booked
+ * sessions, what's open to register for, and the completed record.
  */
-export async function getTrainingOverview(): Promise<TrainingOverview> {
-  await delay();
-
-  const upcoming = db.training.filter((t) => !isPast(t.date)).sort(byDateTime).map(toDetails);
-
-  const completed = db.pastTraining
+function buildOverview(
+  upcoming: TrainingSessionWithDetails[],
+  history: TrainingHistoryItem[],
+): TrainingOverview {
+  const completed = history
     .filter((h) => h.status === 'ATTENDED')
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date));
@@ -94,7 +111,32 @@ export async function getTrainingOverview(): Promise<TrainingOverview> {
   };
 }
 
+/** The full Training-tab payload. */
+export async function getTrainingOverview(): Promise<TrainingOverview> {
+  if (!USE_MOCK) {
+    const [upcoming, history] = await Promise.all([
+      apiFetch<TrainingSessionWithDetails[]>('/api/v1/training'),
+      apiFetch<TrainingHistoryItem[]>('/api/v1/training/history'),
+    ]);
+    return buildOverview(upcoming, history);
+  }
+
+  await delay();
+  return buildOverview(mockUpcoming(), db.pastTraining);
+}
+
 export async function registerForTraining(sessionId: string): Promise<ActionResult> {
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch<ActionResult>(
+        `/api/v1/training/${encodeURIComponent(sessionId)}/registration`,
+        { method: 'POST' },
+      );
+    } catch (err) {
+      return toActionError(err);
+    }
+  }
+
   await delay();
   const session = db.training.find((t) => t.id === sessionId);
   if (!session) return { error: 'That training session could not be found.' };
@@ -111,6 +153,17 @@ export async function registerForTraining(sessionId: string): Promise<ActionResu
 }
 
 export async function cancelTrainingRegistration(sessionId: string): Promise<ActionResult> {
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch<ActionResult>(
+        `/api/v1/training/${encodeURIComponent(sessionId)}/registration`,
+        { method: 'DELETE' },
+      );
+    } catch (err) {
+      return toActionError(err);
+    }
+  }
+
   await delay();
   const session = db.training.find((t) => t.id === sessionId);
   if (!session) return { error: 'That training session could not be found.' };

@@ -1,15 +1,18 @@
 /**
- * Volunteer application service (mock). Mirrors `submitApplication` and
- * `getUserApplicationStatus` in the web app's `application-actions.ts`.
+ * Volunteer application service. Mirrors `submitApplication` and
+ * `getUserApplicationStatus` in the web app's `application-actions.ts`;
+ * against the real API it calls `/api/v1/application`.
  */
 
 import { db } from '@/data/mock-db';
 import type { ActionResult, ApplicationSubmission, MyApplication } from '@/types/models';
 
-import { delay } from './client';
+import { apiFetch, delay, toActionError, USE_MOCK } from './client';
 
 /** The signed-in user's application, or `null` if they haven't applied yet. */
 export async function getMyApplication(): Promise<MyApplication | null> {
+  if (!USE_MOCK) return apiFetch<MyApplication | null>('/api/v1/application');
+
   await delay();
   if (!db.application) return null;
   const { status, submittedAt, notes } = db.application;
@@ -32,12 +35,23 @@ function validate(data: ApplicationSubmission): string | null {
 }
 
 export async function submitApplication(data: ApplicationSubmission): Promise<ActionResult> {
+  const error = validate(data);
+  if (error) return { error };
+
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch<ActionResult>('/api/v1/application', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch (err) {
+      return toActionError(err);
+    }
+  }
+
   await delay(480);
   if (!db.session) return { error: 'Please sign in to submit your application.' };
   if (db.application) return { error: 'You have already submitted an application.' };
-
-  const error = validate(data);
-  if (error) return { error };
 
   db.application = {
     status: 'PENDING',
