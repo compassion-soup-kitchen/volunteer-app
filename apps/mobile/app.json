@@ -46,7 +46,14 @@
         }
       ],
       "expo-secure-store",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-notifications",
+        {
+          "color": "#E4002B",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
