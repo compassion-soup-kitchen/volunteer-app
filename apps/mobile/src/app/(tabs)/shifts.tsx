@@ -142,7 +142,7 @@ export default function ShiftsScreen() {
       : `${openShifts.length} ${openShifts.length === 1 ? 'shift' : 'shifts'} open to pick up.`;
 
   return (
-    <Screen onRefresh={refetch} refreshing={isRefetching}>
+    <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
       {/* Title */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.md }}>
         <View style={{ flex: 1, gap: 4 }}>

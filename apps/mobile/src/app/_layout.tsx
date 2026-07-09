@@ -21,6 +21,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { PushNotifications } from '@/components/push-notifications';
 import { Colors, type ThemeName } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider, useAuth } from '@/providers/auth-provider';
@@ -54,6 +55,8 @@ function RootNavigator() {
         headerTitleStyle: { color: colors.text },
         headerTintColor: colors.primary,
         headerShadowVisible: false,
+        // Chevron only - never surface the previous route's raw name (e.g. "(tabs)").
+        headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: colors.background },
       }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -136,8 +139,13 @@ export default function RootLayout() {
   // Render once fonts load, or fall back to system fonts if they fail.
   const fontsReady = loaded || Boolean(error);
 
+  // Theme the outermost view so native stack / sheet transitions never reveal a
+  // white window behind the scene in dark mode.
+  const scheme = useColorScheme();
+  const rootBackground = scheme === 'dark' ? Colors.dark.background : Colors.light.background;
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: rootBackground }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>

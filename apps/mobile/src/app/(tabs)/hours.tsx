@@ -94,7 +94,7 @@ export default function HoursScreen() {
   });
 
   return (
-    <Screen onRefresh={refetch} refreshing={isRefetching}>
+    <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
       <PageHeader
         overline="Tō pānga"
         title="Your impact"
