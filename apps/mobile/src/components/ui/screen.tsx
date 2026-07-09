@@ -21,7 +21,11 @@ export type ScreenProps = {
   onRefresh?: () => void;
   /** Gap between direct children of the content column */
   gap?: number;
-  /** Pad for the top safe area — true for header-less tab screens, false under a native header */
+  /**
+   * Pad for the top safe area. Pass `false` under a native stack header or inside
+   * `NativeTabs` - both already inset their content below the safe area, so adding
+   * it again double-insets and pushes the first element too far down the page.
+   */
   insetTop?: boolean;
   /** Extra bottom padding (e.g. to clear a sticky footer) */
   bottomInset?: number;

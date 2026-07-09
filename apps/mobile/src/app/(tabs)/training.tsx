@@ -87,7 +87,7 @@ export default function TrainingScreen() {
       : 'Grow your skills and confidence.';
 
   return (
-    <Screen onRefresh={refetch} refreshing={isRefetching}>
+    <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
       <PageHeader overline="Ako · Learning" title="Training" subtitle={subtitle} illustration="korero" />
 
       {isLoading || !data ? (
