@@ -1,8 +1,13 @@
 "use server";
 
-import { connection } from "next/server";
+import { after, connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { sendPushToUsers } from "@/lib/push";
+import {
+  formatShiftDay,
+  shouldNotifyShiftChange,
+} from "@/lib/shift-notifications";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -239,7 +244,23 @@ export async function updateShift(
   const db = getDb();
 
   try {
-    await db.shift.update({
+    const existing = await db.shift.findUnique({
+      where: { id: shiftId },
+      select: {
+        date: true,
+        startTime: true,
+        endTime: true,
+        serviceAreaId: true,
+        signups: {
+          where: { status: "SIGNED_UP" },
+          select: { volunteer: { select: { userId: true } } },
+        },
+      },
+    });
+
+    if (!existing) return { error: "Shift not found." };
+
+    const updated = await db.shift.update({
       where: { id: shiftId },
       data: {
         ...(data.serviceAreaId !== undefined && {
@@ -251,7 +272,22 @@ export async function updateShift(
         ...(data.capacity !== undefined && { capacity: data.capacity }),
         ...(data.notes !== undefined && { notes: data.notes || null }),
       },
+      include: { serviceArea: { select: { name: true } } },
     });
+
+    if (
+      existing.signups.length > 0 &&
+      shouldNotifyShiftChange(existing, updated, new Date())
+    ) {
+      const userIds = existing.signups.map((s) => s.volunteer.userId);
+      after(() =>
+        sendPushToUsers(userIds, {
+          title: "Your shift has changed",
+          body: `${updated.serviceArea.name} is now ${formatShiftDay(updated.date)}, ${updated.startTime}–${updated.endTime}.`,
+          data: { url: `/shift/${shiftId}` },
+        })
+      );
+    }
 
     revalidatePath("/staff/shifts");
     revalidatePath(`/staff/shifts/${shiftId}`);

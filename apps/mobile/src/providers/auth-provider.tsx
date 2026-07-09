@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import * as authService from '@/services/auth-service';
+import { unregisterPushToken } from '@/services/push-service';
 import type { SessionUser } from '@/types/models';
 
 interface AuthState {
@@ -44,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Stop notifying this device while the bearer token is still valid.
+    await unregisterPushToken();
     await authService.logout();
     setUser(null);
   }, []);

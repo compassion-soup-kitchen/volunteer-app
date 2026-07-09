@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.5.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.4.0...v1.5.0) (2026-07-06)
+
+
+### Features
+
+* push notifications via Expo for the mobile app ([6ee0a66](https://github.com/compassion-soup-kitchen/volunteer-app/commit/6ee0a661edb4e01b5455fdc890bfef650b60c8b2))
+
+
+### Bug Fixes
+
+* anchor shift-change day boundary to UTC ([b80ccc9](https://github.com/compassion-soup-kitchen/volunteer-app/commit/b80ccc933b84a9dc3a2ef7c882100227ddcb15b6))
+* format shift-change notification day in UTC ([948edae](https://github.com/compassion-soup-kitchen/volunteer-app/commit/948edae1a04ed58ac0df8c77270d6308ebf7b57e))
+* harden push sending and use a Platform enum ([2f75c39](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2f75c39c4dbb7e98216e3a759d845c9f8f1719d7))
+* keep updateShift's pre-update lookup inside try/catch ([f763b53](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f763b53abe35162b27d559844b647d16988d0851))
+* notify volunteers about same-day shift edits ([a5ad661](https://github.com/compassion-soup-kitchen/volunteer-app/commit/a5ad661733beaea064f8bd21fea34efd63f509b0))
+
+## [1.4.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.3.1...v1.4.0) (2026-07-05)
+
+
+### Features
+
+* **api:** serve the mobile app from the web app via /api/v1 ([11c38c3](https://github.com/compassion-soup-kitchen/volunteer-app/commit/11c38c37b985d535c163030df55a6838e2e7c05f))
+
 ## [1.3.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.3.0...v1.3.1) (2026-06-29)
 
 

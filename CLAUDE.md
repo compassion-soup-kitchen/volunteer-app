@@ -110,6 +110,7 @@ src/
 │   ├── storage.ts                    # S3-compatible storage client (Garage) — uploads/presigned URLs
 │   ├── utils.ts                      # `cn()` helper (clsx + tailwind-merge)
 │   ├── milestones.ts                 # Volunteer milestone definitions
+│   ├── push.ts                       # Expo push notifications — batch send via exp.host, dead-token pruning
 │   ├── auth-actions.ts               # Server Actions: login, register, logout
 │   ├── application-actions.ts        # Submit/review applications
 │   ├── dashboard-actions.ts          # Volunteer dashboard data fetchers
