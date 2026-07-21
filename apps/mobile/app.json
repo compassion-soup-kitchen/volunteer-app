@@ -10,7 +10,7 @@
     "primaryColor": "#E4002B",
     "ios": {
       "icon": "./assets/app.icon",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "nz.org.compassion.volunteer",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
