@@ -69,6 +69,22 @@ export function InfoShell({
             </li>
           </ul>
           <Separator className="my-6" />
+          <ul className="mb-3 flex flex-wrap gap-x-5 gap-y-1.5">
+            {[
+              { label: "Help & support", href: "/support" },
+              { label: "Privacy statement", href: "/privacy" },
+              { label: "Copyright", href: "/copyright" },
+            ].map((l) => (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  className="text-xs text-muted-foreground transition-colors hover:text-primary"
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Compassion Soup Kitchen · Te Pūaroha. All rights
             reserved. Registered Charity{" "}

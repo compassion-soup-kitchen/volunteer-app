@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "I can't sign in",
-    a: "Check that you're using the email address you volunteered with, or try the Google sign-in button if that's how you first joined. Still stuck? Email or ring us and we'll get you back in.",
+    a: "Check that you're using the email address you volunteered with, or try the Google sign-in button if that's how you first joined. Forgotten your password? Use \"Forgot your password?\" on the sign-in page to reset it. Still stuck? Email or ring us and we'll get you back in.",
   },
   {
     q: "How do I pick up a shift?",
