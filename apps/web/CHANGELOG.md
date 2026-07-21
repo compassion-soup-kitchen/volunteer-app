@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.6.0...v1.7.0) (2026-07-21)
+
+
+### Features
+
+* **announcements:** staff can create, publish, and manage panui ([85739d9](https://github.com/compassion-soup-kitchen/volunteer-app/commit/85739d9a9eb54aa0e77276cff769fb3d2cb584ca))
+* **public:** error boundaries, privacy statement, landing CTA fixes ([e433796](https://github.com/compassion-soup-kitchen/volunteer-app/commit/e4337968a9d292a29a11174ba87e309464f6521b))
+
 ## [1.6.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.5.0...v1.6.0) (2026-07-21)
 
 
