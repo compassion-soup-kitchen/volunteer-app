@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { issueApiToken } from "@/lib/api/token";
 import { serializeSessionUser } from "@/lib/api/serializers";
-import { normalizeEmail, verifyCredentials } from "@/lib/data/users";
+import { checkCredentials, normalizeEmail } from "@/lib/data/users";
 import { authRateLimits, checkRateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
@@ -38,14 +38,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = await verifyCredentials(parsed.data.email, parsed.data.password);
-  if (!user) {
+  const check = await checkCredentials(parsed.data.email, parsed.data.password);
+  if (!check.ok) {
+    // Only revealed when the password matched, so it's not a probing oracle.
+    if (check.reason === "email-unverified") {
+      return NextResponse.json(
+        {
+          error:
+            "Please verify your email address first - check your inbox for the link we sent when you signed up.",
+          code: "EMAIL_NOT_VERIFIED",
+        },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { error: "Invalid email or password" },
       { status: 401 }
     );
   }
 
-  const token = await issueApiToken(user.id);
-  return NextResponse.json({ token, user: serializeSessionUser(user) });
+  const token = await issueApiToken(check.user.id);
+  return NextResponse.json({ token, user: serializeSessionUser(check.user) });
 }

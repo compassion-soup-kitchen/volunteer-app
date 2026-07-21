@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
+import { FormAlert } from "../_components/form-alert";
+import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 const DEV_ACCOUNTS = [
   { label: "Admin", email: "admin@soupkitchen.org.nz", password: "admin123!", icon: RiShieldKeyholeLine },
@@ -55,14 +57,7 @@ export function LoginForm() {
       )}
 
       <form action={action} className="space-y-4">
-        {state?.error && (
-          <div
-            role="alert"
-            className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
-          >
-            {state.error}
-          </div>
-        )}
+        {state?.error && <FormAlert>{state.error}</FormAlert>}
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -111,6 +106,12 @@ export function LoginForm() {
           )}
         </Button>
       </form>
+
+      {state?.unverifiedEmail && (
+        <div className="mt-4">
+          <ResendVerificationForm email={state.unverifiedEmail} />
+        </div>
+      )}
 
       <div className="relative my-6">
         <Separator />

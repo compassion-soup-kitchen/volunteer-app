@@ -17,6 +17,21 @@
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
+/**
+ * True when both Resend env vars are present, i.e. `sendEmail` will actually
+ * send rather than skip. Flows that *depend* on an email arriving (account
+ * verification) check this up front so they can degrade gracefully instead of
+ * dead-ending the person on a "check your inbox" screen with no email coming.
+ */
+export function isEmailConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+}
+
+/** Absolute origin for links inside emails, from NEXTAUTH_URL (no trailing slash). */
+export function getBaseUrl(): string {
+  return (process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+}
+
 export type SendEmailInput = {
   to: string | string[];
   subject: string;

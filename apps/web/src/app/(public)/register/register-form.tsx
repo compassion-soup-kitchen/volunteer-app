@@ -1,31 +1,47 @@
 "use client";
 
 import { useActionState } from "react";
-import { register, type AuthState } from "@/lib/auth-actions";
+import { register, type RegisterState } from "@/lib/auth-actions";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
+import { EmailSentNotice } from "../_components/email-sent-notice";
+import { FormAlert } from "../_components/form-alert";
+import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 export function RegisterForm() {
-  const [state, action, pending] = useActionState<AuthState, FormData>(
+  const [state, action, pending] = useActionState<RegisterState, FormData>(
     register,
     null
   );
 
+  if (state?.verificationSentTo) {
+    return (
+      <div className="space-y-4">
+        <EmailSentNotice
+          message={
+            <>
+              We&apos;ve sent a verification link to{" "}
+              <span className="font-medium text-foreground">
+                {state.verificationSentTo}
+              </span>
+              . Click it to activate your account - it&apos;s valid for 24
+              hours.
+            </>
+          }
+        />
+        <ResendVerificationForm email={state.verificationSentTo} />
+      </div>
+    );
+  }
+
   return (
     <>
       <form action={action} className="space-y-4">
-        {state?.error && (
-          <div
-            role="alert"
-            className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
-          >
-            {state.error}
-          </div>
-        )}
+        {state?.error && <FormAlert>{state.error}</FormAlert>}
 
         <div className="space-y-2">
           <Label htmlFor="name">Full name</Label>

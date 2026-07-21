@@ -68,6 +68,7 @@ src/
 │   │   ├── register/
 │   │   ├── forgot-password/          # Request a password-reset email
 │   │   ├── reset-password/           # Redeem the emailed reset token
+│   │   ├── verify-email/             # Redeem the emailed verification link (+ resend form)
 │   │   └── privacy/                  # NZ Privacy Act statement
 │   ├── (volunteer)/                  # VOLUNTEER role routes (mobile-first)
 │   │   ├── layout.tsx                # Auth gate, redirects staff → /staff/dashboard
@@ -115,7 +116,9 @@ src/
 │   ├── utils.ts                      # `cn()` helper (clsx + tailwind-merge)
 │   ├── milestones.ts                 # Volunteer milestone definitions
 │   ├── push.ts                       # Expo push notifications — batch send via exp.host, dead-token pruning
-│   ├── auth-actions.ts               # Server Actions: login, register, logout
+│   ├── email-templates.ts            # All transactional email copy as pure template functions (previewed at /styleguide/emails)
+│   ├── email-verification.ts         # Verification-token issue/redeem + email (shared by web actions and /api/v1 register)
+│   ├── auth-actions.ts               # Server Actions: login, register, email verification, password reset
 │   ├── application-actions.ts        # Submit/review applications
 │   ├── dashboard-actions.ts          # Volunteer dashboard data fetchers
 │   ├── shift-actions.ts              # CRUD shifts, signups, attendance, meals

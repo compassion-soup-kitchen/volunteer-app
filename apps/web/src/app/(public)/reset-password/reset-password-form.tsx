@@ -11,6 +11,7 @@ import {
   RiErrorWarningLine,
   RiLoader4Line,
 } from "@remixicon/react";
+import { FormAlert } from "../_components/form-alert";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, action, pending] = useActionState<PasswordResetState, FormData>(
@@ -68,12 +69,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form action={action} className="space-y-4">
       {state?.error && (
-        <div
-          role="alert"
-          className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
-        >
-          {state.error}
-        </div>
+        <FormAlert>{state.error}</FormAlert>
       )}
 
       <input type="hidden" name="token" value={token} />

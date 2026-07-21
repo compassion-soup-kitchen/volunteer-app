@@ -16,7 +16,9 @@ import {
   sendEmail,
   buildBrandedEmailHtml,
   buildBrandedEmailText,
+  getBaseUrl,
 } from "@/lib/email";
+import { applicationReceivedEmail } from "@/lib/email-templates";
 
 export type { ApplicationFormData } from "@/lib/data/volunteer-profile";
 
@@ -82,25 +84,16 @@ export async function submitApplication(
   const result = await submitApplicationAsUser(session.user.id, parsed.data);
 
   if (result.success && session.user.email) {
-    const email = {
-      heading: "We've received your application",
-      preview: "Thank you for offering your time to Te Pūaroha.",
-      paragraphs: [
-        `Kia ora${session.user.name ? ` ${session.user.name}` : ""},`,
-        "Thank you for applying to volunteer with Compassion Soup Kitchen. Your application is with our coordinator team now, and we'll be in touch once we've had a look — usually within a week or two.",
-        "You can check how things are going from your dashboard any time.",
-      ],
-      cta: {
-        label: "View your application",
-        url: `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/application`,
-      },
-    };
+    const { subject, content } = applicationReceivedEmail(
+      session.user.name ?? null,
+      `${getBaseUrl()}/application`
+    );
     after(() =>
       sendEmail({
         to: session.user.email!,
-        subject: "Your volunteer application has arrived — Te Pūaroha",
-        html: buildBrandedEmailHtml(email),
-        text: buildBrandedEmailText(email),
+        subject,
+        html: buildBrandedEmailHtml(content),
+        text: buildBrandedEmailText(content),
       })
     );
   }

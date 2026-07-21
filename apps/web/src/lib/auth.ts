@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { getDb } from "./db";
 import { verifyCredentials } from "./data/users";
+import { googleProfileToUser, isOAuthSignInAllowed } from "./google-auth";
 import type { Role } from "@prisma/client";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -18,6 +19,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      profile: googleProfileToUser,
     }),
     Credentials({
       credentials: {
@@ -35,7 +37,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
+      if (!isOAuthSignInAllowed(account, profile)) return false;
       // Block archived users from any provider (Google, Credentials)
       if (!user?.id) return true;
       const db = getDb();

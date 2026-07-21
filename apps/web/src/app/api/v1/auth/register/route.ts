@@ -3,6 +3,8 @@ import { z } from "zod";
 import { issueApiToken } from "@/lib/api/token";
 import { serializeSessionUser } from "@/lib/api/serializers";
 import { createUserAccount, normalizeEmail } from "@/lib/data/users";
+import { isEmailConfigured } from "@/lib/email";
+import { sendVerificationEmail } from "@/lib/email-verification";
 import { authRateLimits, checkRateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
@@ -39,16 +41,34 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Without email configured a verification link could never arrive, so the
+  // account is created pre-verified and signed in immediately (mirrors the
+  // web register action's graceful degradation).
+  const emailConfigured = isEmailConfigured();
+
   const created = await createUserAccount(
     parsed.data.name,
     parsed.data.email,
-    parsed.data.password
+    parsed.data.password,
+    { emailVerified: !emailConfigured }
   );
 
   if (created.error || !created.user) {
     return NextResponse.json(
       { error: created.error ?? "Something went wrong. Please try again." },
       { status: 409 }
+    );
+  }
+
+  if (emailConfigured) {
+    await sendVerificationEmail(created.user.email, created.user.name);
+    return NextResponse.json(
+      {
+        requiresVerification: true,
+        message:
+          "We've emailed you a verification link. Click it to activate your account, then sign in.",
+      },
+      { status: 201 }
     );
   }
 

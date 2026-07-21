@@ -35,6 +35,7 @@ async function main() {
       email: "admin@soupkitchen.org.nz",
       password: adminPassword,
       role: "ADMIN",
+      emailVerified: new Date(),
     },
   });
   console.log(`🔑 Admin user: ${admin.email} (password: admin123!)`);
@@ -49,6 +50,7 @@ async function main() {
       email: "coordinator@soupkitchen.org.nz",
       password: coordPassword,
       role: "COORDINATOR",
+      emailVerified: new Date(),
     },
   });
   console.log(`📋 Coordinator user: ${coordinator.email} (password: coord123!)`);
@@ -63,6 +65,7 @@ async function main() {
       email: "volunteer@soupkitchen.org.nz",
       password: volPassword,
       role: "VOLUNTEER",
+      emailVerified: new Date(),
     },
   });
   console.log(`🙋 Volunteer user: ${volunteer.email} (password: volunteer123!)`);
@@ -415,6 +418,7 @@ async function main() {
         email: "hemi@soupkitchen.org.nz",
         password: vol2Password,
         role: "VOLUNTEER",
+        emailVerified: new Date(),
       },
     });
 
@@ -451,6 +455,7 @@ async function main() {
         email: "mere@soupkitchen.org.nz",
         password: vol2Password,
         role: "VOLUNTEER",
+        emailVerified: new Date(),
       },
     });
 
@@ -487,6 +492,7 @@ async function main() {
         email: "tane@soupkitchen.org.nz",
         password: vol2Password,
         role: "VOLUNTEER",
+        emailVerified: new Date(),
       },
     });
 
