@@ -49,6 +49,7 @@ import {
   markBulkAttendance,
   type StaffShift,
 } from "@/lib/shift-actions";
+import { RecordMealsCard } from "./record-meals-card";
 
 interface ShiftDetailViewProps {
   shift: StaffShift;
@@ -147,101 +148,113 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      {/* Shift info */}
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <CardTitle className="text-lg">
-              {shift.serviceArea.name}
-            </CardTitle>
-            {past && (
-              <Badge variant="secondary">Past</Badge>
-            )}
-            {today && (
-              <Badge variant="info">Today</Badge>
-            )}
-          </div>
-          <CardDescription>
-            Created by {shift.createdBy.name || "Unknown"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <RiCalendarLine className="size-4 text-muted-foreground" />
-              <span>{formatDate(shift.date)}</span>
+      {/* Shift info + kai count */}
+      <div className="space-y-6 lg:col-span-1">
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <CardTitle className="text-lg">
+                {shift.serviceArea.name}
+              </CardTitle>
+              {past && (
+                <Badge variant="secondary">Past</Badge>
+              )}
+              {today && (
+                <Badge variant="info">Today</Badge>
+              )}
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <RiTimeLine className="size-4 text-muted-foreground" />
-              <span className="tabular-nums">
-                {shift.startTime}–{shift.endTime}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <RiTeamLine className="size-4 text-muted-foreground" />
-              <span>
-                {activeSignups.length}/{shift.capacity} spots filled
-              </span>
-            </div>
-          </div>
-
-          {shift.notes && (
-            <div className="rounded-md border border-border bg-muted/30 p-3">
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
-                <RiFileTextLine className="size-3.5" />
-                Notes
+            <CardDescription>
+              Created by {shift.createdBy.name || "Unknown"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-sm">
+                <RiCalendarLine className="size-4 text-muted-foreground" />
+                <span>{formatDate(shift.date)}</span>
               </div>
-              <p className="text-sm">{shift.notes}</p>
-            </div>
-          )}
-
-          {/* Attendance summary for past/today shifts */}
-          {canMarkAttendance && shift.signups.length > 0 && (
-            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Attendance Summary
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-green-600 font-medium">
-                    {shift.signups.filter((s) => s.status === "ATTENDED").length}
-                  </span>{" "}
-                  attended
-                </div>
-                <div>
-                  <span className="text-destructive font-medium">
-                    {shift.signups.filter((s) => s.status === "NO_SHOW").length}
-                  </span>{" "}
-                  no show
-                </div>
-                <div>
-                  <span className="text-blue-600 font-medium">
-                    {unmarkedSignups.length}
-                  </span>{" "}
-                  unmarked
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-medium">
-                    {shift.signups.filter((s) => s.status === "CANCELLED").length}
-                  </span>{" "}
-                  cancelled
-                </div>
+              <div className="flex items-center gap-3 text-sm">
+                <RiTimeLine className="size-4 text-muted-foreground" />
+                <span className="tabular-nums">
+                  {shift.startTime}–{shift.endTime}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <RiTeamLine className="size-4 text-muted-foreground" />
+                <span>
+                  {activeSignups.length}/{shift.capacity} spots filled
+                </span>
               </div>
             </div>
-          )}
 
-          {!past && !today && (
-            <Button
-              variant="outline"
-              className="w-full text-destructive hover:text-destructive"
-              onClick={() => setShowDelete(true)}
-            >
-              <RiDeleteBinLine className="mr-2 size-4" />
-              Delete Shift
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+            {shift.notes && (
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
+                  <RiFileTextLine className="size-3.5" />
+                  Notes
+                </div>
+                <p className="text-sm">{shift.notes}</p>
+              </div>
+            )}
+
+            {/* Attendance summary for past/today shifts */}
+            {canMarkAttendance && shift.signups.length > 0 && (
+              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Attendance Summary
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-green-600 font-medium">
+                      {shift.signups.filter((s) => s.status === "ATTENDED").length}
+                    </span>{" "}
+                    attended
+                  </div>
+                  <div>
+                    <span className="text-destructive font-medium">
+                      {shift.signups.filter((s) => s.status === "NO_SHOW").length}
+                    </span>{" "}
+                    no show
+                  </div>
+                  <div>
+                    <span className="text-blue-600 font-medium">
+                      {unmarkedSignups.length}
+                    </span>{" "}
+                    unmarked
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">
+                      {shift.signups.filter((s) => s.status === "CANCELLED").length}
+                    </span>{" "}
+                    cancelled
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!past && !today && (
+              <Button
+                variant="outline"
+                className="w-full text-destructive hover:text-destructive"
+                onClick={() => setShowDelete(true)}
+              >
+                <RiDeleteBinLine className="mr-2 size-4" />
+                Delete Shift
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Kai served - recordable once the shift day arrives */}
+        {(past || today) && (
+          <RecordMealsCard
+            shiftId={shift.id}
+            mealsServed={shift.mealsServed}
+            mealsRecordedAt={shift.mealsRecordedAt}
+            mealsRecordedByName={shift.mealsRecordedBy?.name ?? null}
+          />
+        )}
+      </div>
 
       {/* Signups + Attendance */}
       <Card className="lg:col-span-2">

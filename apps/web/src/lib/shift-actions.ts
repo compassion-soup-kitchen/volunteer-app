@@ -1,9 +1,11 @@
 "use server";
 
 import { after, connection } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
+import { canRecordMeals, mealsServedSchema } from "@/lib/shift-meals";
 import {
   formatShiftDay,
   shouldNotifyShiftChange,
@@ -34,6 +36,9 @@ export type StaffShift = {
   notes: string | null;
   serviceArea: { id: string; name: string };
   createdBy: { name: string | null };
+  mealsServed: number | null;
+  mealsRecordedAt: Date | null;
+  mealsRecordedBy: { name: string | null } | null;
   signups: {
     id: string;
     status: string;
@@ -114,6 +119,7 @@ export async function getStaffShifts(
     include: {
       serviceArea: { select: { id: true, name: true } },
       createdBy: { select: { name: true } },
+      mealsRecordedBy: { select: { name: true } },
       signups: {
         where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
         select: {
@@ -149,6 +155,7 @@ export async function getShiftDetail(shiftId: string): Promise<StaffShift | null
     include: {
       serviceArea: { select: { id: true, name: true } },
       createdBy: { select: { name: true } },
+      mealsRecordedBy: { select: { name: true } },
       signups: {
         select: {
           id: true,
@@ -370,6 +377,65 @@ export async function markBulkAttendance(
     revalidatePath(`/staff/shifts/${shiftId}`);
     revalidatePath("/staff/shifts");
     revalidatePath("/staff/dashboard");
+    return { success: true };
+  } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+// ─── Meals Actions ─────────────────────────────────────
+
+const recordMealsInput = z.object({
+  shiftId: z.string().min(1),
+  mealsServed: mealsServedSchema,
+});
+
+export async function recordShiftMeals(
+  shiftId: string,
+  mealsServed: number
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await auth();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
+  ) {
+    return { error: "Not authorised." };
+  }
+
+  const parsed = recordMealsInput.safeParse({ shiftId, mealsServed });
+  if (!parsed.success) {
+    return { error: "Please enter a whole number between 0 and 5000." };
+  }
+
+  const db = getDb();
+
+  const shift = await db.shift.findUnique({
+    where: { id: parsed.data.shiftId },
+    select: { date: true },
+  });
+
+  if (!shift) return { error: "Shift not found." };
+
+  if (!canRecordMeals(shift.date, new Date())) {
+    return {
+      error: "Kai can only be recorded once the shift day arrives.",
+    };
+  }
+
+  try {
+    await db.shift.update({
+      where: { id: parsed.data.shiftId },
+      data: {
+        mealsServed: parsed.data.mealsServed,
+        mealsRecordedAt: new Date(),
+        mealsRecordedById: session.user.id,
+      },
+    });
+
+    revalidatePath(`/staff/shifts/${parsed.data.shiftId}`);
+    revalidatePath("/staff/shifts");
+    revalidatePath("/dashboard");
+    revalidatePath("/hours");
     return { success: true };
   } catch {
     return { error: "Something went wrong. Please try again." };

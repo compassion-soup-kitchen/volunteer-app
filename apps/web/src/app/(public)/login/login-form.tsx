@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import Link from "next/link";
 import { RiShieldKeyholeLine, RiUserLine, RiHeartLine } from "@remixicon/react";
 import { login, type AuthState } from "@/lib/auth-actions";
 import { signIn } from "next-auth/react";
@@ -31,7 +32,9 @@ export function LoginForm() {
 
   return (
     <>
-      <div className="mb-6 rounded-2xl border border-border bg-secondary/60 p-4">
+      {/* Seeded demo credentials — statically stripped from production bundles. */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="mb-6 rounded-2xl border border-border bg-secondary/60 p-4">
           <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Demo accounts · click to fill
           </p>
@@ -49,6 +52,7 @@ export function LoginForm() {
             ))}
           </div>
         </div>
+      )}
 
       <form action={action} className="space-y-4">
         {state?.error && (
@@ -75,7 +79,15 @@ export function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          </div>
           <Input
             ref={passwordRef}
             id="password"

@@ -21,8 +21,6 @@ jobs:
       NEXTAUTH_SECRET: ci-placeholder-secret
       GOOGLE_CLIENT_ID: ci-placeholder
       GOOGLE_CLIENT_SECRET: ci-placeholder
-      FACEBOOK_CLIENT_ID: ci-placeholder
-      FACEBOOK_CLIENT_SECRET: ci-placeholder
       NEXT_TELEMETRY_DISABLED: "1"
 
     steps:
@@ -58,8 +56,6 @@ jobs:
       AUTH_TRUST_HOST: "true"
       GOOGLE_CLIENT_ID: ci-placeholder
       GOOGLE_CLIENT_SECRET: ci-placeholder
-      FACEBOOK_CLIENT_ID: ci-placeholder
-      FACEBOOK_CLIENT_SECRET: ci-placeholder
       NEXT_TELEMETRY_DISABLED: "1"
 
     steps:

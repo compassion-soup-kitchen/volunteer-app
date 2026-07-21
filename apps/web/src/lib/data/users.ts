@@ -11,6 +11,15 @@ export type AuthenticatedUser = {
 };
 
 /**
+ * User.email is a case-sensitive unique column, so every lookup and create
+ * must go through the same normalization or the same person can end up with
+ * two accounts (John@x.com vs john@x.com) and case-dependent logins.
+ */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
  * Verifies email + password against the user table. Returns the user for a
  * valid, non-archived credentials account; null otherwise.
  */
@@ -20,7 +29,7 @@ export async function verifyCredentials(
 ): Promise<AuthenticatedUser | null> {
   const db = getDb();
   const user = await db.user.findUnique({
-    where: { email },
+    where: { email: normalizeEmail(email) },
   });
 
   if (!user?.password) return null;
@@ -48,9 +57,10 @@ export async function createUserAccount(
   password: string
 ): Promise<{ user?: AuthenticatedUser; error?: string }> {
   const db = getDb();
+  const normalizedEmail = normalizeEmail(email);
 
   const existing = await db.user.findUnique({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (existing) {
@@ -62,7 +72,7 @@ export async function createUserAccount(
   const user = await db.user.create({
     data: {
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role: "PUBLIC",
     },

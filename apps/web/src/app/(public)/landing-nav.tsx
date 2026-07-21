@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { RiSmartphoneLine, RiMenuLine, RiCloseLine } from "@remixicon/react";
+import { RiHandHeartLine, RiMenuLine, RiCloseLine } from "@remixicon/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Wordmark } from "@/components/brand/wordmark";
 
@@ -44,9 +44,9 @@ export function LandingNav() {
             Sign in
           </a>
           <Button size="sm" asChild>
-            <a href="#download">
-              <RiSmartphoneLine data-icon="inline-start" className="size-3.5" />
-              Get the app
+            <a href="/register">
+              <RiHandHeartLine data-icon="inline-start" className="size-3.5" />
+              Become a volunteer
             </a>
           </Button>
           <ThemeToggle />
@@ -84,9 +84,9 @@ export function LandingNav() {
             </div>
             <Separator />
             <Button className="w-full" asChild>
-              <a href="#download" onClick={() => setMenuOpen(false)}>
-                <RiSmartphoneLine data-icon="inline-start" className="size-4" />
-                Get the app
+              <a href="/register" onClick={() => setMenuOpen(false)}>
+                <RiHandHeartLine data-icon="inline-start" className="size-4" />
+                Become a volunteer
               </a>
             </Button>
             <a

@@ -1,6 +1,8 @@
 "use server";
 
-import type { AgreementType, DocumentType } from "@prisma/client";
+import { DocumentType } from "@prisma/client";
+import type { AgreementType } from "@prisma/client";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import {
@@ -405,16 +407,46 @@ export async function getPendingResignCount(): Promise<number> {
 
 // ─── Staff: Upload Document ─────────────────────────────
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+
+const ALLOWED_UPLOAD_CONTENT_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
+const uploadDocumentSchema = z.object({
+  type: z.enum(DocumentType),
+  file: z
+    .instanceof(File)
+    .refine((f) => f.size > 0, "File is empty")
+    .refine(
+      (f) => f.size <= MAX_UPLOAD_BYTES,
+      "File is too large (10 MB max)"
+    )
+    .refine(
+      (f) => ALLOWED_UPLOAD_CONTENT_TYPES.has(f.type),
+      "Unsupported file type — upload a PDF, Word document, or image"
+    ),
+});
+
 export async function uploadDocument(formData: FormData) {
   const session = await auth();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
 
-  const file = formData.get("file") as File;
-  const type = formData.get("type") as string;
-
-  if (!file || !type) throw new Error("File and type are required");
+  const parsed = uploadDocumentSchema.safeParse({
+    file: formData.get("file"),
+    type: formData.get("type"),
+  });
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid upload");
+  }
+  const { file, type } = parsed.data;
 
   const db = getDb();
 
@@ -431,7 +463,7 @@ export async function uploadDocument(formData: FormData) {
 
   await db.document.create({
     data: {
-      type: type as DocumentType,
+      type,
       fileName: file.name,
       fileUrl: storagePath,
       uploadedById: session.user.id,
@@ -485,10 +517,24 @@ export async function getDocumentDownloadUrl(
 
   const doc = await db.document.findUnique({
     where: { id: documentId },
-    select: { fileUrl: true },
+    select: { fileUrl: true, volunteerId: true, type: true },
   });
 
   if (!doc) return null;
+
+  // Staff can download anything; everyone else only their own documents or
+  // org-level material that volunteers are meant to see (policies, training).
+  if (!["COORDINATOR", "ADMIN"].includes(session.user.role)) {
+    if (doc.volunteerId) {
+      const profile = await db.volunteerProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      });
+      if (profile?.id !== doc.volunteerId) throw new Error("Unauthorized");
+    } else if (!["POLICY", "TRAINING_MATERIAL"].includes(doc.type)) {
+      throw new Error("Unauthorized");
+    }
+  }
 
   try {
     return await getSignedDownloadUrl(doc.fileUrl, 60 * 5); // 5 min expiry

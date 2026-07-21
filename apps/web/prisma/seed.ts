@@ -12,6 +12,17 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // The seed creates demo accounts with well-known passwords. Running it
+  // against a production database would hand out working admin credentials.
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_PROD_SEED !== "true") {
+    console.error(
+      "✋ Refusing to seed: NODE_ENV is 'production' and the seed creates demo accounts with known passwords.\n" +
+        "   Use `pnpm run admin:create` to bootstrap a real admin account instead.\n" +
+        "   (Set ALLOW_PROD_SEED=true only if you really mean it.)"
+    );
+    process.exit(1);
+  }
+
   console.log("🌱 Seeding database...");
 
   // Create admin user

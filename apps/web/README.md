@@ -38,7 +38,7 @@ Nau mai, haere mai. This app supports the ~100 volunteers who serve kai, build c
 | 🗄️ Database | Prisma 7 → self-hosted PostgreSQL (Coolify-managed) |
 | 📦 Storage | Garage (S3-compatible, self-hosted) for document uploads |
 | 🔐 Auth | NextAuth v5 — Credentials + Google, JWT sessions |
-| ✉️ Email | Resend (planned) |
+| ✉️ Email | Resend HTTP API via `src/lib/email.ts` (no-ops when `RESEND_API_KEY` unset) |
 | ✨ Animation | `motion/react` |
 | 🎯 Validation | `zod` |
 | 🔔 Toasts | `sonner` |
@@ -199,10 +199,46 @@ See [`CLAUDE.md`](./CLAUDE.md) for the full developer guide. 📖
 ## 🎨 Design
 
 - **Brand primary**: 🔴 `#DC0831` → `oklch(0.52 0.22 18)`
-- **Root font**: Geist (18px base)
+- **Fonts**: Mona Sans (body) + Fraunces (display) + Geist Mono, 18px base
 - **Layouts**: Volunteer = mobile-first with bottom nav; Staff = desktop sidebar
 - **Charts**: Red ramp (`--chart-1` … `--chart-5`)
 - 🌓 Dark mode supported via `next-themes`
+
+---
+
+## 🚀 Going to production
+
+The app ships as a single Docker container (repo-root `Dockerfile`, built for
+Coolify). `prisma migrate deploy` runs automatically on container start, and
+`/api/health/ready` backs the container healthcheck.
+
+**Required environment variables** (see `.env.example`):
+`DATABASE_URL`, `NEXTAUTH_URL` (the real https:// domain), `NEXTAUTH_SECRET`
+(generate a fresh one — never reuse dev's), `GOOGLE_CLIENT_ID` +
+`GOOGLE_CLIENT_SECRET` (with the prod domain added to the OAuth redirect
+allowlist), and `S3_*` for Garage document storage.
+
+**Optional but recommended**: `RESEND_API_KEY` + `EMAIL_FROM` (password reset
+and application emails are skipped without them), and
+`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (address autocomplete; falls back to manual
+entry — restrict the key to the prod domain).
+
+**First admin** — the seed is dev-only (it refuses to run in production, since
+it creates demo accounts with known passwords). Bootstrap the first admin from
+inside the running container:
+
+```
+cd /app/apps/web && ./node_modules/.bin/tsx scripts/create-admin.ts \
+  --email you@example.org.nz --name "Your Name"
+```
+
+(Locally: `pnpm run admin:create -- --email … --name …`. Add `--promote` to
+raise an existing account to ADMIN instead. The generated password prints once
+— change it after first sign-in.)
+
+**Before flicking the switch**: set up automated Postgres backups (and a Garage
+bucket backup) in Coolify, and confirm the privacy page's contact details are
+correct for the kitchen.
 
 ---
 

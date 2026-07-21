@@ -189,6 +189,53 @@ export async function getScheduleForUser(
 
 // ─── Mutations ──────────────────────────────────────────
 
+export type SignupDecision =
+  | { action: "reject"; error: string }
+  | { action: "create" }
+  | { action: "reactivate" };
+
+/**
+ * Pure capacity/eligibility check for a shift signup. Check order matters
+ * and mirrors the messages the UI already relies on: a full shift reports
+ * "full" even to a volunteer who is already on it.
+ */
+export function decideSignup(input: {
+  shift: { date: Date; capacity: number } | null;
+  activeSignupCount: number;
+  existingSignupStatus: string | null;
+  now: Date;
+}): SignupDecision {
+  const { shift, activeSignupCount, existingSignupStatus, now } = input;
+
+  if (!shift) return { action: "reject", error: "Shift not found." };
+  if (shift.date < now) {
+    return { action: "reject", error: "This shift has already passed." };
+  }
+  if (activeSignupCount >= shift.capacity) {
+    return { action: "reject", error: "This shift is full." };
+  }
+  if (existingSignupStatus === "SIGNED_UP") {
+    return {
+      action: "reject",
+      error: "You are already signed up for this shift.",
+    };
+  }
+  return existingSignupStatus === "CANCELLED"
+    ? { action: "reactivate" }
+    : { action: "create" };
+}
+
+/**
+ * Whether an error is a transaction serialization failure worth retrying:
+ * Prisma's P2034 (write conflict / deadlock) or the underlying Postgres
+ * 40001 serialization_failure it maps from.
+ */
+export function isSerializationFailure(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const code = (error as { code?: unknown }).code;
+  return code === "P2034" || code === "40001";
+}
+
 export async function signUpForShiftAsUser(
   userId: string,
   shiftId: string
@@ -204,56 +251,77 @@ export async function signUpForShiftAsUser(
     };
   }
 
-  // Check shift exists and has capacity
-  const shift = await db.shift.findUnique({
-    where: { id: shiftId },
-    include: {
-      signups: {
-        where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
+  // The capacity check and the signup write must be atomic - two volunteers
+  // racing for the last spot would otherwise both pass the count check and
+  // overbook the shift. A Serializable transaction makes Postgres abort one
+  // of the two racing signups (P2034), which we retry once against the
+  // committed state - where the re-count then reports the shift as full.
+  const attemptSignup = () =>
+    db.$transaction(
+      async (tx): Promise<MutationResult> => {
+        const shift = await tx.shift.findUnique({
+          where: { id: shiftId },
+          include: {
+            signups: {
+              where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
+              select: { id: true },
+            },
+          },
+        });
+
+        const existing = await tx.shiftSignup.findUnique({
+          where: {
+            shiftId_volunteerId: {
+              shiftId,
+              volunteerId: profile.id,
+            },
+          },
+        });
+
+        const decision = decideSignup({
+          shift,
+          activeSignupCount: shift?.signups.length ?? 0,
+          existingSignupStatus: existing?.status ?? null,
+          now: new Date(),
+        });
+
+        if (decision.action === "reject") return { error: decision.error };
+
+        if (decision.action === "reactivate" && existing) {
+          // Re-sign up
+          await tx.shiftSignup.update({
+            where: { id: existing.id },
+            data: { status: "SIGNED_UP", signedUpAt: new Date() },
+          });
+        } else {
+          await tx.shiftSignup.create({
+            data: {
+              shiftId,
+              volunteerId: profile.id,
+              status: "SIGNED_UP",
+            },
+          });
+        }
+
+        return { success: true };
       },
-    },
-  });
-
-  if (!shift) return { error: "Shift not found." };
-  if (shift.date < new Date()) return { error: "This shift has already passed." };
-  if (shift.signups.length >= shift.capacity) {
-    return { error: "This shift is full." };
-  }
-
-  // Check for existing signup
-  const existing = await db.shiftSignup.findUnique({
-    where: {
-      shiftId_volunteerId: {
-        shiftId,
-        volunteerId: profile.id,
-      },
-    },
-  });
-
-  if (existing && existing.status === "SIGNED_UP") {
-    return { error: "You are already signed up for this shift." };
-  }
+      { isolationLevel: "Serializable" }
+    );
 
   try {
-    if (existing && existing.status === "CANCELLED") {
-      // Re-sign up
-      await db.shiftSignup.update({
-        where: { id: existing.id },
-        data: { status: "SIGNED_UP", signedUpAt: new Date() },
-      });
-    } else {
-      await db.shiftSignup.create({
-        data: {
-          shiftId,
-          volunteerId: profile.id,
-          status: "SIGNED_UP",
-        },
-      });
+    let result: MutationResult;
+    try {
+      result = await attemptSignup();
+    } catch (error) {
+      if (!isSerializationFailure(error)) throw error;
+      result = await attemptSignup();
     }
+
+    if (result.error) return result;
 
     revalidatePath("/shifts");
     revalidatePath("/dashboard");
-    return { success: true };
+    return result;
   } catch {
     return { error: "Something went wrong. Please try again." };
   }

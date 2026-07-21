@@ -28,6 +28,9 @@ export default defineConfig({
     env: {
       NEXTAUTH_URL: baseURL,
       AUTH_TRUST_HOST: "true",
+      // NextAuth logs MissingSecret errors on every request without one; any
+      // value works for the public-only flows the suite covers.
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? "e2e-test-secret",
     },
   },
 });
