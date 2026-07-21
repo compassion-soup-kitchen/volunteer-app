@@ -1,7 +1,15 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-const publicPaths = ["/", "/login", "/register", "/styleguide"];
+const publicPaths = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/privacy",
+  "/styleguide",
+];
 
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
