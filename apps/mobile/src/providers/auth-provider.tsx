@@ -9,7 +9,11 @@ interface AuthState {
   /** True until the persisted session has been restored on launch */
   initializing: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (
+    name: string,
+    email: string,
+    password: string,
+  ) => Promise<{ error?: string; pendingVerification?: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -41,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(async (name: string, email: string, password: string) => {
     const result = await authService.register(name, email, password);
     if (result.user) setUser(result.user);
-    return { error: result.error };
+    return { error: result.error, pendingVerification: result.pendingVerification };
   }, []);
 
   const signOut = useCallback(async () => {

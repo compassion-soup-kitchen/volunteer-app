@@ -19,12 +19,19 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Email the verification link went to; set when the account needs verifying
+  // before it can sign in.
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   async function onSubmit() {
     setError(null);
     setLoading(true);
     const result = await signUp(name, email, password);
     setLoading(false);
+    if (result.pendingVerification) {
+      setSentTo(email.trim().toLowerCase());
+      return;
+    }
     if (result.error) setError(result.error);
     // On success the (auth) layout guard redirects into the app automatically.
   }
@@ -50,49 +57,63 @@ export default function RegisterScreen() {
               subtitle="Create your account, then tell us a little about yourself - it takes about five minutes."
             />
 
-            <Card style={{ gap: Spacing.lg }}>
-              <TextField
-                label="Full name"
-                value={name}
-                onChangeText={setName}
-                placeholder="Your name"
-                autoCapitalize="words"
-                autoComplete="name"
-                textContentType="name"
-                returnKeyType="next"
-              />
-              <TextField
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                textContentType="emailAddress"
-                returnKeyType="next"
-              />
-              <TextField
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="At least 8 characters"
-                secure
-                autoComplete="password-new"
-                textContentType="newPassword"
-                returnKeyType="go"
-                onSubmitEditing={onSubmit}
-                hint="Use at least 8 characters."
-              />
-
-              {error ? (
-                <Text variant="caption" color="destructive">
-                  {error}
+            {sentTo ? (
+              <Card style={{ gap: Spacing.md }}>
+                <Text variant="heading">Check your inbox</Text>
+                <Text variant="body" color="textSecondary">
+                  We&apos;ve sent a verification link to{' '}
+                  <Text variant="bodyStrong">{sentTo}</Text>. Tap it to activate your account,
+                  then sign in below. The link is valid for 24 hours.
                 </Text>
-              ) : null}
+                <Text variant="callout" color="textSecondary">
+                  Nothing after a few minutes? Have a look in your spam folder.
+                </Text>
+              </Card>
+            ) : (
+              <Card style={{ gap: Spacing.lg }}>
+                <TextField
+                  label="Full name"
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Your name"
+                  autoCapitalize="words"
+                  autoComplete="name"
+                  textContentType="name"
+                  returnKeyType="next"
+                />
+                <TextField
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@email.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  textContentType="emailAddress"
+                  returnKeyType="next"
+                />
+                <TextField
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="At least 8 characters"
+                  secure
+                  autoComplete="password-new"
+                  textContentType="newPassword"
+                  returnKeyType="go"
+                  onSubmitEditing={onSubmit}
+                  hint="Use at least 8 characters."
+                />
 
-              <Button title="Create account" icon="person-add-outline" loading={loading} onPress={onSubmit} />
-            </Card>
+                {error ? (
+                  <Text variant="caption" color="destructive">
+                    {error}
+                  </Text>
+                ) : null}
+
+                <Button title="Create account" icon="person-add-outline" loading={loading} onPress={onSubmit} />
+              </Card>
+            )}
 
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
               <Text variant="callout" color="textSecondary">

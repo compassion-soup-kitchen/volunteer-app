@@ -84,13 +84,14 @@ export function checkRateLimit(
 /**
  * Shared budgets for the auth surface. Web server actions and the mobile
  * `/api/v1/auth/*` routes use the same key prefixes (`login:`, `register:`,
- * `password-reset:` + normalized email) so an attacker can't double their
- * budget by switching clients.
+ * `password-reset:`, `email-verify:` + normalized email) so an attacker
+ * can't double their budget by switching clients.
  */
 export const authRateLimits = {
   login: { limit: 10, windowMs: 15 * 60 * 1000 },
   register: { limit: 5, windowMs: 60 * 60 * 1000 },
   passwordResetRequest: { limit: 3, windowMs: 60 * 60 * 1000 },
+  verificationResend: { limit: 3, windowMs: 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitOptions>;
 
 /** Test helper — empties every bucket so tests can't leak into each other. */

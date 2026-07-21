@@ -18,6 +18,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          role: "PUBLIC",
+          // Google has already verified the address before we ever see it -
+          // record that so the credentials verification gate never applies
+          // to OAuth accounts.
+          emailVerified: profile.email_verified ? new Date() : null,
+        };
+      },
     }),
     Credentials({
       credentials: {
@@ -35,7 +48,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
+      // A Google account must arrive with a verified address, or it would
+      // bypass the verification gate credentials accounts go through.
+      if (account?.provider === "google" && profile?.email_verified !== true) {
+        return false;
+      }
       // Block archived users from any provider (Google, Credentials)
       if (!user?.id) return true;
       const db = getDb();

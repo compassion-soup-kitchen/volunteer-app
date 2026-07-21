@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
+import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 const DEV_ACCOUNTS = [
   { label: "Admin", email: "admin@soupkitchen.org.nz", password: "admin123!", icon: RiShieldKeyholeLine },
@@ -111,6 +112,12 @@ export function LoginForm() {
           )}
         </Button>
       </form>
+
+      {state?.unverifiedEmail && (
+        <div className="mt-4">
+          <ResendVerificationForm email={state.unverifiedEmail} />
+        </div>
+      )}
 
       <div className="relative my-6">
         <Separator />

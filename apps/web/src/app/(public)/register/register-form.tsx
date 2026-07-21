@@ -1,19 +1,41 @@
 "use client";
 
 import { useActionState } from "react";
-import { register, type AuthState } from "@/lib/auth-actions";
+import { register, type RegisterState } from "@/lib/auth-actions";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
+import { EmailSentNotice } from "../_components/email-sent-notice";
+import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 export function RegisterForm() {
-  const [state, action, pending] = useActionState<AuthState, FormData>(
+  const [state, action, pending] = useActionState<RegisterState, FormData>(
     register,
     null
   );
+
+  if (state?.verificationSentTo) {
+    return (
+      <div className="space-y-4">
+        <EmailSentNotice
+          message={
+            <>
+              We&apos;ve sent a verification link to{" "}
+              <span className="font-medium text-foreground">
+                {state.verificationSentTo}
+              </span>
+              . Click it to activate your account - it&apos;s valid for 24
+              hours.
+            </>
+          }
+        />
+        <ResendVerificationForm email={state.verificationSentTo} />
+      </div>
+    );
+  }
 
   return (
     <>

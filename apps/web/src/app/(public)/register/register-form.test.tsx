@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/auth-actions", () => ({
   register: vi.fn(),
+  resendVerificationEmail: vi.fn(),
 }));
 
 vi.mock("next-auth/react", () => ({

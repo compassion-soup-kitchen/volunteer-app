@@ -8,7 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RiLoader4Line, RiMailSendLine } from "@remixicon/react";
+import { RiLoader4Line } from "@remixicon/react";
+import { EmailSentNotice } from "../_components/email-sent-notice";
 
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState<PasswordResetState, FormData>(
@@ -17,22 +18,7 @@ export function ForgotPasswordForm() {
   );
 
   if (state?.success) {
-    return (
-      <div className="rounded-2xl border border-border bg-secondary/60 p-5">
-        <div className="flex items-start gap-3">
-          <RiMailSendLine className="mt-0.5 size-5 shrink-0 text-success" />
-          <div className="space-y-2 text-sm">
-            <p className="font-medium text-foreground">Check your inbox</p>
-            <p className="leading-relaxed text-muted-foreground">
-              {state.success}
-            </p>
-            <p className="leading-relaxed text-muted-foreground">
-              Nothing after a few minutes? Have a look in your spam folder.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <EmailSentNotice message={state.success} />;
   }
 
   return (

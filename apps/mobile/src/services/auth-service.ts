@@ -46,9 +46,12 @@ async function persist(user: SessionUser | null, token: string | null): Promise<
 export interface AuthResult {
   user?: SessionUser;
   error?: string;
+  /** Set when the account was created but a verification email must be clicked before signing in. */
+  pendingVerification?: boolean;
 }
 
 type AuthResponse = { token: string; user: SessionUser };
+type RegisterResponse = Partial<AuthResponse> & { requiresVerification?: boolean };
 
 /** Restores a persisted session on launch. */
 export async function getStoredSession(): Promise<SessionUser | null> {
@@ -117,6 +120,7 @@ export async function register(name: string, email: string, password: string): P
     await delay();
     // New accounts start as PUBLIC applicants - the app routes them into the
     // volunteer application until staff approve them (mirrors the web flow).
+    // No email exists in mock mode, so verification is skipped entirely.
     const user: SessionUser = { id: nextId('usr'), name: n, email: e, role: 'PUBLIC' };
     db.session = user;
     db.application = null;
@@ -125,13 +129,18 @@ export async function register(name: string, email: string, password: string): P
   }
 
   try {
-    const { token, user } = await apiFetch<AuthResponse>('/api/v1/auth/register', {
+    const res = await apiFetch<RegisterResponse>('/api/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name: n, email: e, password }),
     });
-    setAuthToken(token);
-    await persist(user, token);
-    return { user };
+    // With email configured the API withholds the token until the emailed
+    // verification link is clicked; the person then signs in normally.
+    if (res.requiresVerification || !res.token || !res.user) {
+      return { pendingVerification: true };
+    }
+    setAuthToken(res.token);
+    await persist(res.user, res.token);
+    return { user: res.user };
   } catch (err) {
     return toActionError(err);
   }
