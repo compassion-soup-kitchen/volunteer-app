@@ -8,6 +8,8 @@ const publicPaths = [
   "/forgot-password",
   "/reset-password",
   "/privacy",
+  "/support",
+  "/copyright",
   "/styleguide",
 ];
 

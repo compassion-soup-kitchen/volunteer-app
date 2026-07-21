@@ -278,6 +278,7 @@ export default function Home() {
                 { label: "Features", href: "#features" },
                 { label: "Sign in on the web", href: "/login" },
                 { label: "Become a volunteer", href: "/register" },
+                { label: "Help & support", href: "/support" },
                 { label: "Privacy statement", href: "/privacy" },
               ]}
             />
@@ -323,7 +324,9 @@ export default function Home() {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="space-y-1 text-center sm:text-left">
               <p className="text-xs text-muted-foreground">
-                &copy; {new Date().getFullYear()} Compassion Soup Kitchen · Te Pūaroha. All rights reserved.
+                <a href="/copyright" className="transition-colors hover:text-primary">
+                  &copy; {new Date().getFullYear()} Compassion Soup Kitchen · Te Pūaroha. All rights reserved.
+                </a>
               </p>
               <p className="text-xs text-muted-foreground">
                 Registered Charity{" "}
