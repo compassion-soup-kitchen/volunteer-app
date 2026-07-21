@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.5.0...v1.6.0) (2026-07-21)
+
+
+### Features
+
+* **web:** add public support and copyright pages ([72557a2](https://github.com/compassion-soup-kitchen/volunteer-app/commit/72557a27da57d4c90a32f94838caf27b41fb32f9))
+
 ## [1.5.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.4.0...v1.5.0) (2026-07-06)
 
 
