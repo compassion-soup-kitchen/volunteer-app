@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/brand/wordmark";
 import { Eyebrow } from "@/components/brand/eyebrow";
@@ -61,6 +62,12 @@ export default function StyleguidePage() {
           <Wordmark className="h-6" />
           <div className="flex items-center gap-3">
             <Eyebrow className="hidden sm:block">Styleguide</Eyebrow>
+            <Link
+              href="/styleguide/emails"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Emails
+            </Link>
             <ThemeToggle />
           </div>
         </div>

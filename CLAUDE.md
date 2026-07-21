@@ -116,6 +116,7 @@ src/
 │   ├── utils.ts                      # `cn()` helper (clsx + tailwind-merge)
 │   ├── milestones.ts                 # Volunteer milestone definitions
 │   ├── push.ts                       # Expo push notifications — batch send via exp.host, dead-token pruning
+│   ├── email-templates.ts            # All transactional email copy as pure template functions (previewed at /styleguide/emails)
 │   ├── email-verification.ts         # Verification-token issue/redeem + email (shared by web actions and /api/v1 register)
 │   ├── auth-actions.ts               # Server Actions: login, register, email verification, password reset
 │   ├── application-actions.ts        # Submit/review applications

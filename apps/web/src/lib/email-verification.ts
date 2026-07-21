@@ -19,9 +19,9 @@ import {
   buildBrandedEmailText,
   getBaseUrl,
   sendEmail,
-  type BrandedEmail,
   type SendEmailResult,
 } from "@/lib/email";
+import { verificationEmail } from "@/lib/email-templates";
 
 /** Verification links live for 24 hours. */
 export const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -59,22 +59,11 @@ export async function sendVerificationEmail(
   });
 
   const verifyUrl = `${getBaseUrl()}/verify-email?token=${rawToken}`;
-  const content: BrandedEmail = {
-    preview: "One quick click and your account is ready to go",
-    heading: "Confirm your email address",
-    paragraphs: [
-      name ? `Kia ora ${name},` : "Kia ora,",
-      "Nau mai, haere mai - welcome to Te Pūaroha. Please confirm this email address so we know it's really you, then you're all set to sign in.",
-      "The link is valid for 24 hours and can only be used once.",
-    ],
-    cta: { label: "Confirm my email", url: verifyUrl },
-    footerNote:
-      "If you didn't create a Te Pūaroha account, you can safely ignore this email.",
-  };
+  const { subject, content } = verificationEmail(name, verifyUrl);
 
   return sendEmail({
     to: email,
-    subject: "Confirm your email for Te Pūaroha",
+    subject,
     html: buildBrandedEmailHtml(content),
     text: buildBrandedEmailText(content),
   });
@@ -103,6 +92,12 @@ export async function consumeVerificationToken(rawToken: string): Promise<boolea
   const email = record.identifier.slice(VERIFICATION_IDENTIFIER_PREFIX.length);
   const user = await db.user.findUnique({ where: { email } });
   if (!user || user.status === "ARCHIVED") {
+    // Burn it anyway: a link for a missing or archived account must not stay
+    // live in the DB, or it would become redeemable if the account is
+    // restored within the TTL.
+    await db.verificationToken.deleteMany({
+      where: { identifier: record.identifier },
+    });
     return false;
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import { verifyEmail, type VerifyEmailState } from "@/lib/auth-actions";
 import { Button } from "@/components/ui/button";
@@ -9,22 +9,16 @@ import { FormAlert } from "../_components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 /**
- * Redeems the verification token as soon as the page loads. The redemption is
- * a Server Action (a POST), so inbox link-scanners prefetching the URL with a
- * GET can't burn the single-use token before the person arrives.
+ * Redeems the verification token behind an explicit confirm click, mirroring
+ * the reset-password form. Auto-redeeming on load would let mail-security
+ * scanners (Safe Links, Proofpoint, etc.), which execute JS while pre-checking
+ * links, burn the single-use token before the person ever saw the page.
  */
 export function VerifyEmailStatus({ token }: { token: string }) {
-  const [state, action, pending] = useActionState<VerifyEmailState, string>(
+  const [state, action, pending] = useActionState<VerifyEmailState, FormData>(
     verifyEmail,
     null
   );
-  const startedRef = useRef(false);
-
-  useEffect(() => {
-    if (!token || startedRef.current) return;
-    startedRef.current = true;
-    startTransition(() => action(token));
-  }, [token, action]);
 
   if (!token) {
     return (
@@ -38,16 +32,7 @@ export function VerifyEmailStatus({ token }: { token: string }) {
     );
   }
 
-  if (pending || !state) {
-    return (
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-secondary/60 p-5 text-sm text-muted-foreground">
-        <RiLoader4Line className="size-5 shrink-0 animate-spin text-primary" />
-        Confirming your email address...
-      </div>
-    );
-  }
-
-  if (state.status === "success") {
+  if (state?.status === "success") {
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-border bg-secondary/60 p-5">
@@ -71,10 +56,28 @@ export function VerifyEmailStatus({ token }: { token: string }) {
     );
   }
 
+  if (state?.status === "error") {
+    return (
+      <div className="space-y-4">
+        <FormAlert>{state.message}</FormAlert>
+        <ResendVerificationForm />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      <FormAlert>{state.message}</FormAlert>
-      <ResendVerificationForm />
-    </div>
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="token" value={token} />
+      <Button type="submit" className="w-full" disabled={pending}>
+        {pending ? (
+          <>
+            <RiLoader4Line className="size-4 animate-spin" />
+            Confirming...
+          </>
+        ) : (
+          "Confirm my email"
+        )}
+      </Button>
+    </form>
   );
 }

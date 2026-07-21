@@ -426,7 +426,7 @@ describe("verifyEmail", () => {
   const INVALID = /expired or already been used/i;
 
   it("rejects an empty token", async () => {
-    const result = await verifyEmail(null, "");
+    const result = await verifyEmail(null, form({ token: "" }));
     expect(result).toEqual({
       status: "error",
       message: expect.stringMatching(INVALID),
@@ -436,7 +436,7 @@ describe("verifyEmail", () => {
 
   it("rejects an unknown token", async () => {
     tokenFindFirstMock.mockResolvedValueOnce(null);
-    const result = await verifyEmail(null, "raw-token");
+    const result = await verifyEmail(null, form({ token: "raw-token" }));
     expect(result?.status).toBe("error");
     expect(tokenFindFirstMock).toHaveBeenCalledWith({
       where: { token: sha256("raw-token") },
@@ -450,7 +450,7 @@ describe("verifyEmail", () => {
       token: sha256("raw-token"),
       expires: new Date(Date.now() - 1000),
     });
-    const result = await verifyEmail(null, "raw-token");
+    const result = await verifyEmail(null, form({ token: "raw-token" }));
     expect(result?.status).toBe("error");
     expect(updateMock).not.toHaveBeenCalled();
   });
@@ -461,12 +461,12 @@ describe("verifyEmail", () => {
       token: sha256("raw-token"),
       expires: new Date(Date.now() + 60_000),
     });
-    const result = await verifyEmail(null, "raw-token");
+    const result = await verifyEmail(null, form({ token: "raw-token" }));
     expect(result?.status).toBe("error");
     expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("rejects tokens for archived accounts", async () => {
+  it("rejects tokens for archived accounts and still burns them", async () => {
     tokenFindFirstMock.mockResolvedValueOnce({
       identifier: "email-verify:gone@b.co",
       token: sha256("raw-token"),
@@ -478,9 +478,13 @@ describe("verifyEmail", () => {
       status: "ARCHIVED",
       emailVerified: null,
     });
-    const result = await verifyEmail(null, "raw-token");
+    const result = await verifyEmail(null, form({ token: "raw-token" }));
     expect(result?.status).toBe("error");
     expect(updateMock).not.toHaveBeenCalled();
+    // The link must not linger redeemable in case the account is restored.
+    expect(tokenDeleteManyMock).toHaveBeenCalledWith({
+      where: { identifier: "email-verify:gone@b.co" },
+    });
   });
 
   it("marks the account verified and burns the token on success", async () => {
@@ -496,7 +500,7 @@ describe("verifyEmail", () => {
       emailVerified: null,
     });
 
-    const result = await verifyEmail(null, "raw-token");
+    const result = await verifyEmail(null, form({ token: "raw-token" }));
 
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: "u1" },
@@ -521,7 +525,7 @@ describe("verifyEmail", () => {
       emailVerified: new Date("2026-01-01"),
     });
 
-    const result = await verifyEmail(null, "raw-token");
+    const result = await verifyEmail(null, form({ token: "raw-token" }));
 
     expect(updateMock).not.toHaveBeenCalled();
     expect(tokenDeleteManyMock).toHaveBeenCalledWith({

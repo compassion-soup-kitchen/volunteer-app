@@ -12,6 +12,7 @@ const publicPaths = [
   "/support",
   "/copyright",
   "/styleguide",
+  "/styleguide/emails",
 ];
 
 export const proxy = auth((req) => {

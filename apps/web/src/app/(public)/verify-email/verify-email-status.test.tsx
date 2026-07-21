@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 const verifyEmailMock = vi.fn();
 
@@ -9,6 +9,13 @@ vi.mock("@/lib/auth-actions", () => ({
 }));
 
 import { VerifyEmailStatus } from "./verify-email-status";
+
+function submitConfirmForm() {
+  const form = screen
+    .getByRole("button", { name: /confirm my email/i })
+    .closest("form");
+  fireEvent.submit(form!);
+}
 
 beforeEach(() => {
   verifyEmailMock.mockReset();
@@ -26,16 +33,27 @@ describe("<VerifyEmailStatus />", () => {
     expect(verifyEmailMock).not.toHaveBeenCalled();
   });
 
-  it("redeems the token on load and shows the success state", async () => {
+  it("waits for an explicit confirm click instead of redeeming on load", () => {
+    render(<VerifyEmailStatus token="raw-token" />);
+
+    // Mail-security scanners execute JS while pre-checking links; rendering
+    // alone must never consume the single-use token.
+    expect(verifyEmailMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: /confirm my email/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("redeems the token on confirm and shows the success state", async () => {
     verifyEmailMock.mockResolvedValueOnce({ status: "success" });
 
     render(<VerifyEmailStatus token="raw-token" />);
+    submitConfirmForm();
 
-    expect(
-      await screen.findByText(/email confirmed/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/email confirmed/i)).toBeInTheDocument();
     expect(verifyEmailMock).toHaveBeenCalledTimes(1);
-    expect(verifyEmailMock).toHaveBeenCalledWith(null, "raw-token");
+    const submitted = verifyEmailMock.mock.calls[0][1] as FormData;
+    expect(submitted.get("token")).toBe("raw-token");
     expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute(
       "href",
       "/login",
@@ -49,6 +67,7 @@ describe("<VerifyEmailStatus />", () => {
     });
 
     render(<VerifyEmailStatus token="raw-token" />);
+    submitConfirmForm();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /expired or already been used/i,

@@ -15,8 +15,8 @@ import {
   getBaseUrl,
   isEmailConfigured,
   sendEmail,
-  type BrandedEmail,
 } from "@/lib/email";
+import { passwordResetEmail } from "@/lib/email-templates";
 import {
   consumeVerificationToken,
   sendVerificationEmail,
@@ -236,14 +236,17 @@ export async function register(
 }
 
 /**
- * Redeems an email-verification link. Token guessing is infeasible (32 random
- * bytes) so this needs no rate limit, matching `resetPassword`.
+ * Redeems an email-verification link, submitted from an explicit confirm
+ * button (never on page load: mail-security scanners execute JS when
+ * pre-checking links and would burn the single-use token before the person
+ * ever saw the page). Token guessing is infeasible (32 random bytes) so this
+ * needs no rate limit, matching `resetPassword`.
  */
 export async function verifyEmail(
   _prevState: VerifyEmailState,
-  rawToken: string
+  formData: FormData
 ): Promise<VerifyEmailState> {
-  const parsed = z.string().min(1).safeParse(rawToken);
+  const parsed = z.string().min(1).safeParse(formData.get("token"));
   if (!parsed.success) {
     return { status: "error", message: VERIFY_INVALID_TOKEN_MESSAGE };
   }
@@ -342,23 +345,12 @@ export async function requestPasswordReset(
   });
 
   const resetUrl = `${getBaseUrl()}/reset-password?token=${rawToken}`;
-  const content: BrandedEmail = {
-    preview: "Choose a new password for your Te Pūaroha account",
-    heading: "Reset your password",
-    paragraphs: [
-      user.name ? `Kia ora ${user.name},` : "Kia ora,",
-      "We received a request to reset the password for your Te Pūaroha volunteer account. Tap the button below to choose a new one.",
-      "The link is valid for 60 minutes and can only be used once.",
-    ],
-    cta: { label: "Choose a new password", url: resetUrl },
-    footerNote:
-      "If you didn't ask for this, you can safely ignore this email — your password won't change.",
-  };
+  const { subject, content } = passwordResetEmail(user.name, resetUrl);
 
   // sendEmail never throws; a delivery failure must not leak into the flow.
   await sendEmail({
     to: user.email,
-    subject: "Reset your Te Pūaroha password",
+    subject,
     html: buildBrandedEmailHtml(content),
     text: buildBrandedEmailText(content),
   });

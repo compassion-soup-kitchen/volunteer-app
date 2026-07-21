@@ -8,7 +8,9 @@ import {
   sendEmail,
   buildBrandedEmailHtml,
   buildBrandedEmailText,
+  getBaseUrl,
 } from "@/lib/email";
+import { applicationDecisionEmail } from "@/lib/email-templates";
 import { revalidatePath } from "next/cache";
 import {
   startOfWeek,
@@ -344,52 +346,18 @@ export async function reviewApplication(
     // so email is the only channel that reliably reaches them.
     const applicantEmail = application.volunteer.user.email;
     if (applicantEmail) {
-      const firstName = application.volunteer.user.name?.split(" ")[0];
-      const greeting = `Kia ora${firstName ? ` ${firstName}` : ""},`;
-      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-      const decisionEmail =
-        decision === "APPROVED"
-          ? {
-              heading: "Nau mai, haere mai — you're approved!",
-              preview: "Your volunteer application has been approved.",
-              paragraphs: [
-                greeting,
-                "Wonderful news — your application to volunteer with Compassion Soup Kitchen has been approved. We're so glad you're joining the whānau.",
-                "Next step is your induction. Sign in to your dashboard to see what's coming up and grab your first shift when you're ready.",
-              ],
-              cta: { label: "Open your dashboard", url: `${baseUrl}/dashboard` },
-            }
-          : decision === "INFO_REQUESTED"
-            ? {
-                heading: "A quick follow-up on your application",
-                preview: "We need one or two more details from you.",
-                paragraphs: [
-                  greeting,
-                  "Thanks so much for your application. Before we can take the next step, our coordinators need a little more information from you.",
-                  "The details are waiting on your application page — it'll only take a moment.",
-                ],
-                cta: { label: "View your application", url: `${baseUrl}/application` },
-              }
-            : {
-                heading: "About your volunteer application",
-                preview: "An update on your application to Te Pūaroha.",
-                paragraphs: [
-                  greeting,
-                  "Thank you for offering your time to Compassion Soup Kitchen — that means a great deal to us.",
-                  "After careful consideration we're not able to offer you a volunteer role right now. If circumstances change, or you'd like to talk it through, we'd love to hear from you — just reply to this email or get in touch with the kitchen.",
-                ],
-              };
+      const firstName = application.volunteer.user.name?.split(" ")[0] ?? null;
+      const { subject, content } = applicationDecisionEmail(
+        firstName,
+        decision,
+        getBaseUrl()
+      );
       after(() =>
         sendEmail({
           to: applicantEmail,
-          subject:
-            decision === "APPROVED"
-              ? "You're in! Your volunteer application is approved — Te Pūaroha"
-              : decision === "INFO_REQUESTED"
-                ? "We need a few more details — Te Pūaroha"
-                : "An update on your volunteer application — Te Pūaroha",
-          html: buildBrandedEmailHtml(decisionEmail),
-          text: buildBrandedEmailText(decisionEmail),
+          subject,
+          html: buildBrandedEmailHtml(content),
+          text: buildBrandedEmailText(content),
         })
       );
     }
