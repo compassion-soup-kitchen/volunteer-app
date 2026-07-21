@@ -8,13 +8,14 @@ test.describe("Landing page", () => {
       page.getByRole("heading", { name: /volunteer with us/i }),
     ).toBeVisible();
 
-    // App download is the primary CTA.
+    // Signing up on the web is the primary CTA while the mobile apps are
+    // unpublished — the store badges must not render until they ship.
     await expect(
-      page.getByRole("link", { name: /get the app/i }).first(),
-    ).toHaveAttribute("href", "#download");
+      page.getByRole("link", { name: /sign up to volunteer/i }).first(),
+    ).toHaveAttribute("href", "/register");
     await expect(
-      page.getByRole("link", { name: /download on the app store/i }).first(),
-    ).toBeVisible();
+      page.getByRole("link", { name: /download on the app store/i }),
+    ).toHaveCount(0);
   });
 
   test("navigates from landing to /register", async ({ page }) => {

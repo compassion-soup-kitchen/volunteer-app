@@ -65,7 +65,10 @@ src/
 │   │   ├── page.tsx                  # Landing page
 │   │   ├── landing-nav.tsx
 │   │   ├── login/
-│   │   └── register/
+│   │   ├── register/
+│   │   ├── forgot-password/          # Request a password-reset email
+│   │   ├── reset-password/           # Redeem the emailed reset token
+│   │   └── privacy/                  # NZ Privacy Act statement
 │   ├── (volunteer)/                  # VOLUNTEER role routes (mobile-first)
 │   │   ├── layout.tsx                # Auth gate, redirects staff → /staff/dashboard
 │   │   ├── volunteer-nav.tsx         # Top nav
@@ -88,6 +91,7 @@ src/
 │   │   ├── service-areas/            # CRUD service areas
 │   │   ├── training/                 # Create/manage training sessions
 │   │   ├── documents/                # Upload templates, manage agreement templates
+│   │   ├── announcements/            # Create/publish pānui (news for volunteers)
 │   │   └── reports/                  # Charts & exports
 │   └── api/
 │       └── auth/                     # NextAuth handlers (only API route — everything else uses Server Actions)

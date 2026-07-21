@@ -19,7 +19,9 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { SectionHeading } from "@/components/brand/section-heading";
 import { Kowhaiwhai } from "@/components/brand/kowhaiwhai";
 import { Wordmark } from "@/components/brand/wordmark";
-import { StoreBadges } from "./_components/store-badges";
+// Store badges (./_components/store-badges) are intentionally not rendered while
+// the mobile apps are unpublished — re-import and restore <StoreBadges /> in the
+// hero and join CTA once the real App Store / Google Play listing URLs exist.
 import { PhoneShot } from "./_components/phone-frame";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -95,16 +97,27 @@ export default function Home() {
               stay close to your whānau — wherever you are.
             </p>
             <div className="mt-8 flex flex-col items-center gap-4 lg:items-start">
-              <StoreBadges className="justify-center lg:justify-start" />
+              <div className="flex flex-col items-center gap-3 sm:flex-row">
+                <Button size="lg" asChild>
+                  <a href="/register">
+                    Sign up to volunteer
+                    <RiArrowRightLine data-icon="inline-end" className="size-4" />
+                  </a>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <a href="/login">Sign in</a>
+                </Button>
+              </div>
               <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-muted-foreground lg:justify-start">
                 <span className="inline-flex items-center gap-1.5">
                   <RiCheckLine className="size-4 text-primary" />
                   Free for every volunteer
                 </span>
                 <span aria-hidden className="text-border">·</span>
-                <a href="/login" className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline">
-                  Prefer a bigger screen? Sign in on the web
-                </a>
+                <span className="inline-flex items-center gap-1.5">
+                  <RiCheckLine className="size-4 text-primary" />
+                  Works on any phone or computer
+                </span>
               </div>
             </div>
           </motion.div>
@@ -200,27 +213,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Download CTA */}
-      <section id="download" className="scroll-mt-16 px-6 pb-24 sm:pb-28">
+      {/* Join CTA — was the app-download CTA; restore <StoreBadges /> here once
+          the mobile apps are published */}
+      <section id="join" className="scroll-mt-16 px-6 pb-24 sm:pb-28">
         <motion.div {...fadeUp} className="mx-auto max-w-6xl">
           <div className="relative overflow-hidden rounded-[1.75rem] bg-ink px-8 py-16 text-paper sm:px-12 sm:py-20">
             <Kowhaiwhai tone="light" className="pointer-events-none absolute -right-28 -top-24 w-[480px] opacity-[0.06]" />
             <div className="relative mx-auto max-w-xl text-center">
-              <p className={`${eyebrowOnDark} text-paper/55`}>Kuhu mai · Download</p>
+              <p className={`${eyebrowOnDark} text-paper/55`}>Kuhu mai · Join us</p>
               <h2 className="mt-3 font-serif text-3xl font-light tracking-tight sm:text-4xl">
-                Carry the kitchen in your pocket
+                There&apos;s a place here for you
               </h2>
               <span aria-hidden className="mx-auto mt-4 block h-0.5 w-16 rounded-full bg-primary" />
               <p className="mt-5 text-base leading-relaxed text-paper/75">
                 Join hundreds of volunteers who give their time and aroha to Te
-                Pūaroha. Download the app, sign in, and pick up your first shift
-                today.
+                Pūaroha. Create your account, tell us a bit about yourself, and
+                pick up your first shift.
               </p>
-              <StoreBadges className="mt-8 justify-center" />
+              <Button size="lg" className="mt-8" asChild>
+                <a href="/register">
+                  Sign up to volunteer
+                  <RiArrowRightLine data-icon="inline-end" className="size-4" />
+                </a>
+              </Button>
               <p className="mt-6 text-xs text-paper/55">
                 Already have an account?{" "}
                 <a href="/login" className="font-medium text-paper underline underline-offset-2">
-                  Sign in on the web
+                  Sign in
                 </a>
               </p>
             </div>
@@ -255,10 +274,11 @@ export default function Home() {
             <FooterColumn
               title="The app"
               links={[
-                { label: "Get the app", href: "#download" },
+                { label: "Join us", href: "#join" },
                 { label: "Features", href: "#features" },
                 { label: "Sign in on the web", href: "/login" },
                 { label: "Become a volunteer", href: "/register" },
+                { label: "Privacy statement", href: "/privacy" },
               ]}
             />
             <FooterColumn
@@ -303,12 +323,16 @@ export default function Home() {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="space-y-1 text-center sm:text-left">
               <p className="text-xs text-muted-foreground">
-                &copy; 2025 Compassion Soup Kitchen · Te Pūaroha. All rights reserved.
+                &copy; {new Date().getFullYear()} Compassion Soup Kitchen · Te Pūaroha. All rights reserved.
               </p>
               <p className="text-xs text-muted-foreground">
                 Registered Charity{" "}
                 <a href="https://www.register.charities.govt.nz/Charity/CC10246" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 transition-colors hover:text-primary">
                   CC 10246
+                </a>
+                <span className="mx-2 text-muted-foreground/40" aria-hidden>·</span>
+                <a href="/privacy" className="underline underline-offset-2 transition-colors hover:text-primary">
+                  Privacy
                 </a>
                 <span className="mx-2 text-muted-foreground/40" aria-hidden>·</span>
                 <span className="font-mono tracking-tight tabular-nums text-muted-foreground/60">v{APP_VERSION}</span>
