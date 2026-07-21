@@ -32,7 +32,7 @@ packages/     # Shared workspace packages (currently none beyond a placeholder)
 - **DB**: Prisma 7 ORM → self-hosted PostgreSQL (Coolify-managed) via `@prisma/adapter-pg` + `pg` Pool. Migrations via `prisma migrate` (history in `prisma/migrations/`); `prisma migrate deploy` runs on container start.
 - **Storage**: Garage (S3-compatible, self-hosted via Coolify) — accessed through the AWS S3 SDK in `src/lib/storage.ts`. Any S3-compatible backend works (Garage, R2, B2, …); only env values change.
 - **Auth**: NextAuth v5 (beta) — Credentials + Google providers, JWT sessions, PrismaAdapter
-- **Email**: Resend (planned)
+- **Email**: Resend HTTP API via `src/lib/email.ts` (plain fetch, no SDK; sending is skipped when `RESEND_API_KEY` is unset)
 - **Animation**: `motion/react`
 - **Forms/UI**: `react-day-picker`, `recharts`, `sonner` (toasts), `radix-ui`, `class-variance-authority`, `tailwind-merge`
 - **Validation**: `zod`
@@ -59,7 +59,7 @@ Other useful skills in this repo:
 apps/web/
 src/
 ├── app/
-│   ├── layout.tsx                    # Root: Geist fonts, ThemeProvider, SessionProvider, TooltipProvider, Toaster
+│   ├── layout.tsx                    # Root: Mona Sans/Fraunces/Geist Mono fonts, ThemeProvider, SessionProvider, TooltipProvider, Toaster
 │   ├── globals.css                   # Tailwind v4 + shadcn tokens (oklch), 18px root, brand red primary
 │   ├── (public)/                     # Unauthenticated routes
 │   │   ├── page.tsx                  # Landing page
@@ -106,7 +106,7 @@ src/
 │
 ├── lib/
 │   ├── auth.ts                       # NextAuth config (Google + Credentials, JWT, role on session)
-│   ├── db.ts                         # Lazy-init Prisma client (PrismaPg adapter, Pool max=1)
+│   ├── db.ts                         # Lazy-init Prisma client (PrismaPg adapter, pool size via DATABASE_POOL_MAX, default 10)
 │   ├── storage.ts                    # S3-compatible storage client (Garage) — uploads/presigned URLs
 │   ├── utils.ts                      # `cn()` helper (clsx + tailwind-merge)
 │   ├── milestones.ts                 # Volunteer milestone definitions
@@ -172,7 +172,7 @@ Always check role in Server Actions too — never trust the client.
 ### Design
 - **Brand primary**: `#DC0831` → `oklch(0.52 0.22 18)` (red). Used as `--primary` in light mode; slightly muted in dark mode.
 - **Root font size**: 18px (`html { @apply font-sans text-[18px]; }`).
-- **Font**: Geist + Geist Mono via `next/font/google`.
+- **Fonts**: Mona Sans (self-hosted, body/UI) + Fraunces (display serif) + Geist Mono, wired in `src/app/layout.tsx`.
 - **Theme tokens**: All colors via shadcn semantic CSS variables (`bg-primary`, `text-muted-foreground`, `bg-card`, `bg-sidebar`, etc.). Never hardcode hex values in components.
 - **Charts**: Use `--chart-1` … `--chart-5` (red ramp).
 - **Te Reo Māori** woven naturally — section labels, greetings, terms like *whānau*, *mahi*, *kai*, *aroha*, *nau mai haere mai*. Not tokenistic; warm and accurate.
@@ -237,5 +237,7 @@ Required env vars for `apps/web` (see `apps/web/.env.example`):
 - `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-- `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` (provider stubbed; not yet wired)
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` — address autocomplete on the application form (optional; falls back to manual entry)
+- `RESEND_API_KEY`, `EMAIL_FROM` — transactional email via Resend (optional; sending is skipped when unset)
 - `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` — S3-compatible storage (Garage) for document uploads
+- `DATABASE_POOL_MAX` — optional pg pool size (default 10)
