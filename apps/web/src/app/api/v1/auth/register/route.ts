@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { issueApiToken } from "@/lib/api/token";
 import { serializeSessionUser } from "@/lib/api/serializers";
-import { createUserAccount } from "@/lib/data/users";
+import { createUserAccount, normalizeEmail } from "@/lib/data/users";
+import { authRateLimits, checkRateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -17,6 +18,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: parsed.error.issues[0].message },
       { status: 400 }
+    );
+  }
+
+  // Shares the `register:` budget with the web sign-up form.
+  const throttle = checkRateLimit(
+    `register:${normalizeEmail(parsed.data.email)}`,
+    authRateLimits.register
+  );
+  if (!throttle.allowed) {
+    return NextResponse.json(
+      {
+        error:
+          "We've had a few sign-up attempts for this email just now. Please wait a little while and try again.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(throttle.retryAfterSeconds) },
+      }
     );
   }
 
