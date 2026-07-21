@@ -16,6 +16,7 @@ import {
   RiMapPinLine,
   RiGraduationCapLine,
   RiFileTextLine,
+  RiMegaphoneLine,
   RiBarChartBoxLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,11 @@ export function StaffNav({
     { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
     { href: "/staff/training", label: "Training", icon: RiGraduationCapLine },
     { href: "/staff/documents", label: "Documents", icon: RiFileTextLine },
+    {
+      href: "/staff/announcements",
+      label: "Announcements",
+      icon: RiMegaphoneLine,
+    },
     { href: "/staff/reports", label: "Reports", icon: RiBarChartBoxLine },
     ...(user.role === "ADMIN"
       ? [
