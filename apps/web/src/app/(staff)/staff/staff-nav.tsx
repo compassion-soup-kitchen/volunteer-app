@@ -96,8 +96,8 @@ export function StaffNav({
         )}
       >
         <div className="flex h-14 items-center border-b border-sidebar-border px-5">
-          <Link href="/staff/dashboard" aria-label="Te Pūaroha dashboard">
-            <Wordmark className="h-6" />
+          <Link href="/staff/dashboard" aria-label="Te Pūaroha dashboard" className="shrink-0">
+            <Wordmark className="h-5 w-auto" />
           </Link>
         </div>
         <nav className="p-3">
