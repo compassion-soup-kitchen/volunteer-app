@@ -5,8 +5,8 @@ import bcrypt from "bcryptjs";
 import { signIn } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import {
-  checkCredentials,
   createUserAccount,
+  isUnverifiedCredentialsAccount,
   normalizeEmail,
 } from "@/lib/data/users";
 import {
@@ -146,13 +146,15 @@ export async function login(
   } catch (error) {
     if (error instanceof AuthError) {
       // Distinguish "right password, unverified email" so people aren't told
-      // their password is wrong when it isn't. checkCredentials only reveals
-      // this after the password matches, so it's not an account-probing oracle.
-      const check = await checkCredentials(
-        parsed.data.email,
-        parsed.data.password
-      );
-      if (!check.ok && check.reason === "email-unverified") {
+      // their password is wrong when it isn't. The helper only bcrypt-compares
+      // for genuinely unverified accounts (so failed logins don't double
+      // their CPU cost) and only reveals the hint once the password matches.
+      if (
+        await isUnverifiedCredentialsAccount(
+          parsed.data.email,
+          parsed.data.password
+        )
+      ) {
         return {
           error:
             "Almost there - please verify your email address first. We sent you a link when you signed up.",

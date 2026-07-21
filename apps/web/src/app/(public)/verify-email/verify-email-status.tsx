@@ -5,6 +5,7 @@ import Link from "next/link";
 import { verifyEmail, type VerifyEmailState } from "@/lib/auth-actions";
 import { Button } from "@/components/ui/button";
 import { RiCheckboxCircleLine, RiLoader4Line } from "@remixicon/react";
+import { FormAlert } from "../_components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 /**
@@ -28,13 +29,10 @@ export function VerifyEmailStatus({ token }: { token: string }) {
   if (!token) {
     return (
       <div className="space-y-4">
-        <div
-          role="alert"
-          className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
-        >
+        <FormAlert>
           This verification link is missing its token. Enter your email below
           and we&apos;ll send you a fresh one.
-        </div>
+        </FormAlert>
         <ResendVerificationForm />
       </div>
     );
@@ -75,12 +73,7 @@ export function VerifyEmailStatus({ token }: { token: string }) {
 
   return (
     <div className="space-y-4">
-      <div
-        role="alert"
-        className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
-      >
-        {state.message}
-      </div>
+      <FormAlert>{state.message}</FormAlert>
       <ResendVerificationForm />
     </div>
   );

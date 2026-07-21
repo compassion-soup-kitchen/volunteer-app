@@ -18,7 +18,12 @@ vi.mock("bcryptjs", () => ({
 }));
 
 import bcrypt from "bcryptjs";
-import { checkCredentials, normalizeEmail, verifyCredentials } from "./users";
+import {
+  checkCredentials,
+  isUnverifiedCredentialsAccount,
+  normalizeEmail,
+  verifyCredentials,
+} from "./users";
 
 const activeUser = {
   id: "u1",
@@ -115,6 +120,44 @@ describe("checkCredentials", () => {
         role: "VOLUNTEER",
       },
     });
+  });
+});
+
+describe("isUnverifiedCredentialsAccount", () => {
+  it("is false for unknown emails without comparing", async () => {
+    findUniqueMock.mockResolvedValueOnce(null);
+    expect(await isUnverifiedCredentialsAccount("ghost@b.co", "pw")).toBe(false);
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+  });
+
+  it("is false for verified accounts without comparing, so failed logins don't pay a second hash", async () => {
+    findUniqueMock.mockResolvedValueOnce(activeUser);
+    expect(await isUnverifiedCredentialsAccount("aroha@b.co", "pw")).toBe(false);
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+  });
+
+  it("is false for archived accounts without comparing", async () => {
+    findUniqueMock.mockResolvedValueOnce({
+      ...activeUser,
+      status: "ARCHIVED",
+      emailVerified: null,
+    });
+    expect(await isUnverifiedCredentialsAccount("aroha@b.co", "pw")).toBe(false);
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+  });
+
+  it("only reports an unverified account when the password matches", async () => {
+    findUniqueMock.mockResolvedValue({ ...activeUser, emailVerified: null });
+
+    vi.mocked(bcrypt.compare).mockResolvedValueOnce(false as never);
+    expect(await isUnverifiedCredentialsAccount("aroha@b.co", "wrong")).toBe(
+      false,
+    );
+
+    vi.mocked(bcrypt.compare).mockResolvedValueOnce(true as never);
+    expect(await isUnverifiedCredentialsAccount("aroha@b.co", "right")).toBe(
+      true,
+    );
   });
 });
 

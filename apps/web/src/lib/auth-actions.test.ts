@@ -374,6 +374,30 @@ describe("login", () => {
     expect(result).toEqual({ error: "Invalid email or password" });
   });
 
+  it("does not re-hash on failed sign-ins to verified accounts", async () => {
+    signInMock.mockRejectedValueOnce(new AuthError("denied"));
+    findUniqueMock.mockResolvedValueOnce({
+      id: "u1",
+      email: "aroha@b.co",
+      name: "Aroha",
+      image: null,
+      role: "PUBLIC",
+      password: "stored-hash",
+      status: "ACTIVE",
+      emailVerified: new Date("2026-01-01"),
+    });
+
+    const result = await login(
+      null,
+      form({ email: "aroha@b.co", password: "wrong-pw" }),
+    );
+
+    expect(result).toEqual({ error: "Invalid email or password" });
+    // The unverified disambiguation must not double the bcrypt cost of the
+    // common failure case (signIn's own compare is behind the mock).
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+  });
+
   it("rate limits after 10 attempts, keyed by normalized email", async () => {
     signInMock.mockResolvedValue(undefined);
     for (let i = 0; i < 10; i++) {

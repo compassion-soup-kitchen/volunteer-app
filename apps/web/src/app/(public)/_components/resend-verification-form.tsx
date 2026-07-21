@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RiLoader4Line } from "@remixicon/react";
 import { EmailSentNotice } from "./email-sent-notice";
+import { FormAlert } from "./form-alert";
 
 /**
  * Requests a fresh verification link. With a known `email` (register panel,
@@ -28,14 +29,7 @@ export function ResendVerificationForm({ email }: { email?: string }) {
 
   return (
     <form action={action} className="space-y-4">
-      {state?.error && (
-        <div
-          role="alert"
-          className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
-        >
-          {state.error}
-        </div>
-      )}
+      {state?.error && <FormAlert>{state.error}</FormAlert>}
 
       {email ? (
         <input type="hidden" name="email" value={email} />

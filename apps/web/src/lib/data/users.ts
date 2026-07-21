@@ -59,6 +59,31 @@ export async function checkCredentials(
 }
 
 /**
+ * True only for an active, unverified credentials account whose password
+ * matches. Lets a failed sign-in be disambiguated without re-running the
+ * bcrypt comparison for the common failure cases (unknown email, wrong
+ * password on a verified account): the hash comparison only happens when the
+ * account is actually unverified. The "unverified" hint still requires
+ * knowing the password, so this is neither a CPU amplifier for failed-login
+ * sprays nor an account-probing oracle.
+ */
+export async function isUnverifiedCredentialsAccount(
+  email: string,
+  password: string
+): Promise<boolean> {
+  const db = getDb();
+  const user = await db.user.findUnique({
+    where: { email: normalizeEmail(email) },
+  });
+
+  if (!user?.password || user.status === "ARCHIVED" || user.emailVerified) {
+    return false;
+  }
+
+  return bcrypt.compare(password, user.password);
+}
+
+/**
  * Verifies email + password against the user table. Returns the user for a
  * valid, verified, non-archived credentials account; null otherwise.
  */
