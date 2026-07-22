@@ -18,6 +18,16 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
+import { Prisma, type Role } from "@prisma/client";
+import {
+  validateRoleChange,
+  isLastActiveAdmin,
+  type AssignableRole,
+} from "./role-change";
+
+// Thrown inside the role-change transaction to roll back a demotion that would
+// leave zero active admins; caught and mapped to a user-facing message.
+class LastAdminError extends Error {}
 
 // ─── Auth helpers ────────────────────────────────────
 
@@ -27,6 +37,16 @@ async function requireStaff() {
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)
   ) {
+    return null;
+  }
+  return session;
+}
+
+// Role escalation is ADMIN-only — coordinators must never be able to grant
+// COORDINATOR/ADMIN to themselves or others.
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return null;
   }
   return session;
@@ -381,8 +401,10 @@ export type VolunteerListItem = {
   mojStatus: string;
   createdAt: Date;
   user: {
+    id: string;
     name: string | null;
     email: string;
+    role: Role;
     status: string;
     archivedAt: Date | null;
     archivedReason: string | null;
@@ -425,8 +447,10 @@ export async function getVolunteersList(
     include: {
       user: {
         select: {
+          id: true,
           name: true,
           email: true,
+          role: true,
           status: true,
           archivedAt: true,
           archivedReason: true,
@@ -549,6 +573,93 @@ export async function restoreVolunteer(
     return { success: true };
   } catch (e) {
     console.error("Restore volunteer error:", e);
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+// ─── Role management (ADMIN only) ────────────────────
+
+export async function updateUserRole(
+  volunteerId: string,
+  role: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireAdmin();
+  if (!session) return { error: "Not authorised." };
+
+  const db = getDb();
+  const profile = await db.volunteerProfile.findUnique({
+    where: { id: volunteerId },
+    select: {
+      userId: true,
+      user: { select: { role: true, status: true } },
+    },
+  });
+
+  if (!profile) return { error: "Volunteer not found." };
+
+  const targetCurrentRole = profile.user.role;
+  const isTargetLastAdmin = isLastActiveAdmin(
+    targetCurrentRole,
+    await db.user.count({ where: { role: "ADMIN", status: "ACTIVE" } })
+  );
+
+  const validationError = validateRoleChange({
+    actorUserId: session.user!.id,
+    targetUserId: profile.userId,
+    targetCurrentRole,
+    newRole: role,
+    targetIsArchived: profile.user.status === "ARCHIVED",
+    isTargetLastAdmin,
+  });
+  if (validationError) return { error: validationError };
+
+  const demotingAnAdmin = targetCurrentRole === "ADMIN" && role !== "ADMIN";
+
+  try {
+    // The pre-check above closes the sequential last-admin case, but the count
+    // it used was read before this update — two admins demoting two *different*
+    // admins concurrently could each see 2 remaining and both commit, zeroing
+    // out all admins. Apply the write and re-count inside one serializable
+    // transaction so those two demotions can't both succeed.
+    await db.$transaction(
+      async (tx) => {
+        await tx.user.update({
+          where: { id: profile.userId },
+          data: { role: role as AssignableRole },
+        });
+
+        if (demotingAnAdmin) {
+          const remainingAdmins = await tx.user.count({
+            where: { role: "ADMIN", status: "ACTIVE" },
+          });
+          if (remainingAdmins < 1) {
+            throw new LastAdminError();
+          }
+        }
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+
+    revalidatePath("/staff/volunteers");
+    revalidatePath("/staff/dashboard");
+    return { success: true };
+  } catch (e) {
+    if (e instanceof LastAdminError) {
+      return {
+        error: "You can't remove the last admin. Promote someone else first.",
+      };
+    }
+    // A concurrent conflicting role change aborts one transaction under
+    // serializable isolation — safe to retry.
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2034"
+    ) {
+      return {
+        error: "Another role change happened at the same time. Please try again.",
+      };
+    }
+    console.error("Update user role error:", e);
     return { error: "Something went wrong. Please try again." };
   }
 }
