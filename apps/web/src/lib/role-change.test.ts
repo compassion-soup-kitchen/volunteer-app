@@ -49,6 +49,25 @@ describe("validateRoleChange", () => {
     );
   });
 
+  it("blocks assigning a role to a still-PUBLIC pending applicant", () => {
+    // A profile whose user is still PUBLIC hasn't been approved — promoting
+    // them (even to VOLUNTEER, let alone ADMIN) must be blocked here.
+    expect(
+      validateRoleChange({
+        ...base,
+        targetCurrentRole: "PUBLIC",
+        newRole: "ADMIN",
+      })
+    ).toMatch(/approve their application/i);
+    expect(
+      validateRoleChange({
+        ...base,
+        targetCurrentRole: "PUBLIC",
+        newRole: "VOLUNTEER",
+      })
+    ).toMatch(/approve their application/i);
+  });
+
   it("rejects changing your own role", () => {
     expect(
       validateRoleChange({ ...base, targetUserId: base.actorUserId })

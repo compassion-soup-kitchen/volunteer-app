@@ -54,7 +54,11 @@ import {
   updateUserRole,
   type VolunteerListItem,
 } from "@/lib/staff-actions";
-import { ASSIGNABLE_ROLES, type AssignableRole } from "@/lib/role-change";
+import {
+  ASSIGNABLE_ROLES,
+  isAssignableRole,
+  type AssignableRole,
+} from "@/lib/role-change";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -647,9 +651,14 @@ function StatusMenu({
 }) {
   const isArchived = volunteer.user.status === "ARCHIVED";
   // Admins can change anyone's role except their own (guards against
-  // self-lockout; the server enforces this too).
+  // self-lockout; the server enforces this too). Pending applicants are still
+  // PUBLIC — they go through application approval, not this control — so only
+  // offer it once they already hold an assignable role.
   const canChangeRole =
-    isAdmin && !isArchived && volunteer.user.id !== currentUserId;
+    isAdmin &&
+    !isArchived &&
+    volunteer.user.id !== currentUserId &&
+    isAssignableRole(volunteer.user.role);
   const roleOptions = ASSIGNABLE_ROLES.filter(
     (r) => r !== volunteer.user.role
   );

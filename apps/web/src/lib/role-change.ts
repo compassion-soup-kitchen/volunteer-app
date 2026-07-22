@@ -35,6 +35,13 @@ export function validateRoleChange(input: RoleChangeInput): string | null {
   if (!isAssignableRole(newRole)) {
     return "That role can't be assigned.";
   }
+  // A profile whose user is still PUBLIC is a pending applicant — they must go
+  // through approval (which flips them to VOLUNTEER) before any staff role can
+  // be assigned. Otherwise an admin could promote an unvetted applicant
+  // straight to ADMIN, skipping the application / MoJ-vetting / induction flow.
+  if (!isAssignableRole(targetCurrentRole)) {
+    return "Approve their application before assigning a role.";
+  }
   if (actorUserId === targetUserId) {
     return "You can't change your own role.";
   }
