@@ -21,6 +21,7 @@ import {
 import type { Role } from "@prisma/client";
 import {
   validateRoleChange,
+  isLastActiveAdmin,
   type AssignableRole,
 } from "./role-change";
 
@@ -584,21 +585,26 @@ export async function updateUserRole(
   const db = getDb();
   const profile = await db.volunteerProfile.findUnique({
     where: { id: volunteerId },
-    select: { userId: true, user: { select: { role: true } } },
+    select: {
+      userId: true,
+      user: { select: { role: true, status: true } },
+    },
   });
 
   if (!profile) return { error: "Volunteer not found." };
 
   const targetCurrentRole = profile.user.role;
-  const isTargetLastAdmin =
-    targetCurrentRole === "ADMIN" &&
-    (await db.user.count({ where: { role: "ADMIN", status: "ACTIVE" } })) <= 1;
+  const isTargetLastAdmin = isLastActiveAdmin(
+    targetCurrentRole,
+    await db.user.count({ where: { role: "ADMIN", status: "ACTIVE" } })
+  );
 
   const validationError = validateRoleChange({
     actorUserId: session.user!.id,
     targetUserId: profile.userId,
     targetCurrentRole,
     newRole: role,
+    targetIsArchived: profile.user.status === "ARCHIVED",
     isTargetLastAdmin,
   });
   if (validationError) return { error: validationError };

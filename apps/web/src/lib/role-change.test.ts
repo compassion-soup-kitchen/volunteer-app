@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isAssignableRole,
+  isLastActiveAdmin,
   validateRoleChange,
   type RoleChangeInput,
 } from "./role-change";
@@ -10,6 +11,7 @@ const base: RoleChangeInput = {
   targetUserId: "user-2",
   targetCurrentRole: "VOLUNTEER",
   newRole: "COORDINATOR",
+  targetIsArchived: false,
   isTargetLastAdmin: false,
 };
 
@@ -68,6 +70,12 @@ describe("validateRoleChange", () => {
     ).toMatch(/approve their application/i);
   });
 
+  it("blocks changing an archived account's role", () => {
+    expect(
+      validateRoleChange({ ...base, targetIsArchived: true })
+    ).toMatch(/restore this account/i);
+  });
+
   it("rejects changing your own role", () => {
     expect(
       validateRoleChange({ ...base, targetUserId: base.actorUserId })
@@ -102,5 +110,22 @@ describe("validateRoleChange", () => {
         isTargetLastAdmin: true,
       })
     ).toMatch(/already have/i);
+  });
+});
+
+describe("isLastActiveAdmin", () => {
+  it("is true only when the target is an admin and one active admin remains", () => {
+    expect(isLastActiveAdmin("ADMIN", 1)).toBe(true);
+    // Boundary: a second active admin means this one isn't the last.
+    expect(isLastActiveAdmin("ADMIN", 2)).toBe(false);
+  });
+
+  it("treats a zero count as still-last (defensive against races)", () => {
+    expect(isLastActiveAdmin("ADMIN", 0)).toBe(true);
+  });
+
+  it("is false for a non-admin target regardless of count", () => {
+    expect(isLastActiveAdmin("VOLUNTEER", 1)).toBe(false);
+    expect(isLastActiveAdmin("COORDINATOR", 0)).toBe(false);
   });
 });

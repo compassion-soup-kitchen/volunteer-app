@@ -15,11 +15,25 @@ export function isAssignableRole(role: string): role is AssignableRole {
   return (ASSIGNABLE_ROLES as readonly string[]).includes(role);
 }
 
+/**
+ * Whether demoting this target would remove the last active admin. Pure so the
+ * off-by-one boundary (<= 1) is exercised by unit tests rather than only
+ * surfacing in production; the action supplies the live count.
+ */
+export function isLastActiveAdmin(
+  targetCurrentRole: Role,
+  activeAdminCount: number
+): boolean {
+  return targetCurrentRole === "ADMIN" && activeAdminCount <= 1;
+}
+
 export type RoleChangeInput = {
   actorUserId: string;
   targetUserId: string;
   targetCurrentRole: Role;
   newRole: string;
+  // Whether the target account is archived (blocked from sign-in).
+  targetIsArchived: boolean;
   // True when the target is the only remaining active ADMIN.
   isTargetLastAdmin: boolean;
 };
@@ -29,8 +43,14 @@ export type RoleChangeInput = {
  * the change is allowed. Side-effect-free so it can be unit-tested directly.
  */
 export function validateRoleChange(input: RoleChangeInput): string | null {
-  const { actorUserId, targetUserId, targetCurrentRole, newRole, isTargetLastAdmin } =
-    input;
+  const {
+    actorUserId,
+    targetUserId,
+    targetCurrentRole,
+    newRole,
+    targetIsArchived,
+    isTargetLastAdmin,
+  } = input;
 
   if (!isAssignableRole(newRole)) {
     return "That role can't be assigned.";
@@ -41,6 +61,12 @@ export function validateRoleChange(input: RoleChangeInput): string | null {
   // straight to ADMIN, skipping the application / MoJ-vetting / induction flow.
   if (!isAssignableRole(targetCurrentRole)) {
     return "Approve their application before assigning a role.";
+  }
+  // Archived accounts are blocked from sign-in; changing their role here would
+  // let a later restore (staff-level, not admin-only) silently reactivate an
+  // elevated role. Require restoring first.
+  if (targetIsArchived) {
+    return "Restore this account before changing its role.";
   }
   if (actorUserId === targetUserId) {
     return "You can't change your own role.";
