@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.8.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.7.0...v1.8.0) (2026-07-22)
+
+
+### Features
+
+* email preview page; gate verification behind confirm click ([1e272dd](https://github.com/compassion-soup-kitchen/volunteer-app/commit/1e272ddb6e065ccd95277753728c9615c512b184))
+* let admins change volunteer roles from the directory ([219955a](https://github.com/compassion-soup-kitchen/volunteer-app/commit/219955af20e4101ca481635147b2d87f276e0f5d))
+* let admins change volunteer roles from the directory ([19c268c](https://github.com/compassion-soup-kitchen/volunteer-app/commit/19c268c6d006a598874b7a1319814a4369928cde))
+* require email verification for new registrations ([fe821ac](https://github.com/compassion-soup-kitchen/volunteer-app/commit/fe821ac5b0049df128ac7cb2e2e02d5d6595a195))
+* require email verification for new registrations ([4877723](https://github.com/compassion-soup-kitchen/volunteer-app/commit/4877723eb5c5d7e3419c92cae3dac5db073364dc))
+* **web:** cross-link info pages and mention password reset in support FAQ ([66dd121](https://github.com/compassion-soup-kitchen/volunteer-app/commit/66dd1216ca31b862c65790471fcdd78b15cfa65c))
+
+
+### Bug Fixes
+
+* block role changes on still-PUBLIC pending applicants ([c33316e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/c33316e08d88506db7944fc0c2b092e66d527eb2))
+* close last-admin TOCTOU race with a serializable transaction ([f875b5a](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f875b5a5d9e09ecc149710ad93930d4fb90a94e8))
+* enforce archived-account role guardrail server-side; test last-admin logic ([b0af6af](https://github.com/compassion-soup-kitchen/volunteer-app/commit/b0af6af768d755b8277c2adbfa2b995413374b94))
+
 ## [1.7.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.6.0...v1.7.0) (2026-07-21)
 
 
