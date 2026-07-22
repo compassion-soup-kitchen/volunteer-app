@@ -18,6 +18,11 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
+import type { Role } from "@prisma/client";
+import {
+  validateRoleChange,
+  type AssignableRole,
+} from "./role-change";
 
 // ─── Auth helpers ────────────────────────────────────
 
@@ -27,6 +32,16 @@ async function requireStaff() {
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)
   ) {
+    return null;
+  }
+  return session;
+}
+
+// Role escalation is ADMIN-only — coordinators must never be able to grant
+// COORDINATOR/ADMIN to themselves or others.
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return null;
   }
   return session;
@@ -381,8 +396,10 @@ export type VolunteerListItem = {
   mojStatus: string;
   createdAt: Date;
   user: {
+    id: string;
     name: string | null;
     email: string;
+    role: Role;
     status: string;
     archivedAt: Date | null;
     archivedReason: string | null;
@@ -425,8 +442,10 @@ export async function getVolunteersList(
     include: {
       user: {
         select: {
+          id: true,
           name: true,
           email: true,
+          role: true,
           status: true,
           archivedAt: true,
           archivedReason: true,
@@ -549,6 +568,52 @@ export async function restoreVolunteer(
     return { success: true };
   } catch (e) {
     console.error("Restore volunteer error:", e);
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+// ─── Role management (ADMIN only) ────────────────────
+
+export async function updateUserRole(
+  volunteerId: string,
+  role: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireAdmin();
+  if (!session) return { error: "Not authorised." };
+
+  const db = getDb();
+  const profile = await db.volunteerProfile.findUnique({
+    where: { id: volunteerId },
+    select: { userId: true, user: { select: { role: true } } },
+  });
+
+  if (!profile) return { error: "Volunteer not found." };
+
+  const targetCurrentRole = profile.user.role;
+  const isTargetLastAdmin =
+    targetCurrentRole === "ADMIN" &&
+    (await db.user.count({ where: { role: "ADMIN", status: "ACTIVE" } })) <= 1;
+
+  const validationError = validateRoleChange({
+    actorUserId: session.user!.id,
+    targetUserId: profile.userId,
+    targetCurrentRole,
+    newRole: role,
+    isTargetLastAdmin,
+  });
+  if (validationError) return { error: validationError };
+
+  try {
+    await db.user.update({
+      where: { id: profile.userId },
+      data: { role: role as AssignableRole },
+    });
+
+    revalidatePath("/staff/volunteers");
+    revalidatePath("/staff/dashboard");
+    return { success: true };
+  } catch (e) {
+    console.error("Update user role error:", e);
     return { error: "Something went wrong. Please try again." };
   }
 }

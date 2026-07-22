@@ -25,6 +25,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -37,6 +40,9 @@ import {
   RiShieldCheckLine,
   RiArchive2Line,
   RiArrowGoBackLine,
+  RiUserSettingsLine,
+  RiShieldUserLine,
+  RiUserStarLine,
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -45,8 +51,10 @@ import {
   updateVolunteerStatus,
   archiveVolunteer,
   restoreVolunteer,
+  updateUserRole,
   type VolunteerListItem,
 } from "@/lib/staff-actions";
+import { ASSIGNABLE_ROLES, type AssignableRole } from "@/lib/role-change";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,8 +112,33 @@ const MOJ_LABEL: Record<string, string> = {
   FLAGGED: "Flagged",
 };
 
+const ROLE_LABEL: Record<AssignableRole, string> = {
+  VOLUNTEER: "Volunteer",
+  COORDINATOR: "Coordinator",
+  ADMIN: "Admin",
+};
+
+const ROLE_ICON: Record<AssignableRole, typeof RiUserLine> = {
+  VOLUNTEER: RiUserLine,
+  COORDINATOR: RiUserStarLine,
+  ADMIN: RiShieldUserLine,
+};
+
+// Only elevated roles get a badge — VOLUNTEER is the default, badging everyone
+// would just add noise.
+const ROLE_BADGE_VARIANT: Partial<
+  Record<string, "default" | "secondary" | "destructive" | "outline">
+> = {
+  COORDINATOR: "secondary",
+  ADMIN: "default",
+};
+
 interface VolunteerDirectoryProps {
   initialVolunteers: VolunteerListItem[];
+  // The signed-in admin's user id — used to stop them changing their own role.
+  currentUserId: string;
+  // Role controls are ADMIN-only; coordinators see the directory without them.
+  isAdmin: boolean;
 }
 
 const ACCOUNT_OPTIONS: { value: "ACTIVE" | "ARCHIVED" | "ALL"; label: string }[] =
@@ -117,6 +150,8 @@ const ACCOUNT_OPTIONS: { value: "ACTIVE" | "ARCHIVED" | "ALL"; label: string }[]
 
 export function VolunteerDirectory({
   initialVolunteers,
+  currentUserId,
+  isAdmin,
 }: VolunteerDirectoryProps) {
   const [volunteers, setVolunteers] = useState(initialVolunteers);
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -130,6 +165,11 @@ export function VolunteerDirectory({
   );
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
+  const [roleTarget, setRoleTarget] = useState<{
+    volunteer: VolunteerListItem;
+    newRole: AssignableRole;
+  } | null>(null);
+  const [changingRole, setChangingRole] = useState(false);
 
   function reload(next: {
     status?: string;
@@ -208,6 +248,27 @@ export function VolunteerDirectory({
       return;
     }
     toast.success(`${volunteer.user.name || "Volunteer"} restored.`);
+    reload({});
+  }
+
+  async function handleRoleChangeConfirm() {
+    if (!roleTarget) return;
+    setChangingRole(true);
+    const result = await updateUserRole(
+      roleTarget.volunteer.id,
+      roleTarget.newRole
+    );
+    setChangingRole(false);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    const roleLabel = ROLE_LABEL[roleTarget.newRole].toLowerCase();
+    const article = roleTarget.newRole === "ADMIN" ? "an" : "a";
+    toast.success(
+      `${roleTarget.volunteer.user.name || "This person"} is now ${article} ${roleLabel}. They'll need to sign out and back in for it to take effect.`
+    );
+    setRoleTarget(null);
     reload({});
   }
 
@@ -297,6 +358,15 @@ export function VolunteerDirectory({
                       <TableCell>
                         <div className="flex items-center gap-2 font-medium">
                           {vol.user.name || "Unnamed"}
+                          {ROLE_BADGE_VARIANT[vol.user.role] && (
+                            <Badge
+                              variant={ROLE_BADGE_VARIANT[vol.user.role]}
+                              className="text-[10px]"
+                            >
+                              {ROLE_LABEL[vol.user.role as AssignableRole] ??
+                                vol.user.role}
+                            </Badge>
+                          )}
                           {vol.user.status === "ARCHIVED" && (
                             <Badge variant="outline" className="text-[10px]">
                               Archived
@@ -352,9 +422,14 @@ export function VolunteerDirectory({
                       <TableCell>
                         <StatusMenu
                           volunteer={vol}
+                          isAdmin={isAdmin}
+                          currentUserId={currentUserId}
                           onStatusChange={handleStatusChange}
                           onArchive={(v) => setArchiveTarget(v)}
                           onRestore={handleRestore}
+                          onChangeRole={(v, newRole) =>
+                            setRoleTarget({ volunteer: v, newRole })
+                          }
                         />
                       </TableCell>
                     </TableRow>
@@ -374,10 +449,19 @@ export function VolunteerDirectory({
                 <CardContent className="py-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium">
                           {vol.user.name || "Unnamed"}
                         </p>
+                        {ROLE_BADGE_VARIANT[vol.user.role] && (
+                          <Badge
+                            variant={ROLE_BADGE_VARIANT[vol.user.role]}
+                            className="text-[10px]"
+                          >
+                            {ROLE_LABEL[vol.user.role as AssignableRole] ??
+                              vol.user.role}
+                          </Badge>
+                        )}
                         {vol.user.status === "ARCHIVED" && (
                           <Badge variant="outline" className="text-[10px]">
                             Archived
@@ -390,9 +474,14 @@ export function VolunteerDirectory({
                     </div>
                     <StatusMenu
                       volunteer={vol}
+                      isAdmin={isAdmin}
+                      currentUserId={currentUserId}
                       onStatusChange={handleStatusChange}
                       onArchive={(v) => setArchiveTarget(v)}
                       onRestore={handleRestore}
+                      onChangeRole={(v, newRole) =>
+                        setRoleTarget({ volunteer: v, newRole })
+                      }
                     />
                   </div>
 
@@ -483,17 +572,67 @@ export function VolunteerDirectory({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={roleTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRoleTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {roleTarget &&
+                `Make ${roleTarget.volunteer.user.name || "this person"} ${ROLE_LABEL[
+                  roleTarget.newRole
+                ].toLowerCase()}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {roleTarget?.newRole === "ADMIN"
+                ? "Admins have full access, including reporting, service areas, and managing everyone's roles. Only grant this to people you trust with the whole system."
+                : roleTarget?.newRole === "COORDINATOR"
+                  ? "Coordinators can manage applications, rostering, training, and announcements."
+                  : "This removes their staff access. They'll return to a standard volunteer account."}{" "}
+              They&apos;ll need to sign out and back in for the change to take
+              effect.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={changingRole}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRoleChangeConfirm}
+              disabled={changingRole}
+            >
+              {changingRole ? (
+                <>
+                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                roleTarget && `Make ${ROLE_LABEL[roleTarget.newRole]}`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 function StatusMenu({
   volunteer,
+  isAdmin,
+  currentUserId,
   onStatusChange,
   onArchive,
   onRestore,
+  onChangeRole,
 }: {
   volunteer: VolunteerListItem;
+  isAdmin: boolean;
+  currentUserId: string;
   onStatusChange: (
     vol: VolunteerListItem,
     status:
@@ -504,8 +643,16 @@ function StatusMenu({
   ) => void;
   onArchive: (vol: VolunteerListItem) => void;
   onRestore: (vol: VolunteerListItem) => void;
+  onChangeRole: (vol: VolunteerListItem, newRole: AssignableRole) => void;
 }) {
   const isArchived = volunteer.user.status === "ARCHIVED";
+  // Admins can change anyone's role except their own (guards against
+  // self-lockout; the server enforces this too).
+  const canChangeRole =
+    isAdmin && !isArchived && volunteer.user.id !== currentUserId;
+  const roleOptions = ASSIGNABLE_ROLES.filter(
+    (r) => r !== volunteer.user.role
+  );
 
   if (isArchived) {
     return (
@@ -562,6 +709,31 @@ function StatusMenu({
             {s.label}
           </DropdownMenuItem>
         ))}
+        {canChangeRole && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <RiUserSettingsLine className="mr-2 size-4" />
+                Change role
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {roleOptions.map((role) => {
+                  const Icon = ROLE_ICON[role];
+                  return (
+                    <DropdownMenuItem
+                      key={role}
+                      onClick={() => onChangeRole(volunteer, role)}
+                    >
+                      <Icon className="mr-2 size-4" />
+                      Make {ROLE_LABEL[role]}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => onArchive(volunteer)}

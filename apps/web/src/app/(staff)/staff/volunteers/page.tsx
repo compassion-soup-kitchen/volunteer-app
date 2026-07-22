@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { auth } from "@/lib/auth";
 import { getVolunteersList } from "@/lib/staff-actions";
 import { VolunteerDirectory } from "./volunteer-directory";
 import { PageHeader } from "@/components/brand/page-header";
@@ -10,7 +11,10 @@ export const metadata: Metadata = {
 
 export default async function VolunteersPage() {
   await connection();
-  const volunteers = await getVolunteersList();
+  const [volunteers, session] = await Promise.all([
+    getVolunteersList(),
+    auth(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -20,7 +24,11 @@ export default async function VolunteersPage() {
         description="Manage your volunteer whānau"
       />
 
-      <VolunteerDirectory initialVolunteers={volunteers} />
+      <VolunteerDirectory
+        initialVolunteers={volunteers}
+        currentUserId={session?.user?.id ?? ""}
+        isAdmin={session?.user?.role === "ADMIN"}
+      />
     </div>
   );
 }
