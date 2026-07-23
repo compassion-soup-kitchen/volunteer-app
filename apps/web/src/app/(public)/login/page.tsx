@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { AuthShell } from "../auth-shell";
 import { LoginForm } from "./login-form";
+import { demoLoginsEnabled } from "@/lib/demo-accounts";
 
 export const metadata: Metadata = {
   title: "Kia ora — Sign In | Te Pūaroha",
@@ -11,11 +12,10 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage() {
-  // Rendered per-request so DEMO_LOGINS is read from the runtime environment —
+  // Rendered per-request so DEMO_LOGINS is read from the runtime environment -
   // a production build deployed to staging can still enable the demo accounts.
   await connection();
-  const showDemoAccounts =
-    process.env.NODE_ENV === "development" || process.env.DEMO_LOGINS === "true";
+  const showDemoAccounts = demoLoginsEnabled();
 
   return (
     <AuthShell

@@ -56,6 +56,7 @@ vi.mock("@/lib/email", async (importOriginal) => {
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import {
+  demoLogin,
   login,
   register,
   requestPasswordReset,
@@ -63,6 +64,7 @@ import {
   resetPassword,
   verifyEmail,
 } from "./auth-actions";
+import { demoLoginsEnabled } from "./demo-accounts";
 
 function form(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -419,6 +421,61 @@ describe("login", () => {
     expect(
       await login(null, form({ email: "other@b.co", password: "pw" })),
     ).toBeNull();
+  });
+});
+
+describe("demoLogin", () => {
+  const originalDemoLogins = process.env.DEMO_LOGINS;
+
+  afterEach(() => {
+    if (originalDemoLogins === undefined) delete process.env.DEMO_LOGINS;
+    else process.env.DEMO_LOGINS = originalDemoLogins;
+    vi.unstubAllEnvs();
+  });
+
+  it("refuses to sign in when demo logins are disabled", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    delete process.env.DEMO_LOGINS;
+
+    expect(demoLoginsEnabled()).toBe(false);
+    const result = await demoLogin(null, form({ role: "admin" }));
+
+    expect(result?.error).toMatch(/not available/i);
+    // The guard must hold even though the action is callable from anywhere.
+    expect(signInMock).not.toHaveBeenCalled();
+  });
+
+  it("signs in with the seeded credentials when explicitly enabled", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    process.env.DEMO_LOGINS = "true";
+    signInMock.mockResolvedValueOnce(undefined);
+
+    const result = await demoLogin(null, form({ role: "coordinator" }));
+
+    expect(result).toBeNull();
+    expect(signInMock).toHaveBeenCalledWith("credentials", {
+      email: "coordinator@soupkitchen.org.nz",
+      password: "coord123!",
+      redirectTo: "/dashboard",
+    });
+  });
+
+  it("rejects an unknown role", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+
+    const result = await demoLogin(null, form({ role: "superuser" }));
+
+    expect(result?.error).toMatch(/unknown demo account/i);
+    expect(signInMock).not.toHaveBeenCalled();
+  });
+
+  it("explains when the demo account is missing from the database", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    signInMock.mockRejectedValueOnce(new AuthError("nope"));
+
+    const result = await demoLogin(null, form({ role: "volunteer" }));
+
+    expect(result?.error).toMatch(/seed/i);
   });
 });
 

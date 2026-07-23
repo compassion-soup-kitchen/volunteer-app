@@ -3,6 +3,11 @@
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/lib/auth";
+import {
+  DEMO_ACCOUNTS,
+  demoLoginsEnabled,
+  type DemoRole,
+} from "@/lib/demo-accounts";
 import { getDb } from "@/lib/db";
 import {
   createUserAccount,
@@ -111,6 +116,45 @@ function hashResetToken(rawToken: string): string {
 function retryAfterPhrase(retryAfterSeconds: number): string {
   const minutes = Math.ceil(retryAfterSeconds / 60);
   return minutes <= 1 ? "a minute" : `${minutes} minutes`;
+}
+
+/**
+ * One-click sign-in as a seeded demo account. The passwords live in
+ * `demo-accounts.ts` (server-side only), so nothing sensitive reaches the
+ * client - the browser sends just a role key. The flag is re-checked here
+ * rather than trusted from the caller, so the action stays inert in production
+ * even if someone invokes it directly.
+ */
+export async function demoLogin(
+  _prevState: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  if (!demoLoginsEnabled()) {
+    return { error: "Demo sign-in is not available." };
+  }
+
+  const role = String(formData.get("role") ?? "") as DemoRole;
+  const account = DEMO_ACCOUNTS[role];
+  if (!account) {
+    return { error: "Unknown demo account." };
+  }
+
+  try {
+    await signIn("credentials", {
+      email: account.email,
+      password: account.password,
+      redirectTo: "/dashboard",
+    });
+    return null;
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return {
+        error:
+          "That demo account isn't set up on this database. Run the seed first.",
+      };
+    }
+    throw error;
+  }
 }
 
 export async function login(

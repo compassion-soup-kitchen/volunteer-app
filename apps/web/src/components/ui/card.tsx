@@ -13,7 +13,7 @@ const cardVariants = cva(
         // Recessed warm well for nested / quiet blocks. No border.
         muted: "bg-muted text-foreground",
         // Deep cocoa feature card with a faint red corner glow — the hero device.
-        ink: "rounded-2xl bg-ink text-ink-foreground shadow-md before:pointer-events-none before:absolute before:-top-20 before:-right-16 before:size-56 before:rounded-full before:bg-[#e4002b]/25 before:blur-3xl",
+        ink: "rounded-2xl bg-ink text-ink-foreground shadow-md before:pointer-events-none before:absolute before:-top-20 before:-right-16 before:size-56 before:rounded-full before:bg-primary/25 before:blur-3xl",
         // Soft red wash callout for the one brand moment per page.
         tint: "bg-primary-tint text-foreground ring-1 ring-primary/15 dark:ring-primary/25",
       },

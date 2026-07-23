@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/auth-actions", () => ({
   login: vi.fn(),
+  demoLogin: vi.fn(),
   resendVerificationEmail: vi.fn(),
 }));
 
@@ -10,7 +11,7 @@ vi.mock("next-auth/react", () => ({
   signIn: vi.fn(),
 }));
 
-import { login } from "@/lib/auth-actions";
+import { demoLogin, login } from "@/lib/auth-actions";
 import { LoginForm } from "./login-form";
 
 /** Submits the sign-in form, letting the mocked action drive the next state. */
@@ -23,6 +24,7 @@ function submitForm() {
 
 beforeEach(() => {
   vi.mocked(login).mockReset();
+  vi.mocked(demoLogin).mockReset();
 });
 
 describe("<LoginForm />", () => {
@@ -60,15 +62,30 @@ describe("<LoginForm />", () => {
   });
 
   it("signs in as the chosen demo account with one click", async () => {
-    vi.mocked(login).mockResolvedValueOnce(null);
+    vi.mocked(demoLogin).mockResolvedValueOnce(null);
     render(<LoginForm showDemoAccounts />);
 
     fireEvent.click(screen.getByRole("button", { name: /admin/i }));
 
-    await waitFor(() => expect(vi.mocked(login)).toHaveBeenCalledTimes(1));
-    const formData = vi.mocked(login).mock.calls[0][1];
-    expect(formData.get("email")).toBe("admin@soupkitchen.org.nz");
-    expect(formData.get("password")).toBe("admin123!");
+    await waitFor(() => expect(vi.mocked(demoLogin)).toHaveBeenCalledTimes(1));
+    // Only the role travels to the server - credentials never reach the client.
+    const formData = vi.mocked(demoLogin).mock.calls[0][1];
+    expect(formData.get("role")).toBe("admin");
+    expect([...formData.keys()]).toEqual(["role"]);
+    expect(vi.mocked(login)).not.toHaveBeenCalled();
+  });
+
+  it("surfaces an error when demo sign-in is refused", async () => {
+    vi.mocked(demoLogin).mockResolvedValueOnce({
+      error: "Demo sign-in is not available.",
+    });
+    render(<LoginForm showDemoAccounts />);
+
+    fireEvent.click(screen.getByRole("button", { name: /volunteer/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /demo sign-in is not available/i,
+    );
   });
 
   it("offers a resend button when sign-in failed only because the email is unverified", async () => {
