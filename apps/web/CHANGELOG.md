@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.9.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.8.0...v1.9.0) (2026-07-23)
+
+
+### Features
+
+* **volunteers:** show not-yet-applied users and allow direct promotion ([c0b24b7](https://github.com/compassion-soup-kitchen/volunteer-app/commit/c0b24b7cdd91f40aa898560032b6f1e2d7f460a8))
+
+
+### Bug Fixes
+
+* **documents:** exclude staff from agreement-overview volunteer counts ([b0a5fc5](https://github.com/compassion-soup-kitchen/volunteer-app/commit/b0a5fc5f59c9e586cef678b782c40e472fc53b1e))
+* **volunteers:** exclude staff from volunteer counts; unit-test list filter ([6ebf16c](https://github.com/compassion-soup-kitchen/volunteer-app/commit/6ebf16c33f1cd07c69a8342f2e627178dadcb0d6))
+
 ## [1.8.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.7.0...v1.8.0) (2026-07-22)
 
 
