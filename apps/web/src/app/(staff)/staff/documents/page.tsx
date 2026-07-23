@@ -8,6 +8,7 @@ import {
 import { DocumentsOverview } from "./documents-overview";
 import { FileManager } from "./file-manager";
 import { PageHeader } from "@/components/brand/page-header";
+import { SectionHeader } from "@/components/brand/section-header";
 
 export const metadata: Metadata = {
   title: "Documents | Te Pūaroha Staff",
@@ -43,16 +44,16 @@ export default function StaffDocumentsPage() {
       />
 
       {/* Agreements Section */}
-      <section className="space-y-3">
-        <h2 className="font-serif text-xl font-normal">Agreements</h2>
+      <section className="space-y-4">
+        <SectionHeader eyebrow="Ngā whakaaetanga" title="Agreements" />
         <Suspense fallback={<DocumentsSkeleton />}>
           <AgreementsContent />
         </Suspense>
       </section>
 
       {/* Uploaded Files Section */}
-      <section className="space-y-3">
-        <h2 className="font-serif text-xl font-normal">Uploaded files</h2>
+      <section className="space-y-4">
+        <SectionHeader divider eyebrow="Ngā kōnae" title="Uploaded files" />
         <Suspense fallback={<DocumentsSkeleton />}>
           <FilesContent />
         </Suspense>

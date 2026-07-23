@@ -1,20 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  RiFileTextLine,
-  RiArrowRightLine,
-  RiCheckLine,
-  RiAlertLine,
-  RiCloseLine,
-} from "@remixicon/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { IconChip } from "@/components/brand/icon-chip";
+import { StatFigure } from "@/components/brand/stat-figure";
+import { RiFileTextLine, RiArrowRightSLine } from "@remixicon/react";
 import type { AgreementOverview } from "@/lib/document-actions";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -32,84 +23,76 @@ export function DocumentsOverview({
   if (agreements.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center">
-          <RiFileTextLine className="mx-auto size-10 text-muted-foreground/40" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            No agreement templates configured yet. Templates are created
-            automatically when the database is seeded.
-          </p>
+        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+          <IconChip size="lg">
+            <RiFileTextLine />
+          </IconChip>
+          <div>
+            <p className="font-serif text-lg font-medium tracking-tight">
+              No agreement templates yet
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Templates are created automatically when the database is seeded.
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {agreements.map((agreement) => (
-        <Card key={agreement.agreementType}>
-          <CardHeader className="flex-row items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-                <RiFileTextLine className="size-4 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-base">
+    <Card>
+      <ul className="divide-y divide-border">
+        {agreements.map((agreement) => (
+          <li key={agreement.agreementType}>
+            <Link
+              href={`/staff/documents/${agreement.agreementType}`}
+              className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            >
+              <IconChip tone="brand">
+                <RiFileTextLine />
+              </IconChip>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-serif text-base font-medium tracking-tight">
                   {TYPE_LABELS[agreement.agreementType] || agreement.title}
-                </CardTitle>
-                <p className="mt-0.5 text-sm text-muted-foreground">
+                </p>
+                <p className="text-xs text-muted-foreground">
                   Version {agreement.version}
+                  {" · "}
+                  {agreement.totalVolunteers}{" "}
+                  {agreement.totalVolunteers === 1 ? "volunteer" : "volunteers"}
                 </p>
               </div>
-            </div>
-            <Button asChild variant="ghost" size="sm">
-              <Link
-                href={`/staff/documents/${agreement.agreementType}`}
-              >
-                Manage
-                <RiArrowRightLine className="size-3.5" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-1.5">
-                <RiCheckLine className="size-3.5 text-green-600" />
-                <span className="text-sm">
-                  <span className="tabular-nums font-medium">
-                    {agreement.signedCurrentCount}
-                  </span>{" "}
-                  current
-                </span>
+              <div className="hidden shrink-0 items-center gap-2 md:flex">
+                {agreement.signedOutdatedCount > 0 && (
+                  <Badge variant="warning">
+                    {agreement.signedOutdatedCount} outdated
+                  </Badge>
+                )}
+                {agreement.unsignedCount > 0 && (
+                  <Badge variant="neutral">
+                    {agreement.unsignedCount} not signed
+                  </Badge>
+                )}
               </div>
-              {agreement.signedOutdatedCount > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <RiAlertLine className="size-3.5 text-amber-600" />
-                  <span className="text-sm">
-                    <span className="tabular-nums font-medium">
-                      {agreement.signedOutdatedCount}
-                    </span>{" "}
-                    outdated
-                  </span>
-                </div>
-              )}
-              {agreement.unsignedCount > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <RiCloseLine className="size-3.5 text-muted-foreground" />
-                  <span className="text-sm">
-                    <span className="tabular-nums font-medium">
-                      {agreement.unsignedCount}
-                    </span>{" "}
-                    not signed
-                  </span>
-                </div>
-              )}
-              <span className="text-sm text-muted-foreground">
-                of {agreement.totalVolunteers} volunteers
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+              <div className="shrink-0 text-right">
+                <StatFigure
+                  size="md"
+                  value={agreement.signedCurrentCount}
+                  unit={`/${agreement.totalVolunteers}`}
+                />
+                <p className="text-[0.68rem] text-muted-foreground">
+                  signed current
+                </p>
+              </div>
+              <RiArrowRightSLine
+                className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }

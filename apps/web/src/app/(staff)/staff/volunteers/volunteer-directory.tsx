@@ -30,6 +30,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { IconChip } from "@/components/brand/icon-chip";
 import {
   RiSearchLine,
   RiTeamLine,
@@ -46,6 +48,7 @@ import {
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   getVolunteersList,
   updateVolunteerStatus,
@@ -81,40 +84,14 @@ const STATUS_OPTIONS = [
   { value: "NO_APPLICATION", label: "No application yet" },
 ];
 
-const STATUS_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  ACTIVE: "default",
-  APPLICATION_SUBMITTED: "secondary",
-  AWAITING_VETTING: "secondary",
-  APPROVED_FOR_INDUCTION: "outline",
-  INACTIVE: "destructive",
-};
-
+// Human-readable status names for toast copy (badges derive their own labels
+// via StatusBadge).
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: "Active",
   APPLICATION_SUBMITTED: "Applied",
   AWAITING_VETTING: "Awaiting vetting",
   APPROVED_FOR_INDUCTION: "Approved",
   INACTIVE: "Inactive",
-};
-
-const MOJ_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  NOT_STARTED: "secondary",
-  SUBMITTED: "default",
-  CLEARED: "outline",
-  FLAGGED: "destructive",
-};
-
-const MOJ_LABEL: Record<string, string> = {
-  NOT_STARTED: "Not started",
-  SUBMITTED: "Submitted",
-  CLEARED: "Cleared",
-  FLAGGED: "Flagged",
 };
 
 const ROLE_LABEL: Record<AssignableRole, string> = {
@@ -131,12 +108,18 @@ const ROLE_ICON: Record<AssignableRole, typeof RiUserLine> = {
 
 // Only elevated roles get a badge — VOLUNTEER is the default, badging everyone
 // would just add noise.
-const ROLE_BADGE_VARIANT: Partial<
-  Record<string, "default" | "secondary" | "destructive" | "outline">
-> = {
-  COORDINATOR: "secondary",
+const ROLE_BADGE_VARIANT: Partial<Record<string, "default" | "info">> = {
+  COORDINATOR: "info",
   ADMIN: "default",
 };
+
+function initials(name: string | null | undefined) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase() || "?";
+}
 
 interface VolunteerDirectoryProps {
   initialVolunteers: VolunteerListItem[];
@@ -279,62 +262,78 @@ export function VolunteerDirectory({
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="flex w-full items-center gap-2 border border-input px-2.5 sm:flex-1">
-          <RiSearchLine className="size-3.5 shrink-0 text-muted-foreground" />
+      {/* Search + filters */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-xs">
+          <RiSearchLine
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <Input
             placeholder="Search by name or email..."
+            aria-label="Search volunteers by name or email"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full border-0 px-0 focus-visible:ring-0"
+            className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={handleFilterChange}>
-          <SelectTrigger className="w-full sm:w-52">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={accountFilter}
-          onValueChange={(v) =>
-            handleAccountFilterChange(v as "ACTIVE" | "ARCHIVED" | "ALL")
-          }
-        >
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ACCOUNT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+          <Select value={statusFilter} onValueChange={handleFilterChange}>
+            <SelectTrigger className="w-full sm:w-52">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={accountFilter}
+            onValueChange={(v) =>
+              handleAccountFilterChange(v as "ACTIVE" | "ARCHIVED" | "ALL")
+            }
+          >
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACCOUNT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Badge variant="neutral" className="tnum shrink-0 sm:ml-auto">
+            {volunteers.length} {volunteers.length === 1 ? "person" : "people"}
+          </Badge>
+        </div>
       </div>
 
       {isPending && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RiLoader4Line className="size-4 animate-spin" />
+          <RiLoader4Line className="size-4 animate-spin" aria-hidden />
           Loading...
         </div>
       )}
 
       {volunteers.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center">
-            <RiTeamLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">
-              No volunteers found.
-            </p>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <IconChip size="lg">
+              <RiTeamLine />
+            </IconChip>
+            <div>
+              <p className="font-serif text-lg font-medium tracking-tight">
+                No volunteers found
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try adjusting your search or filters.
+              </p>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -342,99 +341,93 @@ export function VolunteerDirectory({
           {/* Desktop table */}
           <div className="hidden sm:block">
             <Card>
-              <Table>
+              <Table className="[&_td]:px-3 [&_th]:px-3 [&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5">
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="hover:bg-transparent">
                     <TableHead>Volunteer</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>MOJ</TableHead>
+                    <TableHead>MoJ</TableHead>
                     <TableHead>Interests</TableHead>
-                    <TableHead style={{ textAlign: "right" }}>Shifts</TableHead>
-                    <TableHead style={{ textAlign: "right" }}>Joined</TableHead>
-                    <TableHead className="w-10" />
+                    <TableHead className="text-right">Shifts</TableHead>
+                    <TableHead className="text-right">Joined</TableHead>
+                    <TableHead className="w-10">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {volunteers.map((vol) => (
                     <TableRow
                       key={vol.id}
-                      className={vol.user.status === "ARCHIVED" ? "opacity-60" : ""}
+                      className={cn(
+                        "hover:bg-secondary/40",
+                        vol.user.status === "ARCHIVED" && "opacity-60"
+                      )}
                     >
                       <TableCell>
-                        <div className="flex items-center gap-2 font-medium">
-                          {vol.user.name || "Unnamed"}
-                          {ROLE_BADGE_VARIANT[vol.user.role] && (
-                            <Badge
-                              variant={ROLE_BADGE_VARIANT[vol.user.role]}
-                              className="text-[10px]"
-                            >
-                              {ROLE_LABEL[vol.user.role as AssignableRole] ??
-                                vol.user.role}
-                            </Badge>
-                          )}
-                          {vol.user.status === "ARCHIVED" && (
-                            <Badge variant="outline" className="text-[10px]">
-                              Archived
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {vol.user.email}
+                        <div className="flex items-center gap-3">
+                          <span
+                            aria-hidden
+                            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
+                          >
+                            {initials(vol.user.name)}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate text-sm font-semibold">
+                                {vol.user.name || "Unnamed"}
+                              </span>
+                              {ROLE_BADGE_VARIANT[vol.user.role] && (
+                                <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
+                                  {ROLE_LABEL[vol.user.role as AssignableRole] ??
+                                    vol.user.role}
+                                </Badge>
+                              )}
+                              {vol.user.status === "ARCHIVED" && (
+                                <StatusBadge status="ARCHIVED" />
+                              )}
+                            </div>
+                            <div className="truncate text-xs text-muted-foreground">
+                              {vol.user.email}
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         {vol.hasProfile && vol.status ? (
-                          <Badge
-                            variant={
-                              STATUS_BADGE_VARIANT[vol.status] || "secondary"
-                            }
-                          >
-                            {STATUS_LABEL[vol.status] || vol.status}
-                          </Badge>
+                          <StatusBadge status={vol.status} />
                         ) : (
                           <Badge variant="outline">No application yet</Badge>
                         )}
                       </TableCell>
                       <TableCell>
                         {vol.hasProfile && vol.mojStatus ? (
-                          <Badge
-                            variant={
-                              MOJ_BADGE_VARIANT[vol.mojStatus] || "secondary"
-                            }
-                          >
-                            {MOJ_LABEL[vol.mojStatus] || vol.mojStatus}
-                          </Badge>
+                          <StatusBadge status={vol.mojStatus} />
                         ) : (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
+                          <span className="text-sm text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {vol.interests.slice(0, 2).map((i) => (
-                            <Badge
-                              key={i.id}
-                              variant="outline"
-                              className="text-[10px]"
-                            >
+                            <Badge key={i.id} variant="outline">
                               {i.name}
                             </Badge>
                           ))}
                           {vol.interests.length > 2 && (
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant="neutral" className="tnum">
                               +{vol.interests.length - 2}
                             </Badge>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="tabular-nums text-sm" style={{ textAlign: "right" }}>
+                      <TableCell className="tnum text-right">
                         {vol._count.shiftSignups}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground" style={{ textAlign: "right" }}>
+                      <TableCell className="tnum text-right text-muted-foreground">
                         {format(vol.createdAt, "d MMM yy")}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right">
                         <StatusMenu
                           volunteer={vol}
                           isAdmin={isAdmin}
@@ -454,97 +447,92 @@ export function VolunteerDirectory({
             </Card>
           </div>
 
-          {/* Mobile cards */}
-          <div className="space-y-3 sm:hidden">
-            {volunteers.map((vol) => (
-              <Card
-                key={vol.id}
-                className={vol.user.status === "ARCHIVED" ? "opacity-60" : ""}
-              >
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">
-                          {vol.user.name || "Unnamed"}
-                        </p>
-                        {ROLE_BADGE_VARIANT[vol.user.role] && (
-                          <Badge
-                            variant={ROLE_BADGE_VARIANT[vol.user.role]}
-                            className="text-[10px]"
-                          >
-                            {ROLE_LABEL[vol.user.role as AssignableRole] ??
-                              vol.user.role}
-                          </Badge>
-                        )}
-                        {vol.user.status === "ARCHIVED" && (
-                          <Badge variant="outline" className="text-[10px]">
-                            Archived
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {vol.user.email}
+          {/* Mobile hairline list */}
+          <Card className="sm:hidden">
+            <ul className="divide-y divide-border">
+              {volunteers.map((vol) => (
+                <li
+                  key={vol.id}
+                  className={cn(
+                    "flex items-start gap-3 px-5 py-3",
+                    vol.user.status === "ARCHIVED" && "opacity-60"
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
+                  >
+                    {initials(vol.user.name)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-sm font-semibold">
+                        {vol.user.name || "Unnamed"}
                       </p>
-                    </div>
-                    <StatusMenu
-                      volunteer={vol}
-                      isAdmin={isAdmin}
-                      currentUserId={currentUserId}
-                      onStatusChange={handleStatusChange}
-                      onArchive={(v) => setArchiveTarget(v)}
-                      onRestore={handleRestore}
-                      onChangeRole={(v, newRole) =>
-                        setRoleTarget({ volunteer: v, newRole })
-                      }
-                    />
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {vol.hasProfile && vol.status ? (
-                      <>
-                        <Badge
-                          variant={
-                            STATUS_BADGE_VARIANT[vol.status] || "secondary"
-                          }
-                        >
-                          {STATUS_LABEL[vol.status] || vol.status}
+                      {ROLE_BADGE_VARIANT[vol.user.role] && (
+                        <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
+                          {ROLE_LABEL[vol.user.role as AssignableRole] ??
+                            vol.user.role}
                         </Badge>
-                        {vol.mojStatus && (
-                          <Badge
-                            variant={
-                              MOJ_BADGE_VARIANT[vol.mojStatus] || "secondary"
-                            }
-                          >
-                            MOJ: {MOJ_LABEL[vol.mojStatus] || vol.mojStatus}
+                      )}
+                      {vol.user.status === "ARCHIVED" && (
+                        <StatusBadge status="ARCHIVED" />
+                      )}
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {vol.user.email}
+                    </p>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {vol.hasProfile && vol.status ? (
+                        <>
+                          <StatusBadge status={vol.status} />
+                          {vol.mojStatus && (
+                            <span className="inline-flex items-center gap-1">
+                              <span className="eyebrow text-[0.62rem] text-muted-foreground">
+                                MoJ
+                              </span>
+                              <StatusBadge status={vol.mojStatus} />
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <Badge variant="outline">No application yet</Badge>
+                      )}
+                    </div>
+
+                    {vol.interests.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {vol.interests.map((i) => (
+                          <Badge key={i.id} variant="outline">
+                            {i.name}
                           </Badge>
-                        )}
-                      </>
-                    ) : (
-                      <Badge variant="outline">No application yet</Badge>
+                        ))}
+                      </div>
                     )}
-                  </div>
 
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {vol.interests.map((i) => (
-                      <Badge
-                        key={i.id}
-                        variant="outline"
-                        className="text-[10px]"
-                      >
-                        {i.name}
-                      </Badge>
-                    ))}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Joined {format(vol.createdAt, "d MMM yyyy")}
+                      {" · "}
+                      <span className="tnum">{vol._count.shiftSignups}</span>{" "}
+                      {vol._count.shiftSignups === 1 ? "shift" : "shifts"}
+                    </p>
                   </div>
-
-                  <div className="mt-2 flex items-center justify-end gap-4 text-xs text-muted-foreground">
-                    <span>Joined {format(vol.createdAt, "d MMM yyyy")}</span>
-                    <span className="tabular-nums">{vol._count.shiftSignups} shifts</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <StatusMenu
+                    volunteer={vol}
+                    isAdmin={isAdmin}
+                    currentUserId={currentUserId}
+                    onStatusChange={handleStatusChange}
+                    onArchive={(v) => setArchiveTarget(v)}
+                    onRestore={handleRestore}
+                    onChangeRole={(v, newRole) =>
+                      setRoleTarget({ volunteer: v, newRole })
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          </Card>
         </>
       )}
 
@@ -644,7 +632,8 @@ export function VolunteerDirectory({
                   Updating...
                 </>
               ) : (
-                roleTarget && `Make ${ROLE_LABEL[roleTarget.newRole]}`
+                roleTarget &&
+                `Make ${ROLE_LABEL[roleTarget.newRole].toLowerCase()}`
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -697,7 +686,11 @@ function StatusMenu({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Actions for ${volunteer.user.name || "volunteer"}`}
+          >
             <RiMoreLine className="size-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -716,24 +709,28 @@ function StatusMenu({
   const availableStatuses = !volunteer.hasProfile
     ? []
     : [
-        { value: "ACTIVE", label: "Set Active", icon: RiCheckLine },
+        { value: "ACTIVE", label: "Set active", icon: RiCheckLine },
         {
           value: "APPROVED_FOR_INDUCTION",
-          label: "Approved for Induction",
+          label: "Approved for induction",
           icon: RiShieldCheckLine,
         },
         {
           value: "AWAITING_VETTING",
-          label: "Awaiting Vetting",
+          label: "Awaiting vetting",
           icon: RiUserLine,
         },
-        { value: "INACTIVE", label: "Set Inactive", icon: RiUserLine },
+        { value: "INACTIVE", label: "Set inactive", icon: RiUserLine },
       ].filter((s) => s.value !== volunteer.status);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Actions for ${volunteer.user.name || "volunteer"}`}
+        >
           <RiMoreLine className="size-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -773,7 +770,7 @@ function StatusMenu({
                       onClick={() => onChangeRole(volunteer, role)}
                     >
                       <Icon className="mr-2 size-4" />
-                      Make {ROLE_LABEL[role]}
+                      Make {ROLE_LABEL[role].toLowerCase()}
                     </DropdownMenuItem>
                   );
                 })}

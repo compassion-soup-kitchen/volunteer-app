@@ -6,13 +6,8 @@ import {
   getStaffDashboardStats,
   getRecentActivity,
 } from "@/lib/staff-actions";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   RiTeamLine,
   RiFileListLine,
@@ -20,10 +15,17 @@ import {
   RiTimeLine,
   RiUserLine,
   RiCheckLine,
+  RiAddLine,
+  RiMegaphoneLine,
+  RiArrowRightSLine,
+  RiGraduationCapLine,
 } from "@remixicon/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
+import { SectionHeader } from "@/components/brand/section-header";
+import { StatFigure } from "@/components/brand/stat-figure";
+import { IconChip } from "@/components/brand/icon-chip";
 
 export const metadata: Metadata = {
   title: "Staff Dashboard | Te Pūaroha",
@@ -35,20 +37,24 @@ export default async function StaffDashboard() {
   const firstName = session?.user?.name?.split(" ")[0] || "there";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Whakahaere · Operations"
         title={`Kia ora, ${firstName}`}
-        description="Staff dashboard, manage volunteers and operations"
+        description="Today's picture across volunteers, shifts and mahi."
       />
 
       <Suspense fallback={<StatsSkeleton />}>
         <StatsCards />
       </Suspense>
 
-      <Suspense fallback={<ActivitySkeleton />}>
-        <RecentActivitySection />
-      </Suspense>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-10">
+        <Suspense fallback={<ActivitySkeleton />}>
+          <RecentActivitySection />
+        </Suspense>
+
+        <QuickActions />
+      </div>
     </div>
   );
 }
@@ -58,64 +64,71 @@ async function StatsCards() {
 
   const cards = [
     {
-      label: "Active Volunteers",
+      label: "Active volunteers",
       value: stats?.activeVolunteers ?? 0,
-      suffix: "",
+      unit: undefined as string | undefined,
       sublabel: "Kaimahi tūao",
       icon: RiTeamLine,
       href: "/staff/volunteers",
+      tone: "brand" as const,
     },
     {
-      label: "Pending Applications",
+      label: "Pending applications",
       value: stats?.pendingApplications ?? 0,
-      suffix: "",
+      unit: undefined,
       sublabel: "Awaiting review",
       icon: RiFileListLine,
       href: "/staff/applications",
+      tone: (stats?.pendingApplications ?? 0) > 0 ? ("warning" as const) : ("neutral" as const),
     },
     {
-      label: "Shifts This Week",
+      label: "Shifts this week",
       value: stats?.shiftsThisWeek ?? 0,
-      suffix: "",
+      unit: undefined,
       sublabel: "Mahi o te wiki",
       icon: RiCalendarLine,
       href: "/staff/shifts",
+      tone: "info" as const,
     },
     {
-      label: "Hours This Month",
+      label: "Hours this month",
       value: stats?.hoursThisMonth ?? 0,
-      suffix: "h",
+      unit: "h",
       sublabel: "Total volunteer hours",
       icon: RiTimeLine,
       href: null,
+      tone: "success" as const,
     },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => {
-        const Wrapper = card.href ? Link : "div";
-        return (
-          <Wrapper
-            key={card.label}
-            href={card.href || "#"}
-            className={card.href ? "group" : undefined}
-          >
-            <Card className={card.href ? "transition-colors group-hover:border-primary/30" : undefined}>
-              <CardHeader className="pb-2">
-                <CardDescription>{card.label}</CardDescription>
-                <CardTitle className="flex items-baseline gap-2">
-                  <span className="font-serif text-3xl font-light tabular-nums">
-                    {card.value}{card.suffix}
-                  </span>
-                  <card.icon className="size-4 text-muted-foreground" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">{card.sublabel}</p>
-              </CardContent>
-            </Card>
-          </Wrapper>
+        const body = (
+          <CardContent className="flex items-start justify-between gap-3">
+            <div className="space-y-1.5">
+              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                {card.label}
+              </p>
+              <StatFigure value={card.value} unit={card.unit} />
+              <p className="text-xs text-muted-foreground">{card.sublabel}</p>
+            </div>
+            <IconChip tone={card.tone} size="sm">
+              <card.icon />
+            </IconChip>
+          </CardContent>
+        );
+        return card.href ? (
+          <Card key={card.label} className="transition-colors hover:ring-input">
+            <Link
+              href={card.href}
+              className="block focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            >
+              {body}
+            </Link>
+          </Card>
+        ) : (
+          <Card key={card.label}>{body}</Card>
         );
       })}
     </div>
@@ -134,54 +147,83 @@ async function RecentActivitySection() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Recent Activity</CardTitle>
-        <CardDescription>He aha ngā mahi hou — what&apos;s been happening</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+    <section className="min-w-0 space-y-4">
+      <SectionHeader
+        eyebrow="Ngā mahi hou"
+        title="Recent activity"
+      />
+      <Card>
+        <ul className="divide-y divide-border">
           {activities.map((activity, i) => {
             const Icon = iconMap[activity.type] || RiUserLine;
             return (
-              <div
-                key={i}
-                className="flex items-start gap-3 text-sm"
-              >
-                <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
-                  <Icon className="size-3.5 text-muted-foreground" />
-                </div>
+              <li key={i} className="flex items-start gap-3 px-5 py-3">
+                <IconChip size="sm" className="mt-0.5">
+                  <Icon />
+                </IconChip>
                 <div className="min-w-0 flex-1">
-                  <p>
-                    <span className="font-medium">{activity.label}</span>{" "}
-                    <span className="text-muted-foreground">
-                      {activity.detail}
-                    </span>
+                  <p className="text-sm">
+                    <span className="font-semibold">{activity.label}</span>{" "}
+                    <span className="text-muted-foreground">{activity.detail}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {formatDistanceToNow(activity.time, { addSuffix: true })}
                   </p>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
-      </CardContent>
-    </Card>
+        </ul>
+      </Card>
+    </section>
+  );
+}
+
+function QuickActions() {
+  const actions = [
+    { href: "/staff/shifts/new", label: "Create a shift", icon: RiAddLine },
+    { href: "/staff/training/new", label: "Schedule training", icon: RiGraduationCapLine },
+    { href: "/staff/announcements", label: "Write a pānui", icon: RiMegaphoneLine },
+    { href: "/staff/applications", label: "Review applications", icon: RiFileListLine },
+  ];
+
+  return (
+    <section className="min-w-0 space-y-4">
+      <SectionHeader eyebrow="Mahi tere" title="Quick actions" />
+      <Card size="sm">
+        <ul className="divide-y divide-border">
+          {actions.map((action) => (
+            <li key={action.href}>
+              <Link
+                href={action.href}
+                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+              >
+                <IconChip size="sm">
+                  <action.icon />
+                </IconChip>
+                <span className="flex-1 text-sm font-medium">{action.label}</span>
+                <RiArrowRightSLine
+                  className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                  aria-hidden
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </section>
   );
 }
 
 function StatsSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {[...Array(4)].map((_, i) => (
         <Card key={i}>
-          <CardHeader className="pb-2">
-            <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-            <div className="h-8 w-12 animate-pulse rounded bg-muted" />
-          </CardHeader>
-          <CardContent>
-            <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+          <CardContent className="space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-8 w-14" />
+            <Skeleton className="h-3 w-20" />
           </CardContent>
         </Card>
       ))}
@@ -191,24 +233,24 @@ function StatsSkeleton() {
 
 function ActivitySkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <div className="h-5 w-32 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-48 animate-pulse rounded bg-muted" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+    <div className="min-w-0 space-y-4">
+      <div className="space-y-1.5">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-6 w-40" />
+      </div>
+      <Card>
+        <div className="space-y-3 px-5">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-start gap-3">
-              <div className="size-7 animate-pulse rounded-full bg-muted" />
-              <div className="flex-1 space-y-1">
-                <div className="h-4 w-48 animate-pulse rounded bg-muted" />
-                <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+              <Skeleton className="size-8 rounded-md" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-20" />
               </div>
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

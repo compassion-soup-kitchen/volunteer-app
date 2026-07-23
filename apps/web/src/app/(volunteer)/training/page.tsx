@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 
 function TrainingSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-32 w-full " />
+        <Skeleton key={i} className="h-44 w-full" />
       ))}
     </div>
   );
@@ -26,7 +26,7 @@ async function TrainingContent() {
 
 export default function VolunteerTrainingPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-24">
+    <div className="space-y-6">
       <PageHeader
         backHref="/dashboard"
         eyebrow="Whakangungu · Training"

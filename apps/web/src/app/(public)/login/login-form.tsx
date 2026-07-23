@@ -3,7 +3,8 @@
 import { useActionState, useRef } from "react";
 import Link from "next/link";
 import { RiShieldKeyholeLine, RiUserLine, RiHeartLine } from "@remixicon/react";
-import { login, type AuthState } from "@/lib/auth-actions";
+import { demoLogin, login, type AuthState } from "@/lib/auth-actions";
+import type { DemoRole } from "@/lib/demo-accounts";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,51 +14,68 @@ import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
 import { FormAlert } from "../_components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 
-const DEV_ACCOUNTS = [
-  { label: "Admin", email: "admin@soupkitchen.org.nz", password: "admin123!", icon: RiShieldKeyholeLine },
-  { label: "Coordinator", email: "coordinator@soupkitchen.org.nz", password: "coord123!", icon: RiUserLine },
-  { label: "Volunteer", email: "volunteer@soupkitchen.org.nz", password: "volunteer123!", icon: RiHeartLine },
+/**
+ * Labels only. The credentials live server-side in `demoLogin` so they never
+ * reach the client bundle - a client component can't be tree-shaken by a
+ * runtime flag, so anything referenced here ships in every build.
+ */
+const DEMO_ACCOUNTS: { role: DemoRole; label: string; icon: typeof RiUserLine }[] = [
+  { role: "admin", label: "Admin", icon: RiShieldKeyholeLine },
+  { role: "coordinator", label: "Coordinator", icon: RiUserLine },
+  { role: "volunteer", label: "Volunteer", icon: RiHeartLine },
 ];
 
-export function LoginForm() {
+export function LoginForm({
+  showDemoAccounts = false,
+}: {
+  /** Renders one-click sign-in chips for the seeded demo accounts. Only ever
+   *  true outside production (see login/page.tsx). */
+  showDemoAccounts?: boolean;
+}) {
   const [state, action, pending] = useActionState<AuthState, FormData>(
     login,
     null
   );
+  // Driven through useActionState, like the sign-in form above it, so Next
+  // handles the post-sign-in redirect the same way.
+  const [demoState, demoAction, demoPending] = useActionState<
+    AuthState,
+    FormData
+  >(demoLogin, null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
-  function fillCredentials(email: string, password: string) {
-    if (emailRef.current) emailRef.current.value = email;
-    if (passwordRef.current) passwordRef.current.value = password;
-  }
+  const busy = pending || demoPending;
+  const alert = state?.error ?? demoState?.error;
 
   return (
     <>
-      {/* Seeded demo credentials — statically stripped from production bundles. */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="mb-6 rounded-2xl border border-border bg-secondary/60 p-4">
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Demo accounts · click to fill
+      {showDemoAccounts && (
+        <div className="mb-6 rounded-xl bg-secondary/60 p-4 ring-1 ring-border">
+          <p className="eyebrow mb-2.5 text-muted-foreground">
+            Demo accounts
           </p>
           <div className="flex flex-wrap gap-2">
-            {DEV_ACCOUNTS.map((account) => (
-              <button
-                key={account.email}
-                type="button"
-                onClick={() => fillCredentials(account.email, account.password)}
-                className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-foreground ring-1 ring-border transition-colors hover:bg-accent hover:ring-primary/30"
-              >
-                <account.icon className="size-3.5 text-muted-foreground" />
-                {account.label}
-              </button>
+            {DEMO_ACCOUNTS.map((account) => (
+              <form key={account.role} action={demoAction}>
+                {/* Only the role travels to the server; it looks up the password. */}
+                <input type="hidden" name="role" value={account.role} />
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="flex items-center gap-1.5 rounded-md bg-card px-3 py-1.5 text-xs font-medium text-foreground ring-1 ring-border transition-colors hover:bg-primary-tint hover:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <account.icon className="size-3.5 text-muted-foreground" />
+                  {account.label}
+                </button>
+              </form>
             ))}
           </div>
         </div>
       )}
 
       <form action={action} className="space-y-4">
-        {state?.error && <FormAlert>{state.error}</FormAlert>}
+        {alert && <FormAlert>{alert}</FormAlert>}
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -69,7 +87,7 @@ export function LoginForm() {
             autoComplete="email"
             placeholder="you@example.com"
             required
-            disabled={pending}
+            disabled={busy}
           />
         </div>
 
@@ -91,11 +109,11 @@ export function LoginForm() {
             autoComplete="current-password"
             placeholder="Enter your password"
             required
-            disabled={pending}
+            disabled={busy}
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <Button type="submit" className="w-full" disabled={busy}>
           {pending ? (
             <>
               <RiLoader4Line className="size-4 animate-spin" />

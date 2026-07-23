@@ -17,8 +17,9 @@ interface PageHeaderProps {
 }
 
 /**
- * PageHeader — the standard page heading across the volunteer and staff apps:
- * optional back chevron, eyebrow, Fraunces serif title, and description.
+ * PageHeader — the standard page opening across the volunteer and staff apps:
+ * optional back chevron, red Te Reo eyebrow, Newsreader serif title, and a
+ * quiet supporting line.
  */
 export function PageHeader({
   eyebrow,
@@ -35,7 +36,7 @@ export function PageHeader({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="mt-1.5 hidden shrink-0 sm:inline-flex"
+            className="mt-1 hidden shrink-0 sm:inline-flex"
             asChild
           >
             <Link href={backHref} aria-label="Back">
@@ -45,11 +46,11 @@ export function PageHeader({
         ) : null}
         <div className="space-y-1">
           {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-          <h1 className="font-serif text-3xl font-light tracking-tight text-balance">
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-balance sm:text-3xl">
             {title}
           </h1>
           {description ? (
-            <p className="text-muted-foreground">{description}</p>
+            <p className="text-sm text-muted-foreground sm:text-base">{description}</p>
           ) : null}
         </div>
       </div>

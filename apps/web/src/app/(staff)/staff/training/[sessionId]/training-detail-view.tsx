@@ -6,19 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,15 +23,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { CapacityMeter } from "@/components/brand/capacity-meter";
+import { IconChip } from "@/components/brand/icon-chip";
 import {
-  RiCalendarLine,
   RiTimeLine,
   RiTeamLine,
   RiDeleteBinLine,
   RiLoader4Line,
   RiUserLine,
-  RiMailLine,
-  RiFileTextLine,
   RiCheckLine,
   RiCloseLine,
   RiCheckDoubleLine,
@@ -51,6 +45,7 @@ import {
   markBulkTrainingAttendance,
   type StaffTrainingSession,
 } from "@/lib/training-actions";
+import { formatTimeRange } from "@/lib/format";
 
 interface TrainingDetailViewProps {
   session: StaffTrainingSession;
@@ -61,6 +56,13 @@ const TYPE_LABELS: Record<string, string> = {
   DE_ESCALATION: "De-escalation",
   HEALTH_SAFETY: "Health & Safety",
   OTHER: "Other",
+};
+
+const TYPE_VARIANTS: Record<string, "info" | "amber" | "success" | "neutral"> = {
+  INDUCTION: "info",
+  DE_ESCALATION: "amber",
+  HEALTH_SAFETY: "success",
+  OTHER: "neutral",
 };
 
 function formatDate(date: Date): string {
@@ -82,19 +84,12 @@ function isToday(date: Date): boolean {
   return today === sessionDate;
 }
 
-function statusBadge(status: string) {
-  switch (status) {
-    case "REGISTERED":
-      return <Badge variant="info">Registered</Badge>;
-    case "ATTENDED":
-      return <Badge variant="success">Attended</Badge>;
-    case "NO_SHOW":
-      return <Badge variant="destructive">No show</Badge>;
-    case "CANCELLED":
-      return <Badge variant="secondary">Cancelled</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
+function initials(name: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase() || "?";
 }
 
 export function TrainingDetailView({ session }: TrainingDetailViewProps) {
@@ -161,82 +156,88 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
       {/* Session info */}
       <Card className="lg:col-span-1">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <CardTitle className="text-lg">{session.title}</CardTitle>
-            {past && <Badge variant="secondary">Past</Badge>}
-            {today && <Badge variant="info">Today</Badge>}
-          </div>
+          <CardTitle>{formatDate(session.date)}</CardTitle>
           <CardDescription>
             Created by {session.createdBy.name || "Unknown"}
           </CardDescription>
+          {(past || today) && (
+            <CardAction>
+              {today ? (
+                <Badge>Today</Badge>
+              ) : (
+                <Badge variant="neutral">Past</Badge>
+              )}
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <RiGraduationCapLine className="size-4 text-muted-foreground" />
-              <Badge variant="outline">{TYPE_LABELS[session.type] || session.type}</Badge>
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2.5 text-sm">
+              <RiGraduationCapLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+              <Badge variant={TYPE_VARIANTS[session.type] || "neutral"}>
+                {TYPE_LABELS[session.type] || session.type}
+              </Badge>
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <RiCalendarLine className="size-4 text-muted-foreground" />
-              <span>{formatDate(session.date)}</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <RiTimeLine className="size-4 text-muted-foreground" />
-              <span className="tabular-nums">
-                {session.startTime}–{session.endTime}
+            <div className="flex items-center gap-2.5 text-sm">
+              <RiTimeLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+              <span className="tnum">
+                {formatTimeRange(session.startTime, session.endTime)}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <RiTeamLine className="size-4 text-muted-foreground" />
-              <span>
-                {activeRegistrations.length}/{session.capacity} spots filled
+            <div className="flex items-center gap-2.5 text-sm">
+              <RiTeamLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+              <span className="tnum">
+                {activeRegistrations.length}/{session.capacity} filled
               </span>
+              <CapacityMeter
+                filled={activeRegistrations.length}
+                capacity={session.capacity}
+              />
             </div>
             {session.location && (
-              <div className="flex items-center gap-3 text-sm">
-                <RiMapPinLine className="size-4 text-muted-foreground" />
+              <div className="flex items-center gap-2.5 text-sm">
+                <RiMapPinLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
                 <span>{session.location}</span>
               </div>
             )}
           </div>
 
           {session.description && (
-            <div className="rounded-md border border-border bg-muted/30 p-3">
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
-                <RiFileTextLine className="size-3.5" />
+            <div className="rounded-lg bg-muted p-3">
+              <p className="eyebrow text-[0.62rem] text-muted-foreground">
                 Description
-              </div>
-              <p className="text-sm">{session.description}</p>
+              </p>
+              <p className="mt-1 text-sm">{session.description}</p>
             </div>
           )}
 
           {/* Attendance summary */}
           {canMarkAttendance && session.attendances.length > 0 && (
-            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Attendance Summary
+            <div className="rounded-lg bg-muted p-3">
+              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                Attendance summary
               </p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="text-green-600 font-medium">
+                  <span className="font-semibold text-success tnum">
                     {session.attendances.filter((a) => a.status === "ATTENDED").length}
                   </span>{" "}
                   attended
                 </div>
                 <div>
-                  <span className="text-destructive font-medium">
+                  <span className="font-semibold text-destructive tnum">
                     {session.attendances.filter((a) => a.status === "NO_SHOW").length}
                   </span>{" "}
                   no show
                 </div>
                 <div>
-                  <span className="text-blue-600 font-medium">
+                  <span className="font-semibold text-info tnum">
                     {unmarkedRegistrations.length}
                   </span>{" "}
                   unmarked
                 </div>
                 <div>
-                  <span className="text-muted-foreground font-medium">
+                  <span className="font-semibold text-muted-foreground tnum">
                     {session.attendances.filter((a) => a.status === "CANCELLED").length}
                   </span>{" "}
                   cancelled
@@ -251,8 +252,8 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
               className="w-full text-destructive hover:text-destructive"
               onClick={() => setShowDelete(true)}
             >
-              <RiDeleteBinLine className="mr-2 size-4" />
-              Delete Session
+              <RiDeleteBinLine className="size-4" />
+              Delete session
             </Button>
           )}
         </CardContent>
@@ -260,186 +261,111 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
 
       {/* Registrations + Attendance */}
       <Card className="lg:col-span-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <RiTeamLine className="size-5 text-primary" />
-                Volunteers ({session.attendances.length})
-              </CardTitle>
-              <CardDescription>
-                {canMarkAttendance
-                  ? "Mark attendance for this session"
-                  : "Who\u2019s registered for this session"}
-              </CardDescription>
-            </div>
-            {canMarkAttendance && unmarkedRegistrations.length > 1 && (
+        <CardHeader className={session.attendances.length > 0 ? "border-b" : undefined}>
+          <CardTitle>Volunteers ({session.attendances.length})</CardTitle>
+          <CardDescription>
+            {canMarkAttendance
+              ? "Mark attendance for this session"
+              : "Who’s registered for this session"}
+          </CardDescription>
+          {canMarkAttendance && unmarkedRegistrations.length > 1 && (
+            <CardAction>
               <Button
                 size="sm"
-                variant="outline"
                 onClick={handleMarkAllAttended}
                 disabled={isPending}
               >
                 {isPending ? (
-                  <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                  <RiLoader4Line className="size-3.5 animate-spin" />
                 ) : (
-                  <RiCheckDoubleLine className="mr-1.5 size-3.5" />
+                  <RiCheckDoubleLine className="size-3.5" />
                 )}
-                Mark All Attended
+                Mark all attended
               </Button>
-            )}
-          </div>
+            </CardAction>
+          )}
         </CardHeader>
-        <CardContent>
-          {session.attendances.length === 0 ? (
-            <div className="py-8 text-center">
-              <RiUserLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                No volunteers registered yet
+        {session.attendances.length === 0 ? (
+          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+            <IconChip size="lg">
+              <RiUserLine />
+            </IconChip>
+            <div>
+              <p className="font-serif text-lg font-medium tracking-tight">
+                No one registered yet
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Volunteers will appear here as they book this session.
               </p>
             </div>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <div className="hidden sm:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Volunteer</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
-                      {canMarkAttendance && (
-                        <TableHead style={{ textAlign: "right" }}>
-                          Actions
-                        </TableHead>
+          </CardContent>
+        ) : (
+          <ul className="divide-y divide-border">
+            {session.attendances.map((attendance) => (
+              <li
+                key={attendance.id}
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3"
+              >
+                <Avatar>
+                  <AvatarFallback>
+                    {initials(attendance.volunteer.user.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {attendance.volunteer.user.name || "—"}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {attendance.volunteer.user.email}
+                  </p>
+                </div>
+                <StatusBadge status={attendance.status} className="shrink-0" />
+                {canMarkAttendance && attendance.status !== "CANCELLED" && (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant={attendance.status === "ATTENDED" ? "secondary" : "outline"}
+                      className={
+                        attendance.status === "ATTENDED"
+                          ? "bg-success-tint text-success-tint-foreground hover:bg-success-tint/80"
+                          : undefined
+                      }
+                      aria-pressed={attendance.status === "ATTENDED"}
+                      disabled={isPending && markingId === attendance.id}
+                      onClick={() =>
+                        handleMarkAttendance(attendance.id, "ATTENDED")
+                      }
+                    >
+                      {isPending && markingId === attendance.id ? (
+                        <RiLoader4Line className="size-3.5 animate-spin" />
+                      ) : (
+                        <RiCheckLine className="size-3.5" />
                       )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {session.attendances.map((attendance) => (
-                      <TableRow key={attendance.id}>
-                        <TableCell className="font-medium">
-                          {attendance.volunteer.user.name || "\u2014"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {attendance.volunteer.user.email}
-                        </TableCell>
-                        <TableCell>{statusBadge(attendance.status)}</TableCell>
-                        {canMarkAttendance && (
-                          <TableCell style={{ textAlign: "right" }}>
-                            {attendance.status !== "CANCELLED" && (
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  size="icon-sm"
-                                  variant={attendance.status === "ATTENDED" ? "default" : "ghost"}
-                                  className={
-                                    attendance.status === "ATTENDED"
-                                      ? "bg-green-600 text-white hover:bg-green-700"
-                                      : "text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30"
-                                  }
-                                  disabled={isPending && markingId === attendance.id}
-                                  onClick={() =>
-                                    handleMarkAttendance(attendance.id, "ATTENDED")
-                                  }
-                                  aria-label="Mark attended"
-                                >
-                                  {isPending && markingId === attendance.id ? (
-                                    <RiLoader4Line className="size-4 animate-spin" />
-                                  ) : (
-                                    <RiCheckLine className="size-4" />
-                                  )}
-                                </Button>
-                                <Button
-                                  size="icon-sm"
-                                  variant={attendance.status === "NO_SHOW" ? "default" : "ghost"}
-                                  className={
-                                    attendance.status === "NO_SHOW"
-                                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      : "text-destructive hover:bg-destructive/10"
-                                  }
-                                  disabled={isPending && markingId === attendance.id}
-                                  onClick={() =>
-                                    handleMarkAttendance(attendance.id, "NO_SHOW")
-                                  }
-                                  aria-label="Mark no show"
-                                >
-                                  <RiCloseLine className="size-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile list */}
-              <div className="space-y-3 sm:hidden">
-                {session.attendances.map((attendance) => (
-                  <div
-                    key={attendance.id}
-                    className="rounded-md border p-3 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium">
-                          {attendance.volunteer.user.name || "\u2014"}
-                        </p>
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <RiMailLine className="size-3" />
-                          {attendance.volunteer.user.email}
-                        </p>
-                      </div>
-                      {statusBadge(attendance.status)}
-                    </div>
-                    {canMarkAttendance && attendance.status !== "CANCELLED" && (
-                      <div className="flex gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          variant={attendance.status === "ATTENDED" ? "default" : "outline"}
-                          className={
-                            attendance.status === "ATTENDED"
-                              ? "flex-1 bg-green-600 text-white hover:bg-green-700"
-                              : "flex-1 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30"
-                          }
-                          disabled={isPending && markingId === attendance.id}
-                          onClick={() =>
-                            handleMarkAttendance(attendance.id, "ATTENDED")
-                          }
-                        >
-                          {isPending && markingId === attendance.id ? (
-                            <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
-                          ) : (
-                            <RiCheckLine className="mr-1.5 size-3.5" />
-                          )}
-                          Attended
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={attendance.status === "NO_SHOW" ? "default" : "outline"}
-                          className={
-                            attendance.status === "NO_SHOW"
-                              ? "flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              : "flex-1 text-destructive hover:bg-destructive/10"
-                          }
-                          disabled={isPending && markingId === attendance.id}
-                          onClick={() =>
-                            handleMarkAttendance(attendance.id, "NO_SHOW")
-                          }
-                        >
-                          <RiCloseLine className="mr-1.5 size-3.5" />
-                          No Show
-                        </Button>
-                      </div>
-                    )}
+                      Attended
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={attendance.status === "NO_SHOW" ? "secondary" : "outline"}
+                      className={
+                        attendance.status === "NO_SHOW"
+                          ? "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80"
+                          : undefined
+                      }
+                      aria-pressed={attendance.status === "NO_SHOW"}
+                      disabled={isPending && markingId === attendance.id}
+                      onClick={() =>
+                        handleMarkAttendance(attendance.id, "NO_SHOW")
+                      }
+                    >
+                      <RiCloseLine className="size-3.5" />
+                      No show
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       {/* Delete dialog */}

@@ -6,13 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { IconChip } from "@/components/brand/icon-chip";
+import { SectionHeader } from "@/components/brand/section-header";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +31,6 @@ import {
   RiMoreLine,
   RiLoader4Line,
   RiMapPinLine,
-  RiCalendarLine,
   RiTeamLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
@@ -146,56 +141,63 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
       <div className="flex justify-end">
         <Button onClick={openCreate}>
           <RiAddLine className="size-4" />
-          New Service Area
+          New service area
         </Button>
       </div>
 
       {/* Active areas */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">
-          Active ({active.length})
-        </h2>
+      <section className="space-y-4">
+        <SectionHeader title={`Active (${active.length})`} />
 
         {active.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center">
-              <RiMapPinLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                No service areas yet. Create one to get started.
-              </p>
+            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+              <IconChip tone="brand" size="lg">
+                <RiMapPinLine />
+              </IconChip>
+              <div>
+                <p className="font-serif text-lg font-medium tracking-tight">
+                  No service areas yet
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Create one to get started.
+                </p>
+              </div>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {active.map((area) => (
-              <AreaCard
-                key={area.id}
-                area={area}
-                onEdit={() => openEdit(area)}
-                onToggleArchive={() => handleToggleArchive(area)}
-              />
-            ))}
-          </div>
+          <Card>
+            <ul className="divide-y divide-border">
+              {active.map((area) => (
+                <AreaRow
+                  key={area.id}
+                  area={area}
+                  onEdit={() => openEdit(area)}
+                  onToggleArchive={() => handleToggleArchive(area)}
+                />
+              ))}
+            </ul>
+          </Card>
         )}
-      </div>
+      </section>
 
       {/* Archived areas */}
       {archived.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            Archived ({archived.length})
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {archived.map((area) => (
-              <AreaCard
-                key={area.id}
-                area={area}
-                onEdit={() => openEdit(area)}
-                onToggleArchive={() => handleToggleArchive(area)}
-              />
-            ))}
-          </div>
-        </div>
+        <section className="space-y-4">
+          <SectionHeader divider title={`Archived (${archived.length})`} />
+          <Card>
+            <ul className="divide-y divide-border">
+              {archived.map((area) => (
+                <AreaRow
+                  key={area.id}
+                  area={area}
+                  onEdit={() => openEdit(area)}
+                  onToggleArchive={() => handleToggleArchive(area)}
+                />
+              ))}
+            </ul>
+          </Card>
+        </section>
       )}
 
       {/* Create/Edit dialog */}
@@ -203,7 +205,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editTarget ? "Edit Service Area" : "New Service Area"}
+              {editTarget ? "Edit service area" : "New service area"}
             </DialogTitle>
             <DialogDescription>
               {editTarget
@@ -249,7 +251,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
               {isSaving && (
                 <RiLoader4Line className="mr-2 size-4 animate-spin" />
               )}
-              {editTarget ? "Save Changes" : "Create"}
+              {editTarget ? "Save changes" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -258,7 +260,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
   );
 }
 
-function AreaCard({
+function AreaRow({
   area,
   onEdit,
   onToggleArchive,
@@ -267,65 +269,61 @@ function AreaCard({
   onEdit: () => void;
   onToggleArchive: () => void;
 }) {
+  const caption = [
+    area.description,
+    `${area._count.shifts} ${area._count.shifts === 1 ? "shift" : "shifts"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <Card className={area.isArchived ? "opacity-60" : undefined}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <CardTitle className="flex items-center gap-2 text-base">
-              {area.name}
-              {area.isArchived && (
-                <Badge variant="secondary" className="text-[10px]">
-                  Archived
-                </Badge>
-              )}
-            </CardTitle>
-            {area.description && (
-              <CardDescription className="mt-1 line-clamp-2">
-                {area.description}
-              </CardDescription>
+    <li className="flex items-center gap-3 px-5 py-3.5">
+      <IconChip
+        tone={area.isArchived ? "neutral" : "brand"}
+        className={area.isArchived ? "opacity-60" : undefined}
+      >
+        <RiMapPinLine />
+      </IconChip>
+      <div className={`min-w-0 flex-1 ${area.isArchived ? "opacity-60" : ""}`}>
+        <p className="truncate font-serif text-base font-medium tracking-tight">
+          {area.name}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">{caption}</p>
+      </div>
+      <Badge variant="neutral" className="hidden sm:inline-flex">
+        <RiTeamLine />
+        {area._count.volunteers} interested
+      </Badge>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Actions for ${area.name}`}
+          >
+            <RiMoreLine className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onEdit}>
+            <RiEditLine className="mr-2 size-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onToggleArchive}>
+            {area.isArchived ? (
+              <>
+                <RiInboxUnarchiveLine className="mr-2 size-4" />
+                Restore
+              </>
+            ) : (
+              <>
+                <RiArchiveLine className="mr-2 size-4" />
+                Archive
+              </>
             )}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <RiMoreLine className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onEdit}>
-                <RiEditLine className="mr-2 size-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onToggleArchive}>
-                {area.isArchived ? (
-                  <>
-                    <RiInboxUnarchiveLine className="mr-2 size-4" />
-                    Restore
-                  </>
-                ) : (
-                  <>
-                    <RiArchiveLine className="mr-2 size-4" />
-                    Archive
-                  </>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <RiCalendarLine className="size-3.5" />
-            {area._count.shifts} shift{area._count.shifts !== 1 ? "s" : ""}
-          </span>
-          <span className="flex items-center gap-1">
-            <RiTeamLine className="size-3.5" />
-            {area._count.volunteers} interested
-          </span>
-        </div>
-      </CardContent>
-    </Card>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
   );
 }

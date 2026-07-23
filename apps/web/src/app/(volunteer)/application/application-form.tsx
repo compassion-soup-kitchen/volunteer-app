@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { IconChip } from "@/components/brand/icon-chip";
 import { SignaturePad } from "@/components/signature-pad";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { DatePicker } from "@/components/date-picker";
@@ -18,6 +18,7 @@ import {
   RiArrowLeftLine,
   RiArrowRightLine,
   RiCheckLine,
+  RiCloseLine,
   RiLoader4Line,
   RiUserLine,
   RiAlarmWarningLine,
@@ -33,7 +34,7 @@ type ServiceArea = { id: string; name: string; description: string | null };
 
 const STEPS = [
   { id: "contact", label: "Contact", shortLabel: "Contact", icon: RiUserLine },
-  { id: "emergency", label: "Emergency Contact", shortLabel: "Emergency", icon: RiAlarmWarningLine },
+  { id: "emergency", label: "Emergency contact", shortLabel: "Emergency", icon: RiAlarmWarningLine },
   { id: "availability", label: "Availability", shortLabel: "Availability", icon: RiCalendarLine },
   { id: "interests", label: "Interests", shortLabel: "Interests", icon: RiHeartLine },
   { id: "skills", label: "Skills", shortLabel: "Skills", icon: RiToolsLine },
@@ -188,61 +189,81 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
     });
   }
 
-  const progress = ((currentStep + 1) / STEPS.length) * 100;
   const StepIcon = STEPS[currentStep].icon;
 
   return (
     <div className="space-y-6">
-      {/* Progress header */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-foreground">
-            Step {currentStep + 1} of {STEPS.length}
-          </span>
-          <span className="text-muted-foreground">{STEPS[currentStep].label}</span>
-        </div>
-        <Progress value={progress} className="h-2" />
-
-        {/* Step indicators - horizontal scroll on mobile */}
-        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
-          {STEPS.map((step, i) => (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => {
-                // Allow going back to completed steps
-                if (i < currentStep) {
-                  setErrors({});
-                  setCurrentStep(i);
-                }
-              }}
-              disabled={i > currentStep}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                i === currentStep
-                  ? "bg-primary text-primary-foreground"
-                  : i < currentStep
-                    ? "bg-primary/10 text-primary cursor-pointer hover:bg-primary/20"
-                    : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {i < currentStep ? (
-                <RiCheckLine className="size-3" />
-              ) : (
-                <step.icon className="size-3" />
-              )}
-              <span className="hidden sm:inline">{step.shortLabel}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Segmented step indicator - numbered steps joined by hairlines */}
+      <nav aria-label="Application steps" className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground sm:hidden">
+          Step {currentStep + 1} of {STEPS.length}
+          {" · "}
+          {STEPS[currentStep].label}
+        </p>
+        <ol className="flex items-center overflow-x-auto pb-1">
+          {STEPS.map((step, i) => {
+            const isDone = i < currentStep;
+            const isActive = i === currentStep;
+            return (
+              <li key={step.id} className="flex shrink-0 items-center">
+                {i > 0 && (
+                  <span
+                    aria-hidden
+                    className="mx-1.5 w-3 border-t border-border sm:mx-2 sm:w-5"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Allow going back to completed steps
+                    if (isDone) {
+                      setErrors({});
+                      setCurrentStep(i);
+                    }
+                  }}
+                  disabled={i > currentStep}
+                  aria-current={isActive ? "step" : undefined}
+                  aria-label={`Step ${i + 1}: ${step.label}${isDone ? " (completed)" : ""}`}
+                  className={`flex items-center gap-1.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                    isDone ? "cursor-pointer" : ""
+                  }`}
+                >
+                  <span
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold tnum transition-colors ${
+                      isActive
+                        ? "border-primary text-primary"
+                        : isDone
+                          ? "border-success/40 text-success"
+                          : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {isDone ? <RiCheckLine className="size-3.5" /> : i + 1}
+                  </span>
+                  <span
+                    className={`eyebrow hidden whitespace-nowrap sm:inline ${
+                      isActive
+                        ? "text-primary"
+                        : isDone
+                          ? "text-success"
+                          : "text-muted-foreground"
+                    }`}
+                  >
+                    {step.shortLabel}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
       {/* Step content */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
-              <StepIcon className="size-5 text-primary" />
-            </div>
+            <IconChip tone="brand">
+              <StepIcon />
+            </IconChip>
             <div>
               <CardTitle>{STEPS[currentStep].label}</CardTitle>
               <CardDescription>{getStepDescription(currentStep)}</CardDescription>
@@ -328,7 +349,7 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
         </CardContent>
       </Card>
 
-      {/* Navigation */}
+      {/* Navigation - the submit button is the page's single red CTA */}
       <div className="flex items-center justify-between">
         <Button
           type="button"
@@ -342,7 +363,12 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
         </Button>
 
         {currentStep < STEPS.length - 1 ? (
-          <Button type="button" onClick={goNext} className="gap-1.5">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={goNext}
+            className="gap-1.5"
+          >
             Next
             <RiArrowRightLine className="size-4" />
           </Button>
@@ -361,7 +387,7 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
             ) : (
               <>
                 <RiCheckLine className="size-4" />
-                Submit Application
+                Submit application
               </>
             )}
           </Button>
@@ -437,7 +463,7 @@ function StepContact({
           fromDate={new Date("1920-01-01")}
         />
         <p className="text-xs text-muted-foreground">
-          Optional — helps us match you with appropriate mahi
+          Optional - helps us match you with appropriate mahi
         </p>
       </div>
     </div>
@@ -526,15 +552,15 @@ function StepAvailability({
                   key={slot}
                   type="button"
                   onClick={() => toggleAvailability(day, slot)}
-                  className={`h-10 rounded-md border text-xs font-medium transition-colors ${
+                  className={`flex h-10 items-center justify-center rounded-md border text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
                     isSelected
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-background text-muted-foreground hover:bg-muted"
+                      ? "border-primary/40 bg-primary-tint text-primary-tint-foreground"
+                      : "border-input bg-card text-muted-foreground hover:bg-muted"
                   }`}
                   aria-label={`${day} ${slot}`}
                   aria-pressed={isSelected}
                 >
-                  {isSelected ? "✓" : "—"}
+                  {isSelected ? <RiCheckLine className="size-4" aria-hidden /> : null}
                 </button>
               );
             })}
@@ -568,15 +594,16 @@ function StepInterests({
               key={area.id}
               type="button"
               onClick={() => toggle(area.id)}
-              className={`rounded-lg border p-4 text-left transition-colors ${
+              aria-pressed={isSelected}
+              className={`rounded-lg border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
                 isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                  : "border-border hover:bg-muted/50"
+                  ? "border-primary/40 bg-primary-tint"
+                  : "border-border bg-card hover:bg-muted/50"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-sm font-medium">{area.name}</p>
+                  <p className="text-sm font-semibold">{area.name}</p>
                   {area.description && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {area.description}
@@ -587,10 +614,10 @@ function StepInterests({
                   className={`flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                     isSelected
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-muted-foreground/30"
+                      : "border-input"
                   }`}
                 >
-                  {isSelected && <RiCheckLine className="size-3" />}
+                  {isSelected && <RiCheckLine className="size-3" aria-hidden />}
                 </div>
               </div>
             </button>
@@ -614,7 +641,7 @@ function StepSkills({
       <div className="space-y-3">
         <Label>Relevant skills</Label>
         <p className="text-xs text-muted-foreground">
-          Select any that apply — don&apos;t worry if none do, all help is welcome
+          Select any that apply - don&apos;t worry if none do, all help is welcome
         </p>
         <div className="flex flex-wrap gap-2">
           {SKILL_OPTIONS.map((skill) => {
@@ -624,13 +651,14 @@ function StepSkills({
                 key={skill}
                 type="button"
                 onClick={() => toggleSkill(skill)}
-                className="group"
+                aria-pressed={isSelected}
+                className="group rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 <Badge
                   variant={isSelected ? "default" : "outline"}
-                  className="cursor-pointer transition-colors hover:bg-primary/10 hover:text-primary"
+                  className="cursor-pointer transition-colors group-hover:text-primary"
                 >
-                  {isSelected && <RiCheckLine className="mr-1 size-3" />}
+                  {isSelected && <RiCheckLine className="mr-1 size-3" aria-hidden />}
                   {skill}
                 </Badge>
               </button>
@@ -643,7 +671,7 @@ function StepSkills({
         <Label htmlFor="bio">About you</Label>
         <Textarea
           id="bio"
-          placeholder="Tell us a bit about yourself — why you'd like to volunteer, any experience you have, or anything else you'd like us to know..."
+          placeholder="Tell us a bit about yourself - why you'd like to volunteer, any experience you have, or anything else you'd like us to know..."
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           rows={4}
@@ -670,13 +698,15 @@ function StepAgreements({
       {/* Code of Conduct */}
       <div className="space-y-4">
         <div>
-          <h3 className="text-base font-semibold">Te Tikanga — Code of Conduct</h3>
+          <h3 className="font-serif text-lg font-medium tracking-tight">
+            Te Tikanga · Code of Conduct
+          </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Our Code of Conduct guides how we work together as whānau
           </p>
         </div>
 
-        <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-muted/30 p-4 text-sm leading-relaxed">
+        <div className="max-h-48 overflow-y-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
           <p className="mb-3">As a volunteer at Compassion Soup Kitchen | Te Pūaroha, I agree to:</p>
           <ul className="space-y-2 pl-4 list-disc">
             <li>Treat all people with aroha (love), manaakitanga (hospitality), and respect</li>
@@ -717,13 +747,15 @@ function StepAgreements({
       {/* Safeguarding */}
       <div className="space-y-4">
         <div>
-          <h3 className="text-base font-semibold">Safeguarding Policy</h3>
+          <h3 className="font-serif text-lg font-medium tracking-tight">
+            Safeguarding Policy
+          </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Protecting the safety and wellbeing of everyone in our community
           </p>
         </div>
 
-        <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-muted/30 p-4 text-sm leading-relaxed">
+        <div className="max-h-48 overflow-y-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
           <p className="mb-3">As a volunteer, I understand and commit to:</p>
           <ul className="space-y-2 pl-4 list-disc">
             <li>Acting in the best interests of all tamariki (children) and vulnerable people</li>
@@ -793,13 +825,13 @@ function StepReview({
         Please review your details below. You can go back to any step to make changes.
       </p>
 
-      <ReviewSection title="Contact Details">
+      <ReviewSection title="Contact details">
         <ReviewField label="Phone" value={phone} />
         <ReviewField label="Address" value={address} />
         <ReviewField label="Date of birth" value={dateOfBirth ? dateOfBirth.toLocaleDateString("en-NZ", { day: "numeric", month: "long", year: "numeric" }) : "Not provided"} />
       </ReviewSection>
 
-      <ReviewSection title="Emergency Contact">
+      <ReviewSection title="Emergency contact">
         <ReviewField label="Name" value={emergencyContactName} />
         <ReviewField label="Phone" value={emergencyContactPhone} />
         <ReviewField label="Relationship" value={emergencyContactRelationship} />
@@ -820,12 +852,12 @@ function StepReview({
       <ReviewSection title="Interests">
         <div className="flex flex-wrap gap-1.5">
           {selectedAreaNames.map((name) => (
-            <Badge key={name} variant="secondary">{name}</Badge>
+            <Badge key={name}>{name}</Badge>
           ))}
         </div>
       </ReviewSection>
 
-      <ReviewSection title="Skills & About">
+      <ReviewSection title="Skills & about">
         {selectedSkills.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {selectedSkills.map((skill) => (
@@ -839,12 +871,20 @@ function StepReview({
       <ReviewSection title="Agreements">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
-            <RiCheckLine className={`size-4 ${hasCocSignature ? "text-green-600" : "text-destructive"}`} />
-            Code of Conduct — {hasCocSignature ? "Signed" : "Not signed"}
+            {hasCocSignature ? (
+              <RiCheckLine className="size-4 text-success" aria-hidden />
+            ) : (
+              <RiCloseLine className="size-4 text-destructive" aria-hidden />
+            )}
+            Code of Conduct · {hasCocSignature ? "Signed" : "Not signed"}
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <RiCheckLine className={`size-4 ${hasSafeguardingSignature ? "text-green-600" : "text-destructive"}`} />
-            Safeguarding Policy — {hasSafeguardingSignature ? "Signed" : "Not signed"}
+            {hasSafeguardingSignature ? (
+              <RiCheckLine className="size-4 text-success" aria-hidden />
+            ) : (
+              <RiCloseLine className="size-4 text-destructive" aria-hidden />
+            )}
+            Safeguarding Policy · {hasSafeguardingSignature ? "Signed" : "Not signed"}
           </div>
         </div>
       </ReviewSection>
@@ -854,10 +894,8 @@ function StepReview({
 
 function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-border p-4">
-      <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-        {title}
-      </h3>
+    <div className="rounded-lg bg-muted p-4">
+      <h3 className="eyebrow mb-3 text-muted-foreground">{title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
   );

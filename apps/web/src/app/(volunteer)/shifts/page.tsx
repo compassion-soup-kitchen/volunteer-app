@@ -4,14 +4,9 @@ import { getAvailableShifts } from "@/lib/shift-actions";
 import { getServiceAreas } from "@/lib/application-actions";
 import { getUserApplicationStatus } from "@/lib/application-actions";
 import { ShiftBrowser } from "./shift-browser";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconChip } from "@/components/brand/icon-chip";
 import { RiInformationLine, RiArrowRightLine } from "@remixicon/react";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
@@ -40,31 +35,31 @@ export default async function ShiftsPage() {
       />
 
       {!isApproved && (
-        <Card className="border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/10">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                <RiInformationLine className="size-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Application Required</CardTitle>
-                <CardDescription>
+        <Card>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-3">
+              <IconChip tone="info">
+                <RiInformationLine />
+              </IconChip>
+              <div className="min-w-0 space-y-0.5">
+                <h2 className="font-serif text-lg font-medium tracking-tight">
+                  Application required
+                </h2>
+                <p className="text-sm text-muted-foreground">
                   Your application needs to be approved before you can sign up
                   for shifts. You can still browse what&apos;s available.
-                </CardDescription>
+                </p>
               </div>
             </div>
-          </CardHeader>
-          {!appStatus && (
-            <CardContent>
+            {!appStatus && (
               <Button asChild size="sm" variant="outline">
                 <Link href="/application">
-                  Start Application
+                  Start application
                   <RiArrowRightLine className="size-3.5" />
                 </Link>
               </Button>
-            </CardContent>
-          )}
+            )}
+          </CardContent>
         </Card>
       )}
 

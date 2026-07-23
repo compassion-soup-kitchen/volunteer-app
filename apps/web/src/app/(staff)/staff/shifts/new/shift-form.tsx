@@ -13,18 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DatePicker } from "@/components/date-picker";
-import {
-  RiLoader4Line,
-  RiCalendarLine,
-} from "@remixicon/react";
+import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
 import { createShift, type CreateShiftData } from "@/lib/shift-actions";
 
@@ -91,117 +82,120 @@ export function ShiftForm({ serviceAreas }: ShiftFormProps) {
 
   return (
     <Card className="max-w-xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <RiCalendarLine className="size-5 text-primary" />
-          Shift Details
-        </CardTitle>
-        <CardDescription>
-          Fill in the details for the new shift
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Service Area */}
-        <div className="space-y-2">
-          <Label htmlFor="serviceArea">Service Area</Label>
-          <Select value={serviceAreaId} onValueChange={setServiceAreaId}>
-            <SelectTrigger id="serviceArea">
-              <SelectValue placeholder="Select a service area" />
-            </SelectTrigger>
-            <SelectContent>
-              {serviceAreas.map((area) => (
-                <SelectItem key={area.id} value={area.id}>
-                  {area.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.serviceAreaId && (
-            <p className="text-sm text-destructive">{errors.serviceAreaId}</p>
-          )}
-        </div>
+      <CardContent className="space-y-6">
+        <section className="space-y-5">
+          <h2 className="font-serif text-lg font-medium tracking-tight">
+            When and where
+          </h2>
 
-        {/* Date */}
-        <div className="space-y-2">
-          <Label>Date</Label>
-          <DatePicker
-            value={date}
-            onChange={setDate}
-            placeholder="Select a date"
-            fromDate={tomorrow}
-          />
-          {errors.date && (
-            <p className="text-sm text-destructive">{errors.date}</p>
-          )}
-        </div>
-
-        {/* Times */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* Service area */}
           <div className="space-y-2">
-            <Label htmlFor="startTime">Start Time</Label>
-            <Input
-              id="startTime"
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
-            {errors.startTime && (
-              <p className="text-sm text-destructive">{errors.startTime}</p>
+            <Label htmlFor="serviceArea">Service area</Label>
+            <Select value={serviceAreaId} onValueChange={setServiceAreaId}>
+              <SelectTrigger id="serviceArea">
+                <SelectValue placeholder="Select a service area" />
+              </SelectTrigger>
+              <SelectContent>
+                {serviceAreas.map((area) => (
+                  <SelectItem key={area.id} value={area.id}>
+                    {area.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.serviceAreaId && (
+              <p className="text-sm text-destructive">{errors.serviceAreaId}</p>
             )}
           </div>
+
+          {/* Date */}
           <div className="space-y-2">
-            <Label htmlFor="endTime">End Time</Label>
-            <Input
-              id="endTime"
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+            <Label>Date</Label>
+            <DatePicker
+              value={date}
+              onChange={setDate}
+              placeholder="Select a date"
+              fromDate={tomorrow}
             />
-            {errors.endTime && (
-              <p className="text-sm text-destructive">{errors.endTime}</p>
+            {errors.date && (
+              <p className="text-sm text-destructive">{errors.date}</p>
             )}
           </div>
-        </div>
 
-        {/* Capacity */}
-        <div className="space-y-2">
-          <Label htmlFor="capacity">Capacity</Label>
-          <Input
-            id="capacity"
-            type="number"
-            min="1"
-            max="50"
-            value={capacity}
-            onChange={(e) => setCapacity(e.target.value)}
-            className="w-24"
-          />
-          {errors.capacity && (
-            <p className="text-sm text-destructive">{errors.capacity}</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Maximum number of volunteers for this shift
-          </p>
-        </div>
+          {/* Times */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start time</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+              {errors.startTime && (
+                <p className="text-sm text-destructive">{errors.startTime}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End time</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+              {errors.endTime && (
+                <p className="text-sm text-destructive">{errors.endTime}</p>
+              )}
+            </div>
+          </div>
+        </section>
 
-        {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes (optional)</Label>
-          <Textarea
-            id="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any details volunteers should know..."
-            rows={3}
-          />
-        </div>
+        <section className="space-y-5 border-t border-border pt-5">
+          <h2 className="font-serif text-lg font-medium tracking-tight">
+            Capacity and notes
+          </h2>
+
+          {/* Capacity */}
+          <div className="space-y-2">
+            <Label htmlFor="capacity">Capacity</Label>
+            <Input
+              id="capacity"
+              type="number"
+              min="1"
+              max="50"
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              className="w-24"
+            />
+            {errors.capacity && (
+              <p className="text-sm text-destructive">{errors.capacity}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Maximum number of volunteers for this shift
+            </p>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes (optional)</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any details volunteers should know..."
+              rows={3}
+            />
+          </div>
+        </section>
 
         {/* Submit */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 border-t border-border pt-5">
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending && (
-              <RiLoader4Line className="mr-2 size-4 animate-spin" />
+              <RiLoader4Line className="size-4 animate-spin" />
             )}
-            Create Shift
+            Create shift
           </Button>
           <Button
             variant="outline"

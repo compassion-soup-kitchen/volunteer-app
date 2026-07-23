@@ -20,12 +20,12 @@ export function VolunteerFooter() {
         />
 
         {/* Values — the visual hero */}
-        <p className="font-serif text-2xl font-light tracking-tight sm:text-3xl">
+        <p className="font-serif text-xl font-normal tracking-tight text-balance sm:text-3xl">
           {values.map((v, i) => (
             <span key={v.maori}>
               <span>{v.maori}</span>
               {i < values.length - 1 && (
-                <span className="mx-3 text-primary/60" aria-hidden>
+                <span className="mx-2 text-primary/60 sm:mx-3" aria-hidden>
                   ·
                 </span>
               )}

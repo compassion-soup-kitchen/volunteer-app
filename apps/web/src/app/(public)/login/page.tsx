@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import Link from "next/link";
 import { AuthShell } from "../auth-shell";
 import { LoginForm } from "./login-form";
+import { demoLoginsEnabled } from "@/lib/demo-accounts";
 
 export const metadata: Metadata = {
   title: "Kia ora — Sign In | Te Pūaroha",
@@ -9,7 +11,12 @@ export const metadata: Metadata = {
     "Sign in to your Compassion Soup Kitchen volunteer account to manage shifts and connect with whānau.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // Rendered per-request so DEMO_LOGINS is read from the runtime environment -
+  // a production build deployed to staging can still enable the demo accounts.
+  await connection();
+  const showDemoAccounts = demoLoginsEnabled();
+
   return (
     <AuthShell
       eyebrow="Kia ora · Welcome back"
@@ -27,7 +34,7 @@ export default function LoginPage() {
         </>
       }
     >
-      <LoginForm />
+      <LoginForm showDemoAccounts={showDemoAccounts} />
     </AuthShell>
   );
 }

@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,11 +16,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   RiCheckLine,
-  RiAlertLine,
   RiFileTextLine,
   RiLoader4Line,
   RiPenNibLine,
 } from "@remixicon/react";
+import { IconChip } from "@/components/brand/icon-chip";
 import { SignaturePad } from "@/components/signature-pad";
 import {
   resignAgreement,
@@ -33,11 +28,30 @@ import {
 } from "@/lib/document-actions";
 
 const TYPE_LABELS: Record<string, string> = {
-  CODE_OF_CONDUCT: "Te Tikanga — Code of Conduct",
+  CODE_OF_CONDUCT: "Te Tikanga · Code of Conduct",
   SAFEGUARDING: "Safeguarding Policy",
   VOLUNTEER_APPLICATION: "Volunteer Application Agreement",
   POLICIES: "General Policies",
 };
+
+function agreementCaption(agreement: VolunteerAgreementStatus) {
+  if (agreement.needsResign) {
+    return agreement.signedVersion
+      ? `Updated to version ${agreement.currentVersion} · re-sign needed`
+      : `Version ${agreement.currentVersion} · not yet signed`;
+  }
+  if (agreement.signedAt) {
+    const date = new Date(agreement.signedAt).toLocaleDateString("en-NZ", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    return agreement.signedVersion
+      ? `Signed ${date} · Version ${agreement.signedVersion}`
+      : `Signed ${date}`;
+  }
+  return `Version ${agreement.currentVersion}`;
+}
 
 export function DocumentsView({
   agreements,
@@ -68,11 +82,18 @@ export function DocumentsView({
   if (agreements.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center">
-          <RiFileTextLine className="mx-auto size-10 text-muted-foreground/40" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            No agreements to display
-          </p>
+        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+          <IconChip size="lg">
+            <RiFileTextLine />
+          </IconChip>
+          <div>
+            <p className="font-serif text-lg font-medium tracking-tight">
+              No agreements yet
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Agreements you sign will appear here.
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -80,87 +101,60 @@ export function DocumentsView({
 
   return (
     <>
-      <div className="space-y-3">
-        {agreements.map((agreement) => (
-          <Card
-            key={agreement.agreementType}
-            className={
-              agreement.needsResign
-                ? "border-amber-500/30 bg-amber-50/30 dark:bg-amber-950/10"
-                : ""
-            }
-          >
-            <CardHeader className="flex-row items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-                  <RiFileTextLine className="size-4 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">
-                    {TYPE_LABELS[agreement.agreementType] || agreement.title}
-                  </CardTitle>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    Version {agreement.currentVersion}
-                  </p>
-                </div>
-              </div>
-              {agreement.needsResign ? (
-                <Badge
-                  variant="outline"
-                  className="text-xs text-amber-600 border-amber-200"
-                >
-                  <RiAlertLine className="mr-1 size-3" />
-                  {agreement.signedVersion ? "Update needed" : "Not signed"}
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className="text-xs text-green-600 border-green-200"
-                >
-                  <RiCheckLine className="mr-1 size-3" />
-                  Signed
-                </Badge>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {agreement.signedAt && (
-                <p className="text-xs text-muted-foreground">
-                  Signed{" "}
-                  {new Date(agreement.signedAt).toLocaleDateString("en-NZ", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  {agreement.signedVersion &&
-                    ` · Version ${agreement.signedVersion}`}
-                </p>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+      <Card>
+        <ul className="divide-y divide-border">
+          {agreements.map((agreement) => {
+            const label =
+              TYPE_LABELS[agreement.agreementType] || agreement.title;
+            return (
+              <li
+                key={agreement.agreementType}
+                className="flex items-center gap-3 px-5 py-3.5"
+              >
+                <button
+                  type="button"
                   onClick={() => setViewingContent(agreement.agreementType)}
+                  aria-label={`View ${label}`}
+                  className="group flex min-w-0 flex-1 items-center gap-3 rounded-sm text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                 >
-                  View Agreement
-                </Button>
-                {agreement.needsResign && (
+                  <IconChip
+                    tone={agreement.needsResign ? "warning" : "neutral"}
+                    size="sm"
+                  >
+                    <RiFileTextLine />
+                  </IconChip>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold transition-colors group-hover:text-primary">
+                      {label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {agreementCaption(agreement)}
+                    </p>
+                  </div>
+                </button>
+                {agreement.needsResign ? (
                   <Button
                     size="sm"
+                    className="shrink-0"
                     onClick={() => {
                       setSigningType(agreement.agreementType);
                       setSignature(null);
                     }}
                   >
-                    <RiPenNibLine className="mr-1.5 size-3.5" />
+                    <RiPenNibLine className="size-3.5" />
                     {agreement.signedVersion ? "Re-sign" : "Sign"}
                   </Button>
+                ) : (
+                  <Badge variant="success" className="shrink-0">
+                    <RiCheckLine />
+                    Signed
+                  </Badge>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
 
       {/* View Agreement Content Dialog */}
       <AlertDialog
@@ -176,7 +170,7 @@ export function DocumentsView({
                 : ""}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <div className="mt-4 rounded-md border border-border bg-muted/30 p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+              <div className="mt-4 whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm leading-relaxed text-foreground">
                 {viewingAgreement?.content}
               </div>
             </AlertDialogDescription>
@@ -231,7 +225,7 @@ export function DocumentsView({
               ) : (
                 <RiPenNibLine className="mr-1.5 size-3.5" />
               )}
-              Confirm Signature
+              Confirm signature
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -148,23 +148,23 @@ export default function StyleguidePage() {
 
         {/* Typography */}
         <section className="border-t border-border py-16">
-          <SectionHeading eyebrow="Ngā momotuhi · Typography" size="sm">Fraunces for voice, Mona Sans for work</SectionHeading>
+          <SectionHeading eyebrow="Ngā momotuhi · Typography" size="sm">Newsreader for voice, Hanken Grotesk for work</SectionHeading>
           <div className="mt-8 grid gap-10 lg:grid-cols-2">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Display · Fraunces</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Display · Newsreader</span>
               <p className="mt-4 font-serif text-6xl font-light leading-none tracking-tight">Haere mai,<br />nau mai.</p>
               <hr className="mt-5 h-0.5 w-16 rounded-full border-0 bg-primary" />
               <p className="mt-5 max-w-md text-muted-foreground">
-                Body copy is Mona Sans at a comfortable size with 1.6 line-height.
+                Body copy is Hanken Grotesk at a comfortable size with 1.6 line-height.
                 Numbers use tabular figures so rosters and hours never jitter: <span className="tabular-nums font-medium text-foreground">1,240 · 87 · 24</span>.
               </p>
             </div>
             <div className="space-y-4">
-              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="font-serif text-4xl font-light">Display</span><span className="text-xs text-muted-foreground">Fraunces · 300</span></div>
-              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="font-serif text-3xl font-normal">Heading 1</span><span className="text-xs text-muted-foreground">Fraunces · 400</span></div>
-              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="text-xl font-semibold">Heading · Mona</span><span className="text-xs text-muted-foreground">Mona · 600</span></div>
-              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="text-base">Body — the workhorse</span><span className="text-xs text-muted-foreground">Mona · 400</span></div>
-              <div className="flex items-baseline justify-between"><Eyebrow>Eyebrow label</Eyebrow><span className="text-xs text-muted-foreground">Mona · 600 · .16em</span></div>
+              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="font-serif text-4xl font-light">Display</span><span className="text-xs text-muted-foreground">Newsreader · 300</span></div>
+              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="font-serif text-3xl font-normal">Heading 1</span><span className="text-xs text-muted-foreground">Newsreader · 400</span></div>
+              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="text-xl font-semibold">Heading · Hanken</span><span className="text-xs text-muted-foreground">Hanken · 600</span></div>
+              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="text-base">Body — the workhorse</span><span className="text-xs text-muted-foreground">Hanken · 400</span></div>
+              <div className="flex items-baseline justify-between"><Eyebrow>Eyebrow label</Eyebrow><span className="text-xs text-muted-foreground">Hanken · 600 · .14em</span></div>
             </div>
           </div>
         </section>

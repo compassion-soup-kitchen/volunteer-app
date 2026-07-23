@@ -1,48 +1,67 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { auth } from "@/lib/auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { SectionHeader } from "@/components/brand/section-header";
+import { DateBlock } from "@/components/brand/date-block";
+import { IconChip } from "@/components/brand/icon-chip";
+import { StatFigure } from "@/components/brand/stat-figure";
+import { Kowhaiwhai } from "@/components/brand/kowhaiwhai";
 import {
-  RiCalendarLine,
-  RiTimeLine,
   RiArrowRightLine,
+  RiArrowRightSLine,
+  RiCalendarLine,
   RiCheckLine,
-  RiTimerLine,
-  RiInformationLine,
-  RiTrophyLine,
-  RiStarFill,
-  RiGraduationCapLine,
   RiFileTextLine,
-  RiRestaurantLine,
-  RiMegaphoneLine,
+  RiGraduationCapLine,
   RiHandHeartLine,
-  RiAlertLine,
+  RiInformationLine,
+  RiMegaphoneLine,
   RiShieldCheckLine,
+  RiTimeLine,
+  RiTimerLine,
+  RiTrophyLine,
 } from "@remixicon/react";
 import Link from "next/link";
-import { Kowhaiwhai } from "@/components/brand/kowhaiwhai";
 import { getUserApplicationStatus } from "@/lib/application-actions";
 import { getDashboardData } from "@/lib/dashboard-actions";
 import { getAvailableTraining } from "@/lib/training-actions";
 import { getPendingResignCount } from "@/lib/document-actions";
 import { getRecentAnnouncements } from "@/lib/announcement-actions";
+import { formatTimeRange } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Dashboard | Te Pūaroha",
 };
 
 const SUPPORT_LINK = "https://www.compassion.org.nz/donate";
+const NZ_TZ = "Pacific/Auckland";
+
+function nzHour() {
+  return Number(
+    new Intl.DateTimeFormat("en-NZ", {
+      timeZone: NZ_TZ,
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(new Date())
+  );
+}
+
+/** Time-of-day greeting, matching the mobile app. */
+function greeting() {
+  const h = nzHour();
+  if (h < 12) return "Mōrena"; // good morning
+  if (h < 18) return "Ahiahi mārie"; // good afternoon
+  return "Pō mārie"; // good evening
+}
 
 function formatToday() {
   return new Date().toLocaleDateString("en-NZ", {
+    timeZone: NZ_TZ,
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -57,32 +76,6 @@ function formatShiftDate(date: Date) {
   });
 }
 
-function formatTime(time: string) {
-  // "09:00" -> "9am", "13:30" -> "1:30pm"
-  const [hStr, mStr] = time.split(":");
-  const h = Number(hStr);
-  const m = Number(mStr);
-  const period = h >= 12 ? "pm" : "am";
-  const displayH = h % 12 === 0 ? 12 : h % 12;
-  const displayM = m === 0 ? "" : `:${String(m).padStart(2, "0")}`;
-  return `${displayH}${displayM}${period}`;
-}
-
-function formatTimeRange(start: string, end: string) {
-  return `${formatTime(start)} – ${formatTime(end)}`;
-}
-
-function SectionEyebrow({ maori, english }: { maori: string; english: string }) {
-  return (
-    <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-      <span className="h-px w-6 bg-primary" aria-hidden />
-      <span className="text-primary">{maori}</span>
-      <span aria-hidden>·</span>
-      <span>{english}</span>
-    </p>
-  );
-}
-
 export default async function VolunteerDashboard() {
   await connection();
   const session = await auth();
@@ -94,7 +87,7 @@ export default async function VolunteerDashboard() {
       getDashboardData(),
       getAvailableTraining(),
       getPendingResignCount(),
-      getRecentAnnouncements(3),
+      getRecentAnnouncements(2),
     ]);
 
   const registeredTraining = trainingSessions.filter(
@@ -108,12 +101,13 @@ export default async function VolunteerDashboard() {
   const nextShiftDate = nextShift ? new Date(nextShift.date) : null;
 
   return (
-    <div className="space-y-6">
-      {/* Greeting */}
+    <div className="space-y-8">
+      {/* Greeting masthead */}
       <div className="relative overflow-hidden">
         <Kowhaiwhai className="pointer-events-none absolute -right-12 -top-14 hidden w-64 opacity-[0.05] sm:block" />
         <div className="relative space-y-1">
-          <h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">
+          <Eyebrow>{greeting()}</Eyebrow>
+          <h1 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl">
             Kia ora, {firstName}
           </h1>
           <p className="text-sm text-muted-foreground">{formatToday()}</p>
@@ -122,18 +116,20 @@ export default async function VolunteerDashboard() {
 
       {/* No application yet */}
       {!appStatus && session?.user?.role === "PUBLIC" && (
-        <Card className="border-primary/20 bg-primary/[0.03]">
-          <CardHeader>
-            <CardTitle>Complete Your Application</CardTitle>
-            <CardDescription>
-              To start volunteering, please complete your application form. We
-              can&apos;t wait to have you on board.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card variant="tint">
+          <CardContent className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="font-serif text-xl font-medium tracking-tight">
+                Complete your application
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                To start volunteering, please complete your application form. We
+                can&apos;t wait to have you on board.
+              </p>
+            </div>
             <Button asChild>
               <Link href="/application">
-                Start Application
+                Start application
                 <RiArrowRightLine className="size-3.5" />
               </Link>
             </Button>
@@ -143,51 +139,51 @@ export default async function VolunteerDashboard() {
 
       {/* Application pending */}
       {appStatus?.applicationStatus === "PENDING" && (
-        <Card className="border-yellow-500/20 bg-yellow-50/50 dark:bg-yellow-950/10">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-                <RiTimerLine className="size-5 text-yellow-600 dark:text-yellow-400" />
+        <Card>
+          <CardContent className="flex items-start gap-3">
+            <IconChip tone="warning">
+              <RiTimerLine />
+            </IconChip>
+            <div className="min-w-0 space-y-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-serif text-lg font-medium tracking-tight">
+                  Application under review
+                </h2>
+                <Badge variant="warning">Pending</Badge>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle>Application Under Review</CardTitle>
-                  <Badge variant="secondary">Pending</Badge>
-                </div>
-                <CardDescription>
-                  Ngā mihi for applying — our team is reviewing your application
-                  and will be in touch soon
-                </CardDescription>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Ngā mihi for applying — our team is reviewing your application
+                and will be in touch soon.
+              </p>
             </div>
-          </CardHeader>
+          </CardContent>
         </Card>
       )}
 
       {/* Application approved */}
       {appStatus?.applicationStatus === "APPROVED" && (
-        <Card className="border-green-500/20 bg-green-50/50 dark:bg-green-950/10">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                <RiCheckLine className="size-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle>Welcome to the Whānau!</CardTitle>
+        <Card>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-3">
+              <IconChip tone="success">
+                <RiCheckLine />
+              </IconChip>
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-serif text-lg font-medium tracking-tight">
+                    Welcome to the whānau!
+                  </h2>
                   <Badge variant="success">Approved</Badge>
                 </div>
-                <CardDescription>
+                <p className="text-sm text-muted-foreground">
                   Your application has been approved. You can now sign up for
                   shifts and start volunteering.
-                </CardDescription>
+                </p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
             <Button asChild>
               <Link href="/shifts">
-                Browse Available Shifts
+                Browse available shifts
                 <RiArrowRightLine className="size-3.5" />
               </Link>
             </Button>
@@ -197,28 +193,28 @@ export default async function VolunteerDashboard() {
 
       {/* More info requested */}
       {appStatus?.applicationStatus === "INFO_REQUESTED" && (
-        <Card className="border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/10">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                <RiInformationLine className="size-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle>More Information Needed</CardTitle>
-                  <Badge variant="outline">Action Required</Badge>
+        <Card>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-3">
+              <IconChip tone="info">
+                <RiInformationLine />
+              </IconChip>
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-serif text-lg font-medium tracking-tight">
+                    More information needed
+                  </h2>
+                  <Badge variant="info">Action required</Badge>
                 </div>
-                <CardDescription>
+                <p className="text-sm text-muted-foreground">
                   We need a bit more info to process your application. Please
                   check your application page for details.
-                </CardDescription>
+                </p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" size="sm">
               <Link href="/application">
-                View Details
+                View details
                 <RiArrowRightLine className="size-3.5" />
               </Link>
             </Button>
@@ -226,24 +222,22 @@ export default async function VolunteerDashboard() {
         </Card>
       )}
 
-      {/* Agreements needing re-ack */}
+      {/* Agreements needing re-acknowledgement */}
       {pendingResigns > 0 && (
-        <Card className="border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/10">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                <RiFileTextLine className="size-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <CardTitle>Action required: review &amp; confirm</CardTitle>
-                <CardDescription>
-                  {pendingResigns} {pendingResigns === 1 ? "policy" : "policies"} need
-                  your acknowledgment before your next shift
-                </CardDescription>
-              </div>
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3">
+            <IconChip tone="warning">
+              <RiFileTextLine />
+            </IconChip>
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <h2 className="font-serif text-lg font-medium tracking-tight">
+                Review &amp; confirm
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {pendingResigns} {pendingResigns === 1 ? "policy needs" : "policies need"}{" "}
+                your acknowledgment before your next shift.
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
             <Button asChild size="sm" variant="outline">
               <Link href="/documents">
                 Review &amp; sign
@@ -254,95 +248,79 @@ export default async function VolunteerDashboard() {
         </Card>
       )}
 
-      {/* My Roster — hero next shift */}
+      {/* Two zones on desktop: the day's essentials + a quiet side rail */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-10">
+      <div className="min-w-0 space-y-8">
+      {/* Next shift hero */}
       {dashboardData && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <SectionEyebrow maori="Tō Rōhita" english="My Roster" />
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/shifts">
-                All my shifts
-                <RiArrowRightLine className="size-3.5" />
-              </Link>
-            </Button>
-          </div>
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Tō rōhita"
+            title="Your next shift"
+            action={{ label: "All shifts", href: "/shifts" }}
+          />
 
           {nextShift && nextShiftDate ? (
-            <Card className="overflow-hidden border-primary/20">
-              <CardContent className="p-0">
-                <div className="flex items-stretch">
-                  {/* Calendar block */}
-                  <div className="flex w-24 flex-col items-center justify-center border-r border-primary/15 bg-primary/[0.06] py-5 sm:w-28">
-                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                      {nextShiftDate.toLocaleDateString("en-NZ", { month: "short" })}
-                    </span>
-                    <span className="font-serif text-4xl font-light leading-none tabular-nums text-foreground">
-                      {nextShiftDate.getDate()}
-                    </span>
-                    <span className="mt-1 text-xs text-muted-foreground">
-                      {nextShiftDate.toLocaleDateString("en-NZ", { weekday: "short" })}
-                    </span>
-                  </div>
-
-                  {/* Details */}
-                  <div className="flex flex-1 flex-wrap items-start justify-between gap-3 p-4 sm:p-5">
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Your next mahi
-                      </p>
-                      <p className="font-serif text-xl font-normal leading-tight">
-                        {nextShift.serviceArea.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatTimeRange(nextShift.startTime, nextShift.endTime)}
-                      </p>
-                      {nextShift.notes && (
-                        <p className="pt-1 text-sm text-muted-foreground">
-                          {nextShift.notes}
-                        </p>
-                      )}
-                    </div>
-                    <Button asChild size="sm">
-                      <Link href="/shifts">
-                        View shift
-                        <RiArrowRightLine className="size-3.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-
-                {dashboardData.upcomingShifts.length > 1 && (
-                  <div className="border-t border-border bg-muted/20 px-4 py-3 sm:px-5">
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Also coming up
+            <Card className="rounded-2xl">
+              {/* The red mission rail marks the volunteer's own commitment */}
+              <span
+                aria-hidden
+                className="absolute inset-y-0 left-0 w-1 bg-primary"
+              />
+              <CardContent className="flex items-center gap-4 sm:gap-5">
+                <DateBlock date={nextShiftDate} />
+                <span aria-hidden className="self-stretch border-l border-border" />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="font-serif text-xl/tight font-medium tracking-tight">
+                    {nextShift.serviceArea.name}
+                  </p>
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <RiTimeLine className="size-3.5 shrink-0" aria-hidden />
+                    {formatTimeRange(nextShift.startTime, nextShift.endTime)}
+                  </p>
+                  {nextShift.notes && (
+                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                      {nextShift.notes}
                     </p>
-                    <ul className="space-y-1.5">
-                      {dashboardData.upcomingShifts.slice(1, 4).map((shift) => (
-                        <li
-                          key={shift.id}
-                          className="flex items-center justify-between gap-2 text-sm"
-                        >
-                          <span className="font-medium">{shift.serviceArea.name}</span>
-                          <span className="text-muted-foreground">
-                            {formatShiftDate(shift.date)}
-                            {" · "}
-                            {formatTimeRange(shift.startTime, shift.endTime)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                  )}
+                </div>
+                <Button asChild size="sm" className="hidden sm:inline-flex">
+                  <Link href="/shifts">View</Link>
+                </Button>
               </CardContent>
+
+              {dashboardData.upcomingShifts.length > 1 && (
+                <div className="border-t border-border">
+                  <ul className="divide-y divide-border">
+                    {dashboardData.upcomingShifts.slice(1, 4).map((shift) => (
+                      <li
+                        key={shift.id}
+                        className="flex flex-col gap-0.5 px-5 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                      >
+                        <span className="min-w-0 font-medium">
+                          {shift.serviceArea.name}
+                        </span>
+                        <span className="text-muted-foreground sm:shrink-0">
+                          {formatShiftDate(shift.date)}
+                          {" · "}
+                          {formatTimeRange(shift.startTime, shift.endTime)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </Card>
           ) : (
-            <Card>
-              <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-                <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-                  <RiCalendarLine className="size-6 text-primary" />
-                </div>
+            <Card className="rounded-2xl">
+              <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
+                <IconChip tone="brand" size="lg">
+                  <RiCalendarLine />
+                </IconChip>
                 <div>
-                  <p className="font-medium">No shift on the horizon yet</p>
+                  <p className="font-serif text-lg font-medium tracking-tight">
+                    No shift on the horizon yet
+                  </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Ready when you are — pick your next mahi from the roster.
                   </p>
@@ -361,40 +339,23 @@ export default async function VolunteerDashboard() {
 
       {/* Open shifts you can fill */}
       {dashboardData && dashboardData.openShiftsForYou.length > 0 && (
-        <Card className="border-primary/30 bg-primary/[0.02]">
-          <CardHeader>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-                  <RiAlertLine className="size-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">
-                    Spots open in your areas
-                  </CardTitle>
-                  <CardDescription>
-                    A few shifts could use your hands
-                  </CardDescription>
-                </div>
-              </div>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/shifts">
-                  Browse all
-                  <RiArrowRightLine className="size-3.5" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
+        <section className="space-y-4">
+          <SectionHeader
+            divider
+            eyebrow="Hei āwhina mai"
+            title="Shifts you can fill"
+            action={{ label: "Browse all", href: "/shifts" }}
+          />
+          <Card>
+            <ul className="divide-y divide-border">
               {dashboardData.openShiftsForYou.slice(0, 3).map((shift) => (
                 <li key={shift.id}>
                   <Link
                     href="/shifts"
-                    className="group flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3 transition-colors hover:border-primary/40 hover:bg-primary/[0.04] focus-visible:border-primary/60 focus-visible:outline-none"
+                    className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">
                         {shift.serviceArea.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -403,142 +364,126 @@ export default async function VolunteerDashboard() {
                         {formatTimeRange(shift.startTime, shift.endTime)}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-xs font-medium text-primary">
-                        {shift.spotsLeft}{" "}
-                        {shift.spotsLeft === 1 ? "spot" : "spots"} left
-                      </span>
-                      <RiArrowRightLine className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                    </div>
+                    <span className="shrink-0 text-xs font-semibold text-primary">
+                      {shift.spotsLeft} {shift.spotsLeft === 1 ? "spot" : "spots"} left
+                    </span>
+                    <RiArrowRightSLine
+                      className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
                   </Link>
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
+          </Card>
+        </section>
       )}
 
-      {/* My Mahi — Impact */}
+      {/* Your contribution — ink stat strip + milestones */}
       {dashboardData && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <SectionEyebrow maori="Tō Mahi" english="My Impact" />
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/hours">
-                Full breakdown
-                <RiArrowRightLine className="size-3.5" />
-              </Link>
-            </Button>
-          </div>
+        <section className="space-y-4">
+          <SectionHeader
+            divider
+            eyebrow="Tō takoha"
+            title="Your contribution"
+            action={{ label: "Details", href: "/hours" }}
+          />
 
           {dashboardData.totalShifts > 0 ? (
-            <Card>
-              <CardContent className="space-y-4 p-4 sm:p-6">
-                {/* Headline meals stat — the soup kitchen's purpose */}
-                <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-                        <RiRestaurantLine className="size-6 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Meals shared
+            <div className="space-y-3">
+              <Card variant="ink">
+                <CardContent className="flex items-stretch justify-between gap-4">
+                  {[
+                    {
+                      label: "Hours",
+                      value: dashboardData.totalHours,
+                      delta:
+                        dashboardData.hoursThisMonth > 0
+                          ? `+${dashboardData.hoursThisMonth} this month`
+                          : null,
+                    },
+                    {
+                      label: "Meals",
+                      value: dashboardData.totalMeals.toLocaleString("en-NZ"),
+                      delta:
+                        dashboardData.mealsThisMonth > 0
+                          ? `+${dashboardData.mealsThisMonth.toLocaleString("en-NZ")} this month`
+                          : null,
+                    },
+                    {
+                      label: "Shifts",
+                      value: dashboardData.totalShifts,
+                      delta: null,
+                    },
+                  ].map((stat, i) => (
+                    <div
+                      key={stat.label}
+                      className={
+                        i > 0
+                          ? "flex-1 border-l border-ink-foreground/15 pl-4"
+                          : "flex-1"
+                      }
+                    >
+                      <p className="eyebrow text-ink-muted-foreground">{stat.label}</p>
+                      <StatFigure value={stat.value} className="mt-1.5" />
+                      {stat.delta && (
+                        <p className="mt-1 text-xs font-medium text-ink-muted-foreground">
+                          {stat.delta}
                         </p>
-                        <p className="font-serif text-4xl font-light leading-none tabular-nums text-foreground">
-                          {dashboardData.totalMeals.toLocaleString("en-NZ")}
-                        </p>
-                      </div>
+                      )}
                     </div>
-                    {dashboardData.mealsThisMonth > 0 && (
-                      <div className="text-right">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          This month
-                        </p>
-                        <p className="font-serif text-xl font-light tabular-nums">
-                          +{dashboardData.mealsThisMonth.toLocaleString("en-NZ")}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  ))}
+                </CardContent>
+              </Card>
 
-                {/* Secondary stats */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg border border-border p-3">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <RiTimeLine className="size-4" />
-                      <p className="text-xs font-medium uppercase tracking-wide">
-                        Hours
-                      </p>
-                    </div>
-                    <p className="mt-1 font-serif text-3xl font-light tabular-nums">
-                      {dashboardData.totalHours}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {dashboardData.hoursThisMonth}h this month
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border p-3">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <RiCalendarLine className="size-4" />
-                      <p className="text-xs font-medium uppercase tracking-wide">
-                        Shifts
-                      </p>
-                    </div>
-                    <p className="mt-1 font-serif text-3xl font-light tabular-nums">
-                      {dashboardData.totalShifts}
-                    </p>
-                    <p className="text-xs text-muted-foreground">attended</p>
-                  </div>
-                </div>
-
-                {/* Milestones */}
-                {(reachedMilestones.length > 0 || nextMilestone) && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-                    <div className="flex items-center gap-2">
-                      <RiTrophyLine className="size-5 text-yellow-600" />
-                      {reachedMilestones.length > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex">
-                            {reachedMilestones.map((m) => (
-                              <RiStarFill
-                                key={m.hours}
-                                className="size-4 text-yellow-500"
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm">
-                            {reachedMilestones.length} milestone
-                            {reachedMilestones.length !== 1 ? "s" : ""} reached
+              {(reachedMilestones.length > 0 || nextMilestone) && (
+                <Card size="sm">
+                  <CardContent className="space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <IconChip tone="warning" size="sm">
+                          <RiTrophyLine />
+                        </IconChip>
+                        <p className="text-sm font-semibold">
+                          {reachedMilestones.length > 0
+                            ? `${reachedMilestones.length} milestone${
+                                reachedMilestones.length !== 1 ? "s" : ""
+                              } reached`
+                            : "Working toward your first milestone"}
+                        </p>
+                      </div>
+                      {nextMilestone && (
+                        <p className="text-xs text-muted-foreground">
+                          {Math.max(
+                            0,
+                            Math.round(nextMilestone.hours - dashboardData.totalHours)
+                          )}
+                          h to{" "}
+                          <span className="font-semibold text-foreground">
+                            {nextMilestone.label}
                           </span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">
-                          Working toward your first milestone
-                        </span>
+                        </p>
                       )}
                     </div>
                     {nextMilestone && (
-                      <p className="text-xs text-muted-foreground">
-                        {Math.max(
-                          0,
-                          Math.round(nextMilestone.hours - dashboardData.totalHours)
+                      <Progress
+                        aria-label={`Progress to ${nextMilestone.label}`}
+                        value={Math.min(
+                          (dashboardData.totalHours / nextMilestone.hours) * 100,
+                          100
                         )}
-                        h to{" "}
-                        <span className="font-medium text-foreground">
-                          {nextMilestone.label}
-                        </span>
-                      </p>
+                      />
                     )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           ) : (
             <Card>
-              <CardContent className="py-8 text-center">
-                <p className="font-medium">Your story starts soon</p>
+              <CardContent className="py-6 text-center">
+                <p className="font-serif text-lg font-medium tracking-tight">
+                  Your story starts soon
+                </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Hours and meals shared will appear here once your first shift
                   is logged.
@@ -549,37 +494,24 @@ export default async function VolunteerDashboard() {
         </section>
       )}
 
-      {/* Upcoming Training */}
+      {/* Training reminder */}
       {registeredTraining.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10">
-                  <RiGraduationCapLine className="size-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Upcoming Training</CardTitle>
-                  <CardDescription>Sessions you&apos;re registered for</CardDescription>
-                </div>
-              </div>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/training">
-                  View all
-                  <RiArrowRightLine className="size-3.5" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+        <section className="space-y-4">
+          <SectionHeader
+            divider
+            eyebrow="He maumahara"
+            title="Don't forget"
+            action={{ label: "All training", href: "/training" }}
+          />
+          <Card>
+            <ul className="divide-y divide-border">
               {registeredTraining.slice(0, 3).map((ts) => (
-                <div
-                  key={ts.id}
-                  className="flex items-center justify-between rounded-md border border-border p-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{ts.title}</p>
+                <li key={ts.id} className="flex items-start gap-3 px-5 py-3">
+                  <IconChip tone="info" size="sm" className="mt-0.5">
+                    <RiGraduationCapLine />
+                  </IconChip>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">{ts.title}</p>
                     <p className="text-xs text-muted-foreground">
                       {formatShiftDate(ts.date)}
                       {" · "}
@@ -587,123 +519,129 @@ export default async function VolunteerDashboard() {
                       {ts.location && ` · ${ts.location}`}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    Registered
+                  <Badge variant="info" className="shrink-0">
+                    Booked
                   </Badge>
-                </div>
+                </li>
               ))}
-            </div>
-          </CardContent>
-        </Card>
+            </ul>
+          </Card>
+        </section>
       )}
+      </div>
 
-      {/* News & Updates */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <SectionEyebrow maori="Ngā Kōrero" english="News & Updates" />
-          {announcements.length > 0 && (
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/news">
-                All updates
-                <RiArrowRightLine className="size-3.5" />
-              </Link>
-            </Button>
-          )}
-        </div>
-        <Card>
-          <CardContent className="p-4 sm:p-5">
-            {announcements.length > 0 ? (
-              <ul className="divide-y divide-border">
-                {announcements.map((a, i) => (
-                  <li key={a.id} className={i === 0 ? "pb-3" : "py-3 last:pb-0"}>
-                    <Link
-                      href={`/news#${a.id}`}
-                      className="group block rounded-sm border-l-2 border-transparent pl-3 transition-colors hover:border-primary"
-                    >
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="text-sm font-semibold leading-tight">
-                          {a.title}
-                        </p>
-                        <p className="shrink-0 text-xs text-muted-foreground">
-                          {formatShiftDate(a.sentAt)}
-                        </p>
-                      </div>
-                      <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
-                        {a.body}
+      {/* Side rail — kōrero and quiet utilities */}
+      <div className="min-w-0 space-y-8">
+      {/* Notices */}
+      <section className="space-y-4">
+        <SectionHeader
+          divider
+          className="lg:border-t-0 lg:pt-0"
+          eyebrow="Pānui"
+          title="Notices"
+          action={announcements.length > 0 ? { label: "All notices", href: "/news" } : undefined}
+        />
+        {announcements.length > 0 ? (
+          <div className="space-y-3">
+            {announcements.map((a) => (
+              <Card key={a.id} size="sm">
+                <Link
+                  href={`/news#${a.id}`}
+                  className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                >
+                  <CardContent className="space-y-1.5 py-0.5">
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground">
+                        {formatShiftDate(a.sentAt)}
                       </p>
-                      {a.authorName && (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          — {a.authorName}
-                        </p>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex items-start gap-3 py-2">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-muted">
-                  <RiMegaphoneLine className="size-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Nothing new just yet</p>
-                  <p className="text-sm text-muted-foreground">
-                    Kitchen news and updates will land here.
-                  </p>
-                </div>
+                      <p className="font-serif text-base font-medium tracking-tight">
+                        {a.title}
+                      </p>
+                    </div>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{a.body}</p>
+                    {a.authorName && (
+                      <p className="text-xs text-muted-foreground">— {a.authorName}</p>
+                    )}
+                  </CardContent>
+                </Link>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card size="sm">
+            <CardContent className="flex items-center gap-3">
+              <IconChip size="sm">
+                <RiMegaphoneLine />
+              </IconChip>
+              <div>
+                <p className="text-sm font-semibold">Nothing new just yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Kitchen news and updates will land here.
+                </p>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* Quiet utility rows */}
+      <section className="space-y-3 border-t border-border pt-6">
+        <Card size="sm">
+          <Link
+            href="/documents"
+            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+          >
+            <CardContent className="flex items-center gap-3">
+              <IconChip size="sm">
+                <RiShieldCheckLine />
+              </IconChip>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Policies &amp; procedures</p>
+                <p className="text-xs text-muted-foreground">
+                  Read and confirm the kaupapa we work by
+                </p>
+              </div>
+              <RiArrowRightSLine className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card size="sm" variant="tint">
+          <CardContent className="flex flex-wrap items-center gap-3">
+            <IconChip tone="brand" size="sm">
+              <RiHandHeartLine />
+            </IconChip>
+            <div className="min-w-0 flex-1 basis-40">
+              <p className="text-sm font-semibold">Other ways to tautoko</p>
+              <p className="text-xs text-muted-foreground">
+                Donate kai, support a drive, or share the kaupapa.
+              </p>
+            </div>
+            <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+              <a href={SUPPORT_LINK} target="_blank" rel="noopener noreferrer">
+                See needs
+                <RiArrowRightLine className="size-3.5" />
+              </a>
+            </Button>
           </CardContent>
         </Card>
       </section>
 
-      {/* Policies & Procedures */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-                <RiShieldCheckLine className="size-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Policies &amp; Procedures</CardTitle>
-                <CardDescription>
-                  Read and confirm the kaupapa we work by
-                </CardDescription>
-              </div>
-            </div>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/documents">
-                Open
-                <RiArrowRightLine className="size-3.5" />
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Other Ways to Support */}
-      <Card className="border-primary/20 bg-primary/[0.04]">
-        <CardContent className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/15">
-              <RiHandHeartLine className="size-6 text-primary" />
-            </div>
-            <div>
-              <p className="font-serif text-lg font-normal">Other ways to tautoko</p>
-              <p className="text-sm text-muted-foreground">
-                Donate kai, support a drive, or share the kaupapa with your whānau.
-              </p>
-            </div>
-          </div>
-          <Button asChild>
-            <a href={SUPPORT_LINK} target="_blank" rel="noopener noreferrer">
-              See current needs
-              <RiArrowRightLine className="size-3.5" />
-            </a>
-          </Button>
+      {/* Kaupapa grace note — Suzanne Aubert's founding words */}
+      <Card variant="ink">
+        <CardContent className="space-y-3">
+          <p className="eyebrow text-ink-muted-foreground">Tō tātou kaupapa</p>
+          <blockquote className="font-serif text-lg/relaxed italic">
+            &ldquo;Help one another and make use of the many little occasions to
+            lighten the burden of others.&rdquo;
+          </blockquote>
+          <p className="eyebrow text-ink-muted-foreground">
+            Suzanne Aubert · Meri Hōhepa
+          </p>
         </CardContent>
       </Card>
+      </div>
+      </div>
     </div>
   );
 }

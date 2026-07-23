@@ -1,12 +1,10 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type badgeVariants } from "@/components/ui/badge";
+import type { VariantProps } from "class-variance-authority";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,18 +17,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   RiCalendarLine,
-  RiTeamLine,
   RiMapPinLine,
   RiLoader4Line,
-  RiCheckLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
 import {
   registerForTraining,
   cancelTrainingRegistration,
   type VolunteerTrainingSession,
 } from "@/lib/training-actions";
+import { formatTimeRange } from "@/lib/format";
 
 interface TrainingBrowserProps {
   sessions: VolunteerTrainingSession[];
@@ -43,11 +42,13 @@ const TYPE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-const TYPE_COLORS: Record<string, string> = {
-  INDUCTION: "bg-blue-600",
-  DE_ESCALATION: "bg-amber-600",
-  HEALTH_SAFETY: "bg-green-600",
-  OTHER: "bg-gray-600",
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
+
+const TYPE_VARIANTS: Record<string, BadgeVariant> = {
+  INDUCTION: "info",
+  DE_ESCALATION: "warning",
+  HEALTH_SAFETY: "success",
+  OTHER: "neutral",
 };
 
 function formatDate(date: Date): string {
@@ -92,93 +93,127 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
 
   if (sessions.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <Illustration name="book" size={96} />
-        <div>
-          <p className="font-serif text-lg font-normal">
-            No training scheduled right now
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            New sessions are added regularly, check back soon.
-          </p>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <Illustration name="book" size={96} />
+          <div>
+            <p className="font-serif text-lg font-medium tracking-tight">
+              No training scheduled right now
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              New sessions are added regularly, check back soon.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {sessions.map((session) => {
           const isFull = session.registeredCount >= session.capacity;
           const isRegistered = session.userAttendanceStatus === "REGISTERED";
           const loading = isPending && actionId === session.id;
+          const spotsLeft = session.capacity - session.registeredCount;
 
           return (
             <Card key={session.id}>
-              <CardContent className="space-y-3 py-4">
-                <div className="flex items-start justify-between gap-3">
+              {isRegistered && (
+                // The red mission rail marks the volunteer's own commitment
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 left-0 w-1 bg-primary"
+                />
+              )}
+              <CardContent className="flex flex-1 flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-serif text-lg font-normal">{session.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-serif text-lg/snug font-medium tracking-tight">
+                        {session.title}
+                      </h3>
                       <Badge
-                        className={`text-xs text-white ${TYPE_COLORS[session.type] || "bg-gray-600"}`}
+                        variant={TYPE_VARIANTS[session.type] ?? "neutral"}
                       >
                         {TYPE_LABELS[session.type] || session.type}
                       </Badge>
                     </div>
                     {session.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="line-clamp-2 text-sm text-muted-foreground">
                         {session.description}
                       </p>
                     )}
                   </div>
-                  {isRegistered && (
-                    <Badge variant="success" className="shrink-0">
-                      <RiCheckLine className="mr-1 size-3" />
-                      Registered
+                  {isRegistered ? (
+                    <Badge variant="info" className="shrink-0">
+                      Booked
                     </Badge>
-                  )}
+                  ) : isFull ? (
+                    <Badge variant="neutral" className="shrink-0">
+                      Full
+                    </Badge>
+                  ) : null}
                 </div>
 
                 <div className="space-y-1.5 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <RiCalendarLine className="size-3.5 shrink-0" />
+                  <p className="flex items-center gap-2">
+                    <RiCalendarLine className="size-3.5 shrink-0" aria-hidden />
                     <span>
                       {formatDate(session.date)} &middot;{" "}
-                      <span className="tabular-nums">{session.startTime}–{session.endTime}</span>
+                      <span className="tabular-nums">
+                        {formatTimeRange(session.startTime, session.endTime)}
+                      </span>
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RiTeamLine className="size-3.5 shrink-0" />
-                    <span>
-                      {session.registeredCount}/{session.capacity} spots filled
-                      {isFull && !isRegistered && (
-                        <span className="text-destructive font-medium ml-1">· Full</span>
-                      )}
-                    </span>
-                  </div>
+                  </p>
                   {session.location && (
-                    <div className="flex items-center gap-2">
-                      <RiMapPinLine className="size-3.5 shrink-0" />
+                    <p className="flex items-center gap-2">
+                      <RiMapPinLine className="size-3.5 shrink-0" aria-hidden />
                       <span>{session.location}</span>
-                    </div>
+                    </p>
                   )}
                 </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="mt-auto flex items-center justify-between gap-3 pt-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CapacityMeter
+                      filled={session.registeredCount}
+                      capacity={session.capacity}
+                    />
+                    {isRegistered ? (
+                      <span className="text-xs font-semibold text-success">
+                        You&apos;re in
+                      </span>
+                    ) : isFull ? (
+                      <span className="text-xs text-muted-foreground">
+                        Session full
+                      </span>
+                    ) : (
+                      <span
+                        className={cn(
+                          "text-xs tabular-nums whitespace-nowrap",
+                          spotsLeft <= 2
+                            ? "font-semibold text-primary"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {spotsLeft} {spotsLeft === 1 ? "spot" : "spots"} left
+                      </span>
+                    )}
+                  </div>
+
                   {isRegistered ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-destructive hover:text-destructive"
                       disabled={loading}
                       onClick={() => setCancelId(session.id)}
                     >
                       {loading && (
                         <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
                       )}
-                      Cancel Registration
+                      Cancel
                     </Button>
                   ) : (
                     <Button
@@ -189,7 +224,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       {loading && (
                         <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
                       )}
-                      {isFull ? "Session Full" : "Register"}
+                      {isFull ? "Session full" : "Register"}
                     </Button>
                   )}
                 </div>
@@ -212,12 +247,12 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Registration</AlertDialogCancel>
+            <AlertDialogCancel>Keep registration</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => cancelId && handleCancel(cancelId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Cancel Registration
+              Cancel registration
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -13,15 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DatePicker } from "@/components/date-picker";
-import { RiLoader4Line, RiGraduationCapLine } from "@remixicon/react";
+import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
 import { createTrainingSession, type CreateTrainingData } from "@/lib/training-actions";
 
@@ -96,142 +90,145 @@ export function TrainingForm() {
 
   return (
     <Card className="max-w-xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <RiGraduationCapLine className="size-5 text-primary" />
-          Session Details
-        </CardTitle>
-        <CardDescription>
-          Fill in the details for the new training session
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Type */}
-        <div className="space-y-2">
-          <Label htmlFor="type">Training Type</Label>
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger id="type">
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              {TRAINING_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.type && (
-            <p className="text-sm text-destructive">{errors.type}</p>
-          )}
-        </div>
+      <CardContent className="space-y-6">
+        <section className="space-y-5">
+          <h2 className="font-serif text-lg font-medium tracking-tight">
+            About the session
+          </h2>
 
-        {/* Title */}
-        <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. New Volunteer Induction"
-          />
-          {errors.title && (
-            <p className="text-sm text-destructive">{errors.title}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div className="space-y-2">
-          <Label htmlFor="description">Description (optional)</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What will be covered in this session..."
-            rows={3}
-          />
-        </div>
-
-        {/* Date */}
-        <div className="space-y-2">
-          <Label>Date</Label>
-          <DatePicker
-            value={date}
-            onChange={setDate}
-            placeholder="Select a date"
-            fromDate={tomorrow}
-          />
-          {errors.date && (
-            <p className="text-sm text-destructive">{errors.date}</p>
-          )}
-        </div>
-
-        {/* Times */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* Type */}
           <div className="space-y-2">
-            <Label htmlFor="startTime">Start Time</Label>
-            <Input
-              id="startTime"
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
-            {errors.startTime && (
-              <p className="text-sm text-destructive">{errors.startTime}</p>
+            <Label htmlFor="type">Training type</Label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger id="type">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {TRAINING_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.type && (
+              <p className="text-sm text-destructive">{errors.type}</p>
             )}
           </div>
+
+          {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="endTime">End Time</Label>
+            <Label htmlFor="title">Title</Label>
             <Input
-              id="endTime"
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. New Volunteer Induction"
             />
-            {errors.endTime && (
-              <p className="text-sm text-destructive">{errors.endTime}</p>
+            {errors.title && (
+              <p className="text-sm text-destructive">{errors.title}</p>
             )}
           </div>
-        </div>
 
-        {/* Capacity */}
-        <div className="space-y-2">
-          <Label htmlFor="capacity">Capacity</Label>
-          <Input
-            id="capacity"
-            type="number"
-            min="1"
-            max="100"
-            value={capacity}
-            onChange={(e) => setCapacity(e.target.value)}
-            className="w-24"
-          />
-          {errors.capacity && (
-            <p className="text-sm text-destructive">{errors.capacity}</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Maximum number of volunteers for this session
-          </p>
-        </div>
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (optional)</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What will be covered in this session..."
+              rows={3}
+            />
+          </div>
+        </section>
 
-        {/* Location */}
-        <div className="space-y-2">
-          <Label htmlFor="location">Location (optional)</Label>
-          <Input
-            id="location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g. Community Hall, Level 1"
-          />
-        </div>
+        <section className="space-y-5 border-t border-border pt-5">
+          <h2 className="font-serif text-lg font-medium tracking-tight">
+            When and where
+          </h2>
+
+          {/* Date */}
+          <div className="space-y-2">
+            <Label>Date</Label>
+            <DatePicker
+              value={date}
+              onChange={setDate}
+              placeholder="Select a date"
+              fromDate={tomorrow}
+            />
+            {errors.date && (
+              <p className="text-sm text-destructive">{errors.date}</p>
+            )}
+          </div>
+
+          {/* Times */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start time</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+              {errors.startTime && (
+                <p className="text-sm text-destructive">{errors.startTime}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End time</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+              {errors.endTime && (
+                <p className="text-sm text-destructive">{errors.endTime}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Capacity */}
+          <div className="space-y-2">
+            <Label htmlFor="capacity">Capacity</Label>
+            <Input
+              id="capacity"
+              type="number"
+              min="1"
+              max="100"
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              className="w-24"
+            />
+            {errors.capacity && (
+              <p className="text-sm text-destructive">{errors.capacity}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Maximum number of volunteers for this session
+            </p>
+          </div>
+
+          {/* Location */}
+          <div className="space-y-2">
+            <Label htmlFor="location">Location (optional)</Label>
+            <Input
+              id="location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Community Hall, Level 1"
+            />
+          </div>
+        </section>
 
         {/* Submit */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 border-t border-border pt-5">
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending && (
-              <RiLoader4Line className="mr-2 size-4 animate-spin" />
+              <RiLoader4Line className="size-4 animate-spin" />
             )}
-            Create Session
+            Create session
           </Button>
           <Button
             variant="outline"

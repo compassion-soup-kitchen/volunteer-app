@@ -3,10 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/date-picker";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconChip } from "@/components/brand/icon-chip";
+import { StatFigure } from "@/components/brand/stat-figure";
+import { StatusBadge } from "@/components/brand/status-badge";
 import {
   Select,
   SelectContent,
@@ -22,8 +25,6 @@ import {
   RiFilterLine,
   RiDownloadLine,
   RiLoader4Line,
-  RiBarChartLine,
-  RiUserAddLine,
 } from "@remixicon/react";
 import type {
   ReportSummary,
@@ -176,7 +177,7 @@ export function ReportDashboard({
     <div className="space-y-6">
       {/* Filters */}
       <Card>
-        <CardContent className="">
+        <CardContent>
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full space-y-1.5 sm:w-auto sm:min-w-40">
               <Label htmlFor="from-date" className="text-xs">
@@ -202,7 +203,7 @@ export function ReportDashboard({
             </div>
             <div className="w-full space-y-1.5 sm:w-auto sm:min-w-44">
               <Label htmlFor="area-filter" className="text-xs">
-                Service Area
+                Service area
               </Label>
               <Select value={areaId} onValueChange={setAreaId}>
                 <SelectTrigger id="area-filter" className="h-9">
@@ -250,63 +251,58 @@ export function ReportDashboard({
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardContent className="py-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Total Hours
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              label: "Total hours",
+              value: summary.totalHours,
+              unit: "h" as string | undefined,
+              sublabel: "Ngā hāora",
+              icon: RiTimeLine,
+              tone: "brand" as const,
+            },
+            {
+              label: "Total shifts",
+              value: summary.totalShifts,
+              unit: undefined,
+              sublabel: "Ngā mahi",
+              icon: RiCalendarLine,
+              tone: "info" as const,
+            },
+            {
+              label: "Unique volunteers",
+              value: summary.uniqueVolunteers,
+              unit: undefined,
+              sublabel: "Kaimahi tūao",
+              icon: RiTeamLine,
+              tone: "neutral" as const,
+            },
+            {
+              label: "Attendance rate",
+              value: summary.overallAttendanceRate,
+              unit: "%",
+              sublabel: "Attended of signed up",
+              icon: RiCheckLine,
+              tone: "success" as const,
+            },
+          ].map((stat) => (
+            <Card key={stat.label}>
+              <CardContent className="flex items-start justify-between gap-3">
+                <div className="space-y-1.5">
+                  <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                    {stat.label}
                   </p>
-                  <p className="font-serif text-3xl font-light tabular-nums">{summary.totalHours}</p>
-                </div>
-                <RiTimeLine className="size-5 text-muted-foreground/40" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="py-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Total Shifts
-                  </p>
-                  <p className="font-serif text-3xl font-light tabular-nums">{summary.totalShifts}</p>
-                </div>
-                <RiCalendarLine className="size-5 text-muted-foreground/40" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="py-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Unique Volunteers
-                  </p>
-                  <p className="font-serif text-3xl font-light tabular-nums">
-                    {summary.uniqueVolunteers}
-                  </p>
-                </div>
-                <RiTeamLine className="size-5 text-muted-foreground/40" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="py-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Attendance Rate
-                  </p>
-                  <p className="font-serif text-3xl font-light tabular-nums">
-                    {summary.overallAttendanceRate}%
+                  <StatFigure value={stat.value} unit={stat.unit} />
+                  <p className="text-xs text-muted-foreground">
+                    {stat.sublabel}
                   </p>
                 </div>
-                <RiCheckLine className="size-5 text-muted-foreground/40" />
-              </div>
-            </CardContent>
-          </Card>
+                <IconChip tone={stat.tone} size="sm">
+                  <stat.icon />
+                </IconChip>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
@@ -314,10 +310,8 @@ export function ReportDashboard({
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <RiBarChartLine className="size-4" />
-              Hours by Service Area
-            </CardTitle>
+            <Eyebrow>Ngā hāora</Eyebrow>
+            <CardTitle>Hours by service area</CardTitle>
           </CardHeader>
           <CardContent>
             {byArea.length > 0 ? (
@@ -332,10 +326,8 @@ export function ReportDashboard({
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <RiCalendarLine className="size-4" />
-              Monthly Trends
-            </CardTitle>
+            <Eyebrow>Ia marama</Eyebrow>
+            <CardTitle>Monthly trends</CardTitle>
           </CardHeader>
           <CardContent>
             {trends.length > 0 ? (
@@ -350,132 +342,114 @@ export function ReportDashboard({
       </div>
 
       {/* Leaderboard + Onboarding */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         {/* Top Volunteers */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <RiTeamLine className="size-4" />
-              Toa — Top Volunteers
-            </CardTitle>
+          <CardHeader className={leaderboard.length > 0 ? "border-b" : undefined}>
+            <Eyebrow>Toa</Eyebrow>
+            <CardTitle>Top volunteers</CardTitle>
           </CardHeader>
-          <CardContent>
-            {leaderboard.length > 0 ? (
-              <div className="space-y-2">
-                {leaderboard.slice(0, 10).map((v, i) => (
-                  <div
-                    key={v.volunteerId}
-                    className="flex items-center justify-between rounded-md border border-border p-2.5"
+          {leaderboard.length > 0 ? (
+            <ul className="divide-y divide-border">
+              {leaderboard.slice(0, 10).map((v, i) => (
+                <li
+                  key={v.volunteerId}
+                  className="flex items-center gap-3 px-5 py-3"
+                >
+                  <span
+                    aria-hidden
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary font-serif text-sm font-medium text-secondary-foreground tnum"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {v.volunteerName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {v.serviceAreas.join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0 text-right">
-                      <div>
-                        <p className="text-sm font-semibold">{v.totalHours}h</p>
-                        <p className="text-xs text-muted-foreground">
-                          {v.totalShifts} shifts
-                        </p>
-                      </div>
-                    </div>
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {v.volunteerName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {v.serviceAreas.join(", ")}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
+                  <div className="shrink-0 text-right">
+                    <StatFigure size="md" value={v.totalHours} unit="h" />
+                    <p className="text-xs text-muted-foreground">
+                      {v.totalShifts} {v.totalShifts === 1 ? "shift" : "shifts"}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <CardContent>
               <p className="py-8 text-center text-sm text-muted-foreground">
                 No attendance data for this period
               </p>
-            )}
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
 
         {/* Onboarding Metrics */}
         {onboarding && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <RiUserAddLine className="size-4" />
-                Onboarding Pipeline
-              </CardTitle>
+              <Eyebrow>Whakauru</Eyebrow>
+              <CardTitle>Onboarding pipeline</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-md border border-border p-3 text-center">
-                  <p className="font-serif text-3xl font-light tabular-nums">
-                    {onboarding.totalApplications}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Total Applications
+                <div className="rounded-lg bg-muted p-4 text-center">
+                  <StatFigure value={onboarding.totalApplications} />
+                  <p className="eyebrow mt-1.5 text-[0.62rem] text-muted-foreground">
+                    Total applications
                   </p>
                 </div>
-                <div className="rounded-md border border-border p-3 text-center">
-                  <p className="font-serif text-3xl font-light tabular-nums">
-                    {onboarding.activeVolunteers}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Active Volunteers
+                <div className="rounded-lg bg-muted p-4 text-center">
+                  <StatFigure value={onboarding.activeVolunteers} />
+                  <p className="eyebrow mt-1.5 text-[0.62rem] text-muted-foreground">
+                    Active volunteers
                   </p>
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+              <ul className="divide-y divide-border">
+                <li className="flex items-center justify-between py-2 text-sm">
                   <span className="text-muted-foreground">Pending</span>
-                  <Badge
-                    variant="outline"
-                    className="text-amber-600 border-amber-200"
-                  >
-                    {onboarding.pending}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between text-sm">
+                  <StatusBadge status="PENDING" label={onboarding.pending} />
+                </li>
+                <li className="flex items-center justify-between py-2 text-sm">
                   <span className="text-muted-foreground">Approved</span>
-                  <Badge
-                    variant="outline"
-                    className="text-green-600 border-green-200"
-                  >
-                    {onboarding.approved}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between text-sm">
+                  <StatusBadge status="APPROVED" label={onboarding.approved} />
+                </li>
+                <li className="flex items-center justify-between py-2 text-sm">
                   <span className="text-muted-foreground">Declined</span>
-                  <Badge
-                    variant="outline"
-                    className="text-red-600 border-red-200"
-                  >
-                    {onboarding.declined}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Info Requested</span>
-                  <Badge variant="outline">{onboarding.infoRequested}</Badge>
-                </div>
-                <div className="flex items-center justify-between text-sm">
+                  <StatusBadge status="DECLINED" label={onboarding.declined} />
+                </li>
+                <li className="flex items-center justify-between py-2 text-sm">
+                  <span className="text-muted-foreground">Info requested</span>
+                  <StatusBadge
+                    status="INFO_REQUESTED"
+                    label={onboarding.infoRequested}
+                  />
+                </li>
+                <li className="flex items-center justify-between py-2 text-sm">
                   <span className="text-muted-foreground">Inactive</span>
-                  <Badge variant="outline">
-                    {onboarding.inactiveVolunteers}
-                  </Badge>
+                  <StatusBadge
+                    status="INACTIVE"
+                    label={onboarding.inactiveVolunteers}
+                  />
+                </li>
+              </ul>
+              {onboarding.avgDaysToApproval !== null && (
+                <div className="rounded-lg bg-muted p-3 text-center">
+                  <StatFigure
+                    size="md"
+                    value={onboarding.avgDaysToApproval}
+                    unit="days"
+                  />
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Average time to approval
+                  </p>
                 </div>
-                {onboarding.avgDaysToApproval !== null && (
-                  <div className="mt-3 rounded-md bg-muted/50 p-3 text-center">
-                    <p className="text-lg font-semibold">
-                      {onboarding.avgDaysToApproval} days
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Average time to approval
-                    </p>
-                  </div>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -484,10 +458,8 @@ export function ReportDashboard({
       {/* Export Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <RiDownloadLine className="size-4" />
-            Tikiake — Export Data
-          </CardTitle>
+          <Eyebrow>Tikiake</Eyebrow>
+          <CardTitle>Export data</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">

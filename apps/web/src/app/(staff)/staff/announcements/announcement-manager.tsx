@@ -45,11 +45,12 @@ import {
   RiEditLine,
   RiEyeOffLine,
   RiLoader4Line,
-  RiMegaphoneLine,
   RiMoreLine,
   RiSendPlaneLine,
   RiUserLine,
 } from "@remixicon/react";
+import { SectionHeader } from "@/components/brand/section-header";
+import { Illustration } from "@/components/brand/illustration";
 import { toast } from "sonner";
 import {
   createAnnouncement,
@@ -73,13 +74,10 @@ const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
   COORDINATORS: "Coordinators",
 };
 
-const AUDIENCE_VARIANTS: Record<
-  AnnouncementAudience,
-  "info" | "default" | "amber"
-> = {
+const AUDIENCE_VARIANTS: Record<AnnouncementAudience, "info" | "neutral"> = {
   ALL: "info",
-  VOLUNTEERS: "default",
-  COORDINATORS: "amber",
+  VOLUNTEERS: "neutral",
+  COORDINATORS: "neutral",
 };
 
 function formatDate(date: Date): string {
@@ -212,50 +210,65 @@ export function AnnouncementManager({
 
       {announcements.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <RiMegaphoneLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">
-              No announcements yet. Write your first pānui to share news with
-              the whānau.
-            </p>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <Illustration name="korero" size={96} />
+            <div>
+              <p className="font-serif text-lg font-medium tracking-tight">
+                No pānui yet
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Write your first pānui to share news with the whānau.
+              </p>
+            </div>
           </CardContent>
         </Card>
       ) : (
         <>
           {drafts.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">
-                Drafts ({drafts.length})
-              </h2>
-              {drafts.map((a) => (
-                <AnnouncementCard
-                  key={a.id}
-                  announcement={a}
-                  onEdit={() => openEdit(a)}
-                  onPublish={() => setPublishTarget(a)}
-                  onUnpublish={() => handleUnpublish(a)}
-                  onDelete={() => setDeleteTarget(a)}
-                />
-              ))}
-            </div>
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Hukihuki"
+                title={`Drafts (${drafts.length})`}
+              />
+              <Card>
+                <ul className="divide-y divide-border">
+                  {drafts.map((a) => (
+                    <AnnouncementRow
+                      key={a.id}
+                      announcement={a}
+                      onEdit={() => openEdit(a)}
+                      onPublish={() => setPublishTarget(a)}
+                      onUnpublish={() => handleUnpublish(a)}
+                      onDelete={() => setDeleteTarget(a)}
+                    />
+                  ))}
+                </ul>
+              </Card>
+            </section>
           )}
 
           {published.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">
-                Published ({published.length})
-              </h2>
-              {published.map((a) => (
-                <AnnouncementCard
-                  key={a.id}
-                  announcement={a}
-                  onEdit={() => openEdit(a)}
-                  onPublish={() => setPublishTarget(a)}
-                  onUnpublish={() => handleUnpublish(a)}
-                  onDelete={() => setDeleteTarget(a)}
-                />
-              ))}
-            </div>
+            <section className="space-y-4">
+              <SectionHeader
+                divider={drafts.length > 0}
+                eyebrow="Kua tukuna"
+                title={`Published (${published.length})`}
+              />
+              <Card>
+                <ul className="divide-y divide-border">
+                  {published.map((a) => (
+                    <AnnouncementRow
+                      key={a.id}
+                      announcement={a}
+                      onEdit={() => openEdit(a)}
+                      onPublish={() => setPublishTarget(a)}
+                      onUnpublish={() => handleUnpublish(a)}
+                      onDelete={() => setDeleteTarget(a)}
+                    />
+                  ))}
+                </ul>
+              </Card>
+            </section>
           )}
         </>
       )}
@@ -412,7 +425,7 @@ export function AnnouncementManager({
   );
 }
 
-function AnnouncementCard({
+function AnnouncementRow({
   announcement,
   onEdit,
   onPublish,
@@ -428,66 +441,63 @@ function AnnouncementCard({
   const isDraft = announcement.sentAt === null;
 
   return (
-    <Card className={isDraft ? "border-dashed" : undefined}>
-      <CardContent className="flex items-start justify-between gap-4 py-4">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate font-medium">{announcement.title}</h3>
-            <Badge variant={isDraft ? "warning" : "success"}>
-              {isDraft ? "Draft" : "Published"}
-            </Badge>
-            <Badge variant={AUDIENCE_VARIANTS[announcement.audience]}>
-              {AUDIENCE_LABELS[announcement.audience]}
-            </Badge>
-          </div>
-          <p className="line-clamp-2 text-sm text-muted-foreground">
-            {announcement.body}
-          </p>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <RiCalendarLine className="size-3.5" />
-              {announcement.sentAt
-                ? `Published ${formatDate(announcement.sentAt)}`
-                : `Created ${formatDate(announcement.createdAt)}`}
-            </span>
-            {announcement.authorName && (
-              <span className="flex items-center gap-1.5">
-                <RiUserLine className="size-3.5" />
-                {announcement.authorName}
-              </span>
-            )}
-          </div>
+    <li className="flex items-start gap-3 px-5 py-3.5">
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h3 className="min-w-0 truncate font-serif text-base font-medium tracking-tight">
+            {announcement.title}
+          </h3>
+          <Badge variant={AUDIENCE_VARIANTS[announcement.audience]}>
+            {AUDIENCE_LABELS[announcement.audience]}
+          </Badge>
         </div>
+        <p className="line-clamp-2 text-sm text-muted-foreground">
+          {announcement.body}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <RiCalendarLine className="size-3.5" aria-hidden />
+            {announcement.sentAt
+              ? `Published ${formatDate(announcement.sentAt)}`
+              : `Created ${formatDate(announcement.createdAt)}`}
+          </span>
+          {announcement.authorName && (
+            <span className="flex items-center gap-1.5">
+              <RiUserLine className="size-3.5" aria-hidden />
+              {announcement.authorName}
+            </span>
+          )}
+        </div>
+      </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="Announcement actions">
-              <RiMoreLine className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onEdit}>
-              <RiEditLine className="mr-2 size-4" />
-              Edit
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon-sm" aria-label="Announcement actions">
+            <RiMoreLine className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onEdit}>
+            <RiEditLine className="mr-2 size-4" />
+            Edit
+          </DropdownMenuItem>
+          {isDraft ? (
+            <DropdownMenuItem onClick={onPublish}>
+              <RiSendPlaneLine className="mr-2 size-4" />
+              Publish
             </DropdownMenuItem>
-            {isDraft ? (
-              <DropdownMenuItem onClick={onPublish}>
-                <RiSendPlaneLine className="mr-2 size-4" />
-                Publish
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={onUnpublish}>
-                <RiEyeOffLine className="mr-2 size-4" />
-                Unpublish
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem variant="destructive" onClick={onDelete}>
-              <RiDeleteBinLine className="mr-2 size-4" />
-              Delete
+          ) : (
+            <DropdownMenuItem onClick={onUnpublish}>
+              <RiEyeOffLine className="mr-2 size-4" />
+              Unpublish
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardContent>
-    </Card>
+          )}
+          <DropdownMenuItem variant="destructive" onClick={onDelete}>
+            <RiDeleteBinLine className="mr-2 size-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
   );
 }

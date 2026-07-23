@@ -22,7 +22,8 @@ export default async function VolunteerLayout({
   return (
     <div className="flex min-h-dvh flex-col bg-background pb-16 sm:pb-0">
       <VolunteerNav user={session.user} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+      {/* Editorial column on mobile, opening out to the full width on desktop */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pt-6 pb-4 sm:px-8 sm:pt-8">
         {children}
       </main>
       <VolunteerFooter />

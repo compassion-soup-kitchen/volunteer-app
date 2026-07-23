@@ -6,19 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,15 +23,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { CapacityMeter } from "@/components/brand/capacity-meter";
+import { IconChip } from "@/components/brand/icon-chip";
 import {
-  RiCalendarLine,
   RiTimeLine,
   RiTeamLine,
   RiDeleteBinLine,
   RiLoader4Line,
   RiUserLine,
-  RiMailLine,
-  RiFileTextLine,
   RiCheckLine,
   RiCloseLine,
   RiCheckDoubleLine,
@@ -50,6 +44,7 @@ import {
   type StaffShift,
 } from "@/lib/shift-actions";
 import { RecordMealsCard } from "./record-meals-card";
+import { formatTimeRange } from "@/lib/format";
 
 interface ShiftDetailViewProps {
   shift: StaffShift;
@@ -74,19 +69,12 @@ function isToday(date: Date): boolean {
   return today === shiftDate;
 }
 
-function statusBadge(status: string) {
-  switch (status) {
-    case "SIGNED_UP":
-      return <Badge variant="info">Signed up</Badge>;
-    case "ATTENDED":
-      return <Badge variant="success">Attended</Badge>;
-    case "NO_SHOW":
-      return <Badge variant="destructive">No show</Badge>;
-    case "CANCELLED":
-      return <Badge variant="secondary">Cancelled</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
+function initials(name: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase() || "?";
 }
 
 export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
@@ -152,78 +140,76 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
       <div className="space-y-6 lg:col-span-1">
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <CardTitle className="text-lg">
-                {shift.serviceArea.name}
-              </CardTitle>
-              {past && (
-                <Badge variant="secondary">Past</Badge>
-              )}
-              {today && (
-                <Badge variant="info">Today</Badge>
-              )}
-            </div>
+            <CardTitle>{formatDate(shift.date)}</CardTitle>
             <CardDescription>
               Created by {shift.createdBy.name || "Unknown"}
             </CardDescription>
+            {(past || today) && (
+              <CardAction>
+                {today ? (
+                  <Badge>Today</Badge>
+                ) : (
+                  <Badge variant="neutral">Past</Badge>
+                )}
+              </CardAction>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm">
-                <RiCalendarLine className="size-4 text-muted-foreground" />
-                <span>{formatDate(shift.date)}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <RiTimeLine className="size-4 text-muted-foreground" />
-                <span className="tabular-nums">
-                  {shift.startTime}–{shift.endTime}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5 text-sm">
+                <RiTimeLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+                <span className="tnum">
+                  {formatTimeRange(shift.startTime, shift.endTime)}
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <RiTeamLine className="size-4 text-muted-foreground" />
-                <span>
-                  {activeSignups.length}/{shift.capacity} spots filled
+              <div className="flex items-center gap-2.5 text-sm">
+                <RiTeamLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+                <span className="tnum">
+                  {activeSignups.length}/{shift.capacity} filled
                 </span>
+                <CapacityMeter
+                  filled={activeSignups.length}
+                  capacity={shift.capacity}
+                />
               </div>
             </div>
 
             {shift.notes && (
-              <div className="rounded-md border border-border bg-muted/30 p-3">
-                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
-                  <RiFileTextLine className="size-3.5" />
+              <div className="rounded-lg bg-muted p-3">
+                <p className="eyebrow text-[0.62rem] text-muted-foreground">
                   Notes
-                </div>
-                <p className="text-sm">{shift.notes}</p>
+                </p>
+                <p className="mt-1 text-sm">{shift.notes}</p>
               </div>
             )}
 
             {/* Attendance summary for past/today shifts */}
             {canMarkAttendance && shift.signups.length > 0 && (
-              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Attendance Summary
+              <div className="rounded-lg bg-muted p-3">
+                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  Attendance summary
                 </p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <span className="text-green-600 font-medium">
+                    <span className="font-semibold text-success tnum">
                       {shift.signups.filter((s) => s.status === "ATTENDED").length}
                     </span>{" "}
                     attended
                   </div>
                   <div>
-                    <span className="text-destructive font-medium">
+                    <span className="font-semibold text-destructive tnum">
                       {shift.signups.filter((s) => s.status === "NO_SHOW").length}
                     </span>{" "}
                     no show
                   </div>
                   <div>
-                    <span className="text-blue-600 font-medium">
+                    <span className="font-semibold text-info tnum">
                       {unmarkedSignups.length}
                     </span>{" "}
                     unmarked
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">
+                    <span className="font-semibold text-muted-foreground tnum">
                       {shift.signups.filter((s) => s.status === "CANCELLED").length}
                     </span>{" "}
                     cancelled
@@ -238,8 +224,8 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                 className="w-full text-destructive hover:text-destructive"
                 onClick={() => setShowDelete(true)}
               >
-                <RiDeleteBinLine className="mr-2 size-4" />
-                Delete Shift
+                <RiDeleteBinLine className="size-4" />
+                Delete shift
               </Button>
             )}
           </CardContent>
@@ -258,20 +244,15 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
 
       {/* Signups + Attendance */}
       <Card className="lg:col-span-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <RiTeamLine className="size-5 text-primary" />
-                Volunteers ({shift.signups.length})
-              </CardTitle>
-              <CardDescription>
-                {canMarkAttendance
-                  ? "Mark attendance for this shift"
-                  : "Who\u2019s signed up for this shift"}
-              </CardDescription>
-            </div>
-            {canMarkAttendance && unmarkedSignups.length > 1 && (
+        <CardHeader className={shift.signups.length > 0 ? "border-b" : undefined}>
+          <CardTitle>Volunteers ({shift.signups.length})</CardTitle>
+          <CardDescription>
+            {canMarkAttendance
+              ? "Mark attendance for this shift"
+              : "Who’s signed up for this shift"}
+          </CardDescription>
+          {canMarkAttendance && unmarkedSignups.length > 1 && (
+            <CardAction>
               <Button
                 size="sm"
                 variant="outline"
@@ -279,165 +260,96 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                 disabled={isPending}
               >
                 {isPending ? (
-                  <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                  <RiLoader4Line className="size-3.5 animate-spin" />
                 ) : (
-                  <RiCheckDoubleLine className="mr-1.5 size-3.5" />
+                  <RiCheckDoubleLine className="size-3.5" />
                 )}
-                Mark All Attended
+                Mark all attended
               </Button>
-            )}
-          </div>
+            </CardAction>
+          )}
         </CardHeader>
-        <CardContent>
-          {shift.signups.length === 0 ? (
-            <div className="py-8 text-center">
-              <RiUserLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                No volunteers signed up yet
+        {shift.signups.length === 0 ? (
+          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+            <IconChip size="lg">
+              <RiUserLine />
+            </IconChip>
+            <div>
+              <p className="font-serif text-lg font-medium tracking-tight">
+                No one signed up yet
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Volunteers will appear here as they join this shift.
               </p>
             </div>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <div className="hidden sm:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Volunteer</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
-                      {canMarkAttendance && (
-                        <TableHead style={{ textAlign: "right" }}>
-                          Actions
-                        </TableHead>
+          </CardContent>
+        ) : (
+          <ul className="divide-y divide-border">
+            {shift.signups.map((signup) => (
+              <li
+                key={signup.id}
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3"
+              >
+                <Avatar>
+                  <AvatarFallback>
+                    {initials(signup.volunteer.user.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {signup.volunteer.user.name || "—"}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {signup.volunteer.user.email}
+                  </p>
+                </div>
+                <StatusBadge status={signup.status} className="shrink-0" />
+                {canMarkAttendance && signup.status !== "CANCELLED" && (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant={signup.status === "ATTENDED" ? "secondary" : "outline"}
+                      className={
+                        signup.status === "ATTENDED"
+                          ? "bg-success-tint text-success-tint-foreground hover:bg-success-tint/80"
+                          : undefined
+                      }
+                      aria-pressed={signup.status === "ATTENDED"}
+                      disabled={isPending && markingId === signup.id}
+                      onClick={() =>
+                        handleMarkAttendance(signup.id, "ATTENDED")
+                      }
+                    >
+                      {isPending && markingId === signup.id ? (
+                        <RiLoader4Line className="size-3.5 animate-spin" />
+                      ) : (
+                        <RiCheckLine className="size-3.5" />
                       )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {shift.signups.map((signup) => (
-                      <TableRow key={signup.id}>
-                        <TableCell className="font-medium">
-                          {signup.volunteer.user.name || "\u2014"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {signup.volunteer.user.email}
-                        </TableCell>
-                        <TableCell>{statusBadge(signup.status)}</TableCell>
-                        {canMarkAttendance && (
-                          <TableCell style={{ textAlign: "right" }}>
-                            {signup.status !== "CANCELLED" && (
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  size="icon-sm"
-                                  variant={signup.status === "ATTENDED" ? "default" : "ghost"}
-                                  className={
-                                    signup.status === "ATTENDED"
-                                      ? "bg-green-600 text-white hover:bg-green-700"
-                                      : "text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30"
-                                  }
-                                  disabled={isPending && markingId === signup.id}
-                                  onClick={() =>
-                                    handleMarkAttendance(signup.id, "ATTENDED")
-                                  }
-                                  aria-label="Mark attended"
-                                >
-                                  {isPending && markingId === signup.id ? (
-                                    <RiLoader4Line className="size-4 animate-spin" />
-                                  ) : (
-                                    <RiCheckLine className="size-4" />
-                                  )}
-                                </Button>
-                                <Button
-                                  size="icon-sm"
-                                  variant={signup.status === "NO_SHOW" ? "default" : "ghost"}
-                                  className={
-                                    signup.status === "NO_SHOW"
-                                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      : "text-destructive hover:bg-destructive/10"
-                                  }
-                                  disabled={isPending && markingId === signup.id}
-                                  onClick={() =>
-                                    handleMarkAttendance(signup.id, "NO_SHOW")
-                                  }
-                                  aria-label="Mark no show"
-                                >
-                                  <RiCloseLine className="size-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile list */}
-              <div className="space-y-3 sm:hidden">
-                {shift.signups.map((signup) => (
-                  <div
-                    key={signup.id}
-                    className="rounded-md border p-3 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium">
-                          {signup.volunteer.user.name || "\u2014"}
-                        </p>
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <RiMailLine className="size-3" />
-                          {signup.volunteer.user.email}
-                        </p>
-                      </div>
-                      {statusBadge(signup.status)}
-                    </div>
-                    {canMarkAttendance && signup.status !== "CANCELLED" && (
-                      <div className="flex gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          variant={signup.status === "ATTENDED" ? "default" : "outline"}
-                          className={
-                            signup.status === "ATTENDED"
-                              ? "flex-1 bg-green-600 text-white hover:bg-green-700"
-                              : "flex-1 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30"
-                          }
-                          disabled={isPending && markingId === signup.id}
-                          onClick={() =>
-                            handleMarkAttendance(signup.id, "ATTENDED")
-                          }
-                        >
-                          {isPending && markingId === signup.id ? (
-                            <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
-                          ) : (
-                            <RiCheckLine className="mr-1.5 size-3.5" />
-                          )}
-                          Attended
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={signup.status === "NO_SHOW" ? "default" : "outline"}
-                          className={
-                            signup.status === "NO_SHOW"
-                              ? "flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              : "flex-1 text-destructive hover:bg-destructive/10"
-                          }
-                          disabled={isPending && markingId === signup.id}
-                          onClick={() =>
-                            handleMarkAttendance(signup.id, "NO_SHOW")
-                          }
-                        >
-                          <RiCloseLine className="mr-1.5 size-3.5" />
-                          No Show
-                        </Button>
-                      </div>
-                    )}
+                      Attended
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={signup.status === "NO_SHOW" ? "secondary" : "outline"}
+                      className={
+                        signup.status === "NO_SHOW"
+                          ? "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80"
+                          : undefined
+                      }
+                      aria-pressed={signup.status === "NO_SHOW"}
+                      disabled={isPending && markingId === signup.id}
+                      onClick={() =>
+                        handleMarkAttendance(signup.id, "NO_SHOW")
+                      }
+                    >
+                      <RiCloseLine className="size-3.5" />
+                      No show
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       {/* Delete dialog */}
@@ -448,7 +360,7 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
             <AlertDialogDescription>
               This will permanently remove the shift on{" "}
               <strong>{formatDate(shift.date)}</strong> (
-              {shift.serviceArea.name}, {shift.startTime}–{shift.endTime}).
+              {shift.serviceArea.name}, {formatTimeRange(shift.startTime, shift.endTime)}).
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

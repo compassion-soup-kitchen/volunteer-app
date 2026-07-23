@@ -1,26 +1,26 @@
 import type { Metadata } from "next";
-import { Fraunces, Geist_Mono } from "next/font/google";
-import localFont from "next/font/local";
+import { Hanken_Grotesk, Newsreader, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-// UI / body — Mona Sans (the parent brand's grotesque), self-hosted variable font.
-const monaSans = localFont({
-  src: "./fonts/MonaSans.woff2",
-  variable: "--font-mona",
+// UI / body — Hanken Grotesk, the mobile app's clean humanist grotesque.
+const hankenGrotesk = Hanken_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-hanken",
   display: "swap",
-  weight: "200 900",
 });
 
-// Display / voice — Fraunces, a free editorial serif standing in for GT Alpina.
-// opsz axis + auto optical sizing gives the high-contrast elegance at large sizes.
-const fraunces = Fraunces({
+// Display / voice — Newsreader, the literary serif on titles, headings and figures.
+// opsz axis + auto optical sizing gives the high-contrast elegance at large sizes;
+// italics carry pull-quotes.
+const newsreader = Newsreader({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  variable: "--font-newsreader",
   display: "swap",
+  style: ["normal", "italic"],
   axes: ["opsz"],
 });
 
@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${monaSans.variable} ${fraunces.variable} ${geistMono.variable}`}
+      className={`${hankenGrotesk.variable} ${newsreader.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <body className="antialiased">
