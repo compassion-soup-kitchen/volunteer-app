@@ -36,6 +36,10 @@ export type RoleChangeInput = {
   targetIsArchived: boolean;
   // True when the target is the only remaining active ADMIN.
   isTargetLastAdmin: boolean;
+  // Whether the target already has a VolunteerProfile. A PUBLIC user *with* a
+  // profile is a pending applicant (must go through approval); a PUBLIC user
+  // *without* one never applied and can be promoted directly.
+  targetHasProfile: boolean;
 };
 
 /**
@@ -50,16 +54,19 @@ export function validateRoleChange(input: RoleChangeInput): string | null {
     newRole,
     targetIsArchived,
     isTargetLastAdmin,
+    targetHasProfile,
   } = input;
 
   if (!isAssignableRole(newRole)) {
     return "That role can't be assigned.";
   }
-  // A profile whose user is still PUBLIC is a pending applicant — they must go
-  // through approval (which flips them to VOLUNTEER) before any staff role can
-  // be assigned. Otherwise an admin could promote an unvetted applicant
-  // straight to ADMIN, skipping the application / MoJ-vetting / induction flow.
-  if (!isAssignableRole(targetCurrentRole)) {
+  // A PUBLIC user *with* a profile is a pending applicant — they must go through
+  // approval (which flips them to VOLUNTEER) before any staff role can be
+  // assigned. Otherwise an admin could promote an unvetted applicant straight to
+  // ADMIN, skipping the application / MoJ-vetting / induction flow. A PUBLIC user
+  // with *no* profile never applied and can be promoted directly (a profile is
+  // created for them on promotion).
+  if (!isAssignableRole(targetCurrentRole) && targetHasProfile) {
     return "Approve their application before assigning a role.";
   }
   // Archived accounts are blocked from sign-in; changing their role here would

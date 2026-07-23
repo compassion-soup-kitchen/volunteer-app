@@ -395,10 +395,15 @@ export async function reviewApplication(
 // ─── Volunteers Directory ────────────────────────────
 
 export type VolunteerListItem = {
+  // The VolunteerProfile id for applicants; the User id for people who signed in
+  // but never applied (no profile). Both are unique, so it's safe as a React key.
   id: string;
+  // False for people who signed in but never submitted an application — they
+  // have no profile, so status/mojStatus/interests/shifts are absent.
+  hasProfile: boolean;
   phone: string | null;
-  status: string;
-  mojStatus: string;
+  status: string | null;
+  mojStatus: string | null;
   createdAt: Date;
   user: {
     id: string;
@@ -430,40 +435,110 @@ export async function getVolunteersList(
 
   const db = getDb();
 
-  const where: Record<string, unknown> = {};
-  if (filters?.status && filters.status !== "ALL") {
-    where.status = filters.status;
-  }
-
+  const statusFilter = filters?.status ?? "ALL";
   // Default to ACTIVE accounts unless explicitly requested otherwise
   const userStatus = filters?.userStatus ?? "ACTIVE";
+
+  // "No application yet" people are Users with role PUBLIC and no profile. Only
+  // fetch applicants when the status filter isn't narrowed to that pseudo-status,
+  // and only fetch the profile-less bucket for "ALL" or "NO_APPLICATION".
+  const includeApplicants = statusFilter !== "NO_APPLICATION";
+  const includeNoApplication =
+    statusFilter === "ALL" || statusFilter === "NO_APPLICATION";
+
+  const where: Record<string, unknown> = {};
+  if (statusFilter !== "ALL" && statusFilter !== "NO_APPLICATION") {
+    where.status = statusFilter;
+  }
   if (userStatus !== "ALL") {
     where.user = { status: userStatus };
   }
 
-  const volunteers = await db.volunteerProfile.findMany({
-    where,
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    include: {
+  const [profiles, noApplicationUsers] = await Promise.all([
+    includeApplicants
+      ? db.volunteerProfile.findMany({
+          where,
+          orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                status: true,
+                archivedAt: true,
+                archivedReason: true,
+              },
+            },
+            interests: { select: { id: true, name: true } },
+            _count: {
+              select: {
+                shiftSignups: { where: { status: { not: "CANCELLED" } } },
+              },
+            },
+          },
+        })
+      : Promise.resolve([]),
+    includeNoApplication
+      ? db.user.findMany({
+          where: {
+            role: "PUBLIC",
+            volunteerProfile: { is: null },
+            ...(userStatus !== "ALL" ? { status: userStatus } : {}),
+          },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            archivedAt: true,
+            archivedReason: true,
+            createdAt: true,
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const applicantItems: VolunteerListItem[] = profiles.map((p) => ({
+    id: p.id,
+    hasProfile: true,
+    phone: p.phone,
+    status: p.status,
+    mojStatus: p.mojStatus,
+    createdAt: p.createdAt,
+    user: p.user,
+    interests: p.interests,
+    _count: p._count,
+  }));
+
+  const noApplicationItems: VolunteerListItem[] = noApplicationUsers.map(
+    (u) => ({
+      id: u.id,
+      hasProfile: false,
+      phone: null,
+      status: null,
+      mojStatus: null,
+      createdAt: u.createdAt,
       user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          status: true,
-          archivedAt: true,
-          archivedReason: true,
-        },
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        status: u.status,
+        archivedAt: u.archivedAt,
+        archivedReason: u.archivedReason,
       },
-      interests: { select: { id: true, name: true } },
-      _count: {
-        select: {
-          shiftSignups: { where: { status: { not: "CANCELLED" } } },
-        },
-      },
-    },
-  });
+      interests: [],
+      _count: { shiftSignups: 0 },
+    })
+  );
+
+  // Applicants first (in their status/recency order), then the people who signed
+  // in but never applied (most recent first).
+  const volunteers = [...applicantItems, ...noApplicationItems];
 
   if (filters?.search) {
     const q = filters.search.toLowerCase();
@@ -509,23 +584,23 @@ export async function updateVolunteerStatus(
 // ─── Archive / Restore Volunteer Account ─────────────
 
 export async function archiveVolunteer(
-  volunteerId: string,
+  userId: string,
   reason?: string
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await requireStaff();
   if (!session) return { error: "Not authorised." };
 
   const db = getDb();
-  const profile = await db.volunteerProfile.findUnique({
-    where: { id: volunteerId },
-    select: { userId: true },
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
   });
 
-  if (!profile) return { error: "Volunteer not found." };
+  if (!user) return { error: "Volunteer not found." };
 
   try {
     await db.user.update({
-      where: { id: profile.userId },
+      where: { id: user.id },
       data: {
         status: "ARCHIVED",
         archivedAt: new Date(),
@@ -544,22 +619,22 @@ export async function archiveVolunteer(
 }
 
 export async function restoreVolunteer(
-  volunteerId: string
+  userId: string
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await requireStaff();
   if (!session) return { error: "Not authorised." };
 
   const db = getDb();
-  const profile = await db.volunteerProfile.findUnique({
-    where: { id: volunteerId },
-    select: { userId: true },
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
   });
 
-  if (!profile) return { error: "Volunteer not found." };
+  if (!user) return { error: "Volunteer not found." };
 
   try {
     await db.user.update({
-      where: { id: profile.userId },
+      where: { id: user.id },
       data: {
         status: "ACTIVE",
         archivedAt: null,
@@ -580,24 +655,27 @@ export async function restoreVolunteer(
 // ─── Role management (ADMIN only) ────────────────────
 
 export async function updateUserRole(
-  volunteerId: string,
+  userId: string,
   role: string
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await requireAdmin();
   if (!session) return { error: "Not authorised." };
 
   const db = getDb();
-  const profile = await db.volunteerProfile.findUnique({
-    where: { id: volunteerId },
+  const user = await db.user.findUnique({
+    where: { id: userId },
     select: {
-      userId: true,
-      user: { select: { role: true, status: true } },
+      id: true,
+      role: true,
+      status: true,
+      volunteerProfile: { select: { id: true } },
     },
   });
 
-  if (!profile) return { error: "Volunteer not found." };
+  if (!user) return { error: "Volunteer not found." };
 
-  const targetCurrentRole = profile.user.role;
+  const hasProfile = user.volunteerProfile !== null;
+  const targetCurrentRole = user.role;
   const isTargetLastAdmin = isLastActiveAdmin(
     targetCurrentRole,
     await db.user.count({ where: { role: "ADMIN", status: "ACTIVE" } })
@@ -605,11 +683,12 @@ export async function updateUserRole(
 
   const validationError = validateRoleChange({
     actorUserId: session.user!.id,
-    targetUserId: profile.userId,
+    targetUserId: user.id,
     targetCurrentRole,
     newRole: role,
-    targetIsArchived: profile.user.status === "ARCHIVED",
+    targetIsArchived: user.status === "ARCHIVED",
     isTargetLastAdmin,
+    targetHasProfile: hasProfile,
   });
   if (validationError) return { error: validationError };
 
@@ -624,9 +703,19 @@ export async function updateUserRole(
     await db.$transaction(
       async (tx) => {
         await tx.user.update({
-          where: { id: profile.userId },
+          where: { id: user.id },
           data: { role: role as AssignableRole },
         });
+
+        // A person who signed in but never applied has no VolunteerProfile.
+        // Promoting them makes them a full member of the system, so give them a
+        // profile — otherwise the roster, hours, and their own directory row
+        // (all keyed on the profile) would be missing.
+        if (!hasProfile) {
+          await tx.volunteerProfile.create({
+            data: { userId: user.id, status: "ACTIVE" },
+          });
+        }
 
         if (demotingAnAdmin) {
           const remainingAdmins = await tx.user.count({
