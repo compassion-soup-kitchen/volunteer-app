@@ -78,6 +78,7 @@ const STATUS_OPTIONS = [
   { value: "AWAITING_VETTING", label: "Awaiting vetting" },
   { value: "APPROVED_FOR_INDUCTION", label: "Approved for induction" },
   { value: "INACTIVE", label: "Inactive" },
+  { value: "NO_APPLICATION", label: "No application yet" },
 ];
 
 const STATUS_BADGE_VARIANT: Record<
@@ -231,7 +232,7 @@ export function VolunteerDirectory({
   async function handleArchiveConfirm() {
     if (!archiveTarget) return;
     setArchiving(true);
-    const result = await archiveVolunteer(archiveTarget.id, archiveReason);
+    const result = await archiveVolunteer(archiveTarget.user.id, archiveReason);
     setArchiving(false);
     if (result.error) {
       toast.error(result.error);
@@ -246,7 +247,7 @@ export function VolunteerDirectory({
   }
 
   async function handleRestore(volunteer: VolunteerListItem) {
-    const result = await restoreVolunteer(volunteer.id);
+    const result = await restoreVolunteer(volunteer.user.id);
     if (result.error) {
       toast.error(result.error);
       return;
@@ -259,7 +260,7 @@ export function VolunteerDirectory({
     if (!roleTarget) return;
     setChangingRole(true);
     const result = await updateUserRole(
-      roleTarget.volunteer.id,
+      roleTarget.volunteer.user.id,
       roleTarget.newRole
     );
     setChangingRole(false);
@@ -382,22 +383,32 @@ export function VolunteerDirectory({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            STATUS_BADGE_VARIANT[vol.status] || "secondary"
-                          }
-                        >
-                          {STATUS_LABEL[vol.status] || vol.status}
-                        </Badge>
+                        {vol.hasProfile && vol.status ? (
+                          <Badge
+                            variant={
+                              STATUS_BADGE_VARIANT[vol.status] || "secondary"
+                            }
+                          >
+                            {STATUS_LABEL[vol.status] || vol.status}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">No application yet</Badge>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            MOJ_BADGE_VARIANT[vol.mojStatus] || "secondary"
-                          }
-                        >
-                          {MOJ_LABEL[vol.mojStatus] || vol.mojStatus}
-                        </Badge>
+                        {vol.hasProfile && vol.mojStatus ? (
+                          <Badge
+                            variant={
+                              MOJ_BADGE_VARIANT[vol.mojStatus] || "secondary"
+                            }
+                          >
+                            {MOJ_LABEL[vol.mojStatus] || vol.mojStatus}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
@@ -490,16 +501,28 @@ export function VolunteerDirectory({
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    <Badge
-                      variant={STATUS_BADGE_VARIANT[vol.status] || "secondary"}
-                    >
-                      {STATUS_LABEL[vol.status] || vol.status}
-                    </Badge>
-                    <Badge
-                      variant={MOJ_BADGE_VARIANT[vol.mojStatus] || "secondary"}
-                    >
-                      MOJ: {MOJ_LABEL[vol.mojStatus] || vol.mojStatus}
-                    </Badge>
+                    {vol.hasProfile && vol.status ? (
+                      <>
+                        <Badge
+                          variant={
+                            STATUS_BADGE_VARIANT[vol.status] || "secondary"
+                          }
+                        >
+                          {STATUS_LABEL[vol.status] || vol.status}
+                        </Badge>
+                        {vol.mojStatus && (
+                          <Badge
+                            variant={
+                              MOJ_BADGE_VARIANT[vol.mojStatus] || "secondary"
+                            }
+                          >
+                            MOJ: {MOJ_LABEL[vol.mojStatus] || vol.mojStatus}
+                          </Badge>
+                        )}
+                      </>
+                    ) : (
+                      <Badge variant="outline">No application yet</Badge>
+                    )}
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -596,7 +619,13 @@ export function VolunteerDirectory({
                 ? "Admins have full access, including reporting, service areas, and managing everyone's roles. Only grant this to people you trust with the whole system."
                 : roleTarget?.newRole === "COORDINATOR"
                   ? "Coordinators can manage applications, rostering, training, and announcements."
-                  : "This removes their staff access. They'll return to a standard volunteer account."}{" "}
+                  : // Making someone a volunteer is either demoting a staff
+                    // member or adding a not-yet-applied person as a full
+                    // volunteer - the copy differs.
+                    roleTarget?.volunteer.user.role === "COORDINATOR" ||
+                      roleTarget?.volunteer.user.role === "ADMIN"
+                    ? "This removes their staff access. They'll return to a standard volunteer account."
+                    : "This adds them as a full volunteer - they'll be able to sign up for shifts and training. It skips the usual application and vetting, so only do this for people you know."}{" "}
               They&apos;ll need to sign out and back in for the change to take
               effect.
             </AlertDialogDescription>
@@ -651,14 +680,15 @@ function StatusMenu({
 }) {
   const isArchived = volunteer.user.status === "ARCHIVED";
   // Admins can change anyone's role except their own (guards against
-  // self-lockout; the server enforces this too). Pending applicants are still
-  // PUBLIC — they go through application approval, not this control — so only
-  // offer it once they already hold an assignable role.
+  // self-lockout; the server enforces this too). Pending applicants (PUBLIC
+  // *with* a profile) go through application approval, not this control. But
+  // someone who signed in and never applied (PUBLIC, no profile) can be promoted
+  // directly — a profile is created for them on the server.
   const canChangeRole =
     isAdmin &&
     !isArchived &&
     volunteer.user.id !== currentUserId &&
-    isAssignableRole(volunteer.user.role);
+    (isAssignableRole(volunteer.user.role) || !volunteer.hasProfile);
   const roleOptions = ASSIGNABLE_ROLES.filter(
     (r) => r !== volunteer.user.role
   );
@@ -681,16 +711,24 @@ function StatusMenu({
     );
   }
 
-  const availableStatuses = [
-    { value: "ACTIVE", label: "Set Active", icon: RiCheckLine },
-    {
-      value: "APPROVED_FOR_INDUCTION",
-      label: "Approved for Induction",
-      icon: RiShieldCheckLine,
-    },
-    { value: "AWAITING_VETTING", label: "Awaiting Vetting", icon: RiUserLine },
-    { value: "INACTIVE", label: "Set Inactive", icon: RiUserLine },
-  ].filter((s) => s.value !== volunteer.status);
+  // Volunteer-status changes only apply to people who have a profile. Someone
+  // who never applied has no status to move between — promote them instead.
+  const availableStatuses = !volunteer.hasProfile
+    ? []
+    : [
+        { value: "ACTIVE", label: "Set Active", icon: RiCheckLine },
+        {
+          value: "APPROVED_FOR_INDUCTION",
+          label: "Approved for Induction",
+          icon: RiShieldCheckLine,
+        },
+        {
+          value: "AWAITING_VETTING",
+          label: "Awaiting Vetting",
+          icon: RiUserLine,
+        },
+        { value: "INACTIVE", label: "Set Inactive", icon: RiUserLine },
+      ].filter((s) => s.value !== volunteer.status);
 
   return (
     <DropdownMenu>
@@ -720,7 +758,7 @@ function StatusMenu({
         ))}
         {canChangeRole && (
           <>
-            <DropdownMenuSeparator />
+            {availableStatuses.length > 0 && <DropdownMenuSeparator />}
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <RiUserSettingsLine className="mr-2 size-4" />

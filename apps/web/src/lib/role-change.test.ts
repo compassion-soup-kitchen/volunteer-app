@@ -13,6 +13,7 @@ const base: RoleChangeInput = {
   newRole: "COORDINATOR",
   targetIsArchived: false,
   isTargetLastAdmin: false,
+  targetHasProfile: true,
 };
 
 describe("isAssignableRole", () => {
@@ -68,6 +69,27 @@ describe("validateRoleChange", () => {
         newRole: "VOLUNTEER",
       })
     ).toMatch(/approve their application/i);
+  });
+
+  it("allows promoting a never-applied PUBLIC user (no profile) directly", () => {
+    // Someone who signed in but never applied has no profile — staff can turn
+    // them into a volunteer or elevate them straight to admin.
+    expect(
+      validateRoleChange({
+        ...base,
+        targetCurrentRole: "PUBLIC",
+        targetHasProfile: false,
+        newRole: "VOLUNTEER",
+      })
+    ).toBeNull();
+    expect(
+      validateRoleChange({
+        ...base,
+        targetCurrentRole: "PUBLIC",
+        targetHasProfile: false,
+        newRole: "ADMIN",
+      })
+    ).toBeNull();
   });
 
   it("blocks changing an archived account's role", () => {
