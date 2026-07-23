@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getApplicationDetail } from "@/lib/staff-actions";
 import { ApplicationReview } from "./application-review";
 import { PageHeader } from "@/components/brand/page-header";
+import { StatusBadge } from "@/components/brand/status-badge";
 
 export const metadata: Metadata = {
   title: "Review Application | Te Pūaroha",
@@ -28,6 +29,8 @@ export default async function ApplicationDetailPage({
         backHref="/staff/applications"
         eyebrow="Arotake tono · Application review"
         title={application.volunteer.user.name || "Unnamed applicant"}
+        description={application.volunteer.user.email}
+        actions={<StatusBadge status={application.status} className="text-sm" />}
       />
 
       <ApplicationReview application={application} />

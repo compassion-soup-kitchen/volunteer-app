@@ -3,20 +3,19 @@
 import { useState, useTransition } from "react";
 import {
   Card,
+  CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { StatFigure } from "@/components/brand/stat-figure";
 import {
-  RiCheckLine,
-  RiAlertLine,
-  RiCloseLine,
   RiEditLine,
   RiSaveLine,
   RiLoader4Line,
@@ -32,6 +31,17 @@ const TYPE_LABELS: Record<string, string> = {
   VOLUNTEER_APPLICATION: "Volunteer Application Agreement",
   POLICIES: "General Policies",
 };
+
+function initials(name: string) {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]!.toUpperCase())
+      .join("") || "?"
+  );
+}
 
 export function AgreementDetailView({
   detail,
@@ -65,29 +75,29 @@ export function AgreementDetailView({
     <div className="space-y-6">
       {/* Template Card */}
       <Card>
-        <CardHeader className="flex-row items-start justify-between gap-4">
-          <div>
-            <CardTitle>
-              {TYPE_LABELS[detail.agreementType] || detail.title}
-            </CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Current version: {detail.version} · Updated{" "}
-              {new Date(detail.updatedAt).toLocaleDateString("en-NZ", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </p>
-          </div>
+        <CardHeader>
+          <CardTitle>
+            {TYPE_LABELS[detail.agreementType] || detail.title}
+          </CardTitle>
+          <CardDescription>
+            Current version: {detail.version} · Updated{" "}
+            {new Date(detail.updatedAt).toLocaleDateString("en-NZ", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </CardDescription>
           {!editing && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditing(true)}
-            >
-              <RiEditLine className="mr-1.5 size-3.5" />
-              Edit
-            </Button>
+            <CardAction>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing(true)}
+              >
+                <RiEditLine className="size-3.5" />
+                Edit
+              </Button>
+            </CardAction>
           )}
         </CardHeader>
         <CardContent>
@@ -116,7 +126,7 @@ export function AgreementDetailView({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="content">Agreement Content</Label>
+                <Label htmlFor="content">Agreement content</Label>
                 <Textarea
                   id="content"
                   value={content}
@@ -128,11 +138,11 @@ export function AgreementDetailView({
               <div className="flex gap-2">
                 <Button onClick={handleSave} disabled={isPending}>
                   {isPending ? (
-                    <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                    <RiLoader4Line className="size-3.5 animate-spin" />
                   ) : (
-                    <RiSaveLine className="mr-1.5 size-3.5" />
+                    <RiSaveLine className="size-3.5" />
                   )}
-                  Save Changes
+                  Save changes
                 </Button>
                 <Button
                   variant="ghost"
@@ -149,7 +159,7 @@ export function AgreementDetailView({
               </div>
             </div>
           ) : (
-            <div className="max-h-64 overflow-y-auto rounded-md border border-border bg-muted/30 p-4 text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="max-h-64 overflow-y-auto rounded-md bg-muted p-4 text-sm/relaxed whitespace-pre-wrap">
               {detail.content}
             </div>
           )}
@@ -159,81 +169,90 @@ export function AgreementDetailView({
       {/* Signing Status */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Signing Status</CardTitle>
+          <CardTitle>Signing status</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           {/* Summary */}
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-1.5">
-              <RiCheckLine className="size-4 text-green-600" />
-              <span className="text-sm font-medium">
-                {signedCurrent.length} signed (v{detail.version})
-              </span>
+          <div className="flex flex-wrap gap-x-8 gap-y-3">
+            <div>
+              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                Signed v{detail.version}
+              </p>
+              <StatFigure
+                size="md"
+                value={signedCurrent.length}
+                className="mt-1"
+              />
             </div>
             {signedOutdated.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <RiAlertLine className="size-4 text-amber-600" />
-                <span className="text-sm font-medium">
-                  {signedOutdated.length} outdated
-                </span>
+              <div>
+                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  Outdated
+                </p>
+                <StatFigure
+                  size="md"
+                  value={signedOutdated.length}
+                  className="mt-1"
+                />
               </div>
             )}
             {unsigned.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <RiCloseLine className="size-4 text-muted-foreground" />
-                <span className="text-sm font-medium">
-                  {unsigned.length} not signed
-                </span>
+              <div>
+                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  Not signed
+                </p>
+                <StatFigure
+                  size="md"
+                  value={unsigned.length}
+                  className="mt-1"
+                />
               </div>
             )}
           </div>
+        </CardContent>
 
-          <Separator />
-
-          {/* Volunteer list */}
-          <div className="space-y-2">
+        {/* Volunteer list */}
+        <div className="border-t border-border">
+          <ul className="divide-y divide-border">
             {detail.volunteers.map((vol) => (
-              <div
-                key={vol.id}
-                className="flex items-center justify-between rounded-md border border-border p-3"
-              >
-                <div>
-                  <p className="text-sm font-medium">{vol.userName}</p>
-                  <p className="text-xs text-muted-foreground">
+              <li key={vol.id} className="flex items-center gap-3 px-5 py-3">
+                <span
+                  aria-hidden
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground"
+                >
+                  {initials(vol.userName)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {vol.userName}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
                     {vol.userEmail}
                   </p>
                 </div>
                 {vol.isCurrent ? (
-                  <Badge
-                    variant="outline"
-                    className="text-xs text-green-600 border-green-200"
-                  >
-                    <RiCheckLine className="mr-1 size-3" />
-                    v{vol.signedVersion}
-                  </Badge>
+                  <StatusBadge
+                    status="COMPLETED"
+                    label={`Signed v${vol.signedVersion}`}
+                  />
                 ) : vol.signedVersion ? (
-                  <Badge
-                    variant="outline"
-                    className="text-xs text-amber-600 border-amber-200"
-                  >
-                    <RiAlertLine className="mr-1 size-3" />
-                    v{vol.signedVersion} (outdated)
-                  </Badge>
+                  <StatusBadge
+                    status="PENDING"
+                    label={`v${vol.signedVersion} · outdated`}
+                  />
                 ) : (
-                  <Badge variant="outline" className="text-xs">
-                    Not signed
-                  </Badge>
+                  <StatusBadge status="NOT_STARTED" label="Not signed" />
                 )}
-              </div>
+              </li>
             ))}
+          </ul>
 
-            {detail.volunteers.length === 0 && (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                No active volunteers
-              </p>
-            )}
-          </div>
-        </CardContent>
+          {detail.volunteers.length === 0 && (
+            <p className="px-5 py-6 text-center text-sm text-muted-foreground">
+              No active volunteers
+            </p>
+          )}
+        </div>
       </Card>
     </div>
   );

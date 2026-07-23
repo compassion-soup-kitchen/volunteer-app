@@ -44,10 +44,11 @@ export function HoursChart({ data }: { data: HoursByServiceArea[] }) {
           axisLine={false}
         />
         <Tooltip
+          cursor={{ fill: "var(--secondary)", opacity: 0.5 }}
           contentStyle={{
             backgroundColor: "var(--popover)",
             border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
+            borderRadius: 13,
             fontSize: 13,
             color: "var(--popover-foreground)",
           }}

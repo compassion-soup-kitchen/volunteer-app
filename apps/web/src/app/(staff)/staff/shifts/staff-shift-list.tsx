@@ -12,14 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,18 +27,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { DateBlock } from "@/components/brand/date-block";
+import { CapacityMeter } from "@/components/brand/capacity-meter";
+import { Illustration } from "@/components/brand/illustration";
 import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  RiCalendarLine,
   RiMoreLine,
   RiEyeLine,
   RiDeleteBinLine,
   RiFilterLine,
   RiLoader4Line,
-  RiTeamLine,
   RiTimeLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
@@ -56,6 +46,7 @@ import {
   type StaffShift,
   type ShiftFilters,
 } from "@/lib/shift-actions";
+import { formatTimeRange } from "@/lib/format";
 
 interface StaffShiftListProps {
   initialShifts: StaffShift[];
@@ -73,6 +64,12 @@ function formatDate(date: Date): string {
 
 function isPast(date: Date): boolean {
   return new Date(date) < new Date(new Date().toISOString().split("T")[0]);
+}
+
+function isToday(date: Date): boolean {
+  const today = new Date().toISOString().split("T")[0];
+  const shiftDate = new Date(date).toISOString().split("T")[0];
+  return today === shiftDate;
 }
 
 export function StaffShiftList({
@@ -125,11 +122,13 @@ export function StaffShiftList({
     setDeleteTarget(null);
   }
 
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <RiFilterLine className="size-4 text-muted-foreground" />
+        <RiFilterLine aria-hidden className="size-4 text-muted-foreground" />
         <Select value={serviceAreaFilter} onValueChange={handleAreaChange}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="All areas" />
@@ -160,188 +159,114 @@ export function StaffShiftList({
         )}
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden md:block">
-        {shifts.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <RiCalendarLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-              <p className="text-sm font-medium text-muted-foreground">
+      {/* Hairline roster list */}
+      {shifts.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <Illustration name="coffee" size={96} />
+            <div>
+              <p className="font-serif text-lg font-medium tracking-tight">
                 No shifts found
               </p>
-              <p className="mt-1 text-xs text-muted-foreground/70">
-                Try adjusting filters or create a new shift
+              <p className="mt-1 text-sm text-muted-foreground">
+                Adjust the filters or create a new shift.
               </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Service Area</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Signups</TableHead>
-                  <TableHead className="w-[50px]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {shifts.map((shift) => {
-                  const past = isPast(shift.date);
-                  return (
-                    <TableRow
-                      key={shift.id}
-                      className="cursor-pointer"
-                      onClick={() =>
-                        router.push(`/staff/shifts/${shift.id}`)
-                      }
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className={past ? "text-muted-foreground" : ""}>
-                            {formatDate(shift.date)}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <ul className="divide-y divide-border">
+            {shifts.map((shift) => {
+              const past = isPast(shift.date);
+              const today = isToday(shift.date);
+              const shiftYear = new Date(shift.date).getFullYear();
+              return (
+                <li key={shift.id}>
+                  <div
+                    className="flex cursor-pointer items-center gap-4 px-5 py-3.5 transition-colors hover:bg-secondary/40"
+                    onClick={() => router.push(`/staff/shifts/${shift.id}`)}
+                  >
+                    <DateBlock
+                      date={new Date(shift.date)}
+                      className={past ? "opacity-55" : undefined}
+                    />
+                    <span
+                      aria-hidden
+                      className="self-stretch border-l border-border"
+                    />
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="truncate font-serif text-base/snug font-medium tracking-tight">
+                          {shift.serviceArea.name}
+                        </p>
+                        {today && <Badge>Today</Badge>}
+                        {past && <Badge variant="neutral">Past</Badge>}
+                      </div>
+                      <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <RiTimeLine aria-hidden className="size-3.5 shrink-0" />
+                          <span className="tnum">
+                            {formatTimeRange(shift.startTime, shift.endTime)}
                           </span>
-                          {past && (
-                            <Badge variant="secondary" className="text-[10px]">
-                              Past
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{shift.serviceArea.name}</TableCell>
-                      <TableCell className="tabular-nums text-sm">
-                        {shift.startTime}–{shift.endTime}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <RiTeamLine className="size-3.5 text-muted-foreground" />
-                          <span>
-                            {shift.signups.length}/{shift.capacity}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <RiMoreLine className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/staff/shifts/${shift.id}`);
-                              }}
-                            >
-                              <RiEyeLine className="mr-2 size-4" />
-                              View details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteTarget(shift);
-                              }}
-                            >
-                              <RiDeleteBinLine className="mr-2 size-4" />
-                              Delete shift
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile cards */}
-      <div className="space-y-3 md:hidden">
-        {shifts.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <RiCalendarLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-              <p className="text-sm font-medium text-muted-foreground">
-                No shifts found
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          shifts.map((shift) => {
-            const past = isPast(shift.date);
-            return (
-              <Card
-                key={shift.id}
-                className="cursor-pointer active:bg-accent/50 transition-colors"
-                onClick={() => router.push(`/staff/shifts/${shift.id}`)}
-              >
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {shift.serviceArea.name}
+                        </span>
+                        {shiftYear !== currentYear && (
+                          <span className="tnum">{shiftYear}</span>
+                        )}
+                        <span className="tnum sm:hidden">
+                          {shift.signups.length}/{shift.capacity} filled
+                        </span>
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <RiCalendarLine className="size-3.5" />
-                          {formatDate(shift.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <RiTimeLine className="size-3.5" />
-                          {shift.startTime}–{shift.endTime}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <RiTeamLine className="size-3.5" />
-                        {shift.signups.length}/{shift.capacity} signed up
-                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {past && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          Past
-                        </Badge>
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <RiMoreLine className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteTarget(shift);
-                            }}
-                          >
-                            <RiDeleteBinLine className="mr-2 size-4" />
-                            Delete shift
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <div className="hidden shrink-0 flex-col items-end gap-1.5 sm:flex">
+                      <CapacityMeter
+                        filled={shift.signups.length}
+                        capacity={shift.capacity}
+                      />
+                      <span className="text-xs text-muted-foreground tnum">
+                        {shift.signups.length}/{shift.capacity} filled
+                      </span>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Shift actions"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <RiMoreLine className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/staff/shifts/${shift.id}`);
+                          }}
+                        >
+                          <RiEyeLine className="mr-2 size-4" />
+                          View details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(shift);
+                          }}
+                        >
+                          <RiDeleteBinLine className="mr-2 size-4" />
+                          Delete shift
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
 
       {/* Delete confirmation dialog */}
       <AlertDialog
@@ -359,7 +284,7 @@ export function StaffShiftList({
                   on{" "}
                   <strong>{formatDate(deleteTarget.date)}</strong> (
                   {deleteTarget.serviceArea.name},{" "}
-                  {deleteTarget.startTime}–{deleteTarget.endTime})
+                  {formatTimeRange(deleteTarget.startTime, deleteTarget.endTime)})
                 </>
               )}
               . This action cannot be undone.

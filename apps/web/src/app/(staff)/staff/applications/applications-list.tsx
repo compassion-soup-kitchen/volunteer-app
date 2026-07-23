@@ -4,13 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -20,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { IconChip } from "@/components/brand/icon-chip";
 import {
   RiSearchLine,
   RiArrowRightSLine,
@@ -33,29 +29,20 @@ import {
 } from "@/lib/staff-actions";
 
 const STATUS_OPTIONS = [
-  { value: "ALL", label: "All statuses" },
+  { value: "ALL", label: "All" },
   { value: "PENDING", label: "Pending" },
   { value: "APPROVED", label: "Approved" },
   { value: "DECLINED", label: "Declined" },
   { value: "INFO_REQUESTED", label: "Info requested" },
 ];
 
-const STATUS_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  PENDING: "default",
-  APPROVED: "outline",
-  DECLINED: "destructive",
-  INFO_REQUESTED: "secondary",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  DECLINED: "Declined",
-  INFO_REQUESTED: "Info requested",
-};
+function initials(name: string | null | undefined) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase() || "?";
+}
 
 interface ApplicationsListProps {
   initialApplications: ApplicationListItem[];
@@ -92,45 +79,62 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="flex w-full items-center gap-2 border border-input px-2.5 sm:flex-1">
-          <RiSearchLine className="size-3.5 shrink-0 text-muted-foreground" />
+      {/* Search + segmented status filter */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-xs">
+          <RiSearchLine
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <Input
             placeholder="Search by name or email..."
+            aria-label="Search applications by name or email"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full border-0 px-0 focus-visible:ring-0"
+            className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={handleFilterChange}>
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <Tabs
+            value={statusFilter}
+            onValueChange={handleFilterChange}
+            className="min-w-0 max-w-full overflow-x-auto"
+          >
+            <TabsList className="h-9">
+              {STATUS_OPTIONS.map((opt) => (
+                <TabsTrigger key={opt.value} value={opt.value} className="px-2.5 text-xs">
+                  {opt.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <Badge variant="neutral" className="tnum ml-auto shrink-0">
+            {sorted.length} {sorted.length === 1 ? "application" : "applications"}
+          </Badge>
+        </div>
       </div>
 
       {isPending && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RiLoader4Line className="size-4 animate-spin" />
+          <RiLoader4Line className="size-4 animate-spin" aria-hidden />
           Loading...
         </div>
       )}
 
       {sorted.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center">
-            <RiFileListLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">
-              No applications found.
-            </p>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <IconChip size="lg">
+              <RiFileListLine />
+            </IconChip>
+            <div>
+              <p className="font-serif text-lg font-medium tracking-tight">
+                No applications found
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try a different search or status filter.
+              </p>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -138,57 +142,71 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
           {/* Desktop table */}
           <div className="hidden sm:block">
             <Card>
-              <Table>
+              <Table className="[&_td]:px-3 [&_th]:px-3 [&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5">
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="hover:bg-transparent">
                     <TableHead>Applicant</TableHead>
                     <TableHead>Interests</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Submitted</TableHead>
-                    <TableHead className="w-10" />
+                    <TableHead className="w-10">
+                      <span className="sr-only">Open</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sorted.map((app) => (
-                    <TableRow key={app.id} className="group">
+                    <TableRow key={app.id} className="group hover:bg-secondary/40">
                       <TableCell>
                         <Link
                           href={`/staff/applications/${app.id}`}
-                          className="block"
+                          className="flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                         >
-                          <div className="font-medium group-hover:text-primary">
-                            {app.volunteer.user.name || "Unnamed"}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {app.volunteer.user.email}
-                          </div>
+                          <span
+                            aria-hidden
+                            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
+                          >
+                            {initials(app.volunteer.user.name)}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold">
+                              {app.volunteer.user.name || "Unnamed"}
+                            </span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {app.volunteer.user.email}
+                            </span>
+                          </span>
                         </Link>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {app.volunteer.interests.slice(0, 2).map((i) => (
-                            <Badge key={i.id} variant="outline" className="text-[10px]">
+                            <Badge key={i.id} variant="outline">
                               {i.name}
                             </Badge>
                           ))}
                           {app.volunteer.interests.length > 2 && (
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant="neutral" className="tnum">
                               +{app.volunteer.interests.length - 2}
                             </Badge>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={STATUS_BADGE_VARIANT[app.status] || "secondary"}>
-                          {STATUS_LABEL[app.status] || app.status}
-                        </Badge>
+                        <StatusBadge status={app.status} />
                       </TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">
+                      <TableCell className="tnum text-right text-muted-foreground">
                         {format(app.submittedAt, "d MMM yyyy")}
                       </TableCell>
-                      <TableCell>
-                        <Link href={`/staff/applications/${app.id}`}>
-                          <RiArrowRightSLine className="size-4 text-muted-foreground" />
+                      <TableCell className="text-right">
+                        <Link
+                          href={`/staff/applications/${app.id}`}
+                          aria-label={`Review application from ${
+                            app.volunteer.user.name || "unnamed applicant"
+                          }`}
+                          className="inline-flex rounded-sm p-1 text-muted-foreground transition-transform group-hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-ring"
+                        >
+                          <RiArrowRightSLine className="size-4" aria-hidden />
                         </Link>
                       </TableCell>
                     </TableRow>
@@ -198,43 +216,50 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
             </Card>
           </div>
 
-          {/* Mobile cards */}
-          <div className="space-y-3 sm:hidden">
-            {sorted.map((app) => (
-              <Link key={app.id} href={`/staff/applications/${app.id}`}>
-                <Card className="transition-colors hover:border-primary/30">
-                  <CardContent className="py-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium">
+          {/* Mobile hairline list */}
+          <Card className="sm:hidden">
+            <ul className="divide-y divide-border">
+              {sorted.map((app) => (
+                <li key={app.id}>
+                  <Link
+                    href={`/staff/applications/${app.id}`}
+                    className="flex items-start gap-3 px-5 py-3 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                  >
+                    <span
+                      aria-hidden
+                      className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
+                    >
+                      {initials(app.volunteer.user.name)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-semibold">
                           {app.volunteer.user.name || "Unnamed"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {app.volunteer.user.email}
-                        </p>
-                      </div>
-                      <Badge
-                        variant={STATUS_BADGE_VARIANT[app.status] || "secondary"}
-                        className="shrink-0"
-                      >
-                        {STATUS_LABEL[app.status] || app.status}
-                      </Badge>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {app.volunteer.interests.map((i) => (
-                        <Badge key={i.id} variant="outline" className="text-[10px]">
-                          {i.name}
-                        </Badge>
-                      ))}
-                    </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Submitted {formatDistanceToNow(app.submittedAt, { addSuffix: true })}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                        </span>
+                        <StatusBadge status={app.status} className="shrink-0" />
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {app.volunteer.user.email}
+                      </span>
+                      {app.volunteer.interests.length > 0 && (
+                        <span className="mt-2 flex flex-wrap gap-1">
+                          {app.volunteer.interests.map((i) => (
+                            <Badge key={i.id} variant="outline">
+                              {i.name}
+                            </Badge>
+                          ))}
+                        </span>
+                      )}
+                      <span className="mt-2 block text-xs text-muted-foreground">
+                        Submitted{" "}
+                        {formatDistanceToNow(app.submittedAt, { addSuffix: true })}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </>
       )}
     </div>

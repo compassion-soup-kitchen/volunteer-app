@@ -4,7 +4,9 @@ import { useState, useTransition, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { IconChip } from "@/components/brand/icon-chip";
 import {
   Select,
   SelectContent,
@@ -28,7 +30,6 @@ import {
   RiDeleteBinLine,
   RiDownloadLine,
   RiLoader4Line,
-  RiFileLine,
   RiFileTextLine,
 } from "@remixicon/react";
 import {
@@ -40,18 +41,21 @@ import {
 
 const TYPE_LABELS: Record<string, string> = {
   POLICY: "Policy",
-  TRAINING_MATERIAL: "Training Material",
-  ID: "ID Document",
-  MOJ_FORM: "MOJ Form",
-  SIGNED_AGREEMENT: "Signed Agreement",
+  TRAINING_MATERIAL: "Training material",
+  ID: "ID document",
+  MOJ_FORM: "MoJ form",
+  SIGNED_AGREEMENT: "Signed agreement",
 };
 
-const TYPE_COLORS: Record<string, string> = {
-  POLICY: "text-blue-600 border-blue-200",
-  TRAINING_MATERIAL: "text-purple-600 border-purple-200",
-  ID: "text-gray-600 border-gray-200",
-  MOJ_FORM: "text-green-600 border-green-200",
-  SIGNED_AGREEMENT: "text-amber-600 border-amber-200",
+const TYPE_VARIANTS: Record<
+  string,
+  "info" | "default" | "neutral" | "warning"
+> = {
+  POLICY: "info",
+  TRAINING_MATERIAL: "default",
+  ID: "neutral",
+  MOJ_FORM: "neutral",
+  SIGNED_AGREEMENT: "warning",
 };
 
 export function FileManager({ documents }: { documents: UploadedDocument[] }) {
@@ -101,13 +105,13 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
       {/* Upload Form */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Upload Document</CardTitle>
+          <CardTitle>Upload a document</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpload} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="doc-type">Document Type</Label>
+                <Label htmlFor="doc-type">Document type</Label>
                 <Select value={docType} onValueChange={setDocType}>
                   <SelectTrigger id="doc-type">
                     <SelectValue />
@@ -115,29 +119,28 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                   <SelectContent>
                     <SelectItem value="POLICY">Policy</SelectItem>
                     <SelectItem value="TRAINING_MATERIAL">
-                      Training Material
+                      Training material
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="file">File</Label>
-                <input
+                <Input
                   ref={fileRef}
                   id="file"
                   name="file"
                   type="file"
                   accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
                   required
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
                 />
               </div>
             </div>
             <Button type="submit" disabled={uploading} size="sm">
               {uploading ? (
-                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                <RiLoader4Line className="size-3.5 animate-spin" />
               ) : (
-                <RiUploadLine className="mr-1.5 size-3.5" />
+                <RiUploadLine className="size-3.5" />
               )}
               Upload
             </Button>
@@ -147,16 +150,17 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
 
       {/* Document List */}
       {documents.length > 0 ? (
-        <div className="space-y-2">
-          {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="flex items-center justify-between rounded-md border border-border p-3"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <RiFileLine className="size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{doc.fileName}</p>
+        <Card>
+          <ul className="divide-y divide-border">
+            {documents.map((doc) => (
+              <li key={doc.id} className="flex items-center gap-3 px-5 py-3">
+                <IconChip size="sm">
+                  <RiFileTextLine />
+                </IconChip>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {doc.fileName}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(doc.uploadedAt).toLocaleDateString("en-NZ", {
                       day: "numeric",
@@ -166,72 +170,79 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                     {doc.uploadedByName && ` · ${doc.uploadedByName}`}
                   </p>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${TYPE_COLORS[doc.type] || ""}`}
-                >
-                  {TYPE_LABELS[doc.type] || doc.type}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => handleDownload(doc.id, doc.fileName)}
-                  disabled={downloading === doc.id}
-                  aria-label="Download"
-                >
-                  {downloading === doc.id ? (
-                    <RiLoader4Line className="size-3.5 animate-spin" />
-                  ) : (
-                    <RiDownloadLine className="size-3.5" />
-                  )}
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge
+                    variant={TYPE_VARIANTS[doc.type] ?? "neutral"}
+                    className="hidden sm:inline-flex"
+                  >
+                    {TYPE_LABELS[doc.type] || doc.type}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleDownload(doc.id, doc.fileName)}
+                    disabled={downloading === doc.id}
+                    aria-label="Download"
+                  >
+                    {downloading === doc.id ? (
+                      <RiLoader4Line className="size-3.5 animate-spin" />
+                    ) : (
+                      <RiDownloadLine className="size-3.5" />
+                    )}
+                  </Button>
 
-                <AlertDialog
-                  open={deletingId === doc.id}
-                  onOpenChange={(open) => !open && setDeletingId(null)}
-                >
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setDeletingId(doc.id)}
-                      aria-label="Delete"
-                    >
-                      <RiDeleteBinLine className="size-3.5 text-destructive" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Document</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete &ldquo;{doc.fileName}
-                        &rdquo;? This cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(doc.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  <AlertDialog
+                    open={deletingId === doc.id}
+                    onOpenChange={(open) => !open && setDeletingId(null)}
+                  >
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setDeletingId(doc.id)}
+                        aria-label="Delete"
                       >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
-          ))}
-        </div>
+                        <RiDeleteBinLine className="size-3.5 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete document</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete &ldquo;{doc.fileName}
+                          &rdquo;? This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          variant="destructive"
+                          onClick={() => handleDelete(doc.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
       ) : (
         <Card>
-          <CardContent className="py-8 text-center">
-            <RiFileTextLine className="mx-auto size-8 text-muted-foreground/40" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              No files uploaded yet
-            </p>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <IconChip size="lg">
+              <RiFileTextLine />
+            </IconChip>
+            <div>
+              <p className="font-serif text-lg font-medium tracking-tight">
+                No files yet
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Uploaded policies and training material will appear here.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}

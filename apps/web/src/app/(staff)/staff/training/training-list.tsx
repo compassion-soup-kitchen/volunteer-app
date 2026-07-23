@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { DateBlock } from "@/components/brand/date-block";
+import { CapacityMeter } from "@/components/brand/capacity-meter";
+import { SectionHeader } from "@/components/brand/section-header";
+import { Illustration } from "@/components/brand/illustration";
 import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  RiCalendarLine,
-  RiTimeLine,
-  RiTeamLine,
+  RiArrowRightSLine,
   RiMapPinLine,
-  RiGraduationCapLine,
+  RiTimeLine,
 } from "@remixicon/react";
 import type { StaffTrainingSession } from "@/lib/training-actions";
+import { formatTimeRange } from "@/lib/format";
 
 interface TrainingListProps {
   sessions: StaffTrainingSession[];
@@ -33,28 +33,32 @@ const TYPE_VARIANTS: Record<string, "info" | "amber" | "success" | "neutral"> = 
   OTHER: "neutral",
 };
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-NZ", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function isPast(date: Date): boolean {
   return new Date(date) < new Date(new Date().toISOString().split("T")[0]);
+}
+
+function isToday(date: Date): boolean {
+  const today = new Date().toISOString().split("T")[0];
+  const sessionDate = new Date(date).toISOString().split("T")[0];
+  return today === sessionDate;
 }
 
 export function TrainingList({ sessions }: TrainingListProps) {
   if (sessions.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <RiGraduationCapLine className="mx-auto mb-3 size-10 text-muted-foreground/40" />
-        <p className="text-muted-foreground">
-          No training sessions yet. Create one to get started.
-        </p>
-      </div>
+      <Card>
+        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+          <Illustration name="book" size={96} />
+          <div>
+            <p className="font-serif text-lg font-medium tracking-tight">
+              No training sessions yet
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create one to get started.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -62,33 +66,44 @@ export function TrainingList({ sessions }: TrainingListProps) {
   const past = sessions.filter((s) => isPast(s.date));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {upcoming.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Upcoming ({upcoming.length})
-          </h2>
-          {upcoming.map((session) => (
-            <SessionCard key={session.id} session={session} />
-          ))}
-        </div>
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Kei te heke mai"
+            title={`Upcoming (${upcoming.length})`}
+          />
+          <Card>
+            <ul className="divide-y divide-border">
+              {upcoming.map((session) => (
+                <SessionRow key={session.id} session={session} />
+              ))}
+            </ul>
+          </Card>
+        </section>
       )}
 
       {past.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Past ({past.length})
-          </h2>
-          {past.map((session) => (
-            <SessionCard key={session.id} session={session} isPast />
-          ))}
-        </div>
+        <section className="space-y-4">
+          <SectionHeader
+            divider={upcoming.length > 0}
+            eyebrow="Kua hipa"
+            title={`Past (${past.length})`}
+          />
+          <Card>
+            <ul className="divide-y divide-border">
+              {past.map((session) => (
+                <SessionRow key={session.id} session={session} isPast />
+              ))}
+            </ul>
+          </Card>
+        </section>
       )}
     </div>
   );
 }
 
-function SessionCard({
+function SessionRow({
   session,
   isPast: past,
 }: {
@@ -96,42 +111,64 @@ function SessionCard({
   isPast?: boolean;
 }) {
   const activeCount = session.attendances.length;
+  const today = isToday(session.date);
+  const sessionYear = new Date(session.date).getFullYear();
+  const currentYear = new Date().getFullYear();
 
   return (
-    <Link href={`/staff/training/${session.id}`}>
-      <Card className={`transition-colors hover:border-primary/30 ${past ? "opacity-70" : ""}`}>
-        <CardContent className="flex items-center justify-between gap-4 py-4">
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <h3 className="font-medium truncate">{session.title}</h3>
-              <Badge variant={TYPE_VARIANTS[session.type] || "neutral"}>
-                {TYPE_LABELS[session.type] || session.type}
-              </Badge>
-              {past && <Badge variant="secondary">Past</Badge>}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <RiCalendarLine className="size-3.5" />
-                {formatDate(session.date)}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <RiTimeLine className="size-3.5" />
-                <span className="tabular-nums">{session.startTime}–{session.endTime}</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <RiTeamLine className="size-3.5" />
-                {activeCount}/{session.capacity}
-              </span>
-              {session.location && (
-                <span className="flex items-center gap-1.5">
-                  <RiMapPinLine className="size-3.5" />
-                  {session.location}
-                </span>
-              )}
-            </div>
+    <li>
+      <Link
+        href={`/staff/training/${session.id}`}
+        className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+      >
+        <DateBlock
+          date={new Date(session.date)}
+          className={past ? "opacity-55" : undefined}
+        />
+        <span aria-hidden className="self-stretch border-l border-border" />
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="truncate font-serif text-base/snug font-medium tracking-tight">
+              {session.title}
+            </p>
+            <Badge variant={TYPE_VARIANTS[session.type] || "neutral"}>
+              {TYPE_LABELS[session.type] || session.type}
+            </Badge>
+            {today && <Badge>Today</Badge>}
+            {past && <Badge variant="neutral">Past</Badge>}
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <RiTimeLine aria-hidden className="size-3.5 shrink-0" />
+              <span className="tnum">
+                {formatTimeRange(session.startTime, session.endTime)}
+              </span>
+            </span>
+            {sessionYear !== currentYear && (
+              <span className="tnum">{sessionYear}</span>
+            )}
+            {session.location && (
+              <span className="flex min-w-0 items-center gap-1.5">
+                <RiMapPinLine aria-hidden className="size-3.5 shrink-0" />
+                <span className="truncate">{session.location}</span>
+              </span>
+            )}
+            <span className="tnum sm:hidden">
+              {activeCount}/{session.capacity} filled
+            </span>
+          </p>
+        </div>
+        <div className="hidden shrink-0 flex-col items-end gap-1.5 sm:flex">
+          <CapacityMeter filled={activeCount} capacity={session.capacity} />
+          <span className="text-xs text-muted-foreground tnum">
+            {activeCount}/{session.capacity} filled
+          </span>
+        </div>
+        <RiArrowRightSLine
+          aria-hidden
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+        />
+      </Link>
+    </li>
   );
 }

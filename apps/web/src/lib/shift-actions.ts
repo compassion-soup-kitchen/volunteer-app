@@ -134,7 +134,8 @@ export async function getStaffShifts(
         },
       },
     },
-    orderBy: [{ date: "desc" }, { startTime: "asc" }],
+    // Upcoming reads forward from today; past reads back from the most recent.
+    orderBy: [{ date: fromDate ? "asc" : "desc" }, { startTime: "asc" }],
   });
 
   return shifts;

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -11,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StatFigure } from "@/components/brand/stat-figure";
+import { IconChip } from "@/components/brand/icon-chip";
 import { RiLoader4Line, RiRestaurantLine } from "@remixicon/react";
 import { toast } from "sonner";
 import { recordShiftMeals } from "@/lib/shift-actions";
@@ -70,25 +73,35 @@ export function RecordMealsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <RiRestaurantLine className="size-5 text-primary" />
-          Kai served
-        </CardTitle>
+        <CardTitle>Kai served</CardTitle>
         <CardDescription>
           Meals shared with the community on this shift
         </CardDescription>
+        <CardAction>
+          <IconChip tone="brand" size="sm">
+            <RiRestaurantLine />
+          </IconChip>
+        </CardAction>
       </CardHeader>
       <CardContent className="space-y-4">
         {hasRecorded && (
-          <div className="rounded-md border border-border bg-muted/30 p-3">
-            <p className="text-2xl font-semibold tabular-nums">
-              {mealsServed}
+          <div className="rounded-lg bg-muted p-4">
+            <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              Meals shared
             </p>
-            <p className="text-xs text-muted-foreground">
-              {mealsServed === 1 ? "meal" : "meals"} served
-              {mealsRecordedByName ? ` · recorded by ${mealsRecordedByName}` : ""}
-              {mealsRecordedAt ? ` · ${formatRecordedAt(mealsRecordedAt)}` : ""}
-            </p>
+            <StatFigure
+              value={mealsServed}
+              unit={mealsServed === 1 ? "meal" : "meals"}
+              className="mt-1.5"
+            />
+            {(mealsRecordedByName || mealsRecordedAt) && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {mealsRecordedByName
+                  ? `Recorded by ${mealsRecordedByName}`
+                  : "Recorded"}
+                {mealsRecordedAt ? ` · ${formatRecordedAt(mealsRecordedAt)}` : ""}
+              </p>
+            )}
           </div>
         )}
 
@@ -111,7 +124,7 @@ export function RecordMealsCard({
             />
             <Button onClick={handleSave} disabled={isPending}>
               {isPending ? (
-                <RiLoader4Line className="mr-1.5 size-4 animate-spin" />
+                <RiLoader4Line className="size-4 animate-spin" />
               ) : null}
               {hasRecorded ? "Update" : "Save"}
             </Button>

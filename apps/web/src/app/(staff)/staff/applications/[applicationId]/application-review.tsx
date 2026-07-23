@@ -30,6 +30,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { IconChip } from "@/components/brand/icon-chip";
 import {
   RiCheckLine,
   RiCloseLine,
@@ -50,23 +52,6 @@ import {
   updateMojStatus,
   type ApplicationDetail,
 } from "@/lib/staff-actions";
-
-const STATUS_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  PENDING: "default",
-  APPROVED: "outline",
-  DECLINED: "destructive",
-  INFO_REQUESTED: "secondary",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  DECLINED: "Declined",
-  INFO_REQUESTED: "Info requested",
-};
 
 const DAY_LABELS: Record<string, string> = {
   monday: "Mon",
@@ -131,90 +116,96 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     });
   }
 
+  const contactFacts = [
+    { label: "Email", value: vol.user.email, icon: RiMailLine },
+    { label: "Phone", value: vol.phone || "Not provided", icon: RiPhoneLine },
+    { label: "Address", value: vol.address || "Not provided", icon: RiMapPinLine },
+    {
+      label: "Date of birth",
+      value: vol.dateOfBirth
+        ? format(vol.dateOfBirth, "d MMMM yyyy")
+        : "Not provided",
+      icon: RiCalendarLine,
+    },
+  ];
+
+  const emergencyFacts = [
+    { label: "Name", value: vol.emergencyContactName || "Not provided" },
+    { label: "Phone", value: vol.emergencyContactPhone || "Not provided" },
+    {
+      label: "Relationship",
+      value: vol.emergencyContactRelationship || "Not provided",
+    },
+  ];
+
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      {/* Left column — volunteer details */}
+      {/* Left column — the applicant's story */}
       <div className="space-y-4 lg:col-span-2">
-        {/* Contact info */}
+        {/* Contact details */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <RiUserLine className="size-4" />
-              Contact Details
-            </CardTitle>
+            <div className="flex items-center gap-2.5">
+              <IconChip size="sm">
+                <RiUserLine />
+              </IconChip>
+              <CardTitle>Contact details</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            <dl className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs text-muted-foreground">Email</dt>
-                <dd className="flex items-center gap-1.5 text-sm">
-                  <RiMailLine className="size-3.5 text-muted-foreground" />
-                  {vol.user.email}
-                </dd>
+          <dl className="divide-y divide-border border-t border-border">
+            {contactFacts.map((fact) => (
+              <div key={fact.label} className="flex items-center gap-3 px-5 py-3">
+                <IconChip size="sm">
+                  <fact.icon />
+                </IconChip>
+                <div className="min-w-0">
+                  <dt className="eyebrow text-[0.62rem] text-muted-foreground">
+                    {fact.label}
+                  </dt>
+                  <dd className="truncate text-sm font-medium">{fact.value}</dd>
+                </div>
               </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Phone</dt>
-                <dd className="flex items-center gap-1.5 text-sm">
-                  <RiPhoneLine className="size-3.5 text-muted-foreground" />
-                  {vol.phone || "Not provided"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Address</dt>
-                <dd className="flex items-center gap-1.5 text-sm">
-                  <RiMapPinLine className="size-3.5 text-muted-foreground" />
-                  {vol.address || "Not provided"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Date of Birth</dt>
-                <dd className="flex items-center gap-1.5 text-sm">
-                  <RiCalendarLine className="size-3.5 text-muted-foreground" />
-                  {vol.dateOfBirth
-                    ? format(vol.dateOfBirth, "d MMMM yyyy")
-                    : "Not provided"}
-                </dd>
-              </div>
-            </dl>
-          </CardContent>
+            ))}
+          </dl>
         </Card>
 
         {/* Emergency contact */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Emergency Contact</CardTitle>
+            <div className="flex items-center gap-2.5">
+              <IconChip size="sm">
+                <RiPhoneLine />
+              </IconChip>
+              <CardTitle>Emergency contact</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            <dl className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <dt className="text-xs text-muted-foreground">Name</dt>
-                <dd className="text-sm">{vol.emergencyContactName || "—"}</dd>
+          <dl className="divide-y divide-border border-t border-border">
+            {emergencyFacts.map((fact) => (
+              <div key={fact.label} className="flex items-center gap-3 px-5 py-3">
+                <div className="min-w-0">
+                  <dt className="eyebrow text-[0.62rem] text-muted-foreground">
+                    {fact.label}
+                  </dt>
+                  <dd className="truncate text-sm font-medium">{fact.value}</dd>
+                </div>
               </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Phone</dt>
-                <dd className="text-sm">{vol.emergencyContactPhone || "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Relationship</dt>
-                <dd className="text-sm">
-                  {vol.emergencyContactRelationship || "—"}
-                </dd>
-              </div>
-            </dl>
-          </CardContent>
+            ))}
+          </dl>
         </Card>
 
         {/* Interests & skills */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <RiHeartLine className="size-4" />
-              Interests & Skills
-            </CardTitle>
+            <div className="flex items-center gap-2.5">
+              <IconChip size="sm" tone="brand">
+                <RiHeartLine />
+              </IconChip>
+              <CardTitle>Interests &amp; skills</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4 border-t border-border pt-4">
             <div>
-              <p className="mb-1.5 text-xs text-muted-foreground">
+              <p className="eyebrow mb-1.5 text-[0.62rem] text-muted-foreground">
                 Service area interests
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -230,7 +221,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
               </div>
             </div>
             <div>
-              <p className="mb-1.5 text-xs text-muted-foreground">Skills</p>
+              <p className="eyebrow mb-1.5 text-[0.62rem] text-muted-foreground">
+                Skills
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {vol.skills.length > 0 ? (
                   vol.skills.map((s) => (
@@ -245,7 +238,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             </div>
             {vol.bio && (
               <div>
-                <p className="mb-1 text-xs text-muted-foreground">
+                <p className="eyebrow mb-1 text-[0.62rem] text-muted-foreground">
                   About themselves
                 </p>
                 <p className="text-sm">{vol.bio}</p>
@@ -258,17 +251,24 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         {availability && Object.keys(availability).length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Availability</CardTitle>
+              <div className="flex items-center gap-2.5">
+                <IconChip size="sm">
+                  <RiCalendarLine />
+                </IconChip>
+                <CardTitle>Availability</CardTitle>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <CardContent className="border-t border-border pt-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {Object.entries(DAY_LABELS).map(([key, label]) => {
                   const times = availability[key];
                   if (!times || times.length === 0) return null;
                   return (
                     <div key={key}>
-                      <p className="text-xs font-medium">{label}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
+                      <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                        {label}
+                      </p>
+                      <p className="text-sm font-medium capitalize">
                         {times.join(", ")}
                       </p>
                     </div>
@@ -279,61 +279,58 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
           </Card>
         )}
 
-        {/* Agreements */}
+        {/* Signed agreements */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <RiShieldCheckLine className="size-4" />
-              Signed Agreements
-            </CardTitle>
+            <div className="flex items-center gap-2.5">
+              <IconChip size="sm" tone="success">
+                <RiShieldCheckLine />
+              </IconChip>
+              <CardTitle>Signed agreements</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            {vol.signedAgreements.length > 0 ? (
-              <div className="space-y-2">
-                {vol.signedAgreements.map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                  >
-                    <span>
-                      {a.agreementType
-                        .replace(/_/g, " ")
-                        .toLowerCase()
-                        .replace(/\b\w/g, (c) => c.toUpperCase())}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(a.signedAt, "d MMM yyyy")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
+          {vol.signedAgreements.length > 0 ? (
+            <ul className="divide-y divide-border border-t border-border">
+              {vol.signedAgreements.map((a) => (
+                <li key={a.id} className="flex items-center gap-3 px-5 py-3">
+                  <IconChip size="sm" tone="success">
+                    <RiCheckLine />
+                  </IconChip>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {a.agreementType
+                      .replace(/_/g, " ")
+                      .toLowerCase()
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </span>
+                  <span className="tnum shrink-0 text-xs text-muted-foreground">
+                    {format(a.signedAt, "d MMM yyyy")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <CardContent className="border-t border-border pt-4">
               <p className="text-sm text-muted-foreground">
                 No agreements signed yet.
               </p>
-            )}
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
       </div>
 
-      {/* Right column — actions */}
+      {/* Right column — status & actions */}
       <div className="space-y-4">
         {/* Status card */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Application Status</CardTitle>
+            <CardTitle>Application status</CardTitle>
             <CardDescription>
               Submitted{" "}
               {format(application.submittedAt, "d MMM yyyy 'at' h:mm a")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Badge
-              variant={STATUS_BADGE_VARIANT[application.status] || "secondary"}
-              className="text-sm"
-            >
-              {STATUS_LABEL[application.status] || application.status}
-            </Badge>
+            <StatusBadge status={application.status} className="text-sm" />
 
             {application.reviewedAt && application.reviewedBy && (
               <p className="text-xs text-muted-foreground">
@@ -344,10 +341,10 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
           </CardContent>
         </Card>
 
-        {/* MOJ status */}
+        {/* MoJ status */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">MOJ Vetting</CardTitle>
+            <CardTitle>MoJ vetting</CardTitle>
             <CardDescription>
               Ministry of Justice background check
             </CardDescription>
@@ -370,9 +367,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         {/* Notes */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Review Notes</CardTitle>
+            <CardTitle>Review notes</CardTitle>
             <CardDescription>
-              Internal notes — not visible to volunteer
+              Internal only · not visible to the volunteer
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -390,7 +387,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         application.status === "INFO_REQUESTED" ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Decision</CardTitle>
+              <CardTitle>Decision</CardTitle>
               <CardDescription>
                 Take action on this application
               </CardDescription>
@@ -419,7 +416,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                       {isSaving && (
                         <RiLoader4Line className="mr-2 size-4 animate-spin" />
                       )}
-                      Confirm Approval
+                      Confirm approval
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -432,14 +429,14 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                 onClick={() => handleDecision("INFO_REQUESTED")}
               >
                 <RiQuestionLine className="size-4" />
-                Request More Info
+                Request more info
               </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
-                    variant="destructive"
-                    className="w-full"
+                    variant="outline"
+                    className="w-full border-destructive/40 text-destructive hover:bg-destructive-tint hover:text-destructive"
                     disabled={isSaving}
                   >
                     <RiCloseLine className="size-4" />
@@ -463,7 +460,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                       {isSaving && (
                         <RiLoader4Line className="mr-2 size-4 animate-spin" />
                       )}
-                      Confirm Decline
+                      Confirm decline
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -472,8 +469,18 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
           </Card>
         ) : (
           <Card>
-            <CardContent className="py-4">
-              <p className="text-center text-sm text-muted-foreground">
+            <CardContent className="flex items-center gap-3">
+              <IconChip
+                size="sm"
+                tone={application.status === "APPROVED" ? "success" : "destructive"}
+              >
+                {application.status === "APPROVED" ? (
+                  <RiCheckLine />
+                ) : (
+                  <RiCloseLine />
+                )}
+              </IconChip>
+              <p className="text-sm text-muted-foreground">
                 This application has been{" "}
                 {application.status === "APPROVED" ? "approved" : "declined"}.
               </p>

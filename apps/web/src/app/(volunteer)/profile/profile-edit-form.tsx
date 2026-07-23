@@ -78,7 +78,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Edit Your Details</CardTitle>
+        <CardTitle>Edit your details</CardTitle>
         <CardDescription>
           Update your contact and emergency information
         </CardDescription>
@@ -86,9 +86,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
       <CardContent className="space-y-6">
         {/* Contact */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Contact
-          </h3>
+          <h3 className="eyebrow text-muted-foreground">Contact</h3>
           <div className="space-y-2">
             <Label htmlFor="edit-phone">Phone</Label>
             <Input
@@ -109,10 +107,8 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         </div>
 
         {/* Emergency Contact */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Emergency Contact
-          </h3>
+        <div className="space-y-4 border-t border-border pt-6">
+          <h3 className="eyebrow text-muted-foreground">Emergency contact</h3>
           <div className="space-y-2">
             <Label htmlFor="edit-ec-name">Name</Label>
             <Input
@@ -141,10 +137,8 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         </div>
 
         {/* About */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            About You
-          </h3>
+        <div className="space-y-4 border-t border-border pt-6">
+          <h3 className="eyebrow text-muted-foreground">About you</h3>
           <div className="space-y-2">
             <Label htmlFor="edit-bio">Bio</Label>
             <Textarea
@@ -157,7 +151,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
           <Button
             type="button"
             variant="outline"
@@ -182,7 +176,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
             ) : (
               <>
                 <RiCheckLine className="size-4" />
-                Save Changes
+                Save changes
               </>
             )}
           </Button>

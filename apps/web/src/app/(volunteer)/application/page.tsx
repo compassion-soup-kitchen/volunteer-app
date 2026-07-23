@@ -2,15 +2,8 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   RiCheckLine,
   RiTimeLine,
@@ -24,6 +17,8 @@ import {
   getUserApplicationStatus,
 } from "@/lib/application-actions";
 import { PageHeader } from "@/components/brand/page-header";
+import { IconChip } from "@/components/brand/icon-chip";
+import { StatusBadge } from "@/components/brand/status-badge";
 
 export const metadata: Metadata = {
   title: "Volunteer Application | Te Pūaroha",
@@ -32,29 +27,29 @@ export const metadata: Metadata = {
 const STATUS_CONFIG = {
   PENDING: {
     icon: RiTimeLine,
-    label: "Under Review",
-    badgeVariant: "secondary" as const,
+    tone: "warning" as const,
+    cardVariant: "default" as const,
     description:
-      "Your application has been received and is being reviewed by our team. We'll be in touch soon — ngā mihi for your patience.",
+      "Your application has been received and is being reviewed by our team. We'll be in touch soon - ngā mihi for your patience.",
   },
   APPROVED: {
     icon: RiCheckLine,
-    label: "Approved",
-    badgeVariant: "default" as const,
+    tone: "success" as const,
+    cardVariant: "tint" as const,
     description:
-      "Congratulations! Your application has been approved. Welcome to the whānau — you can now sign up for shifts.",
+      "Congratulations! Your application has been approved. Welcome to the whānau - you can now sign up for shifts.",
   },
   DECLINED: {
     icon: RiCloseLine,
-    label: "Declined",
-    badgeVariant: "destructive" as const,
+    tone: "destructive" as const,
+    cardVariant: "default" as const,
     description:
       "Unfortunately, your application was not approved at this time. Please contact us if you have questions.",
   },
   INFO_REQUESTED: {
     icon: RiInformationLine,
-    label: "More Info Needed",
-    badgeVariant: "outline" as const,
+    tone: "info" as const,
+    cardVariant: "default" as const,
     description:
       "We need a bit more information before we can process your application. Please check the notes below.",
   },
@@ -84,43 +79,45 @@ export default async function ApplicationPage() {
           description="Tēnā koe, your application status"
         />
 
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
-              <StatusIcon className="size-6 text-primary" />
+        <Card variant={config.cardVariant} className="rounded-2xl">
+          <CardContent className="flex flex-col items-center gap-4 pt-2 text-center">
+            <IconChip tone={config.tone} size="lg">
+              <StatusIcon />
+            </IconChip>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <h2 className="font-serif text-xl font-medium tracking-tight">
+                  Application status
+                </h2>
+                <StatusBadge status={status} />
+              </div>
+              <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+                {config.description}
+              </p>
             </div>
-            <div className="flex items-center justify-center gap-2">
-              <CardTitle>Application Status</CardTitle>
-              <Badge variant={config.badgeVariant}>{config.label}</Badge>
-            </div>
-            <CardDescription className="mx-auto max-w-sm">
-              {config.description}
-            </CardDescription>
-          </CardHeader>
+          </CardContent>
           {appStatus.applicationNotes && (
             <CardContent>
-              <div className="rounded-md border border-border bg-muted/30 p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">
+              <div className="rounded-lg bg-muted p-4 text-left">
+                <p className="eyebrow text-muted-foreground">
                   Notes from our team
                 </p>
-                <p className="text-sm">{appStatus.applicationNotes}</p>
+                <p className="mt-1.5 text-sm">{appStatus.applicationNotes}</p>
               </div>
             </CardContent>
           )}
-          <CardContent className="pt-0">
-            <div className="flex justify-center gap-3">
-              <Button asChild variant="outline">
-                <Link href="/dashboard">
-                  Back to Dashboard
+          <CardContent className="flex flex-wrap justify-center gap-3 pb-2">
+            <Button asChild variant="outline">
+              <Link href="/dashboard">Back to dashboard</Link>
+            </Button>
+            {status === "APPROVED" && (
+              <Button asChild>
+                <Link href="/shifts">
+                  Browse shifts
                   <RiArrowRightLine className="size-3.5" />
                 </Link>
               </Button>
-              {status === "APPROVED" && (
-                <Button asChild>
-                  <Link href="/shifts">Browse Shifts</Link>
-                </Button>
-              )}
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

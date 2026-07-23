@@ -13,40 +13,49 @@ import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
 import { FormAlert } from "../_components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 
-const DEV_ACCOUNTS = [
+const DEMO_ACCOUNTS = [
   { label: "Admin", email: "admin@soupkitchen.org.nz", password: "admin123!", icon: RiShieldKeyholeLine },
   { label: "Coordinator", email: "coordinator@soupkitchen.org.nz", password: "coord123!", icon: RiUserLine },
   { label: "Volunteer", email: "volunteer@soupkitchen.org.nz", password: "volunteer123!", icon: RiHeartLine },
 ];
 
-export function LoginForm() {
+export function LoginForm({
+  showDemoAccounts = false,
+}: {
+  /** Renders one-click sign-in chips for the seeded demo accounts. Only ever
+   *  true outside production (see login/page.tsx). */
+  showDemoAccounts?: boolean;
+}) {
   const [state, action, pending] = useActionState<AuthState, FormData>(
     login,
     null
   );
+  const formRef = useRef<HTMLFormElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
-  function fillCredentials(email: string, password: string) {
-    if (emailRef.current) emailRef.current.value = email;
-    if (passwordRef.current) passwordRef.current.value = password;
+  function signInAs(email: string, password: string) {
+    if (!emailRef.current || !passwordRef.current) return;
+    emailRef.current.value = email;
+    passwordRef.current.value = password;
+    formRef.current?.requestSubmit();
   }
 
   return (
     <>
-      {/* Seeded demo credentials — statically stripped from production bundles. */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="mb-6 rounded-2xl border border-border bg-secondary/60 p-4">
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Demo accounts · click to fill
+      {showDemoAccounts && (
+        <div className="mb-6 rounded-xl bg-secondary/60 p-4 ring-1 ring-border">
+          <p className="eyebrow mb-2.5 text-muted-foreground">
+            Demo accounts
           </p>
           <div className="flex flex-wrap gap-2">
-            {DEV_ACCOUNTS.map((account) => (
+            {DEMO_ACCOUNTS.map((account) => (
               <button
                 key={account.email}
                 type="button"
-                onClick={() => fillCredentials(account.email, account.password)}
-                className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-foreground ring-1 ring-border transition-colors hover:bg-accent hover:ring-primary/30"
+                disabled={pending}
+                onClick={() => signInAs(account.email, account.password)}
+                className="flex items-center gap-1.5 rounded-md bg-card px-3 py-1.5 text-xs font-medium text-foreground ring-1 ring-border transition-colors hover:bg-primary-tint hover:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
               >
                 <account.icon className="size-3.5 text-muted-foreground" />
                 {account.label}
@@ -56,7 +65,7 @@ export function LoginForm() {
         </div>
       )}
 
-      <form action={action} className="space-y-4">
+      <form ref={formRef} action={action} className="space-y-4">
         {state?.error && <FormAlert>{state.error}</FormAlert>}
 
         <div className="space-y-2">

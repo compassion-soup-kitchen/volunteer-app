@@ -14,8 +14,9 @@ export const metadata: Metadata = {
 
 export default async function StaffShiftsPage() {
   await connection();
+  // Matches the list's default "Upcoming" filter, so the first paint agrees with it.
   const [shifts, serviceAreas] = await Promise.all([
-    getStaffShifts(),
+    getStaffShifts({ fromDate: new Date().toISOString() }),
     getServiceAreas(),
   ]);
 
@@ -29,7 +30,7 @@ export default async function StaffShiftsPage() {
           <Button asChild>
             <Link href="/staff/shifts/new">
               <RiAddLine className="size-4" />
-              New shift
+              Create shift
             </Link>
           </Button>
         }

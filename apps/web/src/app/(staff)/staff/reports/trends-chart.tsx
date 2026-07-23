@@ -36,10 +36,11 @@ export function TrendsChart({ data }: { data: MonthlyTrend[] }) {
           axisLine={false}
         />
         <Tooltip
+          cursor={{ stroke: "var(--border)" }}
           contentStyle={{
             backgroundColor: "var(--popover)",
             border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
+            borderRadius: 13,
             fontSize: 13,
             color: "var(--popover-foreground)",
           }}
@@ -51,9 +52,9 @@ export function TrendsChart({ data }: { data: MonthlyTrend[] }) {
           type="monotone"
           dataKey="hours"
           name="Hours"
-          stroke="var(--primary)"
+          stroke="var(--chart-1)"
           strokeWidth={2}
-          dot={{ r: 3, fill: "var(--primary)" }}
+          dot={{ r: 3, fill: "var(--chart-1)" }}
           activeDot={{ r: 5 }}
         />
         <Line

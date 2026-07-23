@@ -20,9 +20,11 @@ export default async function StaffLayout({
   return (
     <div className="min-h-dvh bg-background">
       <StaffNav user={session.user} />
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:pl-64">
-        {children}
-      </main>
+      <div className="lg:pl-64">
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

@@ -8,19 +8,14 @@ import {
 import { DocumentsView } from "./documents-view";
 import { DownloadableFiles } from "./downloadable-files";
 import { PageHeader } from "@/components/brand/page-header";
+import { SectionHeader } from "@/components/brand/section-header";
 
 export const metadata: Metadata = {
   title: "My Documents | Te Pūaroha",
 };
 
 function DocumentsSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 2 }).map((_, i) => (
-        <Skeleton key={i} className="h-40 w-full" />
-      ))}
-    </div>
-  );
+  return <Skeleton className="h-44 w-full rounded-xl" />;
 }
 
 async function AgreementsContent() {
@@ -35,7 +30,7 @@ async function FilesContent() {
 
 export default function VolunteerDocumentsPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-8 pb-24">
+    <div className="space-y-8 pb-24">
       <PageHeader
         backHref="/dashboard"
         eyebrow="Tuhinga · Documents"
@@ -43,19 +38,21 @@ export default function VolunteerDocumentsPage() {
         description="View agreements and download policies"
       />
 
-      <section className="space-y-3">
-        <h2 className="font-serif text-xl font-normal">Agreements</h2>
-        <Suspense fallback={<DocumentsSkeleton />}>
-          <AgreementsContent />
-        </Suspense>
-      </section>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-10">
+        <section className="min-w-0 space-y-4">
+          <SectionHeader eyebrow="Ngā whakaaetanga" title="Agreements" />
+          <Suspense fallback={<DocumentsSkeleton />}>
+            <AgreementsContent />
+          </Suspense>
+        </section>
 
-      <section className="space-y-3">
-        <h2 className="font-serif text-xl font-normal">Policies &amp; resources</h2>
-        <Suspense fallback={<DocumentsSkeleton />}>
-          <FilesContent />
-        </Suspense>
-      </section>
+        <section className="min-w-0 space-y-4">
+          <SectionHeader eyebrow="Ngā rauemi" title="Policies & resources" />
+          <Suspense fallback={<DocumentsSkeleton />}>
+            <FilesContent />
+          </Suspense>
+        </section>
+      </div>
     </div>
   );
 }

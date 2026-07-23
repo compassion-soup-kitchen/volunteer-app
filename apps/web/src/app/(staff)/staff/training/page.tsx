@@ -16,7 +16,7 @@ function TrainingListSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-24 w-full " />
+        <Skeleton key={i} className="h-24 w-full rounded-xl" />
       ))}
     </div>
   );
@@ -38,7 +38,7 @@ export default function StaffTrainingPage() {
           <Button asChild>
             <Link href="/staff/training/new">
               <RiAddLine className="size-4" />
-              New session
+              Schedule training
             </Link>
           </Button>
         }

@@ -8,9 +8,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Type — Mona Sans (UI), Fraunces (display/voice), Geist Mono (data) */
-  --font-sans: var(--font-mona), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  /* Type — Hanken Grotesk (UI/body), Newsreader (editorial serif), Geist Mono (data) */
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --color-sidebar-ring: var(--sidebar-ring);
@@ -49,70 +49,116 @@
   --color-navy-foreground: var(--navy-foreground);
   --color-ink: var(--ink);
   --color-ink-foreground: var(--ink-foreground);
+  --color-ink-muted-foreground: var(--ink-muted-foreground);
   --color-paper: var(--paper);
+
+  /* Semantic status pairs — solid + tinted pill (bg/fg tuned per theme for AA) */
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-tint: var(--success-tint);
+  --color-success-tint-foreground: var(--success-tint-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-tint: var(--warning-tint);
+  --color-warning-tint-foreground: var(--warning-tint-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-tint: var(--info-tint);
+  --color-info-tint-foreground: var(--info-tint-foreground);
+  --color-destructive-tint: var(--destructive-tint);
+  --color-destructive-tint-foreground: var(--destructive-tint-foreground);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-tint-foreground: var(--primary-tint-foreground);
+  --color-neutral-tint: var(--neutral-tint);
+  --color-neutral-tint-foreground: var(--neutral-tint-foreground);
 
-  --radius-sm: calc(var(--radius) * 0.55);
-  --radius-md: calc(var(--radius) * 0.75);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.35);
-  --radius-2xl: calc(var(--radius) * 1.7);
-  --radius-3xl: calc(var(--radius) * 2.1);
-  --radius-4xl: calc(var(--radius) * 2.5);
+  /* Soft, generous radii mirroring the mobile app (px so the 18px root doesn't scale them) */
+  --radius-sm: 10px;
+  --radius-md: 13px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 28px;
+
+  /* Warm, paper-on-paper shadows — the design is border-led, elevation stays soft */
+  --shadow-2xs: 0 1px 2px rgb(28 18 12 / 0.04);
+  --shadow-xs: 0 1px 2px rgb(28 18 12 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(28 18 12 / 0.05), 0 2px 6px -2px rgb(28 18 12 / 0.06);
+  --shadow-md: 0 6px 20px -10px rgb(28 18 12 / 0.12);
+  --shadow-lg: 0 24px 50px -24px rgb(28 18 12 / 0.18);
+  --shadow-xl: 0 32px 64px -28px rgb(28 18 12 / 0.22);
+  /* The one hero CTA per screen — a soft brand glow, not a heavy halo */
+  --shadow-cta: 0 10px 24px -12px rgb(228 0 43 / 0.35);
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 14px;
 
-  --background: #f1f3f1; /* paper — green-tinted off-white */
-  --foreground: #272b27; /* ink — warm green-black */
+  --background: #fbf7f2; /* warm cream "paper" canvas */
+  --foreground: #1c1815; /* deep cocoa ink */
   --card: #ffffff;
-  --card-foreground: #272b27;
+  --card-foreground: #1c1815;
   --popover: #ffffff;
-  --popover-foreground: #272b27;
+  --popover-foreground: #1c1815;
 
-  --primary: #de0832; /* Pūaroha red */
+  --primary: #e4002b; /* Pūaroha red */
   --primary-foreground: #ffffff;
-  --secondary: #e8ebe8;
-  --secondary-foreground: #272b27;
-  --muted: #e8ebe8;
-  --muted-foreground: #5b605b;
-  --accent: #e8ebe8;
-  --accent-foreground: #272b27;
-  --destructive: #a8071f; /* deeper than brand red, reserved for destructive */
+  --primary-tint: #fcebed;
+  --primary-tint-foreground: #b80022;
+  --secondary: #f0e9e1; /* warm well */
+  --secondary-foreground: #1c1815;
+  --muted: #f0e9e1;
+  --muted-foreground: #6f6459; /* taupe, darkened from mobile's #8A7F76 for AA on cream */
+  --accent: #f0e9e1;
+  --accent-foreground: #1c1815;
+  --destructive: #99161b; /* deep oxblood, kept distinct from the affirmative brand red */
   --destructive-foreground: #ffffff;
+  --destructive-tint: #f7e4e2;
+  --destructive-tint-foreground: #7c1014;
 
-  --border: #e2e4e2;
-  --input: #d4d7d4;
-  --ring: #293e6b; /* Aubert navy focus ring */
+  --border: #ece4dc; /* warm hairline */
+  --input: #e0d6cb;
+  --ring: #293e6b; /* Aubert navy focus ring — site brand, visible on red CTAs */
 
   --navy: #293e6b;
   --navy-foreground: #ffffff;
-  --ink: #272b27;
-  --ink-foreground: #f1f3f1;
-  --paper: #f1f3f1;
-  --success: #2e7d52;
+  --ink: #1c1815; /* dark feature-card surface */
+  --ink-foreground: #fbf7f2;
+  --ink-muted-foreground: rgb(251 247 242 / 0.66);
+  --paper: #fbf7f2;
+
+  --success: #1b7a4b;
   --success-foreground: #ffffff;
+  --success-tint: #e7f3ec;
+  --success-tint-foreground: #176b41;
   --warning: #b26a00;
   --warning-foreground: #ffffff;
+  --warning-tint: #f7ecd6;
+  --warning-tint-foreground: #7a4900;
+  --info: #293e6b;
+  --info-foreground: #ffffff;
+  --info-tint: #e9edf6;
+  --info-tint-foreground: #24365d;
+  --neutral-tint: #ede6dd;
+  --neutral-tint-foreground: #5e5347;
 
-  --chart-1: #de0832;
-  --chart-2: #293e6b;
-  --chart-3: #b26a00;
-  --chart-4: #2e7d52;
-  --chart-5: #9d9fa2;
+  /* Chart ramp — red → ochre → taupe → green → stone */
+  --chart-1: #e4002b;
+  --chart-2: #c8761f;
+  --chart-3: #5e5347;
+  --chart-4: #1b7a4b;
+  --chart-5: #c3b7ac;
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #272b27;
-  --sidebar-primary: #de0832;
+  /* Staff sidebar — a deep "ink" panel against the cream canvas */
+  --sidebar: #1c1815;
+  --sidebar-foreground: rgb(251 247 242 / 0.72);
+  --sidebar-primary: #ff3355; /* brightened red reads on ink */
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fbe6eb; /* red tint for active / hover */
-  --sidebar-accent-foreground: #a8071f;
-  --sidebar-border: #e2e4e2;
-  --sidebar-ring: #293e6b;
+  --sidebar-accent: rgb(251 247 242 / 0.08);
+  --sidebar-accent-foreground: #fbf7f2;
+  --sidebar-border: rgb(251 247 242 / 0.1);
+  --sidebar-ring: #7d97cf;
 
   /* Device chrome — the phone-mockup bezel on marketing surfaces. Decorative
      hardware, intentionally theme-independent (a device shell is dark in both
@@ -131,52 +177,68 @@
 }
 
 .dark {
-  --background: #1a1c1a;
-  --foreground: #f1f3f1;
-  --card: #232622;
-  --card-foreground: #f1f3f1;
-  --popover: #232622;
-  --popover-foreground: #f1f3f1;
+  --background: #171310; /* warm near-black cocoa — the cream palette inverted, never cold */
+  --foreground: #fbf7f2;
+  --card: #241f1a;
+  --card-foreground: #fbf7f2;
+  --popover: #241f1a;
+  --popover-foreground: #fbf7f2;
 
-  --primary: #de0832;
+  --primary: #ff3355;
   --primary-foreground: #ffffff;
-  --secondary: #2c2f2b;
-  --secondary-foreground: #f1f3f1;
-  --muted: #2a2d29;
-  --muted-foreground: #a7aba5;
-  --accent: #2c2f2b;
-  --accent-foreground: #f1f3f1;
-  --destructive: #ff5a6e;
-  --destructive-foreground: #1a1c1a;
+  --primary-tint: rgb(255 51 85 / 0.18);
+  --primary-tint-foreground: #ff94a4;
+  --secondary: #2f2922;
+  --secondary-foreground: #fbf7f2;
+  --muted: #2f2922;
+  --muted-foreground: #b7ac9f;
+  --accent: #2f2922;
+  --accent-foreground: #fbf7f2;
+  --destructive: #ff6a72;
+  --destructive-foreground: #1a1814;
+  --destructive-tint: rgb(255 106 114 / 0.18);
+  --destructive-tint-foreground: #ff9aa1;
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: #6e86c2;
+  --border: rgb(255 255 255 / 0.11);
+  --input: rgb(255 255 255 / 0.18);
+  --ring: #7d97cf;
 
   --navy: #44598c;
   --navy-foreground: #ffffff;
-  --ink: #272b27; /* fixed brand ink across themes */
-  --ink-foreground: #f1f3f1;
-  --paper: #f1f3f1; /* fixed brand paper across themes */
-  --success: #4ea379;
-  --success-foreground: #0d1f15;
-  --warning: #d99a3c;
-  --warning-foreground: #2a1c00;
+  --ink: #0f0c09;
+  --ink-foreground: #fbf7f2;
+  --ink-muted-foreground: rgb(251 247 242 / 0.66);
+  --paper: #fbf7f2; /* fixed brand paper across themes */
 
-  --chart-1: #ff3a5c;
-  --chart-2: #7d97cf;
-  --chart-3: #d99a3c;
-  --chart-4: #4ea379;
-  --chart-5: #9d9fa2;
+  --success: #56b585;
+  --success-foreground: #0a2318;
+  --success-tint: rgb(86 181 133 / 0.18);
+  --success-tint-foreground: #8adcae;
+  --warning: #e0a44c;
+  --warning-foreground: #241803;
+  --warning-tint: rgb(224 164 76 / 0.18);
+  --warning-tint-foreground: #f1c489;
+  --info: #7d97cf;
+  --info-foreground: #101828;
+  --info-tint: rgb(125 151 207 / 0.18);
+  --info-tint-foreground: #b3c4e8;
+  --neutral-tint: rgb(201 188 172 / 0.16);
+  --neutral-tint-foreground: #d8cdbe;
 
-  --sidebar: #232622;
-  --sidebar-foreground: #f1f3f1;
-  --sidebar-primary: #de0832;
+  --chart-1: #ff3355;
+  --chart-2: #e0a44c;
+  --chart-3: #c9bcac;
+  --chart-4: #56b585;
+  --chart-5: #8a7f72;
+
+  --sidebar: #0f0c09;
+  --sidebar-foreground: rgb(251 247 242 / 0.72);
+  --sidebar-primary: #ff3355;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #3a1f26; /* dark red tint */
-  --sidebar-accent-foreground: #ff8a9e;
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #6e86c2;
+  --sidebar-accent: rgb(251 247 242 / 0.08);
+  --sidebar-accent-foreground: #fbf7f2;
+  --sidebar-border: rgb(251 247 242 / 0.1);
+  --sidebar-ring: #7d97cf;
 }
 
 @layer base {
@@ -189,7 +251,7 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* Display face uses optical sizing so big headings get the high-contrast cut */
+  /* Newsreader carries optical sizing — big headings get the high-contrast cut */
   .font-serif {
     font-optical-sizing: auto;
   }
@@ -201,11 +263,12 @@
 
 /* Eyebrow label — tiny uppercase letter-spaced section marker (brand signature).
    Colour is left to a text-* utility (default applied by the Eyebrow component) so
-   callers can override it (e.g. text-primary on a hero, text-paper on dark panels). */
+   callers can override it (e.g. text-muted-foreground for quiet labels, or
+   text-ink-muted-foreground on ink panels). */
 @utility eyebrow {
   font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 

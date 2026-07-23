@@ -25,7 +25,7 @@ export default async function ShiftDetailPage({
       <PageHeader
         backHref="/staff/shifts"
         eyebrow="Te wāhi mahi · Shift"
-        title="Shift details"
+        title={shift.serviceArea.name}
         description="View and manage this shift"
       />
 

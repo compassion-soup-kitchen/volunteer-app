@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/auth-actions", () => ({
   login: vi.fn(),
@@ -51,6 +51,24 @@ describe("<LoginForm />", () => {
     expect(
       screen.queryByRole("button", { name: /resend verification email/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("hides the demo accounts by default", () => {
+    render(<LoginForm />);
+
+    expect(screen.queryByText(/demo accounts/i)).not.toBeInTheDocument();
+  });
+
+  it("signs in as the chosen demo account with one click", async () => {
+    vi.mocked(login).mockResolvedValueOnce(null);
+    render(<LoginForm showDemoAccounts />);
+
+    fireEvent.click(screen.getByRole("button", { name: /admin/i }));
+
+    await waitFor(() => expect(vi.mocked(login)).toHaveBeenCalledTimes(1));
+    const formData = vi.mocked(login).mock.calls[0][1];
+    expect(formData.get("email")).toBe("admin@soupkitchen.org.nz");
+    expect(formData.get("password")).toBe("admin123!");
   });
 
   it("offers a resend button when sign-in failed only because the email is unverified", async () => {

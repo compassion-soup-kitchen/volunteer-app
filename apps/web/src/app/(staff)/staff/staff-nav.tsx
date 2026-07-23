@@ -13,6 +13,7 @@ import {
   RiCalendarLine,
   RiLogoutBoxLine,
   RiMenuLine,
+  RiCloseLine,
   RiMapPinLine,
   RiGraduationCapLine,
   RiFileTextLine,
@@ -22,6 +23,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
+type NavItem = { href: string; label: string; icon: typeof RiDashboardLine };
+type NavGroup = { label: string | null; items: NavItem[] };
+
 export function StaffNav({
   user,
 }: {
@@ -30,57 +34,132 @@ export function StaffNav({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const sidebarItems = [
-    { href: "/staff/dashboard", label: "Dashboard", icon: RiDashboardLine },
+  const groups: NavGroup[] = [
     {
-      href: "/staff/applications",
-      label: "Applications",
-      icon: RiFileListLine,
+      label: null,
+      items: [
+        { href: "/staff/dashboard", label: "Dashboard", icon: RiDashboardLine },
+      ],
     },
-    { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
-    { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
-    { href: "/staff/training", label: "Training", icon: RiGraduationCapLine },
-    { href: "/staff/documents", label: "Documents", icon: RiFileTextLine },
     {
-      href: "/staff/announcements",
-      label: "Announcements",
-      icon: RiMegaphoneLine,
+      label: "Ngā tāngata · People",
+      items: [
+        { href: "/staff/applications", label: "Applications", icon: RiFileListLine },
+        { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
+      ],
     },
-    { href: "/staff/reports", label: "Reports", icon: RiBarChartBoxLine },
-    ...(user.role === "ADMIN"
-      ? [
-          {
-            href: "/staff/service-areas",
-            label: "Service Areas",
-            icon: RiMapPinLine,
-          },
-        ]
-      : []),
+    {
+      label: "Ngā mahi · Operations",
+      items: [
+        { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
+        { href: "/staff/training", label: "Training", icon: RiGraduationCapLine },
+        ...(user.role === "ADMIN"
+          ? [{ href: "/staff/service-areas", label: "Service areas", icon: RiMapPinLine }]
+          : []),
+      ],
+    },
+    {
+      label: "Kōrero · Comms",
+      items: [
+        { href: "/staff/announcements", label: "Announcements", icon: RiMegaphoneLine },
+        { href: "/staff/documents", label: "Documents", icon: RiFileTextLine },
+        { href: "/staff/reports", label: "Reports", icon: RiBarChartBoxLine },
+      ],
+    },
   ];
+
+  const nav = (
+    <nav className="flex-1 overflow-y-auto px-3 py-4">
+      {groups.map((group, gi) => (
+        <div key={group.label ?? gi} className={gi > 0 ? "mt-5" : undefined}>
+          {group.label && (
+            <p className="eyebrow mb-1.5 px-3 text-[0.62rem] text-sidebar-foreground/50">
+              {group.label}
+            </p>
+          )}
+          <ul className="space-y-0.5">
+            {group.items.map((item) => {
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                        : "font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {/* Red mission tick on the active room */}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute inset-y-2 left-0 w-0.5 rounded-full bg-sidebar-primary transition-opacity",
+                        isActive ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <item.icon className="size-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+
+  const footer = (
+    <div className="border-t border-sidebar-border px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">
+            {user.name}
+          </p>
+          <p className="eyebrow text-[0.6rem] text-sidebar-foreground/50">
+            {user.role === "ADMIN" ? "Admin" : "Coordinator"}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center">
+          <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            onClick={() => signOut({ redirectTo: "/" })}
+            aria-label="Sign out"
+          >
+            <RiLogoutBoxLine className="size-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
-      {/* Top bar */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
-        <div className="flex h-14 items-center justify-between px-4 sm:px-6">
+      {/* Top bar (mobile only) */}
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-sm lg:hidden">
+        <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon-sm"
-              className="lg:hidden"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label="Toggle sidebar"
             >
-              <RiMenuLine className="size-5" />
+              {sidebarOpen ? <RiCloseLine className="size-5" /> : <RiMenuLine className="size-5" />}
             </Button>
-            <Link href="/staff/dashboard" aria-label="Te Pūaroha dashboard" className="lg:hidden">
+            <Link href="/staff/dashboard" aria-label="Te Pūaroha dashboard">
               <Wordmark className="h-6" />
             </Link>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {user.name}
-            </span>
+          <div className="flex items-center gap-1.5">
             <ThemeToggle />
             <Button
               variant="ghost"
@@ -94,49 +173,35 @@ export function StaffNav({
         </div>
       </header>
 
-      {/* Sidebar */}
+      {/* Ink sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-dvh w-60 border-r border-sidebar-border bg-sidebar transition-transform lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed left-0 top-0 z-50 flex h-dvh w-64 flex-col bg-sidebar text-sidebar-foreground transition-transform lg:translate-x-0",
+          sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full"
         )}
       >
-        <div className="flex h-14 items-center border-b border-sidebar-border px-5">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-5">
           <Link href="/staff/dashboard" aria-label="Te Pūaroha dashboard" className="shrink-0">
-            <Wordmark className="h-5 w-auto" />
+            <Wordmark tone="white" className="h-5 w-auto" />
           </Link>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <RiCloseLine className="size-4" />
+          </Button>
         </div>
-        <nav className="p-3">
-          <ul className="space-y-1">
-            {sidebarItems.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                    )}
-                  >
-                    <item.icon className="size-4" />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        {nav}
+        {footer}
       </aside>
 
       {/* Sidebar backdrop (mobile) */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-ink/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
