@@ -10,6 +10,7 @@ import {
   getSignedDownloadUrl,
   deleteFile,
 } from "@/lib/storage";
+import { STAFF_ROLES } from "@/lib/role-change";
 import { revalidatePath } from "next/cache";
 
 // ─── Types ──────────────────────────────────────────────
@@ -78,9 +79,13 @@ export async function getAgreementOverview(): Promise<AgreementOverview[]> {
     orderBy: { agreementType: "asc" },
   });
 
-  // Get total active volunteers
+  // Get total active volunteers (excluding staff — a directly-promoted
+  // COORDINATOR/ADMIN shouldn't inflate the re-acknowledgement denominator).
   const totalVolunteers = await db.volunteerProfile.count({
-    where: { status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] } },
+    where: {
+      status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] },
+      user: { role: { notIn: STAFF_ROLES } },
+    },
   });
 
   // Get all signed agreements grouped (ordered so first per volunteer is latest)
@@ -195,8 +200,12 @@ export async function getAgreementDetail(
   if (!template) return null;
 
   // Get all active volunteers with their signing status for this type
+  // (excluding staff, to match the totalVolunteers denominator above).
   const volunteers = await db.volunteerProfile.findMany({
-    where: { status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] } },
+    where: {
+      status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] },
+      user: { role: { notIn: STAFF_ROLES } },
+    },
     select: {
       id: true,
       user: { select: { name: true, email: true } },
