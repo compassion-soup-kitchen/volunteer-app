@@ -22,8 +22,10 @@ import { Prisma, type Role } from "@prisma/client";
 import {
   validateRoleChange,
   isLastActiveAdmin,
+  STAFF_ROLES,
   type AssignableRole,
 } from "./role-change";
+import { resolveVolunteerListBuckets } from "./volunteer-list-filter";
 
 // Thrown inside the role-change transaction to roll back a demotion that would
 // leave zero active admins; caught and mapped to a user-facing message.
@@ -76,7 +78,12 @@ export async function getStaffDashboardStats(): Promise<DashboardStats | null> {
   const [activeVolunteers, pendingApplications, shiftsThisWeek, attendedSignups] =
     await Promise.all([
       db.volunteerProfile.count({
-        where: { status: "ACTIVE", user: { status: "ACTIVE" } },
+        // Exclude staff (COORDINATOR/ADMIN) — they aren't counted as volunteers,
+        // e.g. someone promoted straight to admin who never volunteered.
+        where: {
+          status: "ACTIVE",
+          user: { status: "ACTIVE", role: { notIn: STAFF_ROLES } },
+        },
       }),
       db.application.count({
         where: { status: "PENDING" },
@@ -439,16 +446,14 @@ export async function getVolunteersList(
   // Default to ACTIVE accounts unless explicitly requested otherwise
   const userStatus = filters?.userStatus ?? "ACTIVE";
 
-  // "No application yet" people are Users with role PUBLIC and no profile. Only
-  // fetch applicants when the status filter isn't narrowed to that pseudo-status,
-  // and only fetch the profile-less bucket for "ALL" or "NO_APPLICATION".
-  const includeApplicants = statusFilter !== "NO_APPLICATION";
-  const includeNoApplication =
-    statusFilter === "ALL" || statusFilter === "NO_APPLICATION";
+  // "No application yet" people are Users with role PUBLIC and no profile. The
+  // pure helper decides which groups to query and how to filter applicants.
+  const { includeApplicants, includeNoApplication, applicantStatus } =
+    resolveVolunteerListBuckets(statusFilter);
 
   const where: Record<string, unknown> = {};
-  if (statusFilter !== "ALL" && statusFilter !== "NO_APPLICATION") {
-    where.status = statusFilter;
+  if (applicantStatus) {
+    where.status = applicantStatus;
   }
   if (userStatus !== "ALL") {
     where.user = { status: userStatus };
