@@ -15,6 +15,11 @@ export function isAssignableRole(role: string): role is AssignableRole {
   return (ASSIGNABLE_ROLES as readonly string[]).includes(role);
 }
 
+// Roles that are staff, not volunteers. Used to exclude staff from volunteer
+// counts/reports — a person promoted straight to COORDINATOR/ADMIN (who may
+// never have volunteered) shouldn't inflate volunteer aggregates.
+export const STAFF_ROLES: Role[] = ["COORDINATOR", "ADMIN"];
+
 /**
  * Whether demoting this target would remove the last active admin. Pure so the
  * off-by-one boundary (<= 1) is exercised by unit tests rather than only

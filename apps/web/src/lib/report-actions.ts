@@ -3,6 +3,7 @@
 import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { STAFF_ROLES } from "@/lib/role-change";
 import {
   startOfMonth,
   endOfMonth,
@@ -360,6 +361,10 @@ export async function getOnboardingMetrics(): Promise<OnboardingMetrics | null> 
     }),
     db.volunteerProfile.groupBy({
       by: ["status"],
+      // Exclude staff (COORDINATOR/ADMIN) so directly-promoted staff, who never
+      // went through onboarding, don't skew the funnel. Pending applicants are
+      // still PUBLIC, so they remain counted.
+      where: { user: { role: { notIn: STAFF_ROLES } } },
       _count: true,
     }),
   ]);
@@ -478,7 +483,11 @@ export async function getVolunteerExportData(
     : {};
 
   const volunteers = await db.volunteerProfile.findMany({
-    where: { status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] } },
+    // Exclude staff (COORDINATOR/ADMIN) from the volunteer export.
+    where: {
+      status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] },
+      user: { role: { notIn: STAFF_ROLES } },
+    },
     include: {
       user: { select: { name: true, email: true } },
       shiftSignups: {
