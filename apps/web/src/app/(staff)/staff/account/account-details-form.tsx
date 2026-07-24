@@ -32,7 +32,7 @@ export function AccountDetailsForm({
   );
   const { update } = useSession();
   const router = useRouter();
-  const announced = useRef<string | null>(null);
+  const handled = useRef<AccountDetailsState>(null);
 
   // The name lives in the JWT, which is what the sidebar reads — refresh the
   // session so the new name lands in the chrome without a sign-out. The
@@ -40,12 +40,15 @@ export function AccountDetailsForm({
   // only a payload makes next-auth re-run the jwt callback with
   // `trigger: "update"`. The value itself is ignored there — the callback
   // re-reads the name from the database rather than trusting the client.
+  //
+  // Keyed on the state object rather than the saved name, so re-saving the
+  // same name still confirms instead of silently doing nothing.
   useEffect(() => {
-    if (!state?.savedName || announced.current === state.savedName) return;
-    announced.current = state.savedName;
+    if (!state?.savedName || handled.current === state) return;
+    handled.current = state;
     toast.success("Your details have been saved");
     void update({ name: state.savedName }).then(() => router.refresh());
-  }, [state?.savedName, update, router]);
+  }, [state, update, router]);
 
   return (
     <form action={action} className="space-y-5">

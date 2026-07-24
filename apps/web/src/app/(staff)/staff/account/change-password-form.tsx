@@ -19,15 +19,21 @@ export function ChangePasswordForm() {
     null
   );
   const formRef = useRef<HTMLFormElement>(null);
-  const cleared = useRef<string | null>(null);
+  const handled = useRef<PasswordChangeState>(null);
 
   // Never leave a used password sitting in the DOM.
+  //
+  // Keyed on the state object, not on `state.success` - the action returns the
+  // same literal message every time, so a message-keyed guard would go inert
+  // after the first success and leave the second change's password in the
+  // fields. Each submission produces a fresh state object, so the identity
+  // check fires once per success and never twice for the same one.
   useEffect(() => {
-    if (!state?.success || cleared.current === state.success) return;
-    cleared.current = state.success;
+    if (!state?.success || handled.current === state) return;
+    handled.current = state;
     formRef.current?.reset();
     toast.success("Password updated");
-  }, [state?.success]);
+  }, [state]);
 
   return (
     <form ref={formRef} action={action} className="space-y-5">
