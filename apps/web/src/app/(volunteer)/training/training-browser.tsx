@@ -30,6 +30,7 @@ import {
   type VolunteerTrainingSession,
 } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
+import { formatDateOnly } from "@/lib/date-only";
 
 interface TrainingBrowserProps {
   sessions: VolunteerTrainingSession[];
@@ -52,7 +53,7 @@ const TYPE_VARIANTS: Record<string, BadgeVariant> = {
 };
 
 function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-NZ", {
+  return formatDateOnly(date, {
     weekday: "short",
     day: "numeric",
     month: "short",

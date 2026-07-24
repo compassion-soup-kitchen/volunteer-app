@@ -1,3 +1,5 @@
+import { startOfTodayInAppZone } from "@/lib/date-only";
+
 const shiftDayFormat = new Intl.DateTimeFormat("en-NZ", {
   weekday: "long",
   day: "numeric",
@@ -25,9 +27,8 @@ export type ShiftNotificationDetails = {
 /**
  * Whether an edit moved the when/where of a shift volunteers still care
  * about. Capacity and notes tweaks don't count, and neither do shifts on
- * past days — but a shift later today does. `Shift.date` is date-only,
- * encoded as midnight UTC, so "today" is anchored to the UTC day boundary
- * rather than the server's timezone (which must not change the outcome).
+ * past days — but a shift later today does. "Today" is the day on the
+ * kitchen's own wall calendar (see date-only.ts).
  */
 export function shouldNotifyShiftChange(
   existing: ShiftNotificationDetails,
@@ -40,8 +41,5 @@ export function shouldNotifyShiftChange(
     updated.endTime !== existing.endTime ||
     updated.serviceAreaId !== existing.serviceAreaId;
 
-  const todayUtc = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-  return detailsChanged && updated.date >= todayUtc;
+  return detailsChanged && updated.date >= startOfTodayInAppZone(now);
 }

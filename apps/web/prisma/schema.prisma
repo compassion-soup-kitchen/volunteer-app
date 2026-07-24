@@ -149,6 +149,7 @@ model VolunteerProfile {
   documents           Document[]
   signedAgreements    SignedAgreement[]
   shiftSignups        ShiftSignup[]
+  shiftOffers         ShiftOffer[]
   trainingAttendances TrainingAttendance[]
 }
 
@@ -253,11 +254,38 @@ model Shift {
   mealsServed       Int?
   mealsRecordedAt   DateTime?
   mealsRecordedById String?
+  // Right of first refusal: while this day has not passed and someone still
+  // has a pending offer, only the volunteers offered the shift can take it.
+  offersCloseOn     DateTime? @db.Date
 
   serviceArea     ServiceArea   @relation(fields: [serviceAreaId], references: [id])
   createdBy       User          @relation(fields: [createdById], references: [id])
   mealsRecordedBy User?         @relation("MealsRecordedBy", fields: [mealsRecordedById], references: [id])
   signups         ShiftSignup[]
+  offers          ShiftOffer[]
+}
+
+enum ShiftOfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+/// A shift held for a regular before it opens to everyone — the established
+/// crew gets first refusal, and declining releases the spot early.
+model ShiftOffer {
+  id          String           @id @default(cuid())
+  shiftId     String
+  volunteerId String
+  status      ShiftOfferStatus @default(PENDING)
+  offeredAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  shift     Shift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, volunteerId])
+  @@index([volunteerId, status])
 }
 
 enum SignupStatus {

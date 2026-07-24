@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getServiceAreas } from "@/lib/application-actions";
-import { ShiftForm } from "./shift-form";
+import { getVolunteerOptions } from "@/lib/shift-actions";
+import { ShiftForm } from "../shift-form";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
@@ -10,7 +11,10 @@ export const metadata: Metadata = {
 
 export default async function NewShiftPage() {
   await connection();
-  const serviceAreas = await getServiceAreas();
+  const [serviceAreas, volunteers] = await Promise.all([
+    getServiceAreas(),
+    getVolunteerOptions(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -21,7 +25,7 @@ export default async function NewShiftPage() {
         description="Add a new shift to the roster"
       />
 
-      <ShiftForm serviceAreas={serviceAreas} />
+      <ShiftForm serviceAreas={serviceAreas} volunteers={volunteers} />
     </div>
   );
 }

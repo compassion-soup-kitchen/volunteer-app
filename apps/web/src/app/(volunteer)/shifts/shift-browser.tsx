@@ -9,6 +9,7 @@ import {
   RiCheckLine,
   RiCloseLine,
   RiLoader4Line,
+  RiLockLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -19,10 +20,19 @@ import {
   signUpForShift,
   cancelShiftSignup,
   getAvailableShifts,
+  respondToShiftOffer,
   type ShiftWithDetails,
   type ShiftFilters,
 } from "@/lib/shift-actions";
 import { formatTimeRange } from "@/lib/format";
+import {
+  addDaysToDateOnly,
+  dateOnlyOf,
+  formatDateOnly,
+  parseDateOnly,
+  todayInAppZone,
+} from "@/lib/date-only";
+import { formatHoldUntil } from "@/lib/shift-offers";
 
 interface ShiftBrowserProps {
   initialShifts: ShiftWithDetails[];
@@ -35,36 +45,24 @@ function groupShiftsByDate(
 ): Map<string, ShiftWithDetails[]> {
   const map = new Map<string, ShiftWithDetails[]>();
   for (const shift of shifts) {
-    const key = new Date(shift.date).toISOString().split("T")[0];
+    const key = dateOnlyOf(shift.date);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(shift);
   }
   return map;
 }
 
-function isToday(dateStr: string): boolean {
-  const today = new Date().toISOString().split("T")[0];
-  return dateStr === today;
-}
-
-function isTomorrow(dateStr: string): boolean {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return dateStr === tomorrow.toISOString().split("T")[0];
-}
-
 /** Red overline above the day heading: "Today", "Tomorrow", or the weekday. */
 function dayOverline(dateStr: string): string {
-  if (isToday(dateStr)) return "Today";
-  if (isTomorrow(dateStr)) return "Tomorrow";
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-NZ", {
-    weekday: "long",
-  });
+  const today = todayInAppZone();
+  if (dateStr === today) return "Today";
+  if (dateStr === addDaysToDateOnly(today, 1)) return "Tomorrow";
+  return formatDateOnly(parseDateOnly(dateStr), { weekday: "long" });
 }
 
 /** Serif day heading: "23 July". */
 function dayHeading(dateStr: string): string {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-NZ", {
+  return formatDateOnly(parseDateOnly(dateStr), {
     day: "numeric",
     month: "long",
   });
@@ -90,6 +88,15 @@ export function ShiftBrowser({
     });
   }
 
+  function refresh() {
+    startTransition(async () => {
+      const filters: ShiftFilters = {};
+      if (serviceAreaFilter !== "all") filters.serviceAreaId = serviceAreaFilter;
+      const refreshed = await getAvailableShifts(filters);
+      setShifts(refreshed);
+    });
+  }
+
   async function handleSignUp(shiftId: string) {
     setLoadingShiftId(shiftId);
     const result = await signUpForShift(shiftId);
@@ -97,14 +104,7 @@ export function ShiftBrowser({
       toast.error(result.error);
     } else {
       toast.success("Kia ora! You're signed up for this shift.");
-      // Refresh shifts
-      startTransition(async () => {
-        const filters: ShiftFilters = {};
-        if (serviceAreaFilter !== "all")
-          filters.serviceAreaId = serviceAreaFilter;
-        const refreshed = await getAvailableShifts(filters);
-        setShifts(refreshed);
-      });
+      refresh();
     }
     setLoadingShiftId(null);
   }
@@ -116,13 +116,20 @@ export function ShiftBrowser({
       toast.error(result.error);
     } else {
       toast.success("Signup cancelled.");
-      startTransition(async () => {
-        const filters: ShiftFilters = {};
-        if (serviceAreaFilter !== "all")
-          filters.serviceAreaId = serviceAreaFilter;
-        const refreshed = await getAvailableShifts(filters);
-        setShifts(refreshed);
-      });
+      refresh();
+    }
+    setLoadingShiftId(null);
+  }
+
+  /** Passing on an offer hands the shift to whoever wants it next. */
+  async function handleDeclineOffer(shiftId: string) {
+    setLoadingShiftId(shiftId);
+    const result = await respondToShiftOffer(shiftId, "DECLINE");
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("No worries — we've passed it on.");
+      refresh();
     }
     setLoadingShiftId(null);
   }
@@ -200,10 +207,14 @@ export function ShiftBrowser({
                 const isFull = spotsLeft <= 0;
                 const isSignedUp = shift.userSignupStatus === "SIGNED_UP";
                 const isLoading = loadingShiftId === shift.id;
+                // Held for its regulars: theirs to take, everyone else waits.
+                const offeredToMe =
+                  shift.heldForOffers && shift.userOfferStatus === "PENDING";
+                const heldForOthers = shift.heldForOffers && !offeredToMe;
 
                 return (
                   <Card key={shift.id}>
-                    {isSignedUp && (
+                    {(isSignedUp || offeredToMe) && (
                       // The red mission rail marks the volunteer's own commitment
                       <span
                         aria-hidden
@@ -226,14 +237,40 @@ export function ShiftBrowser({
                             </span>
                           </p>
                         </div>
-                        {isSignedUp && (
+                        {isSignedUp ? (
                           <Badge className="shrink-0">Signed up</Badge>
-                        )}
+                        ) : offeredToMe ? (
+                          <Badge variant="warning" className="shrink-0">
+                            Yours first
+                          </Badge>
+                        ) : heldForOthers ? (
+                          <Badge variant="neutral" className="shrink-0 gap-1">
+                            <RiLockLine aria-hidden className="size-3" />
+                            Held
+                          </Badge>
+                        ) : null}
                       </div>
 
                       {shift.notes && (
                         <p className="line-clamp-2 text-sm text-muted-foreground">
                           {shift.notes}
+                        </p>
+                      )}
+
+                      {offeredToMe && shift.offersCloseOn && (
+                        <p className="rounded-md bg-warning-tint px-3 py-2 text-sm text-warning-tint-foreground">
+                          Held for you until{" "}
+                          {formatHoldUntil(shift.offersCloseOn)}. Let us know
+                          either way and we&apos;ll offer it on if you can&apos;t
+                          make it.
+                        </p>
+                      )}
+
+                      {heldForOthers && shift.offersCloseOn && (
+                        <p className="text-sm text-muted-foreground">
+                          Offered to the regular crew until{" "}
+                          {formatHoldUntil(shift.offersCloseOn)} — open to
+                          everyone after that.
                         </p>
                       )}
 
@@ -267,7 +304,7 @@ export function ShiftBrowser({
                         </div>
 
                         {canSignUp && (
-                          <>
+                          <div className="flex shrink-0 items-center gap-2">
                             {isSignedUp ? (
                               <Button
                                 variant="outline"
@@ -283,20 +320,36 @@ export function ShiftBrowser({
                                 Cancel
                               </Button>
                             ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => handleSignUp(shift.id)}
-                                disabled={isFull || isLoading}
-                              >
-                                {isLoading ? (
-                                  <RiLoader4Line className="mr-1 size-3.5 animate-spin" />
-                                ) : (
-                                  <RiCheckLine className="mr-1 size-3.5" />
+                              <>
+                                {offeredToMe && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleDeclineOffer(shift.id)
+                                    }
+                                    disabled={isLoading}
+                                  >
+                                    Not this time
+                                  </Button>
                                 )}
-                                Sign up
-                              </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSignUp(shift.id)}
+                                  disabled={
+                                    isFull || isLoading || heldForOthers
+                                  }
+                                >
+                                  {isLoading ? (
+                                    <RiLoader4Line className="mr-1 size-3.5 animate-spin" />
+                                  ) : (
+                                    <RiCheckLine className="mr-1 size-3.5" />
+                                  )}
+                                  {offeredToMe ? "Take it" : "Sign up"}
+                                </Button>
+                              </>
                             )}
-                          </>
+                          </div>
                         )}
                       </div>
                     </CardContent>

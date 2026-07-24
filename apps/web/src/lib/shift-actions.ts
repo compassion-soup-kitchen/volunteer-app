@@ -15,10 +15,22 @@ import { revalidatePath } from "next/cache";
 import {
   cancelShiftSignupAsUser,
   getAvailableShiftsForUser,
+  respondToShiftOfferAsUser,
   signUpForShiftAsUser,
   type ShiftFilters,
   type ShiftWithDetails,
 } from "@/lib/data/volunteer-shifts";
+import {
+  isDateOnly,
+  parseDateOnly,
+  safeParseDateOnly,
+  todayInAppZone,
+} from "@/lib/date-only";
+import {
+  formatHoldUntil,
+  resolveOfferWindow,
+  type OfferStatus,
+} from "@/lib/shift-offers";
 
 export type {
   ShiftWithDetails,
@@ -34,6 +46,7 @@ export type StaffShift = {
   endTime: string;
   capacity: number;
   notes: string | null;
+  offersCloseOn: Date | null;
   serviceArea: { id: string; name: string };
   createdBy: { name: string | null };
   mealsServed: number | null;
@@ -47,6 +60,22 @@ export type StaffShift = {
       user: { name: string | null; email: string };
     };
   }[];
+  offers: {
+    id: string;
+    status: OfferStatus;
+    respondedAt: Date | null;
+    volunteer: {
+      id: string;
+      user: { name: string | null; email: string };
+    };
+  }[];
+};
+
+/** A volunteer who can be offered a shift, for the first-refusal picker. */
+export type VolunteerOption = {
+  id: string;
+  name: string;
+  email: string;
 };
 
 // ─── Volunteer Actions ──────────────────────────────────
@@ -83,6 +112,19 @@ export async function cancelShiftSignup(
   return cancelShiftSignupAsUser(session.user.id, shiftId);
 }
 
+/** Answer a shift offered to you ahead of everyone else. */
+export async function respondToShiftOffer(
+  shiftId: string,
+  response: "ACCEPT" | "DECLINE"
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "You must be signed in." };
+  }
+
+  return respondToShiftOfferAsUser(session.user.id, shiftId, response);
+}
+
 // ─── Staff Actions ──────────────────────────────────────
 
 export async function getStaffShifts(
@@ -99,8 +141,10 @@ export async function getStaffShifts(
 
   const db = getDb();
 
-  const fromDate = filters?.fromDate ? new Date(filters.fromDate) : undefined;
-  const toDate = filters?.toDate ? new Date(filters.toDate) : undefined;
+  const fromDate = filters?.fromDate
+    ? safeParseDateOnly(filters.fromDate)
+    : null;
+  const toDate = filters?.toDate ? safeParseDateOnly(filters.toDate) : null;
 
   const shifts = await db.shift.findMany({
     where: {
@@ -133,12 +177,53 @@ export async function getStaffShifts(
           },
         },
       },
+      offers: {
+        select: {
+          id: true,
+          status: true,
+          respondedAt: true,
+          volunteer: {
+            select: {
+              id: true,
+              user: { select: { name: true, email: true } },
+            },
+          },
+        },
+        orderBy: { offeredAt: "asc" },
+      },
     },
     // Upcoming reads forward from today; past reads back from the most recent.
     orderBy: [{ date: fromDate ? "asc" : "desc" }, { startTime: "asc" }],
   });
 
   return shifts;
+}
+
+/**
+ * Active volunteers, for the first-refusal picker. Only people who can
+ * actually take a shift are offerable.
+ */
+export async function getVolunteerOptions(): Promise<VolunteerOption[]> {
+  const session = await auth();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
+  ) {
+    return [];
+  }
+
+  const db = getDb();
+  const profiles = await db.volunteerProfile.findMany({
+    where: { status: "ACTIVE", user: { status: "ACTIVE" } },
+    select: { id: true, user: { select: { name: true, email: true } } },
+    orderBy: { user: { name: "asc" } },
+  });
+
+  return profiles.map((profile) => ({
+    id: profile.id,
+    name: profile.user.name?.trim() || profile.user.email,
+    email: profile.user.email,
+  }));
 }
 
 export async function getShiftDetail(shiftId: string): Promise<StaffShift | null> {
@@ -170,21 +255,146 @@ export async function getShiftDetail(shiftId: string): Promise<StaffShift | null
         },
         orderBy: { signedUpAt: "asc" },
       },
+      offers: {
+        select: {
+          id: true,
+          status: true,
+          respondedAt: true,
+          volunteer: {
+            select: {
+              id: true,
+              user: { select: { name: true, email: true } },
+            },
+          },
+        },
+        orderBy: { offeredAt: "asc" },
+      },
     },
   });
 }
 
-export type CreateShiftData = {
+/** Everything the create and edit forms send. Dates are calendar days. */
+export type ShiftFormData = {
   serviceAreaId: string;
-  date: string; // ISO
+  date: string; // YYYY-MM-DD
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   capacity: number;
   notes?: string;
+  /** VolunteerProfile ids offered the shift ahead of everyone else. */
+  offeredVolunteerIds?: string[];
+  /** Calendar day that offer is held through, or null for no first refusal. */
+  offersCloseOn?: string | null;
 };
 
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const shiftInput = z
+  .object({
+    serviceAreaId: z.string().min(1, "Please select a service area."),
+    date: z.string().refine(isDateOnly, "Please select a date."),
+    startTime: z.string().regex(TIME_PATTERN, "Start time is required."),
+    endTime: z.string().regex(TIME_PATTERN, "End time is required."),
+    capacity: z
+      .number()
+      .int("Capacity must be a whole number.")
+      .min(1, "Capacity must be at least 1.")
+      .max(50, "Capacity can't be more than 50."),
+    notes: z.string().trim().max(2000).optional(),
+    offeredVolunteerIds: z.array(z.string().min(1)).max(50).optional(),
+    offersCloseOn: z
+      .string()
+      .refine(isDateOnly, "Please choose the day the offer is held until.")
+      .nullish(),
+  })
+  .refine((data) => data.startTime < data.endTime, {
+    message: "End time must be after start time.",
+    path: ["endTime"],
+  });
+
+/** The first error zod found, in the wording the form shows inline. */
+function firstIssue(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Please check the details and try again.";
+}
+
+type ParsedShift = {
+  serviceAreaId: string;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+  notes: string | null;
+  offersCloseOn: Date | null;
+  offeredVolunteerIds: string[];
+};
+
+/** Validates a form payload and turns its calendar days into stored dates. */
+function parseShiftForm(
+  data: ShiftFormData
+): { ok: true; value: ParsedShift } | { ok: false; error: string } {
+  const parsed = shiftInput.safeParse(data);
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+
+  const window = resolveOfferWindow({
+    shiftDate: parsed.data.date,
+    offersCloseOn: parsed.data.offersCloseOn ?? null,
+    volunteerIds: parsed.data.offeredVolunteerIds ?? [],
+    today: todayInAppZone(),
+  });
+  if (!window.ok) return { ok: false, error: window.error };
+
+  return {
+    ok: true,
+    value: {
+      serviceAreaId: parsed.data.serviceAreaId,
+      date: parseDateOnly(parsed.data.date),
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime,
+      capacity: parsed.data.capacity,
+      notes: parsed.data.notes || null,
+      offersCloseOn: window.offersCloseOn
+        ? parseDateOnly(window.offersCloseOn)
+        : null,
+      offeredVolunteerIds: window.volunteerIds,
+    },
+  };
+}
+
+/** Tells the named volunteers a shift is theirs first, if they want it. */
+function notifyOffered(
+  volunteerIds: string[],
+  shift: {
+    id: string;
+    date: Date;
+    startTime: string;
+    endTime: string;
+    offersCloseOn: Date | null;
+    serviceArea: { name: string };
+  }
+) {
+  if (volunteerIds.length === 0 || !shift.offersCloseOn) return;
+  const holdUntil = formatHoldUntil(shift.offersCloseOn);
+
+  after(async () => {
+    const db = getDb();
+    const profiles = await db.volunteerProfile.findMany({
+      where: { id: { in: volunteerIds } },
+      select: { userId: true },
+    });
+
+    await sendPushToUsers(
+      profiles.map((profile) => profile.userId),
+      {
+        title: "A shift is being held for you",
+        body: `${shift.serviceArea.name} on ${formatShiftDay(shift.date)}, ${shift.startTime}–${shift.endTime}. Yours until ${holdUntil}.`,
+        data: { url: `/shift/${shift.id}` },
+      }
+    );
+  });
+}
+
 export async function createShift(
-  data: CreateShiftData
+  data: ShiftFormData
 ): Promise<{ error?: string; success?: boolean; shiftId?: string }> {
   const session = await auth();
   if (
@@ -194,32 +404,25 @@ export async function createShift(
     return { error: "Not authorised." };
   }
 
-  if (!data.serviceAreaId || !data.date || !data.startTime || !data.endTime) {
-    return { error: "All fields are required." };
-  }
-
-  if (data.capacity < 1) {
-    return { error: "Capacity must be at least 1." };
-  }
-
-  if (data.startTime >= data.endTime) {
-    return { error: "End time must be after start time." };
-  }
+  const parsed = parseShiftForm(data);
+  if (!parsed.ok) return { error: parsed.error };
+  const { offeredVolunteerIds, ...fields } = parsed.value;
 
   const db = getDb();
 
   try {
     const shift = await db.shift.create({
       data: {
-        serviceAreaId: data.serviceAreaId,
-        date: new Date(data.date),
-        startTime: data.startTime,
-        endTime: data.endTime,
-        capacity: data.capacity,
-        notes: data.notes || null,
+        ...fields,
         createdById: session.user.id,
+        offers: {
+          create: offeredVolunteerIds.map((volunteerId) => ({ volunteerId })),
+        },
       },
+      include: { serviceArea: { select: { name: true } } },
     });
+
+    notifyOffered(offeredVolunteerIds, shift);
 
     revalidatePath("/staff/shifts");
     revalidatePath("/shifts");
@@ -231,7 +434,7 @@ export async function createShift(
 
 export async function updateShift(
   shiftId: string,
-  data: Partial<CreateShiftData>
+  data: ShiftFormData
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await auth();
   if (
@@ -241,13 +444,9 @@ export async function updateShift(
     return { error: "Not authorised." };
   }
 
-  if (data.startTime && data.endTime && data.startTime >= data.endTime) {
-    return { error: "End time must be after start time." };
-  }
-
-  if (data.capacity !== undefined && data.capacity < 1) {
-    return { error: "Capacity must be at least 1." };
-  }
+  const parsed = parseShiftForm(data);
+  if (!parsed.ok) return { error: parsed.error };
+  const { offeredVolunteerIds, ...fields } = parsed.value;
 
   const db = getDb();
 
@@ -259,29 +458,43 @@ export async function updateShift(
         startTime: true,
         endTime: true,
         serviceAreaId: true,
+        capacity: true,
         signups: {
           where: { status: "SIGNED_UP" },
           select: { volunteer: { select: { userId: true } } },
         },
+        offers: { select: { volunteerId: true } },
       },
     });
 
     if (!existing) return { error: "Shift not found." };
 
+    if (fields.capacity < existing.signups.length) {
+      return {
+        error: `${existing.signups.length} volunteer${existing.signups.length > 1 ? "s are" : " is"} already signed up — capacity can't go below that.`,
+      };
+    }
+
+    const offeredBefore = new Set(existing.offers.map((o) => o.volunteerId));
+    const newlyOffered = offeredVolunteerIds.filter(
+      (id) => !offeredBefore.has(id)
+    );
+
     const updated = await db.shift.update({
       where: { id: shiftId },
       data: {
-        ...(data.serviceAreaId !== undefined && {
-          serviceAreaId: data.serviceAreaId,
-        }),
-        ...(data.date !== undefined && { date: new Date(data.date) }),
-        ...(data.startTime !== undefined && { startTime: data.startTime }),
-        ...(data.endTime !== undefined && { endTime: data.endTime }),
-        ...(data.capacity !== undefined && { capacity: data.capacity }),
-        ...(data.notes !== undefined && { notes: data.notes || null }),
+        ...fields,
+        offers: {
+          // Volunteers taken off the list lose the offer along with any
+          // answer they gave; the rest keep theirs, answered or not.
+          deleteMany: { volunteerId: { notIn: offeredVolunteerIds } },
+          create: newlyOffered.map((volunteerId) => ({ volunteerId })),
+        },
       },
       include: { serviceArea: { select: { name: true } } },
     });
+
+    notifyOffered(newlyOffered, updated);
 
     if (
       existing.signups.length > 0 &&
@@ -300,6 +513,7 @@ export async function updateShift(
     revalidatePath("/staff/shifts");
     revalidatePath(`/staff/shifts/${shiftId}`);
     revalidatePath("/shifts");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch {
     return { error: "Something went wrong. Please try again." };

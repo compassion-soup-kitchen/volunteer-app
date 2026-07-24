@@ -16,9 +16,11 @@ describe("canRecordMeals", () => {
     ).toBe(true);
   });
 
-  it("allows recording from the very start of the shift's UTC day", () => {
+  it("allows recording from first thing on the shift day in Aotearoa", () => {
+    // 18:00 UTC on the 5th is 06:00 on the 6th in Wellington — the kitchen's
+    // day has started even though UTC is still on the day before.
     expect(
-      canRecordMeals(shiftDay("2026-07-06"), new Date("2026-07-06T00:00:00Z"))
+      canRecordMeals(shiftDay("2026-07-06"), new Date("2026-07-05T18:00:00Z"))
     ).toBe(true);
   });
 
@@ -34,9 +36,10 @@ describe("canRecordMeals", () => {
     ).toBe(false);
   });
 
-  it("blocks tomorrow's shift even at the last second of today, UTC", () => {
+  it("blocks tomorrow's shift at the last moment of today in Aotearoa", () => {
+    // 11:59 UTC on the 6th is 23:59 on the 6th in Wellington.
     expect(
-      canRecordMeals(shiftDay("2026-07-07"), new Date("2026-07-06T23:59:59Z"))
+      canRecordMeals(shiftDay("2026-07-07"), new Date("2026-07-06T11:59:59Z"))
     ).toBe(false);
   });
 });

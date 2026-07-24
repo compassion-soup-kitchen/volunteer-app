@@ -46,6 +46,11 @@ import {
   type StaffTrainingSession,
 } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
+import {
+  formatDateOnly,
+  isPastInAppZone,
+  isTodayInAppZone,
+} from "@/lib/date-only";
 
 interface TrainingDetailViewProps {
   session: StaffTrainingSession;
@@ -65,23 +70,15 @@ const TYPE_VARIANTS: Record<string, "info" | "amber" | "success" | "neutral"> = 
   OTHER: "neutral",
 };
 
+const LONG_DATE: Intl.DateTimeFormatOptions = {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+};
+
 function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-NZ", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function isPast(date: Date): boolean {
-  return new Date(date) < new Date(new Date().toISOString().split("T")[0]);
-}
-
-function isToday(date: Date): boolean {
-  const today = new Date().toISOString().split("T")[0];
-  const sessionDate = new Date(date).toISOString().split("T")[0];
-  return today === sessionDate;
+  return formatDateOnly(date, LONG_DATE);
 }
 
 function initials(name: string | null): string {
@@ -98,8 +95,8 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [markingId, setMarkingId] = useState<string | null>(null);
-  const past = isPast(session.date);
-  const today = isToday(session.date);
+  const past = isPastInAppZone(session.date);
+  const today = isTodayInAppZone(session.date);
   const canMarkAttendance = past || today;
   const activeRegistrations = session.attendances.filter(
     (a) => a.status === "REGISTERED" || a.status === "ATTENDED"
