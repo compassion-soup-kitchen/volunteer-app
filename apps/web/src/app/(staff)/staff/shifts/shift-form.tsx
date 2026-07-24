@@ -23,7 +23,12 @@ import {
   type ShiftFormData,
   type VolunteerOption,
 } from "@/lib/shift-actions";
-import { toDateOnly, toPickerDate } from "@/lib/date-only";
+import {
+  parseDateOnly,
+  toDateOnly,
+  todayInAppZone,
+  toPickerDate,
+} from "@/lib/date-only";
 import type { OfferStatus } from "@/lib/shift-offers";
 import { VolunteerOfferPicker } from "./volunteer-offer-picker";
 
@@ -48,10 +53,14 @@ interface ShiftFormProps {
   shift?: ShiftFormValues;
 }
 
-function startOfLocalToday(): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
+/**
+ * Today as the picker wants it, but on the kitchen's calendar rather than
+ * this device's. The server validates the same bounds against
+ * `todayInAppZone()`, so a coordinator working from another timezone must
+ * not be offered a hold date the server will then refuse.
+ */
+function startOfToday(): Date {
+  return toPickerDate(parseDateOnly(todayInAppZone()));
 }
 
 function addDays(date: Date, days: number): Date {
@@ -88,7 +97,7 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
     (shift?.offers ?? []).map((offer) => [offer.volunteerId, offer.status])
   );
 
-  const today = startOfLocalToday();
+  const today = startOfToday();
   // A shift already in the past stays editable — you can still fix its time.
   const earliestDate =
     shift && toPickerDate(shift.date) < today

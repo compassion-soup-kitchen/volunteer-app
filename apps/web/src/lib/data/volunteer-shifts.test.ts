@@ -153,6 +153,40 @@ describe("decideSignup", () => {
     ).toEqual({ action: "create" });
   });
 
+  // One regular accepting doesn't lift the hold for the rest of the crew, but
+  // a repeat submit from that volunteer should hear about their own signup
+  // rather than a hold that no longer concerns them.
+  it("tells a volunteer already on a held shift that they are already on it", () => {
+    expect(
+      decideSignup({
+        shift: {
+          ...heldShift(),
+          offers: [{ status: "ACCEPTED" }, { status: "PENDING" }],
+        },
+        activeSignupCount: 1,
+        existingSignupStatus: "SIGNED_UP",
+        userOfferStatus: "ACCEPTED",
+        now,
+      })
+    ).toEqual({
+      action: "reject",
+      error: "You are already signed up for this shift.",
+    });
+  });
+
+  it("still holds the shift against someone whose signup was cancelled", () => {
+    const decision = decideSignup({
+      shift: heldShift(),
+      activeSignupCount: 0,
+      existingSignupStatus: "CANCELLED",
+      now,
+    });
+    expect(decision.action).toBe("reject");
+    expect(decision).toMatchObject({
+      error: expect.stringContaining("Wednesday, 8 July"),
+    });
+  });
+
   it("opens the shift to everyone once the hold day has passed", () => {
     expect(
       decideSignup({

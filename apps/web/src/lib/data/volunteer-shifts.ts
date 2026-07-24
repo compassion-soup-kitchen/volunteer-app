@@ -227,7 +227,8 @@ export type SignupDecision =
  * Pure capacity/eligibility check for a shift signup. Check order matters
  * and mirrors the messages the UI already relies on: a full shift reports
  * "full" even to a volunteer who is already on it, and a shift still held
- * for its regulars explains the hold rather than reporting it as full.
+ * for its regulars explains the hold rather than reporting it as full —
+ * except to a volunteer who already has a spot on it.
  */
 export function decideSignup(input: {
   shift:
@@ -257,8 +258,12 @@ export function decideSignup(input: {
   if (shift.date < startOfTodayInAppZone(now)) {
     return { action: "reject", error: "This shift has already passed." };
   }
+  // The hold is about who may take a spot, so it has nothing to say to
+  // someone already holding one — they hear "already signed up" below, even
+  // while the shift is still held for the rest of the crew.
   if (
     userOfferStatus !== "PENDING" &&
+    existingSignupStatus !== "SIGNED_UP" &&
     shift.offersCloseOn &&
     isHeldForOffers(shift, now)
   ) {
