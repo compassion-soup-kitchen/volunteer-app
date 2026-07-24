@@ -48,11 +48,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
       return dbUser?.status !== "ARCHIVED";
     },
-    async jwt({ token, user }) {
+    async jwt({ token, trigger, user }) {
       if (user) {
         token.id = user.id!;
         token.role = (user as { role: Role }).role;
       }
+
+      // `useSession().update()` — fired after someone edits their own account.
+      // The JWT is the only copy of the name and role the chrome reads, so
+      // re-read them from the database rather than trusting whatever the
+      // client passed in.
+      if (trigger === "update" && token.id) {
+        const db = getDb();
+        const fresh = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { name: true, email: true, role: true },
+        });
+        if (fresh) {
+          token.name = fresh.name;
+          token.email = fresh.email;
+          token.role = fresh.role;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

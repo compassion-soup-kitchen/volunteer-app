@@ -60,6 +60,32 @@ export function passwordResetEmail(
   };
 }
 
+/**
+ * Sent after someone changes their own password from the account page. This
+ * is the safety net: if the change wasn't theirs, this email is how they find
+ * out while the reset link can still rescue the account.
+ */
+export function passwordChangedEmail(
+  name: string | null,
+  resetUrl: string
+): EmailTemplate {
+  return {
+    subject: "Your Te Pūaroha password was changed",
+    content: {
+      preview: "A heads-up that your account password just changed",
+      heading: "Your password was changed",
+      paragraphs: [
+        name ? `Kia ora ${name},` : "Kia ora,",
+        "This is just a note to let you know the password on your Te Pūaroha account was changed a moment ago. If that was you, there's nothing more to do.",
+        "If it wasn't you, reset your password straight away and let a coordinator know.",
+      ],
+      cta: { label: "Reset my password", url: resetUrl },
+      footerNote:
+        "We send this every time a password changes, so you always know where your account stands.",
+    },
+  };
+}
+
 /** Confirmation sent as soon as a volunteer application is submitted. */
 export function applicationReceivedEmail(
   name: string | null,

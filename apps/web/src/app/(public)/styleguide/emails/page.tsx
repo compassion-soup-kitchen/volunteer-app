@@ -12,6 +12,7 @@ import {
 import {
   applicationDecisionEmail,
   applicationReceivedEmail,
+  passwordChangedEmail,
   passwordResetEmail,
   verificationEmail,
   type EmailTemplate,
@@ -59,6 +60,12 @@ function getSamples(): EmailSample[] {
         sampleName,
         `${base}/reset-password?token=${sampleToken}`
       ),
+    },
+    {
+      slug: "password-changed",
+      title: "Password changed",
+      note: "Sent after someone changes their own password from the account page.",
+      template: passwordChangedEmail(sampleName, `${base}/forgot-password`),
     },
     {
       slug: "application-received",

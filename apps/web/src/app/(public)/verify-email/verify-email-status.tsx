@@ -5,7 +5,7 @@ import Link from "next/link";
 import { verifyEmail, type VerifyEmailState } from "@/lib/auth-actions";
 import { Button } from "@/components/ui/button";
 import { RiCheckboxCircleLine, RiLoader4Line } from "@remixicon/react";
-import { FormAlert } from "../_components/form-alert";
+import { FormAlert } from "@/components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 /**
