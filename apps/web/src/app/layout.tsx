@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import "./globals.css";
 
 // UI / body — Hanken Grotesk, the mobile app's clean humanist grotesque.
@@ -63,6 +64,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <TooltipProvider>
+              <ImpersonationBanner />
               {children}
             </TooltipProvider>
             <Toaster richColors />

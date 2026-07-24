@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,7 @@ import {
   RiUserSettingsLine,
   RiShieldUserLine,
   RiUserStarLine,
+  RiEyeLine,
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -57,6 +60,7 @@ import {
   updateUserRole,
   type VolunteerListItem,
 } from "@/lib/staff-actions";
+import { startImpersonation } from "@/lib/impersonation-actions";
 import {
   ASSIGNABLE_ROLES,
   isAssignableRole,
@@ -141,6 +145,8 @@ export function VolunteerDirectory({
   currentUserId,
   isAdmin,
 }: VolunteerDirectoryProps) {
+  const { update } = useSession();
+  const router = useRouter();
   const [volunteers, setVolunteers] = useState(initialVolunteers);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [accountFilter, setAccountFilter] = useState<"ACTIVE" | "ARCHIVED" | "ALL">(
@@ -237,6 +243,20 @@ export function VolunteerDirectory({
     }
     toast.success(`${volunteer.user.name || "Volunteer"} restored.`);
     reload({});
+  }
+
+  async function handleImpersonate(volunteer: VolunteerListItem) {
+    const result = await startImpersonation(volunteer.user.id);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    // Swap the session token to the target (the jwt callback enforces authority
+    // and opens the audit row), then land on their home — the layouts route
+    // coordinators on to /staff/dashboard.
+    await update({ impersonate: volunteer.user.id });
+    router.push("/dashboard");
+    router.refresh();
   }
 
   async function handleRoleChangeConfirm() {
@@ -438,6 +458,7 @@ export function VolunteerDirectory({
                           onChangeRole={(v, newRole) =>
                             setRoleTarget({ volunteer: v, newRole })
                           }
+                          onImpersonate={handleImpersonate}
                         />
                       </TableCell>
                     </TableRow>
@@ -528,6 +549,7 @@ export function VolunteerDirectory({
                     onChangeRole={(v, newRole) =>
                       setRoleTarget({ volunteer: v, newRole })
                     }
+                    onImpersonate={handleImpersonate}
                   />
                 </li>
               ))}
@@ -651,6 +673,7 @@ function StatusMenu({
   onArchive,
   onRestore,
   onChangeRole,
+  onImpersonate,
 }: {
   volunteer: VolunteerListItem;
   isAdmin: boolean;
@@ -666,6 +689,7 @@ function StatusMenu({
   onArchive: (vol: VolunteerListItem) => void;
   onRestore: (vol: VolunteerListItem) => void;
   onChangeRole: (vol: VolunteerListItem, newRole: AssignableRole) => void;
+  onImpersonate: (vol: VolunteerListItem) => void;
 }) {
   const isArchived = volunteer.user.status === "ARCHIVED";
   // Admins can change anyone's role except their own (guards against
@@ -681,6 +705,14 @@ function StatusMenu({
   const roleOptions = ASSIGNABLE_ROLES.filter(
     (r) => r !== volunteer.user.role
   );
+
+  // Admins can view the app as any active non-admin - but never themselves or
+  // another admin. The server (and the jwt callback) enforce this too.
+  const canImpersonate =
+    isAdmin &&
+    !isArchived &&
+    volunteer.user.id !== currentUserId &&
+    volunteer.user.role !== "ADMIN";
 
   if (isArchived) {
     return (
@@ -776,6 +808,15 @@ function StatusMenu({
                 })}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+          </>
+        )}
+        {canImpersonate && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onImpersonate(volunteer)}>
+              <RiEyeLine className="mr-2 size-4" />
+              View as this person
+            </DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />
