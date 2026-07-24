@@ -49,6 +49,30 @@ describe("POST /api/v1/auth/login", () => {
     expect(checkCredentialsMock).not.toHaveBeenCalled();
   });
 
+  // Unauthenticated, so this is the most exposed path to bcrypt in the app.
+  it("refuses an unbounded password before it reaches bcrypt", async () => {
+    const res = await POST(
+      request({ email: "aroha@b.co", password: "a".repeat(2000) })
+    );
+
+    expect(res.status).toBe(400);
+    expect(checkCredentialsMock).not.toHaveBeenCalled();
+  });
+
+  // ...but a pre-cap account's longer password still has to get through.
+  it("still accepts a password longer than bcrypt's byte limit", async () => {
+    checkCredentialsMock.mockResolvedValueOnce({
+      ok: false,
+      reason: "invalid-credentials",
+    });
+    const legacy = "a".repeat(120);
+
+    const res = await POST(request({ email: "aroha@b.co", password: legacy }));
+
+    expect(res.status).toBe(401);
+    expect(checkCredentialsMock).toHaveBeenCalledWith("aroha@b.co", legacy);
+  });
+
   it("returns 401 for invalid credentials", async () => {
     checkCredentialsMock.mockResolvedValueOnce({
       ok: false,

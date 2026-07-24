@@ -15,7 +15,7 @@ import {
   PASSWORD_INPUT_MAX,
   PASSWORD_MAX_BYTES,
   PASSWORD_MIN,
-} from "@/lib/account-schema";
+} from "@/lib/password-rules";
 
 export function ChangePasswordForm() {
   const [state, action, pending] = useActionState<PasswordChangeState, FormData>(

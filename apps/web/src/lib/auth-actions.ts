@@ -26,6 +26,7 @@ import {
   consumeVerificationToken,
   sendVerificationEmail,
 } from "@/lib/email-verification";
+import { existingPasswordField, newPasswordField } from "@/lib/password-rules";
 import {
   PASSWORD_RESET_IDENTIFIER_PREFIX,
   PASSWORD_RESET_TOKEN_TTL_MS,
@@ -65,13 +66,15 @@ export type PasswordResetState = {
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
+  // Cost-bounded only: an account created before the byte cap may hold a
+  // longer password, and capping here would lock its owner out entirely.
+  password: existingPasswordField("Password is required"),
 });
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: newPasswordField("Password must be at least 8 characters"),
   confirmPassword: z.string(),
 });
 
@@ -81,7 +84,7 @@ const emailOnlySchema = z.object({
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, "This reset link is missing its token"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: newPasswordField("Password must be at least 8 characters"),
   confirmPassword: z.string(),
 });
 

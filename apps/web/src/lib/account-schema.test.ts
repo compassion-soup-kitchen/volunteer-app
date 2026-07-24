@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { ACCOUNT_NAME_MAX, parseAccountDetails, parsePasswordChange } from "./account-schema";
 import {
-  ACCOUNT_NAME_MAX,
   PASSWORD_INPUT_MAX,
   PASSWORD_MAX_BYTES,
-  parseAccountDetails,
-  parsePasswordChange,
   passwordByteLength,
-} from "./account-schema";
+} from "./password-rules";
 
 describe("parseAccountDetails", () => {
   it("trims the name", () => {

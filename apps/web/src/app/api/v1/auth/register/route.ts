@@ -5,12 +5,13 @@ import { serializeSessionUser } from "@/lib/api/serializers";
 import { createUserAccount, normalizeEmail } from "@/lib/data/users";
 import { isEmailConfigured } from "@/lib/email";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { newPasswordField } from "@/lib/password-rules";
 import { authRateLimits, checkRateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: newPasswordField("Password must be at least 8 characters"),
 });
 
 export async function POST(req: NextRequest) {

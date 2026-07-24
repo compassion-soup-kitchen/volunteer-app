@@ -68,6 +68,23 @@ describe("POST /api/v1/auth/register", () => {
     expect(createUserAccountMock).not.toHaveBeenCalled();
   });
 
+  // This route carries its own schema, so the byte cap has to be wired in
+  // here too - the web register action holding the line doesn't cover mobile.
+  it("rejects a password bcrypt would silently truncate", async () => {
+    const res = await POST(request({ ...fields, password: "ā".repeat(72) }));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/too long/i);
+    expect(createUserAccountMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unbounded password", async () => {
+    const res = await POST(request({ ...fields, password: "a".repeat(2000) }));
+
+    expect(res.status).toBe(400);
+    expect(createUserAccountMock).not.toHaveBeenCalled();
+  });
+
   it("returns 409 when the email is already taken", async () => {
     createUserAccountMock.mockResolvedValueOnce({
       error: "An account with this email already exists",

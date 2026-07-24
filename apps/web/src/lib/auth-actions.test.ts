@@ -115,6 +115,38 @@ describe("register", () => {
     expect(findUniqueMock).not.toHaveBeenCalled();
   });
 
+  // Registration is where most people set their password for the first time,
+  // so it gets the same bcrypt byte cap as the account page.
+  it("rejects a password bcrypt would silently truncate", async () => {
+    const macrons = "ā".repeat(72); // 72 characters, 144 bytes
+    const result = await register(
+      null,
+      form({
+        name: "Aroha Ngata",
+        email: "a@b.co",
+        password: macrons,
+        confirmPassword: macrons,
+      }),
+    );
+    expect(result?.error).toMatch(/too long/i);
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unbounded password before it reaches bcrypt", async () => {
+    const huge = "a".repeat(2000);
+    const result = await register(
+      null,
+      form({
+        name: "Aroha Ngata",
+        email: "a@b.co",
+        password: huge,
+        confirmPassword: huge,
+      }),
+    );
+    expect(result?.error).toMatch(/doesn't look like a password/i);
+    expect(bcrypt.hash).not.toHaveBeenCalled();
+  });
+
   it("rejects an invalid email", async () => {
     const result = await register(
       null,
@@ -304,6 +336,29 @@ describe("login", () => {
       form({ email: "nope", password: "anything" }),
     );
     expect(result?.error).toMatch(/email/i);
+    expect(signInMock).not.toHaveBeenCalled();
+  });
+
+  // Sign-in must never inherit the byte cap: an account created before that
+  // cap existed holds a longer password, and refusing it here would lock its
+  // owner out of the only flow that could change it.
+  it("still accepts a password longer than bcrypt's byte limit", async () => {
+    const legacy = "a".repeat(120);
+    await login(null, form({ email: "a@b.co", password: legacy }));
+
+    expect(signInMock).toHaveBeenCalledWith(
+      "credentials",
+      expect.objectContaining({ password: legacy }),
+    );
+  });
+
+  it("refuses an unbounded password before it reaches bcrypt", async () => {
+    const result = await login(
+      null,
+      form({ email: "a@b.co", password: "a".repeat(2000) }),
+    );
+
+    expect(result?.error).toMatch(/doesn't look like a password/i);
     expect(signInMock).not.toHaveBeenCalled();
   });
 
@@ -810,6 +865,28 @@ describe("resetPassword", () => {
     );
     expect(result?.error).toMatch(/8 characters/);
     expect(tokenFindFirstMock).not.toHaveBeenCalled();
+  });
+
+  // Reset is one of the two paths where people actually set a password, so
+  // the bcrypt byte cap has to hold here and not just on the account page.
+  it("rejects a password bcrypt would silently truncate", async () => {
+    const macrons = "ā".repeat(72); // 72 characters, 144 bytes
+    const result = await resetPassword(
+      null,
+      form({ ...validFields, password: macrons, confirmPassword: macrons }),
+    );
+    expect(result?.error).toMatch(/too long/i);
+    expect(tokenFindFirstMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unbounded password before it reaches bcrypt", async () => {
+    const huge = "a".repeat(2000);
+    const result = await resetPassword(
+      null,
+      form({ ...validFields, password: huge, confirmPassword: huge }),
+    );
+    expect(result?.error).toMatch(/doesn't look like a password/i);
+    expect(bcrypt.hash).not.toHaveBeenCalled();
   });
 
   it("rejects mismatched passwords", async () => {
