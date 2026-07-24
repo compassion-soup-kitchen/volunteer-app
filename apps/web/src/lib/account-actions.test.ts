@@ -59,8 +59,8 @@ function form(fields: Record<string, string>): FormData {
   return fd;
 }
 
-function signedIn(id = USER_ID) {
-  authMock.mockResolvedValue({ user: { id, role: "ADMIN" } });
+function signedIn(id = USER_ID, role = "ADMIN") {
+  authMock.mockResolvedValue({ user: { id, role } });
 }
 
 function passwordForm(overrides: Partial<Record<string, string>> = {}) {
@@ -190,6 +190,41 @@ describe("updateAccountDetails", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/staff", "layout");
     expect(revalidatePathMock).not.toHaveBeenCalledWith("/", "layout");
   });
+
+  // These actions are reachable by any signed-in caller, by design - the write
+  // is scoped to their own row, so identity is the whole authorisation
+  // question. What a non-staff caller must not do is flush a cache they can't
+  // even see.
+  it("lets a volunteer rename themselves", async () => {
+    signedIn(USER_ID, "VOLUNTEER");
+    updateMock.mockResolvedValue({});
+
+    const result = await updateAccountDetails(null, form({ name: "Hemi Rangi" }));
+
+    expect(result?.savedName).toBe("Hemi Rangi");
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: USER_ID },
+      data: { name: "Hemi Rangi" },
+    });
+  });
+
+  it("does not let a volunteer flush the staff route cache", async () => {
+    signedIn(USER_ID, "VOLUNTEER");
+    updateMock.mockResolvedValue({});
+
+    await updateAccountDetails(null, form({ name: "Hemi Rangi" }));
+
+    expect(revalidatePathMock).not.toHaveBeenCalled();
+  });
+
+  it("revalidates for a coordinator as well as an admin", async () => {
+    signedIn(USER_ID, "COORDINATOR");
+    updateMock.mockResolvedValue({});
+
+    await updateAccountDetails(null, form({ name: "Mereana Whitiora" }));
+
+    expect(revalidatePathMock).toHaveBeenCalledWith("/staff", "layout");
+  });
 });
 
 describe("changeMyPassword", () => {
@@ -302,6 +337,21 @@ describe("changeMyPassword", () => {
 
     expect(blocked?.error).toMatch(/too many attempts/i);
     expect(vi.mocked(bcrypt.compare)).toHaveBeenCalledTimes(5);
+  });
+
+  it("lets a volunteer change their own password", async () => {
+    signedIn(USER_ID, "VOLUNTEER");
+    findUniqueMock.mockResolvedValue(credentialsUser());
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    updateMock.mockResolvedValue({});
+
+    const result = await changeMyPassword(null, passwordForm());
+
+    expect(result?.success).toBeTruthy();
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: USER_ID },
+      data: { password: "hashed:brand-new-password" },
+    });
   });
 
   it("keeps each account's throttle budget separate", async () => {

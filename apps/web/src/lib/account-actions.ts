@@ -18,8 +18,22 @@ import type { Role } from "@prisma/client";
 
 /**
  * Self-service account management: the signed-in person editing their own
- * name and password. Every action scopes its write to `session.user.id`, so
- * there is no id parameter a caller could point at somebody else's account.
+ * name and password.
+ *
+ * These are gated on identity, not role, and that is deliberate. Every action
+ * scopes its write to `session.user.id` - there is no id parameter a caller
+ * could point at somebody else's account - so the authorisation question is
+ * "are you signed in?", not "what are you?". CLAUDE.md's "always check role in
+ * Server Actions" is about not letting the UI be the only thing standing
+ * between a caller and someone else's data; here nothing but your own row is
+ * reachable in the first place, which is the same shape as the existing
+ * `updateVolunteerProfile`.
+ *
+ * Adding a COORDINATOR/ADMIN gate would not close a hole - it would stop a
+ * volunteer changing their own password, which is a capability we want them to
+ * have, and would quietly break the volunteer profile the moment this form is
+ * wired in there. Only the page is staff-only, because it is the only place
+ * the form is currently rendered.
  */
 
 export type AccountDetailsState = {
@@ -94,11 +108,16 @@ export async function updateAccountDetails(
     data: { name: parsed.data.name },
   });
 
-  // The staff sidebar is the only chrome that renders the name, so this is
-  // the only tree that needs invalidating. If this form is ever offered to
-  // volunteers, add "/" here too - the root layout doesn't show the name
-  // today, and invalidating it would flush every public route for nothing.
-  revalidatePath("/staff", "layout");
+  // The staff sidebar is the only chrome that renders the name, so it's the
+  // only tree that needs invalidating - and only for someone who can actually
+  // see it. This action is reachable by any signed-in caller (see the note at
+  // the top of the file), and a volunteer shouldn't be able to flush the staff
+  // route cache by renaming themselves. If this form is ever offered to
+  // volunteers, add "/" for them: the root layout doesn't render the name
+  // today, so invalidating it would flush every public route for nothing.
+  if (session.user.role === "COORDINATOR" || session.user.role === "ADMIN") {
+    revalidatePath("/staff", "layout");
+  }
 
   return { savedName: parsed.data.name };
 }
