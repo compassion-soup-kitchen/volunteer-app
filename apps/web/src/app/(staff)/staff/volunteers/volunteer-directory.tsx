@@ -252,9 +252,18 @@ export function VolunteerDirectory({
       return;
     }
     // Swap the session token to the target (the jwt callback enforces authority
-    // and opens the audit row), then land on their home — the layouts route
-    // coordinators on to /staff/dashboard.
-    await update({ impersonate: volunteer.user.id });
+    // and opens the audit row). `update()` resolves to the new session, so read
+    // it back: if the swap was silently refused — e.g. the target was archived
+    // between the precheck above and here — `impersonator` won't be set, and we
+    // must not pretend it worked. Only navigate on a confirmed swap; the layouts
+    // route coordinators on to /staff/dashboard.
+    const updated = await update({ impersonate: volunteer.user.id });
+    if (!updated?.user?.impersonator) {
+      toast.error(
+        `Couldn't start viewing as ${volunteer.user.name || "this person"}. Please try again.`
+      );
+      return;
+    }
     router.push("/dashboard");
     router.refresh();
   }
