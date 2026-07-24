@@ -20,22 +20,19 @@ import {
   type ShiftFilters,
   type ShiftWithDetails,
 } from "@/lib/data/volunteer-shifts";
+import { safeParseDateOnly, todayInAppZone } from "@/lib/date-only";
+import { formatHoldUntil, type OfferStatus } from "@/lib/shift-offers";
 import {
-  isDateOnly,
-  parseDateOnly,
-  safeParseDateOnly,
-  todayInAppZone,
-} from "@/lib/date-only";
-import {
-  formatHoldUntil,
-  resolveOfferWindow,
-  type OfferStatus,
-} from "@/lib/shift-offers";
+  holdIsLive,
+  parseShiftForm,
+  type ShiftFormData,
+} from "@/lib/shift-form";
 
 export type {
   ShiftWithDetails,
   ShiftFilters,
 } from "@/lib/data/volunteer-shifts";
+export type { ShiftFormData } from "@/lib/shift-form";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -273,93 +270,6 @@ export async function getShiftDetail(shiftId: string): Promise<StaffShift | null
   });
 }
 
-/** Everything the create and edit forms send. Dates are calendar days. */
-export type ShiftFormData = {
-  serviceAreaId: string;
-  date: string; // YYYY-MM-DD
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
-  capacity: number;
-  notes?: string;
-  /** VolunteerProfile ids offered the shift ahead of everyone else. */
-  offeredVolunteerIds?: string[];
-  /** Calendar day that offer is held through, or null for no first refusal. */
-  offersCloseOn?: string | null;
-};
-
-const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-const shiftInput = z
-  .object({
-    serviceAreaId: z.string().min(1, "Please select a service area."),
-    date: z.string().refine(isDateOnly, "Please select a date."),
-    startTime: z.string().regex(TIME_PATTERN, "Start time is required."),
-    endTime: z.string().regex(TIME_PATTERN, "End time is required."),
-    capacity: z
-      .number()
-      .int("Capacity must be a whole number.")
-      .min(1, "Capacity must be at least 1.")
-      .max(50, "Capacity can't be more than 50."),
-    notes: z.string().trim().max(2000).optional(),
-    offeredVolunteerIds: z.array(z.string().min(1)).max(50).optional(),
-    offersCloseOn: z
-      .string()
-      .refine(isDateOnly, "Please choose the day the offer is held until.")
-      .nullish(),
-  })
-  .refine((data) => data.startTime < data.endTime, {
-    message: "End time must be after start time.",
-    path: ["endTime"],
-  });
-
-/** The first error zod found, in the wording the form shows inline. */
-function firstIssue(error: z.ZodError): string {
-  return error.issues[0]?.message ?? "Please check the details and try again.";
-}
-
-type ParsedShift = {
-  serviceAreaId: string;
-  date: Date;
-  startTime: string;
-  endTime: string;
-  capacity: number;
-  notes: string | null;
-  offersCloseOn: Date | null;
-  offeredVolunteerIds: string[];
-};
-
-/** Validates a form payload and turns its calendar days into stored dates. */
-function parseShiftForm(
-  data: ShiftFormData
-): { ok: true; value: ParsedShift } | { ok: false; error: string } {
-  const parsed = shiftInput.safeParse(data);
-  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
-
-  const window = resolveOfferWindow({
-    shiftDate: parsed.data.date,
-    offersCloseOn: parsed.data.offersCloseOn ?? null,
-    volunteerIds: parsed.data.offeredVolunteerIds ?? [],
-    today: todayInAppZone(),
-  });
-  if (!window.ok) return { ok: false, error: window.error };
-
-  return {
-    ok: true,
-    value: {
-      serviceAreaId: parsed.data.serviceAreaId,
-      date: parseDateOnly(parsed.data.date),
-      startTime: parsed.data.startTime,
-      endTime: parsed.data.endTime,
-      capacity: parsed.data.capacity,
-      notes: parsed.data.notes || null,
-      offersCloseOn: window.offersCloseOn
-        ? parseDateOnly(window.offersCloseOn)
-        : null,
-      offeredVolunteerIds: window.volunteerIds,
-    },
-  };
-}
-
 /** Tells the named volunteers a shift is theirs first, if they want it. */
 function notifyOffered(
   volunteerIds: string[],
@@ -372,8 +282,11 @@ function notifyOffered(
     serviceArea: { name: string };
   }
 ) {
-  if (volunteerIds.length === 0 || !shift.offersCloseOn) return;
-  const holdUntil = formatHoldUntil(shift.offersCloseOn);
+  // Nothing to promise if the hold has already run out — an edit can carry a
+  // lapsed offer through untouched, and that must not page anyone.
+  if (volunteerIds.length === 0) return;
+  if (!holdIsLive(shift.offersCloseOn, todayInAppZone())) return;
+  const holdUntil = formatHoldUntil(shift.offersCloseOn!);
 
   after(async () => {
     const db = getDb();
@@ -404,7 +317,7 @@ export async function createShift(
     return { error: "Not authorised." };
   }
 
-  const parsed = parseShiftForm(data);
+  const parsed = parseShiftForm(data, { today: todayInAppZone() });
   if (!parsed.ok) return { error: parsed.error };
   const { offeredVolunteerIds, ...fields } = parsed.value;
 
@@ -444,13 +357,11 @@ export async function updateShift(
     return { error: "Not authorised." };
   }
 
-  const parsed = parseShiftForm(data);
-  if (!parsed.ok) return { error: parsed.error };
-  const { offeredVolunteerIds, ...fields } = parsed.value;
-
   const db = getDb();
 
   try {
+    // Read before validating: the hold already on the shift decides whether a
+    // lapsed offer date is a mistake or just history being carried through.
     const existing = await db.shift.findUnique({
       where: { id: shiftId },
       select: {
@@ -459,9 +370,10 @@ export async function updateShift(
         endTime: true,
         serviceAreaId: true,
         capacity: true,
+        offersCloseOn: true,
         signups: {
-          where: { status: "SIGNED_UP" },
-          select: { volunteer: { select: { userId: true } } },
+          where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
+          select: { status: true, volunteer: { select: { userId: true } } },
         },
         offers: { select: { volunteerId: true } },
       },
@@ -469,11 +381,25 @@ export async function updateShift(
 
     if (!existing) return { error: "Shift not found." };
 
-    if (fields.capacity < existing.signups.length) {
+    const parsed = parseShiftForm(data, {
+      today: todayInAppZone(),
+      existingOffersCloseOn: existing.offersCloseOn,
+    });
+    if (!parsed.ok) return { error: parsed.error };
+    const { offeredVolunteerIds, ...fields } = parsed.value;
+
+    // Everyone holding a spot, including those already marked attended —
+    // capacity must never fall below the people the shift is committed to.
+    const booked = existing.signups.length;
+    if (fields.capacity < booked) {
       return {
-        error: `${existing.signups.length} volunteer${existing.signups.length > 1 ? "s are" : " is"} already signed up — capacity can't go below that.`,
+        error: `${booked} volunteer${booked > 1 ? "s are" : " is"} already signed up — capacity can't go below that.`,
       };
     }
+
+    // Only volunteers still expected get told the shift moved; a change to a
+    // past shift's record is not news to whoever already worked it.
+    const expected = existing.signups.filter((s) => s.status === "SIGNED_UP");
 
     const offeredBefore = new Set(existing.offers.map((o) => o.volunteerId));
     const newlyOffered = offeredVolunteerIds.filter(
@@ -497,10 +423,10 @@ export async function updateShift(
     notifyOffered(newlyOffered, updated);
 
     if (
-      existing.signups.length > 0 &&
+      expected.length > 0 &&
       shouldNotifyShiftChange(existing, updated, new Date())
     ) {
-      const userIds = existing.signups.map((s) => s.volunteer.userId);
+      const userIds = expected.map((s) => s.volunteer.userId);
       after(() =>
         sendPushToUsers(userIds, {
           title: "Your shift has changed",

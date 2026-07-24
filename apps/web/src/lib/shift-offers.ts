@@ -54,6 +54,13 @@ export type OfferWindowInput = {
   offersCloseOn: string | null;
   volunteerIds: string[];
   today: string;
+  /**
+   * The hold day already stored on the shift, when editing. A hold that has
+   * since lapsed is history, not a mistake — carrying it through unchanged
+   * has to stay legal, or a shift whose offer closed last week could never
+   * be edited again.
+   */
+  existingOffersCloseOn?: string | null;
 };
 
 export type OfferWindowResult =
@@ -79,7 +86,8 @@ export function resolveOfferWindow(input: OfferWindowInput): OfferWindowResult {
     };
   }
 
-  if (input.offersCloseOn < input.today) {
+  const holdIsUnchanged = input.offersCloseOn === input.existingOffersCloseOn;
+  if (input.offersCloseOn < input.today && !holdIsUnchanged) {
     return {
       ok: false,
       error: "The offer can't be held until a day that has already passed.",
