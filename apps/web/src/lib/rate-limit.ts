@@ -94,6 +94,15 @@ export const authRateLimits = {
   verificationResend: { limit: 3, windowMs: 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitOptions>;
 
+/**
+ * Budgets for self-service account changes. Keyed by user id (`password-change:`
+ * + id) rather than email: these actions already sit behind a session, and the
+ * budget should follow the account being changed.
+ */
+export const accountRateLimits = {
+  passwordChange: { limit: 5, windowMs: 15 * 60 * 1000 },
+} as const satisfies Record<string, RateLimitOptions>;
+
 /** Test helper — empties every bucket so tests can't leak into each other. */
 export function clearRateLimits(): void {
   buckets.clear();

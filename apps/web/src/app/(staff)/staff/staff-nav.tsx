@@ -19,6 +19,7 @@ import {
   RiFileTextLine,
   RiMegaphoneLine,
   RiBarChartBoxLine,
+  RiSettings3Line,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -117,14 +118,27 @@ export function StaffNav({
   const footer = (
     <div className="border-t border-sidebar-border px-4 py-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">
-            {user.name}
-          </p>
-          <p className="eyebrow text-[0.6rem] text-sidebar-foreground/50">
-            {user.role === "ADMIN" ? "Admin" : "Coordinator"}
-          </p>
-        </div>
+        {/* The identity block doubles as the way in to your own account. */}
+        <Link
+          href="/staff/account"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="My account"
+          aria-current={pathname === "/staff/account" ? "page" : undefined}
+          className={cn(
+            "group/account -mx-2 flex min-w-0 items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-sidebar-accent/60",
+            pathname === "/staff/account" && "bg-sidebar-accent"
+          )}
+        >
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-sidebar-accent-foreground">
+              {user.name}
+            </span>
+            <span className="eyebrow block truncate text-[0.6rem] text-sidebar-foreground/50">
+              {user.role === "ADMIN" ? "Admin" : "Coordinator"}
+            </span>
+          </span>
+          <RiSettings3Line className="size-3.5 shrink-0 text-sidebar-foreground/40 transition-colors group-hover/account:text-sidebar-accent-foreground" />
+        </Link>
         <div className="flex shrink-0 items-center">
           <ThemeToggle />
           <Button

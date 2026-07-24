@@ -3,11 +3,13 @@ import { z } from "zod";
 import { issueApiToken } from "@/lib/api/token";
 import { serializeSessionUser } from "@/lib/api/serializers";
 import { checkCredentials, normalizeEmail } from "@/lib/data/users";
+import { existingPasswordField } from "@/lib/password-rules";
 import { authRateLimits, checkRateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
+  // Cost-bounded only, never byte-capped - see password-rules.ts.
+  password: existingPasswordField("Password is required"),
 });
 
 export async function POST(req: NextRequest) {

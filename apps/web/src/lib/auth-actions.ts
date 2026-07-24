@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/lib/auth";
 import {
@@ -26,6 +26,13 @@ import {
   consumeVerificationToken,
   sendVerificationEmail,
 } from "@/lib/email-verification";
+import { existingPasswordField, newPasswordField } from "@/lib/password-rules";
+import {
+  PASSWORD_RESET_IDENTIFIER_PREFIX,
+  PASSWORD_RESET_TOKEN_TTL_MS,
+  hashPasswordResetToken,
+  passwordResetIdentifier,
+} from "@/lib/password-reset";
 import { authRateLimits, checkRateLimit } from "@/lib/rate-limit";
 import { AuthError } from "next-auth";
 import { z } from "zod";
@@ -59,13 +66,15 @@ export type PasswordResetState = {
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
+  // Cost-bounded only: an account created before the byte cap may hold a
+  // longer password, and capping here would lock its owner out entirely.
+  password: existingPasswordField("Password is required"),
 });
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: newPasswordField("Password must be at least 8 characters"),
   confirmPassword: z.string(),
 });
 
@@ -75,18 +84,9 @@ const emailOnlySchema = z.object({
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, "This reset link is missing its token"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: newPasswordField("Password must be at least 8 characters"),
   confirmPassword: z.string(),
 });
-
-/** Reset tokens live for 60 minutes. */
-const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
-
-/**
- * VerificationToken.identifier prefix for password resets, so these rows can
- * never collide with NextAuth email-verification tokens if we add them later.
- */
-const RESET_IDENTIFIER_PREFIX = "password-reset:";
 
 /**
  * Sent whether or not the email exists — the response must not reveal which
@@ -107,11 +107,6 @@ const VERIFY_INVALID_TOKEN_MESSAGE =
  */
 const RESEND_VERIFICATION_NEUTRAL_MESSAGE =
   "If that address has an account waiting on verification, we've emailed it a fresh link. The link is valid for 24 hours.";
-
-/** Only a sha256 hash of the reset token is ever stored. */
-function hashResetToken(rawToken: string): string {
-  return createHash("sha256").update(rawToken).digest("hex");
-}
 
 function retryAfterPhrase(retryAfterSeconds: number): string {
   const minutes = Math.ceil(retryAfterSeconds / 60);
@@ -376,15 +371,15 @@ export async function requestPasswordReset(
   }
 
   const rawToken = randomBytes(32).toString("hex");
-  const identifier = `${RESET_IDENTIFIER_PREFIX}${email}`;
+  const identifier = passwordResetIdentifier(email);
 
   // One outstanding link per person — a new request replaces any older ones.
   await db.verificationToken.deleteMany({ where: { identifier } });
   await db.verificationToken.create({
     data: {
       identifier,
-      token: hashResetToken(rawToken),
-      expires: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+      token: hashPasswordResetToken(rawToken),
+      expires: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
     },
   });
 
@@ -427,18 +422,20 @@ export async function resetPassword(
 
   const db = getDb();
   const record = await db.verificationToken.findFirst({
-    where: { token: hashResetToken(parsed.data.token) },
+    where: { token: hashPasswordResetToken(parsed.data.token) },
   });
 
   if (
     !record ||
-    !record.identifier.startsWith(RESET_IDENTIFIER_PREFIX) ||
+    !record.identifier.startsWith(PASSWORD_RESET_IDENTIFIER_PREFIX) ||
     record.expires < new Date()
   ) {
     return { error: RESET_INVALID_TOKEN_MESSAGE };
   }
 
-  const email = record.identifier.slice(RESET_IDENTIFIER_PREFIX.length);
+  const email = record.identifier.slice(
+    PASSWORD_RESET_IDENTIFIER_PREFIX.length
+  );
   const user = await db.user.findUnique({ where: { email } });
   if (!user || user.status === "ARCHIVED") {
     return { error: RESET_INVALID_TOKEN_MESSAGE };

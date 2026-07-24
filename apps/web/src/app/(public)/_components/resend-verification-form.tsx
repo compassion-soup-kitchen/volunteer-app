@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RiLoader4Line } from "@remixicon/react";
 import { EmailSentNotice } from "./email-sent-notice";
-import { FormAlert } from "./form-alert";
+import { FormAlert } from "@/components/form-alert";
 
 /**
  * Requests a fresh verification link. With a known `email` (register panel,

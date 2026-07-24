@@ -1,6 +1,6 @@
 /**
- * Inline destructive alert for form errors - shared by every (public) auth
- * form so the error state looks and reads the same everywhere.
+ * Inline destructive alert for form errors - shared by the auth forms and the
+ * account page so the error state looks and reads the same everywhere.
  */
 export function FormAlert({ children }: { children: React.ReactNode }) {
   return (

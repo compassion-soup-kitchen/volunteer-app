@@ -5,7 +5,16 @@ import Google from "next-auth/providers/google";
 import { getDb } from "./db";
 import { verifyCredentials } from "./data/users";
 import { googleProfileToUser, isOAuthSignInAllowed } from "./google-auth";
+import { applySessionRefresh } from "./session-refresh";
 import type { Role } from "@prisma/client";
+
+/** Current name/email/role for one account - the JWT's source of truth. */
+function readSessionUser(userId: string) {
+  return getDb().user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true, role: true },
+  });
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,11 +57,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
       return dbUser?.status !== "ARCHIVED";
     },
-    async jwt({ token, user }) {
+    async jwt({ token, trigger, user }) {
       if (user) {
         token.id = user.id!;
         token.role = (user as { role: Role }).role;
       }
+
+      // `useSession().update()` — fired after someone edits their own account.
+      // The JWT is the only copy of the name and role the chrome reads, so
+      // re-read them from the database rather than trusting whatever the
+      // client passed in. See session-refresh.ts for that guarantee and its
+      // tests.
+      if (trigger === "update") {
+        return applySessionRefresh(token, readSessionUser);
+      }
+
       return token;
     },
     async session({ session, token }) {

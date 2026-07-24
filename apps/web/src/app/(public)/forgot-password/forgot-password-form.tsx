@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RiLoader4Line } from "@remixicon/react";
 import { EmailSentNotice } from "../_components/email-sent-notice";
-import { FormAlert } from "../_components/form-alert";
+import { FormAlert } from "@/components/form-alert";
 
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState<PasswordResetState, FormData>(

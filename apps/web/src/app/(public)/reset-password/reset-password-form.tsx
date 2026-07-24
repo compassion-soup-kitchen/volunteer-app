@@ -11,7 +11,7 @@ import {
   RiErrorWarningLine,
   RiLoader4Line,
 } from "@remixicon/react";
-import { FormAlert } from "../_components/form-alert";
+import { FormAlert } from "@/components/form-alert";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, action, pending] = useActionState<PasswordResetState, FormData>(

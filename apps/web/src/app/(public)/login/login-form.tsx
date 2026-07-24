@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
-import { FormAlert } from "../_components/form-alert";
+import { FormAlert } from "@/components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 
 /**
