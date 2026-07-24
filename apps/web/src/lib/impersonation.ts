@@ -15,6 +15,17 @@
  * `update({ impersonate: someId })` is refused here. Kept out of `auth.ts` and
  * given injected collaborators so this guarantee can be unit-tested without
  * standing up NextAuth or a database.
+ *
+ * Attribution tradeoff (intentional): because the effective identity fully
+ * becomes the target, any server action that stamps who-did-this from
+ * `session.user.id` (attendance, meals, application reviews, ...) records the
+ * *target*, not the admin. Writes are deliberately allowed - the point is to
+ * reproduce what the person can do - so the audit link back to the admin is the
+ * `ImpersonationEvent` row's [startedAt, endedAt] window, not a per-action
+ * field. The confirmation dialog before starting spells this out, and the
+ * banner keeps it visible throughout. If per-action attribution is ever needed,
+ * that's a schema change (stamp `impersonatorId` alongside the actor), not a
+ * change here.
  */
 
 import type { Role } from "@prisma/client";

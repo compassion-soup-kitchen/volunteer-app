@@ -164,6 +164,9 @@ export function VolunteerDirectory({
     newRole: AssignableRole;
   } | null>(null);
   const [changingRole, setChangingRole] = useState(false);
+  const [impersonateTarget, setImpersonateTarget] =
+    useState<VolunteerListItem | null>(null);
+  const [impersonating, setImpersonating] = useState(false);
 
   function reload(next: {
     status?: string;
@@ -245,9 +248,13 @@ export function VolunteerDirectory({
     reload({});
   }
 
-  async function handleImpersonate(volunteer: VolunteerListItem) {
+  async function handleImpersonateConfirm() {
+    const volunteer = impersonateTarget;
+    if (!volunteer) return;
+    setImpersonating(true);
     const result = await startImpersonation(volunteer.user.id);
     if ("error" in result) {
+      setImpersonating(false);
       toast.error(result.error);
       return;
     }
@@ -259,11 +266,13 @@ export function VolunteerDirectory({
     // route coordinators on to /staff/dashboard.
     const updated = await update({ impersonate: volunteer.user.id });
     if (!updated?.user?.impersonator) {
+      setImpersonating(false);
       toast.error(
         `Couldn't start viewing as ${volunteer.user.name || "this person"}. Please try again.`
       );
       return;
     }
+    setImpersonateTarget(null);
     router.push("/dashboard");
     router.refresh();
   }
@@ -467,7 +476,7 @@ export function VolunteerDirectory({
                           onChangeRole={(v, newRole) =>
                             setRoleTarget({ volunteer: v, newRole })
                           }
-                          onImpersonate={handleImpersonate}
+                          onImpersonate={(v) => setImpersonateTarget(v)}
                         />
                       </TableCell>
                     </TableRow>
@@ -558,7 +567,7 @@ export function VolunteerDirectory({
                     onChangeRole={(v, newRole) =>
                       setRoleTarget({ volunteer: v, newRole })
                     }
-                    onImpersonate={handleImpersonate}
+                    onImpersonate={(v) => setImpersonateTarget(v)}
                   />
                 </li>
               ))}
@@ -665,6 +674,50 @@ export function VolunteerDirectory({
               ) : (
                 roleTarget &&
                 `Make ${ROLE_LABEL[roleTarget.newRole].toLowerCase()}`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={impersonateTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !impersonating) setImpersonateTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              View the app as {impersonateTarget?.user.name || "this person"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You&apos;ll see everything exactly as they do, and a banner will
+              show you&apos;re viewing as them. Anything you do while viewing as
+              them - signing up for a shift, marking attendance - is recorded as{" "}
+              <span className="font-medium">their</span> action, not yours, so
+              only act on their behalf if you mean to. Use{" "}
+              <span className="font-medium">Return to your account</span>{" "}
+              when you&apos;re done.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={impersonating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Keep the dialog open while the session swaps and navigates.
+                e.preventDefault();
+                void handleImpersonateConfirm();
+              }}
+              disabled={impersonating}
+            >
+              {impersonating ? (
+                <>
+                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "View as this person"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
