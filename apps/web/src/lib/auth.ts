@@ -111,8 +111,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
+      // A token with no id is a deliberately-cleared identity: stopping
+      // impersonation when the admin's own account has since been archived or
+      // deleted leaves nothing to restore. Return an unauthenticated session so
+      // `proxy.ts` and the layout gates bounce to /login, rather than an object
+      // whose `user.id` is undefined - which reads as authenticated and blows up
+      // the first `findUnique({ where: { id } })` downstream.
+      if (typeof token.id !== "string" || token.id === "") {
+        return { ...session, user: undefined as unknown as typeof session.user };
+      }
       if (session.user) {
-        session.user.id = token.id as string;
+        session.user.id = token.id;
         session.user.role = token.role as Role;
         // Surface the real admin (id/name/email only) so the UI can show the
         // impersonation banner and offer a way back.

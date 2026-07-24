@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   applyImpersonationUpdate,
+  checkImpersonationTarget,
+  checkImpersonatorAuthority,
   type ImpersonatableToken,
   type ImpersonationDeps,
   type ImpersonationUserRow,
@@ -296,5 +298,91 @@ describe("applyImpersonationUpdate - passthrough", () => {
 
     expect(handled).toBe(false);
     expect(d.recordStart).not.toHaveBeenCalled();
+  });
+});
+
+// The shared validation both the jwt callback and the server action run, so the
+// toast can't disagree with what the token swap actually does.
+describe("checkImpersonatorAuthority", () => {
+  const base = {
+    actorRole: "ADMIN" as const,
+    actorIsImpersonating: false,
+    actorId: ADMIN_ID,
+    targetId: TARGET_ID,
+  };
+
+  it("allows a non-impersonating admin targeting someone else", () => {
+    expect(checkImpersonatorAuthority(base)).toEqual({ ok: true });
+  });
+
+  it("refuses when the actor is already impersonating", () => {
+    const result = checkImpersonatorAuthority({
+      ...base,
+      actorIsImpersonating: true,
+    });
+    expect(result).toEqual({
+      ok: false,
+      message: "Return to your own account before impersonating someone else.",
+    });
+  });
+
+  it("refuses a non-admin actor", () => {
+    expect(checkImpersonatorAuthority({ ...base, actorRole: "COORDINATOR" })).toEqual({
+      ok: false,
+      message: "Only admins can view the app as another person.",
+    });
+  });
+
+  it("refuses when the actor has no id", () => {
+    expect(checkImpersonatorAuthority({ ...base, actorId: "" })).toMatchObject({
+      ok: false,
+    });
+  });
+
+  it("refuses self-impersonation", () => {
+    expect(
+      checkImpersonatorAuthority({ ...base, targetId: ADMIN_ID })
+    ).toEqual({ ok: false, message: "You can't impersonate yourself." });
+  });
+
+  // A nested attempt is rejected before the role check, so the message points at
+  // returning first rather than at admin rights.
+  it("prefers the nesting message over the role message", () => {
+    const result = checkImpersonatorAuthority({
+      ...base,
+      actorRole: "VOLUNTEER",
+      actorIsImpersonating: true,
+    });
+    expect(result).toMatchObject({
+      message: "Return to your own account before impersonating someone else.",
+    });
+  });
+});
+
+describe("checkImpersonationTarget", () => {
+  it("allows an active non-admin", () => {
+    expect(checkImpersonationTarget({ role: "VOLUNTEER", status: "ACTIVE" })).toEqual({
+      ok: true,
+    });
+  });
+
+  it("refuses a missing target", () => {
+    expect(checkImpersonationTarget(null)).toEqual({
+      ok: false,
+      message: "That person's account no longer exists.",
+    });
+  });
+
+  it("refuses an archived target", () => {
+    expect(
+      checkImpersonationTarget({ role: "VOLUNTEER", status: "ARCHIVED" })
+    ).toEqual({ ok: false, message: "You can't impersonate an archived account." });
+  });
+
+  it("refuses an admin target", () => {
+    expect(checkImpersonationTarget({ role: "ADMIN", status: "ACTIVE" })).toEqual({
+      ok: false,
+      message: "You can't impersonate another admin.",
+    });
   });
 });

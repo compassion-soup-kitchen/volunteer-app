@@ -76,6 +76,63 @@ export type ImpersonationResult<T> = {
 };
 
 /**
+ * The outcome of a validation check. `message` is a user-facing reason, surfaced
+ * by the server action as a toast; the `jwt` callback only reads `ok`.
+ */
+export type ImpersonationCheck = { ok: true } | { ok: false; message: string };
+
+/**
+ * Whether the actor is allowed to begin *any* impersonation, from who they are
+ * alone - no database read needed. Kept separate from the target checks so the
+ * security-sensitive `jwt` path can refuse a forged non-admin request without
+ * ever hitting the database (a volunteer spamming `update({ impersonate })`
+ * must not amplify into DB load).
+ */
+export function checkImpersonatorAuthority(input: {
+  actorRole: Role | undefined;
+  actorIsImpersonating: boolean;
+  actorId: string;
+  targetId: string;
+}): ImpersonationCheck {
+  if (input.actorIsImpersonating) {
+    return {
+      ok: false,
+      message: "Return to your own account before impersonating someone else.",
+    };
+  }
+  if (!input.actorId || input.actorRole !== "ADMIN") {
+    return {
+      ok: false,
+      message: "Only admins can view the app as another person.",
+    };
+  }
+  if (input.targetId === input.actorId) {
+    return { ok: false, message: "You can't impersonate yourself." };
+  }
+  return { ok: true };
+}
+
+/**
+ * Whether a loaded target may be impersonated. `target: null` means the account
+ * wasn't found. Callers run this only after `checkImpersonatorAuthority` passes,
+ * so the two together are the single source of truth for "can A impersonate B".
+ */
+export function checkImpersonationTarget(
+  target: Pick<ImpersonationUserRow, "role" | "status"> | null
+): ImpersonationCheck {
+  if (!target) {
+    return { ok: false, message: "That person's account no longer exists." };
+  }
+  if (target.status === "ARCHIVED") {
+    return { ok: false, message: "You can't impersonate an archived account." };
+  }
+  if (target.role === "ADMIN") {
+    return { ok: false, message: "You can't impersonate another admin." };
+  }
+  return { ok: true };
+}
+
+/**
  * Applies an impersonation start/stop to `token`, or reports the payload wasn't
  * one so the caller can handle it otherwise.
  *
@@ -108,19 +165,25 @@ async function startImpersonating(
   targetUserId: string,
   { readUser, recordStart }: ImpersonationDeps
 ): Promise<void> {
-  // Authority comes from the signed token, not the caller's payload. Also
-  // refuse to nest - an already-impersonating token must return first.
-  if (token.role !== "ADMIN" || token.impersonator) return;
+  // Authority comes from the signed token, not the caller's payload - and it's
+  // checked before any database read so a forged non-admin request can't amplify
+  // into DB load. Shares the validation with the server action (which reuses
+  // these helpers to produce the user-facing error) so the two can't drift.
   if (typeof token.id !== "string" || token.id === "") return;
   const adminId = token.id;
 
-  // Can't impersonate yourself.
-  if (targetUserId === adminId) return;
+  const authority = checkImpersonatorAuthority({
+    actorRole: token.role as Role | undefined,
+    actorIsImpersonating: Boolean(token.impersonator),
+    actorId: adminId,
+    targetId: targetUserId,
+  });
+  if (!authority.ok) return;
 
   const target = await readUser(targetUserId);
-  if (!target || target.status === "ARCHIVED" || target.role === "ADMIN") {
-    return;
-  }
+  if (!checkImpersonationTarget(target).ok) return;
+  // Past the guard, `target` is non-null.
+  if (!target) return;
 
   const eventId = await recordStart(adminId, target.id);
 
