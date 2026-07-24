@@ -3,6 +3,7 @@
 import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { safeParseDateOnly } from "@/lib/date-only";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -46,7 +47,7 @@ export type CreateTrainingData = {
   type: string;
   title: string;
   description?: string;
-  date: string; // ISO
+  date: string; // YYYY-MM-DD
   startTime: string;
   endTime: string;
   capacity: number;
@@ -130,9 +131,12 @@ export async function createTrainingSession(
     return { error: "Not authorised." };
   }
 
-  if (!data.title || !data.date || !data.startTime || !data.endTime || !data.type) {
+  if (!data.title || !data.startTime || !data.endTime || !data.type) {
     return { error: "All fields are required." };
   }
+
+  const date = safeParseDateOnly(data.date);
+  if (!date) return { error: "Please select a date." };
 
   if (data.capacity < 1) {
     return { error: "Capacity must be at least 1." };
@@ -150,7 +154,7 @@ export async function createTrainingSession(
         type: data.type as "INDUCTION" | "DE_ESCALATION" | "HEALTH_SAFETY" | "OTHER",
         title: data.title,
         description: data.description || null,
-        date: new Date(data.date),
+        date,
         startTime: data.startTime,
         endTime: data.endTime,
         capacity: data.capacity,

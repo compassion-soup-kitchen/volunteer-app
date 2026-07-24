@@ -1,5 +1,7 @@
 import { getDb } from "@/lib/db";
+import { startOfTodayInAppZone } from "@/lib/date-only";
 import { getMilestones, type Milestone } from "@/lib/milestones";
+import { isHeldForOffers } from "@/lib/shift-offers";
 import { diffHours } from "./time";
 
 // ─── Types ──────────────────────────────────────────────
@@ -77,7 +79,9 @@ export async function getDashboardDataForUser(
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const thirtyDaysOut = new Date(now);
+  // Shift days carry no time, so "from now on" starts at the top of today.
+  const today = startOfTodayInAppZone(now);
+  const thirtyDaysOut = new Date(today);
   thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
 
   // Upcoming shifts (signed up, date >= today)
@@ -85,7 +89,7 @@ export async function getDashboardDataForUser(
     where: {
       volunteerId: profile.id,
       status: "SIGNED_UP",
-      shift: { date: { gte: now } },
+      shift: { date: { gte: today } },
     },
     include: {
       shift: {
@@ -140,7 +144,7 @@ export async function getDashboardDataForUser(
     ? await db.shift.findMany({
         where: {
           serviceAreaId: { in: interestAreaIds },
-          date: { gte: now, lte: thirtyDaysOut },
+          date: { gte: today, lte: thirtyDaysOut },
           signups: {
             none: {
               volunteerId: profile.id,
@@ -154,6 +158,7 @@ export async function getDashboardDataForUser(
             where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
             select: { id: true },
           },
+          offers: { select: { volunteerId: true, status: true } },
         },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       })
@@ -161,6 +166,15 @@ export async function getDashboardDataForUser(
 
   const openShiftsForYou = openShifts
     .filter((s) => s.signups.length < s.capacity)
+    // Don't dangle a shift that's being held for someone else's crew.
+    .filter(
+      (s) =>
+        !isHeldForOffers(s, now) ||
+        s.offers.some(
+          (offer) =>
+            offer.volunteerId === profile.id && offer.status === "PENDING"
+        )
+    )
     .slice(0, 5)
     .map((s) => ({
       id: s.id,

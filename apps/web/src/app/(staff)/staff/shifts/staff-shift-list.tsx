@@ -34,9 +34,11 @@ import { Illustration } from "@/components/brand/illustration";
 import {
   RiMoreLine,
   RiEyeLine,
+  RiPencilLine,
   RiDeleteBinLine,
   RiFilterLine,
   RiLoader4Line,
+  RiLockLine,
   RiTimeLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
@@ -47,29 +49,18 @@ import {
   type ShiftFilters,
 } from "@/lib/shift-actions";
 import { formatTimeRange } from "@/lib/format";
+import {
+  addDaysToDateOnly,
+  formatDateOnly,
+  isPastInAppZone,
+  isTodayInAppZone,
+  todayInAppZone,
+} from "@/lib/date-only";
+import { isHeldForOffers } from "@/lib/shift-offers";
 
 interface StaffShiftListProps {
   initialShifts: StaffShift[];
   serviceAreas: { id: string; name: string }[];
-}
-
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-NZ", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function isPast(date: Date): boolean {
-  return new Date(date) < new Date(new Date().toISOString().split("T")[0]);
-}
-
-function isToday(date: Date): boolean {
-  const today = new Date().toISOString().split("T")[0];
-  const shiftDate = new Date(date).toISOString().split("T")[0];
-  return today === shiftDate;
 }
 
 export function StaffShiftList({
@@ -88,10 +79,12 @@ export function StaffShiftList({
     startTransition(async () => {
       const filters: ShiftFilters = {};
       if (areaId !== "all") filters.serviceAreaId = areaId;
+      const today = todayInAppZone();
       if (time === "upcoming") {
-        filters.fromDate = new Date().toISOString();
+        filters.fromDate = today;
       } else if (time === "past") {
-        filters.toDate = new Date().toISOString();
+        // Today's shifts belong with the upcoming ones, not the archive.
+        filters.toDate = addDaysToDateOnly(today, -1);
       }
       const result = await getStaffShifts(filters);
       setShifts(result);
@@ -178,9 +171,10 @@ export function StaffShiftList({
         <Card>
           <ul className="divide-y divide-border">
             {shifts.map((shift) => {
-              const past = isPast(shift.date);
-              const today = isToday(shift.date);
-              const shiftYear = new Date(shift.date).getFullYear();
+              const past = isPastInAppZone(shift.date);
+              const today = isTodayInAppZone(shift.date);
+              const held = isHeldForOffers(shift);
+              const shiftYear = shift.date.getUTCFullYear();
               return (
                 <li key={shift.id}>
                   <div
@@ -188,7 +182,7 @@ export function StaffShiftList({
                     onClick={() => router.push(`/staff/shifts/${shift.id}`)}
                   >
                     <DateBlock
-                      date={new Date(shift.date)}
+                      date={shift.date}
                       className={past ? "opacity-55" : undefined}
                     />
                     <span
@@ -202,6 +196,12 @@ export function StaffShiftList({
                         </p>
                         {today && <Badge>Today</Badge>}
                         {past && <Badge variant="neutral">Past</Badge>}
+                        {held && (
+                          <Badge variant="warning" className="gap-1">
+                            <RiLockLine aria-hidden className="size-3" />
+                            First refusal
+                          </Badge>
+                        )}
                       </div>
                       <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1.5">
@@ -249,6 +249,15 @@ export function StaffShiftList({
                           View details
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/staff/shifts/${shift.id}/edit`);
+                          }}
+                        >
+                          <RiPencilLine className="mr-2 size-4" />
+                          Edit shift
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -281,8 +290,7 @@ export function StaffShiftList({
               {deleteTarget && (
                 <>
                   {" "}
-                  on{" "}
-                  <strong>{formatDate(deleteTarget.date)}</strong> (
+                  on <strong>{formatDateOnly(deleteTarget.date)}</strong> (
                   {deleteTarget.serviceArea.name},{" "}
                   {formatTimeRange(deleteTarget.startTime, deleteTarget.endTime)})
                 </>

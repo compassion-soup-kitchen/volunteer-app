@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/date-picker";
+import { toDateOnly, toPickerDate } from "@/lib/date-only";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
@@ -80,18 +81,18 @@ export function ReportDashboard({
   const [exporting, setExporting] = useState<string | null>(null);
 
   const [fromDate, setFromDate] = useState<Date | undefined>(
-    filters.fromDate ? new Date(filters.fromDate) : undefined
+    filters.fromDate ? toPickerDate(new Date(filters.fromDate)) : undefined
   );
   const [toDate, setToDate] = useState<Date | undefined>(
-    filters.toDate ? new Date(filters.toDate) : undefined
+    filters.toDate ? toPickerDate(new Date(filters.toDate)) : undefined
   );
   const [areaId, setAreaId] = useState(filters.serviceAreaId || "all");
 
   function applyFilters() {
     startTransition(() => {
       const params = new URLSearchParams();
-      if (fromDate) params.set("from", fromDate.toISOString().split("T")[0]);
-      if (toDate) params.set("to", toDate.toISOString().split("T")[0]);
+      if (fromDate) params.set("from", toDateOnly(fromDate));
+      if (toDate) params.set("to", toDateOnly(toDate));
       if (areaId && areaId !== "all") params.set("area", areaId);
       const qs = params.toString();
       router.push(`/staff/reports${qs ? `?${qs}` : ""}`);

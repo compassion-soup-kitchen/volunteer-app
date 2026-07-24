@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { startOfTodayInAppZone } from "@/lib/date-only";
+
 /** Sanity ceiling for a single shift's kai count - well above any real service. */
 export const MEALS_SERVED_MAX = 5000;
 
@@ -11,15 +13,10 @@ export const mealsServedSchema = z
 
 /**
  * Kai can only be recorded once the shift day has arrived - never for a
- * future shift. `Shift.date` is date-only (@db.Date), encoded as midnight
- * UTC, so "today" is anchored to the UTC day boundary rather than the
- * server's timezone (same anchoring as shift-notifications.ts).
+ * future shift. "Today" is the day on the kitchen's own wall calendar, so a
+ * morning shift can be written up over lunch rather than waiting for UTC to
+ * catch up (see date-only.ts).
  */
 export function canRecordMeals(shiftDate: Date, now: Date): boolean {
-  const todayUtc = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate()
-  );
-  return shiftDate.getTime() <= todayUtc;
+  return shiftDate <= startOfTodayInAppZone(now);
 }

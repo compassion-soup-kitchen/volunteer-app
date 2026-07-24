@@ -156,12 +156,13 @@ prisma/
 - **Migrations**: history lives in `prisma/migrations/`. After editing the schema, run `pnpm run db:migrate` to create a new migration locally. Production applies them via `prisma migrate deploy` on container start (see `Dockerfile`).
 - Lazy-init pattern: import `getDb()` from `@/lib/db` (never instantiate PrismaClient elsewhere).
 - All dates stored as UTC; shift `date` is `@db.Date`, times stored as `String` (HH:mm).
+- **Calendar days go through `src/lib/date-only.ts`.** `@db.Date` columns (`Shift.date`, `Shift.offersCloseOn`, `TrainingSession.date`) are wall-calendar days encoded as midnight UTC, and a date picker hands back *local* midnight — so `toISOString()` on a picked date silently loses a day in NZ. Serialise with `toDateOnly`, parse with `parseDateOnly`, format with `formatDateOnly`, and answer "is it today?" with `todayInAppZone` / `isTodayInAppZone` (anchored to `Pacific/Auckland`, not the server or UTC).
 - Cascade deletes on user-owned data (Account, Session, VolunteerProfile, ShiftSignup, TrainingAttendance, etc.).
 
 ### Database Models (overview)
 - **Auth**: `User`, `Account`, `Session`, `VerificationToken` — NextAuth standard tables. `User.role` ∈ `{PUBLIC, VOLUNTEER, COORDINATOR, ADMIN}`. `User.status` ∈ `{ACTIVE, ARCHIVED}` (archived users blocked at sign-in).
 - **Onboarding**: `VolunteerProfile` (status: APPLICATION_SUBMITTED → AWAITING_VETTING → APPROVED_FOR_INDUCTION → ACTIVE / INACTIVE; `mojStatus` ∈ NOT_STARTED/SUBMITTED/CLEARED/FLAGGED), `Application`, `Document`, `SignedAgreement`, `AgreementTemplate` (versioned, supports re-acknowledgement).
-- **Operations**: `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `TrainingSession`, `TrainingAttendance`.
+- **Operations**: `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `ShiftOffer` (right of first refusal: PENDING/ACCEPTED/DECLINED, paired with `Shift.offersCloseOn`), `TrainingSession`, `TrainingAttendance`.
 - **Communication**: `Announcement` (audience: ALL / VOLUNTEERS / COORDINATORS).
 
 ### Auth Roles

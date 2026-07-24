@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getStaffShifts } from "@/lib/shift-actions";
+import { todayInAppZone } from "@/lib/date-only";
 import { getServiceAreas } from "@/lib/application-actions";
 import { StaffShiftList } from "./staff-shift-list";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ export default async function StaffShiftsPage() {
   await connection();
   // Matches the list's default "Upcoming" filter, so the first paint agrees with it.
   const [shifts, serviceAreas] = await Promise.all([
-    getStaffShifts({ fromDate: new Date().toISOString() }),
+    getStaffShifts({ fromDate: todayInAppZone() }),
     getServiceAreas(),
   ]);
 

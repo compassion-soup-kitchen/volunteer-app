@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DatePicker } from "@/components/date-picker";
 import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
+import { toDateOnly } from "@/lib/date-only";
 import { createTrainingSession, type CreateTrainingData } from "@/lib/training-actions";
 
 const TRAINING_TYPES = [
@@ -68,7 +69,7 @@ export function TrainingForm() {
         type,
         title: title.trim(),
         description: description.trim() || undefined,
-        date: date!.toISOString(),
+        date: toDateOnly(date!),
         startTime,
         endTime,
         capacity: parseInt(capacity, 10),

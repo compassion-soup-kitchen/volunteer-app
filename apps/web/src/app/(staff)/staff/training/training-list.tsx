@@ -14,6 +14,7 @@ import {
 } from "@remixicon/react";
 import type { StaffTrainingSession } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
+import { isPastInAppZone, isTodayInAppZone } from "@/lib/date-only";
 
 interface TrainingListProps {
   sessions: StaffTrainingSession[];
@@ -32,16 +33,6 @@ const TYPE_VARIANTS: Record<string, "info" | "amber" | "success" | "neutral"> = 
   HEALTH_SAFETY: "success",
   OTHER: "neutral",
 };
-
-function isPast(date: Date): boolean {
-  return new Date(date) < new Date(new Date().toISOString().split("T")[0]);
-}
-
-function isToday(date: Date): boolean {
-  const today = new Date().toISOString().split("T")[0];
-  const sessionDate = new Date(date).toISOString().split("T")[0];
-  return today === sessionDate;
-}
 
 export function TrainingList({ sessions }: TrainingListProps) {
   if (sessions.length === 0) {
@@ -62,8 +53,8 @@ export function TrainingList({ sessions }: TrainingListProps) {
     );
   }
 
-  const upcoming = sessions.filter((s) => !isPast(s.date));
-  const past = sessions.filter((s) => isPast(s.date));
+  const upcoming = sessions.filter((s) => !isPastInAppZone(s.date));
+  const past = sessions.filter((s) => isPastInAppZone(s.date));
 
   return (
     <div className="space-y-8">
@@ -111,8 +102,8 @@ function SessionRow({
   isPast?: boolean;
 }) {
   const activeCount = session.attendances.length;
-  const today = isToday(session.date);
-  const sessionYear = new Date(session.date).getFullYear();
+  const today = isTodayInAppZone(session.date);
+  const sessionYear = session.date.getUTCFullYear();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -122,7 +113,7 @@ function SessionRow({
         className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       >
         <DateBlock
-          date={new Date(session.date)}
+          date={session.date}
           className={past ? "opacity-55" : undefined}
         />
         <span aria-hidden className="self-stretch border-l border-border" />

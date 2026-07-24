@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { startOfTodayInAppZone } from "@/lib/date-only";
 import { revalidatePath } from "next/cache";
 import type { MutationResult } from "./volunteer-shifts";
 
@@ -75,7 +76,8 @@ export async function getAvailableTrainingForUser(
     where: { userId },
   });
 
-  const now = new Date();
+  // Training days carry no time, so today's session is still open today.
+  const now = startOfTodayInAppZone();
 
   const sessions = await db.trainingSession.findMany({
     where: {
@@ -171,7 +173,7 @@ export async function registerForTrainingAsUser(
   });
 
   if (!ts) return { error: "Training session not found." };
-  if (ts.date < new Date()) return { error: "This session has already passed." };
+  if (ts.date < startOfTodayInAppZone()) return { error: "This session has already passed." };
   if (ts.attendances.length >= ts.capacity) {
     return { error: "This session is full." };
   }
@@ -239,7 +241,7 @@ export async function cancelTrainingRegistrationAsUser(
     return { error: "No active registration found for this session." };
   }
 
-  if (attendance.session.date < new Date()) {
+  if (attendance.session.date < startOfTodayInAppZone()) {
     return { error: "Cannot cancel a session that has already passed." };
   }
 

@@ -1,5 +1,12 @@
+import { Prisma } from "@prisma/client";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { safeParseDateOnly, startOfTodayInAppZone } from "@/lib/date-only";
+import {
+  heldForOffersMessage,
+  isHeldForOffers,
+  type OfferStatus,
+} from "@/lib/shift-offers";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -14,12 +21,20 @@ export type ShiftWithDetails = {
   signupCount: number;
   userSignupId: string | null; // null if user hasn't signed up
   userSignupStatus: string | null;
+  /** Day the right of first refusal runs through, or null if there is none. */
+  offersCloseOn: Date | null;
+  /** True while only the volunteers offered this shift may take it. */
+  heldForOffers: boolean;
+  /** This volunteer's own standing on the offer, if they were given one. */
+  userOfferStatus: OfferStatus | null;
 };
 
 export type ShiftFilters = {
   serviceAreaId?: string;
-  fromDate?: string; // ISO
-  toDate?: string; // ISO
+  /** Calendar day, `YYYY-MM-DD`, inclusive. Shift days carry no time. */
+  fromDate?: string;
+  /** Calendar day, `YYYY-MM-DD`, inclusive. */
+  toDate?: string;
 };
 
 export type ScheduleEntry = {
@@ -42,16 +57,32 @@ type ShiftWithSignups = {
   endTime: string;
   capacity: number;
   notes: string | null;
+  offersCloseOn: Date | null;
   serviceArea: { id: string; name: string };
   signups: { id: string; volunteerId: string; status: string }[];
+  offers: { volunteerId: string; status: OfferStatus }[];
 };
+
+/** Signups and offers both come back with the shift wherever it's read. */
+const shiftDetailInclude = {
+  serviceArea: { select: { id: true, name: true } },
+  signups: {
+    where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
+    select: { id: true, volunteerId: true, status: true },
+  },
+  offers: { select: { volunteerId: true, status: true } },
+} satisfies Prisma.ShiftInclude;
 
 function toShiftWithDetails(
   shift: ShiftWithSignups,
-  volunteerId: string | null
+  volunteerId: string | null,
+  now: Date = new Date()
 ): ShiftWithDetails {
   const userSignup = volunteerId
     ? shift.signups.find((s) => s.volunteerId === volunteerId)
+    : null;
+  const userOffer = volunteerId
+    ? shift.offers.find((o) => o.volunteerId === volunteerId)
     : null;
 
   return {
@@ -65,6 +96,9 @@ function toShiftWithDetails(
     signupCount: shift.signups.length,
     userSignupId: userSignup?.id ?? null,
     userSignupStatus: userSignup?.status ?? null,
+    offersCloseOn: shift.offersCloseOn,
+    heldForOffers: isHeldForOffers(shift, now),
+    userOfferStatus: userOffer?.status ?? null,
   };
 }
 
@@ -79,9 +113,13 @@ export async function getAvailableShiftsForUser(
     where: { userId },
   });
 
+  // Today's shift is still worth showing today, so "from" floors to the
+  // start of the day here rather than to this instant.
   const now = new Date();
-  const fromDate = filters?.fromDate ? new Date(filters.fromDate) : now;
-  const toDate = filters?.toDate ? new Date(filters.toDate) : undefined;
+  const fromDate =
+    (filters?.fromDate ? safeParseDateOnly(filters.fromDate) : null) ??
+    startOfTodayInAppZone(now);
+  const toDate = filters?.toDate ? safeParseDateOnly(filters.toDate) : null;
 
   const shifts = await db.shift.findMany({
     where: {
@@ -93,17 +131,13 @@ export async function getAvailableShiftsForUser(
         ? { serviceAreaId: filters.serviceAreaId }
         : {}),
     },
-    include: {
-      serviceArea: { select: { id: true, name: true } },
-      signups: {
-        where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
-        select: { id: true, volunteerId: true, status: true },
-      },
-    },
+    include: shiftDetailInclude,
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
 
-  return shifts.map((shift) => toShiftWithDetails(shift, profile?.id ?? null));
+  return shifts.map((shift) =>
+    toShiftWithDetails(shift, profile?.id ?? null, now)
+  );
 }
 
 export async function getShiftForUser(
@@ -118,13 +152,7 @@ export async function getShiftForUser(
 
   const shift = await db.shift.findUnique({
     where: { id: shiftId },
-    include: {
-      serviceArea: { select: { id: true, name: true } },
-      signups: {
-        where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
-        select: { id: true, volunteerId: true, status: true },
-      },
-    },
+    include: shiftDetailInclude,
   });
 
   return shift ? toShiftWithDetails(shift, profile?.id ?? null) : null;
@@ -151,7 +179,8 @@ export async function getScheduleForUser(
     },
   });
 
-  const now = new Date();
+  // A shift on today is still upcoming, right up to the end of the day.
+  const today = startOfTodayInAppZone();
   const upcoming: ScheduleEntry[] = [];
   const past: ScheduleEntry[] = [];
 
@@ -171,7 +200,7 @@ export async function getScheduleForUser(
     };
 
     if (signup.status === "SIGNED_UP") {
-      if (signup.shift.date >= now) upcoming.push(entry);
+      if (signup.shift.date >= today) upcoming.push(entry);
     } else {
       past.push(entry);
     }
@@ -197,19 +226,51 @@ export type SignupDecision =
 /**
  * Pure capacity/eligibility check for a shift signup. Check order matters
  * and mirrors the messages the UI already relies on: a full shift reports
- * "full" even to a volunteer who is already on it.
+ * "full" even to a volunteer who is already on it, and a shift still held
+ * for its regulars explains the hold rather than reporting it as full —
+ * except to a volunteer who already has a spot on it.
  */
 export function decideSignup(input: {
-  shift: { date: Date; capacity: number } | null;
+  shift:
+    | {
+        date: Date;
+        capacity: number;
+        offersCloseOn: Date | null;
+        offers: { status: OfferStatus }[];
+      }
+    | null;
   activeSignupCount: number;
   existingSignupStatus: string | null;
+  /** This volunteer's own offer on the shift, if they were given one. */
+  userOfferStatus?: OfferStatus | null;
   now: Date;
 }): SignupDecision {
-  const { shift, activeSignupCount, existingSignupStatus, now } = input;
+  const {
+    shift,
+    activeSignupCount,
+    existingSignupStatus,
+    userOfferStatus = null,
+    now,
+  } = input;
 
   if (!shift) return { action: "reject", error: "Shift not found." };
-  if (shift.date < now) {
+  // Shift.date is date-only, so "passed" means the day is behind us.
+  if (shift.date < startOfTodayInAppZone(now)) {
     return { action: "reject", error: "This shift has already passed." };
+  }
+  // The hold is about who may take a spot, so it has nothing to say to
+  // someone already holding one — they hear "already signed up" below, even
+  // while the shift is still held for the rest of the crew.
+  if (
+    userOfferStatus !== "PENDING" &&
+    existingSignupStatus !== "SIGNED_UP" &&
+    shift.offersCloseOn &&
+    isHeldForOffers(shift, now)
+  ) {
+    return {
+      action: "reject",
+      error: heldForOffersMessage(shift.offersCloseOn),
+    };
   }
   if (activeSignupCount >= shift.capacity) {
     return { action: "reject", error: "This shift is full." };
@@ -266,6 +327,7 @@ export async function signUpForShiftAsUser(
               where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
               select: { id: true },
             },
+            offers: { select: { volunteerId: true, status: true } },
           },
         });
 
@@ -278,10 +340,14 @@ export async function signUpForShiftAsUser(
           },
         });
 
+        const userOffer =
+          shift?.offers.find((o) => o.volunteerId === profile.id) ?? null;
+
         const decision = decideSignup({
           shift,
           activeSignupCount: shift?.signups.length ?? 0,
           existingSignupStatus: existing?.status ?? null,
+          userOfferStatus: userOffer?.status ?? null,
           now: new Date(),
         });
 
@@ -300,6 +366,16 @@ export async function signUpForShiftAsUser(
               volunteerId: profile.id,
               status: "SIGNED_UP",
             },
+          });
+        }
+
+        // Taking the shift answers any offer that was held open for them.
+        if (userOffer && userOffer.status === "PENDING") {
+          await tx.shiftOffer.update({
+            where: {
+              shiftId_volunteerId: { shiftId, volunteerId: profile.id },
+            },
+            data: { status: "ACCEPTED", respondedAt: new Date() },
           });
         }
 
@@ -352,14 +428,67 @@ export async function cancelShiftSignupAsUser(
     return { error: "No active signup found for this shift." };
   }
 
-  if (signup.shift.date < new Date()) {
+  if (signup.shift.date < startOfTodayInAppZone()) {
     return { error: "Cannot cancel a shift that has already passed." };
   }
 
   try {
-    await db.shiftSignup.update({
-      where: { id: signup.id },
-      data: { status: "CANCELLED" },
+    await db.$transaction([
+      db.shiftSignup.update({
+        where: { id: signup.id },
+        data: { status: "CANCELLED" },
+      }),
+      // Giving the spot back releases the hold too — an accepted offer that
+      // is handed back must not keep the shift closed to everyone else.
+      db.shiftOffer.updateMany({
+        where: { shiftId, volunteerId: profile.id, status: "ACCEPTED" },
+        data: { status: "DECLINED", respondedAt: new Date() },
+      }),
+    ]);
+
+    revalidatePath("/shifts");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+/**
+ * A volunteer answering an offer. Accepting goes through the normal signup
+ * path so the capacity race is handled the same way; declining just releases
+ * the hold, which may open the shift to everyone straight away.
+ */
+export async function respondToShiftOfferAsUser(
+  userId: string,
+  shiftId: string,
+  response: "ACCEPT" | "DECLINE"
+): Promise<MutationResult> {
+  const db = getDb();
+
+  const profile = await db.volunteerProfile.findUnique({ where: { userId } });
+  if (!profile) return { error: "Profile not found." };
+
+  const offer = await db.shiftOffer.findUnique({
+    where: { shiftId_volunteerId: { shiftId, volunteerId: profile.id } },
+  });
+  if (!offer) return { error: "This shift wasn't offered to you." };
+
+  if (response === "ACCEPT") {
+    return signUpForShiftAsUser(userId, shiftId);
+  }
+
+  if (offer.status === "DECLINED") return { success: true };
+  // Backing out of an offer they had already taken is a cancellation, which
+  // releases the hold on its way through.
+  if (offer.status === "ACCEPTED") {
+    return cancelShiftSignupAsUser(userId, shiftId);
+  }
+
+  try {
+    await db.shiftOffer.update({
+      where: { id: offer.id },
+      data: { status: "DECLINED", respondedAt: new Date() },
     });
 
     revalidatePath("/shifts");

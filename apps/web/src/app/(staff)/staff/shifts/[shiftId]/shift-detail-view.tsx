@@ -31,11 +31,15 @@ import {
   RiTeamLine,
   RiDeleteBinLine,
   RiLoader4Line,
+  RiLockLine,
+  RiLockUnlockLine,
+  RiPencilLine,
   RiUserLine,
   RiCheckLine,
   RiCloseLine,
   RiCheckDoubleLine,
 } from "@remixicon/react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   deleteShift,
@@ -45,29 +49,30 @@ import {
 } from "@/lib/shift-actions";
 import { RecordMealsCard } from "./record-meals-card";
 import { formatTimeRange } from "@/lib/format";
+import {
+  formatDateOnly,
+  isPastInAppZone,
+  isTodayInAppZone,
+} from "@/lib/date-only";
+import { formatHoldUntil, isHeldForOffers } from "@/lib/shift-offers";
 
 interface ShiftDetailViewProps {
   shift: StaffShift;
 }
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-NZ", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+const LONG_DATE: Intl.DateTimeFormatOptions = {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+};
 
-function isPast(date: Date): boolean {
-  return new Date(date) < new Date(new Date().toISOString().split("T")[0]);
-}
-
-function isToday(date: Date): boolean {
-  const today = new Date().toISOString().split("T")[0];
-  const shiftDate = new Date(date).toISOString().split("T")[0];
-  return today === shiftDate;
-}
+/** How each answer to an offer reads: passing on a shift is not a failure. */
+const OFFER_BADGES = {
+  PENDING: { label: "Yet to answer", variant: "warning" },
+  ACCEPTED: { label: "Taking it", variant: "success" },
+  DECLINED: { label: "Passed", variant: "neutral" },
+} as const;
 
 function initials(name: string | null): string {
   if (!name) return "?";
@@ -83,9 +88,10 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [markingId, setMarkingId] = useState<string | null>(null);
-  const past = isPast(shift.date);
-  const today = isToday(shift.date);
+  const past = isPastInAppZone(shift.date);
+  const today = isTodayInAppZone(shift.date);
   const canMarkAttendance = past || today;
+  const held = isHeldForOffers(shift);
   const activeSignups = shift.signups.filter(
     (s) => s.status === "SIGNED_UP" || s.status === "ATTENDED"
   );
@@ -140,7 +146,7 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
       <div className="space-y-6 lg:col-span-1">
         <Card>
           <CardHeader>
-            <CardTitle>{formatDate(shift.date)}</CardTitle>
+            <CardTitle>{formatDateOnly(shift.date, LONG_DATE)}</CardTitle>
             <CardDescription>
               Created by {shift.createdBy.name || "Unknown"}
             </CardDescription>
@@ -218,18 +224,76 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
               </div>
             )}
 
-            {!past && !today && (
-              <Button
-                variant="outline"
-                className="w-full text-destructive hover:text-destructive"
-                onClick={() => setShowDelete(true)}
-              >
-                <RiDeleteBinLine className="size-4" />
-                Delete shift
+            <div className="flex flex-col gap-2">
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/staff/shifts/${shift.id}/edit`}>
+                  <RiPencilLine className="size-4" />
+                  Edit shift
+                </Link>
               </Button>
-            )}
+              {!past && !today && (
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive hover:text-destructive"
+                  onClick={() => setShowDelete(true)}
+                >
+                  <RiDeleteBinLine className="size-4" />
+                  Delete shift
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
+
+        {/* Right of first refusal */}
+        {shift.offers.length > 0 && (
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>First refusal</CardTitle>
+              <CardDescription>
+                {held && shift.offersCloseOn
+                  ? `Held for these volunteers until ${formatHoldUntil(shift.offersCloseOn)}`
+                  : "Open to all volunteers — the offer has run its course"}
+              </CardDescription>
+              <CardAction>
+                {held ? (
+                  <Badge variant="warning" className="gap-1">
+                    <RiLockLine aria-hidden className="size-3" />
+                    Held
+                  </Badge>
+                ) : (
+                  <Badge variant="neutral" className="gap-1">
+                    <RiLockUnlockLine aria-hidden className="size-3" />
+                    Open
+                  </Badge>
+                )}
+              </CardAction>
+            </CardHeader>
+            <ul className="divide-y divide-border">
+              {shift.offers.map((offer) => (
+                <li
+                  key={offer.id}
+                  className="flex items-center gap-3 px-5 py-2.5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {offer.volunteer.user.name || offer.volunteer.user.email}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {offer.volunteer.user.email}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={OFFER_BADGES[offer.status].variant}
+                    className="shrink-0"
+                  >
+                    {OFFER_BADGES[offer.status].label}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         {/* Kai served - recordable once the shift day arrives */}
         {(past || today) && (
@@ -359,7 +423,7 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
             <AlertDialogTitle>Delete this shift?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove the shift on{" "}
-              <strong>{formatDate(shift.date)}</strong> (
+              <strong>{formatDateOnly(shift.date, LONG_DATE)}</strong> (
               {shift.serviceArea.name}, {formatTimeRange(shift.startTime, shift.endTime)}).
               This action cannot be undone.
             </AlertDialogDescription>

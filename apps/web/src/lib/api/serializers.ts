@@ -43,6 +43,11 @@ export function serializeShift(shift: ShiftWithDetails) {
     signupCount: shift.signupCount,
     userSignupId: shift.userSignupId,
     userSignupStatus: shift.userSignupStatus,
+    // Right of first refusal. Older app versions ignore these; the signup
+    // endpoint enforces the hold either way.
+    offersCloseOn: shift.offersCloseOn ? dateOnly(shift.offersCloseOn) : null,
+    heldForOffers: shift.heldForOffers,
+    userOfferStatus: shift.userOfferStatus,
   };
 }
 
