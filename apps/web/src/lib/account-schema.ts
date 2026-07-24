@@ -11,12 +11,36 @@ export const ACCOUNT_NAME_MIN = 2;
 export const ACCOUNT_NAME_MAX = 80;
 
 export const PASSWORD_MIN = 8;
+
 /**
- * bcrypt only hashes the first 72 bytes, so anything longer is silently
+ * bcrypt only hashes the first 72 **bytes**, so anything longer is silently
  * truncated. We say so up front rather than accept a password whose tail
  * doesn't count.
+ *
+ * Bytes, not characters: this app's copy is full of macrons, and every one of
+ * ā ē ī ō ū costs two bytes in UTF-8. A 72-character password of those is 144
+ * bytes, half of which bcrypt would quietly discard - which is the exact
+ * failure this limit exists to prevent.
  */
-export const PASSWORD_MAX = 72;
+export const PASSWORD_MAX_BYTES = 72;
+
+/**
+ * Hard ceiling on any password field before it reaches bcrypt. Deliberately
+ * far above `PASSWORD_MAX_BYTES`: the *current* password can't be capped at
+ * the bcrypt limit, because accounts created before that limit existed may
+ * hold a longer one and their owners must still be able to type it in full.
+ * This just stops an authenticated caller feeding megabytes to
+ * `bcrypt.compare()`, whose cost scales with input size before it truncates.
+ */
+export const PASSWORD_INPUT_MAX = 1024;
+
+/**
+ * UTF-8 byte length - what bcrypt actually measures. `TextEncoder` rather
+ * than `Buffer` because this module is imported by client components.
+ */
+export function passwordByteLength(value: string): number {
+  return new TextEncoder().encode(value).length;
+}
 
 export const accountDetailsSchema = z.object({
   name: z
@@ -31,13 +55,15 @@ export type AccountDetailsInput = z.infer<typeof accountDetailsSchema>;
 export const passwordChangeSchema = z.object({
   currentPassword: z
     .string("Enter your current password.")
-    .min(1, "Enter your current password."),
+    .min(1, "Enter your current password.")
+    .max(PASSWORD_INPUT_MAX, "That doesn't look like a password."),
   newPassword: z
     .string("Choose a new password.")
     .min(PASSWORD_MIN, `Your new password needs at least ${PASSWORD_MIN} characters.`)
-    .max(
-      PASSWORD_MAX,
-      `Passwords can be at most ${PASSWORD_MAX} characters.`
+    .max(PASSWORD_INPUT_MAX, "That doesn't look like a password.")
+    .refine(
+      (value) => passwordByteLength(value) <= PASSWORD_MAX_BYTES,
+      `Your new password is too long - it has to fit in ${PASSWORD_MAX_BYTES} bytes, which is ${PASSWORD_MAX_BYTES} plain characters or fewer if you use macrons or emoji.`
     ),
   confirmPassword: z.string("Repeat your new password."),
 });

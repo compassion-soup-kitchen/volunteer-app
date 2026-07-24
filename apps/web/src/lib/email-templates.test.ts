@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applicationDecisionEmail,
   applicationReceivedEmail,
+  passwordChangedEmail,
   passwordResetEmail,
   verificationEmail,
 } from "./email-templates";
@@ -34,6 +35,28 @@ describe("passwordResetEmail", () => {
     );
     expect(subject).toMatch(/password/i);
     expect(content.cta?.url).toBe(`${BASE}/reset-password?token=t2`);
+  });
+});
+
+describe("passwordChangedEmail", () => {
+  it("carries the recovery link and a personal greeting", () => {
+    const { subject, content } = passwordChangedEmail(
+      "Aroha",
+      `${BASE}/forgot-password`,
+    );
+    expect(subject).toMatch(/password was changed/i);
+    expect(content.cta?.url).toBe(`${BASE}/forgot-password`);
+    expect(content.paragraphs[0]).toBe("Kia ora Aroha,");
+  });
+
+  it("falls back to a plain greeting without a name", () => {
+    const { content } = passwordChangedEmail(null, `${BASE}/forgot-password`);
+    expect(content.paragraphs[0]).toBe("Kia ora,");
+  });
+
+  it("tells someone who didn't do this what to do about it", () => {
+    const { content } = passwordChangedEmail("Aroha", `${BASE}/forgot-password`);
+    expect(content.paragraphs.join(" ")).toMatch(/if it wasn't you/i);
   });
 });
 

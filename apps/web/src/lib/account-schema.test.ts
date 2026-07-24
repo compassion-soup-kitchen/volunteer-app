@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCOUNT_NAME_MAX,
-  PASSWORD_MAX,
+  PASSWORD_INPUT_MAX,
+  PASSWORD_MAX_BYTES,
   parseAccountDetails,
   parsePasswordChange,
+  passwordByteLength,
 } from "./account-schema";
 
 describe("parseAccountDetails", () => {
@@ -58,11 +60,63 @@ describe("parsePasswordChange", () => {
   });
 
   it("rejects a new password past bcrypt's 72-byte limit", () => {
-    const long = "a".repeat(PASSWORD_MAX + 1);
+    const long = "a".repeat(PASSWORD_MAX_BYTES + 1);
     expect(
       parsePasswordChange({ ...valid, newPassword: long, confirmPassword: long })
         .error
-    ).toMatch(new RegExp(`${PASSWORD_MAX}`));
+    ).toMatch(new RegExp(`${PASSWORD_MAX_BYTES}`));
+  });
+
+  it("accepts a new password sitting exactly on the byte limit", () => {
+    const exact = "a".repeat(PASSWORD_MAX_BYTES);
+    expect(
+      parsePasswordChange({ ...valid, newPassword: exact, confirmPassword: exact })
+        .data
+    ).toBeDefined();
+  });
+
+  // The bug this guards: 72 macron vowels are 72 characters but 144 bytes,
+  // and bcrypt would silently hash only the first half.
+  it("counts bytes, not characters, so macrons can't smuggle past the limit", () => {
+    const macrons = "ā".repeat(PASSWORD_MAX_BYTES);
+    expect(macrons.length).toBe(PASSWORD_MAX_BYTES);
+    expect(passwordByteLength(macrons)).toBe(PASSWORD_MAX_BYTES * 2);
+    expect(
+      parsePasswordChange({
+        ...valid,
+        newPassword: macrons,
+        confirmPassword: macrons,
+      }).error
+    ).toMatch(/too long/i);
+  });
+
+  it("accepts a macron password that fits once measured in bytes", () => {
+    const macrons = "ā".repeat(PASSWORD_MAX_BYTES / 2);
+    expect(passwordByteLength(macrons)).toBe(PASSWORD_MAX_BYTES);
+    expect(
+      parsePasswordChange({
+        ...valid,
+        newPassword: macrons,
+        confirmPassword: macrons,
+      }).data
+    ).toBeDefined();
+  });
+
+  // bcrypt.compare's cost scales with input size before it truncates, so the
+  // current password is bounded too - just far above the bcrypt limit, since
+  // older accounts may legitimately hold a password longer than 72 bytes.
+  it("bounds the current password well above bcrypt's limit", () => {
+    const legacy = "a".repeat(PASSWORD_MAX_BYTES + 30);
+    expect(
+      parsePasswordChange({ ...valid, currentPassword: legacy }).data
+    ).toBeDefined();
+
+    expect(
+      parsePasswordChange({
+        ...valid,
+        currentPassword: "a".repeat(PASSWORD_INPUT_MAX + 1),
+      }).error
+    ).toMatch(/doesn't look like a password/i);
   });
 
   it("rejects a mismatched confirmation", () => {

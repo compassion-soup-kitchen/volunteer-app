@@ -11,7 +11,11 @@ import {
   changeMyPassword,
   type PasswordChangeState,
 } from "@/lib/account-actions";
-import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/account-schema";
+import {
+  PASSWORD_INPUT_MAX,
+  PASSWORD_MAX_BYTES,
+  PASSWORD_MIN,
+} from "@/lib/account-schema";
 
 export function ChangePasswordForm() {
   const [state, action, pending] = useActionState<PasswordChangeState, FormData>(
@@ -51,11 +55,17 @@ export function ChangePasswordForm() {
 
       <div className="space-y-2">
         <Label htmlFor="currentPassword">Current password</Label>
+        {/*
+          No `maxLength={PASSWORD_MAX_BYTES}` here: an account created before
+          that limit existed may hold a longer password, and its owner still
+          has to be able to type the whole thing.
+        */}
         <PasswordInput
           id="currentPassword"
           name="currentPassword"
           autoComplete="current-password"
           required
+          maxLength={PASSWORD_INPUT_MAX}
           disabled={pending}
           aria-invalid={state?.error ? true : undefined}
         />
@@ -70,7 +80,7 @@ export function ChangePasswordForm() {
             autoComplete="new-password"
             required
             minLength={PASSWORD_MIN}
-            maxLength={PASSWORD_MAX}
+            maxLength={PASSWORD_MAX_BYTES}
             disabled={pending}
           />
           <p className="text-xs text-muted-foreground">
@@ -86,7 +96,7 @@ export function ChangePasswordForm() {
             autoComplete="new-password"
             required
             minLength={PASSWORD_MIN}
-            maxLength={PASSWORD_MAX}
+            maxLength={PASSWORD_MAX_BYTES}
             disabled={pending}
           />
         </div>
