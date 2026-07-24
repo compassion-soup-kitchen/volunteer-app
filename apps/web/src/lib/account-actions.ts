@@ -94,9 +94,11 @@ export async function updateAccountDetails(
     data: { name: parsed.data.name },
   });
 
-  // The name shows up in both shells' chrome, so refresh every layout.
+  // The staff sidebar is the only chrome that renders the name, so this is
+  // the only tree that needs invalidating. If this form is ever offered to
+  // volunteers, add "/" here too - the root layout doesn't show the name
+  // today, and invalidating it would flush every public route for nothing.
   revalidatePath("/staff", "layout");
-  revalidatePath("/", "layout");
 
   return { savedName: parsed.data.name };
 }
