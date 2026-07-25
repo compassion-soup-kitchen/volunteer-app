@@ -25,6 +25,14 @@ import {
   STAFF_ROLES,
   type AssignableRole,
 } from "./role-change";
+import {
+  findDeletionBlocker,
+  validateUserDeletion,
+  wouldRemoveLastAdmin,
+  type AuthoredRecordCounts,
+  type ErasedRecordCounts,
+} from "./user-deletion";
+import { deleteFile } from "@/lib/storage";
 import { resolveVolunteerListBuckets } from "./volunteer-list-filter";
 
 // Thrown inside the role-change transaction to roll back a demotion that would
@@ -655,6 +663,270 @@ export async function restoreVolunteer(
     console.error("Restore volunteer error:", e);
     return { error: "Something went wrong. Please try again." };
   }
+}
+
+// ─── Delete Account (ADMIN only, permanent) ──────────
+
+export type UserDeletionSummary = {
+  userId: string;
+  name: string | null;
+  email: string;
+  role: Role;
+  isArchived: boolean;
+  // What deleting them destroys.
+  erases: ErasedRecordCounts;
+  // What they authored for the org (any of this blocks deletion).
+  authored: AuthoredRecordCounts;
+  // Non-null when this account can't be deleted at all, whatever is typed.
+  blocker: string | null;
+};
+
+type DeletionContext = {
+  summary: UserDeletionSummary;
+  profileId: string | null;
+  isLastAdmin: boolean;
+};
+
+/**
+ * Everything both the confirm dialog and the delete itself need to know about a
+ * target account. Shared so the numbers an admin agrees to can't drift from the
+ * rules the action enforces a moment later.
+ */
+async function loadDeletionContext(
+  actorUserId: string,
+  userId: string
+): Promise<DeletionContext | null> {
+  const db = getDb();
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      volunteerProfile: { select: { id: true } },
+      _count: {
+        select: {
+          createdShifts: true,
+          createdTraining: true,
+          createdAnnouncements: true,
+        },
+      },
+    },
+  });
+
+  if (!user) return null;
+
+  const profileId = user.volunteerProfile?.id ?? null;
+
+  // Exclude the target from the admin count: an *archived* admin isn't in the
+  // active tally, so counting the whole table would read as "one admin left"
+  // and wrongly block deleting them.
+  const [
+    shiftSignups,
+    attendedShifts,
+    trainingAttendances,
+    documents,
+    signedAgreements,
+    otherActiveAdmins,
+  ] = await Promise.all([
+    profileId
+      ? db.shiftSignup.count({
+          where: { volunteerId: profileId, status: { not: "CANCELLED" } },
+        })
+      : Promise.resolve(0),
+    profileId
+      ? db.shiftSignup.count({
+          where: { volunteerId: profileId, status: "ATTENDED" },
+        })
+      : Promise.resolve(0),
+    profileId
+      ? db.trainingAttendance.count({ where: { volunteerId: profileId } })
+      : Promise.resolve(0),
+    profileId
+      ? db.document.count({ where: { volunteerId: profileId } })
+      : Promise.resolve(0),
+    profileId
+      ? db.signedAgreement.count({ where: { volunteerId: profileId } })
+      : Promise.resolve(0),
+    db.user.count({
+      where: { role: "ADMIN", status: "ACTIVE", id: { not: userId } },
+    }),
+  ]);
+
+  const authored: AuthoredRecordCounts = {
+    shifts: user._count.createdShifts,
+    trainingSessions: user._count.createdTraining,
+    announcements: user._count.createdAnnouncements,
+  };
+  const isLastAdmin = wouldRemoveLastAdmin(user.role, otherActiveAdmins);
+
+  return {
+    profileId,
+    isLastAdmin,
+    summary: {
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isArchived: user.status === "ARCHIVED",
+      authored,
+      erases: {
+        shiftSignups,
+        attendedShifts,
+        trainingAttendances,
+        documents,
+        signedAgreements,
+      },
+      blocker: findDeletionBlocker({
+        actorUserId,
+        targetUserId: user.id,
+        isLastAdmin,
+        authored,
+      }),
+    },
+  };
+}
+
+/**
+ * What an admin is about to destroy, for the confirmation dialog. Read-only -
+ * nothing is deleted until `deleteUser` is called with the typed confirmation.
+ */
+export async function getUserDeletionSummary(
+  userId: string
+): Promise<UserDeletionSummary | { error: string }> {
+  const session = await requireAdmin();
+  if (!session) return { error: "Not authorised." };
+
+  const context = await loadDeletionContext(session.user!.id, userId);
+  if (!context) return { error: "That account no longer exists." };
+
+  return context.summary;
+}
+
+/**
+ * Permanently erase an account and everything that belongs to it: profile,
+ * application, shift signups, training attendance, uploaded documents, signed
+ * agreements, push tokens, and sign-in credentials. Irreversible, and their
+ * hours leave reporting with them - archiving is the right tool for anyone who
+ * has simply stopped volunteering.
+ *
+ * ADMIN-only, and guarded by `validateUserDeletion`: never yourself, never the
+ * last admin, never someone who created shifts, training, or pānui.
+ */
+export async function deleteUser(
+  userId: string,
+  confirmation: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireAdmin();
+  if (!session) return { error: "Not authorised." };
+
+  const db = getDb();
+  const context = await loadDeletionContext(session.user!.id, userId);
+  if (!context) return { error: "That account no longer exists." };
+  const { summary } = context;
+
+  const validationError = validateUserDeletion({
+    actorUserId: session.user!.id,
+    targetUserId: summary.userId,
+    targetRole: summary.role,
+    targetEmail: summary.email,
+    isLastAdmin: context.isLastAdmin,
+    authored: summary.authored,
+    confirmation,
+  });
+  if (validationError) return { error: validationError };
+
+  // Read the storage keys before the rows go: deleting the User cascades the
+  // Document rows away, but the files behind them live in Garage and would be
+  // orphaned with no row left to find them by.
+  const documentKeys = context.profileId
+    ? (
+        await db.document.findMany({
+          where: { volunteerId: context.profileId },
+          select: { fileUrl: true },
+        })
+      ).map((d) => d.fileUrl)
+    : [];
+
+  try {
+    // The pre-check above closes the sequential last-admin case, but its count
+    // was read before this delete - two admins deleting two *different* admins
+    // concurrently could each see one remaining and both commit. Delete and
+    // re-count inside one serializable transaction so they can't both succeed.
+    await db.$transaction(
+      async (tx) => {
+        await tx.user.delete({ where: { id: summary.userId } });
+
+        if (summary.role === "ADMIN") {
+          const remainingAdmins = await tx.user.count({
+            where: { role: "ADMIN", status: "ACTIVE" },
+          });
+          if (remainingAdmins < 1) {
+            throw new LastAdminError();
+          }
+        }
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+  } catch (e) {
+    if (e instanceof LastAdminError) {
+      return {
+        error: "You can't delete the last admin. Promote someone else first.",
+      };
+    }
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      // Deleted by someone else between the load above and here.
+      if (e.code === "P2025") return { error: "That account no longer exists." };
+      // A required relation we don't pre-check still points at them. Refuse
+      // rather than leave the records half-orphaned.
+      if (e.code === "P2003" || e.code === "P2014") {
+        return {
+          error:
+            "The kitchen's records still reference this account. Archive it instead.",
+        };
+      }
+      // A concurrent conflicting write aborts one transaction under
+      // serializable isolation - safe to retry.
+      if (e.code === "P2034") {
+        return {
+          error: "Another change happened at the same time. Please try again.",
+        };
+      }
+    }
+    console.error("Delete user error:", e);
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  // The account is gone, so this line is the only remaining trace of who did
+  // it. Deliberately records ids and counts, not the name or email we were
+  // just asked to erase.
+  console.warn("[audit] user permanently deleted", {
+    actorId: session.user!.id,
+    targetId: summary.userId,
+    targetRole: summary.role,
+    erased: summary.erases,
+  });
+
+  // After the commit: the rows are gone either way, and a storage hiccup
+  // shouldn't fail a deletion the admin has already been told succeeded.
+  after(async () => {
+    for (const key of documentKeys) {
+      try {
+        await deleteFile(key);
+      } catch (e) {
+        console.error("Delete user document file error:", key, e);
+      }
+    }
+  });
+
+  revalidatePath("/staff/volunteers");
+  revalidatePath("/staff/dashboard");
+  revalidatePath("/staff/applications");
+  revalidatePath("/staff/documents");
+  revalidatePath("/staff/reports");
+  return { success: true };
 }
 
 // ─── Role management (ADMIN only) ────────────────────
