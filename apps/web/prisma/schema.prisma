@@ -51,6 +51,26 @@ model User {
   archivedBy           User?               @relation("UserArchivedBy", fields: [archivedById], references: [id])
   archivedUsers        User[]              @relation("UserArchivedBy")
   pushTokens           PushToken[]
+  impersonationsMade   ImpersonationEvent[] @relation("ImpersonationImpersonator")
+  impersonationsOf     ImpersonationEvent[] @relation("ImpersonationTarget")
+}
+
+// Audit trail for admin impersonation. One row per "become another user"
+// session: `startedAt` on start, `endedAt` filled when the admin returns to
+// their own account (null while an impersonation is still active). Kept for
+// accountability - who viewed the app as whom, and for how long.
+model ImpersonationEvent {
+  id             String    @id @default(cuid())
+  impersonatorId String
+  targetUserId   String
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+
+  impersonator User @relation("ImpersonationImpersonator", fields: [impersonatorId], references: [id], onDelete: Cascade)
+  target       User @relation("ImpersonationTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([impersonatorId])
+  @@index([targetUserId])
 }
 
 enum Platform {

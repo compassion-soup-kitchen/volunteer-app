@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,7 @@ import {
   RiUserSettingsLine,
   RiShieldUserLine,
   RiUserStarLine,
+  RiEyeLine,
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -57,6 +60,7 @@ import {
   updateUserRole,
   type VolunteerListItem,
 } from "@/lib/staff-actions";
+import { startImpersonation } from "@/lib/impersonation-actions";
 import {
   ASSIGNABLE_ROLES,
   isAssignableRole,
@@ -141,6 +145,8 @@ export function VolunteerDirectory({
   currentUserId,
   isAdmin,
 }: VolunteerDirectoryProps) {
+  const { update } = useSession();
+  const router = useRouter();
   const [volunteers, setVolunteers] = useState(initialVolunteers);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [accountFilter, setAccountFilter] = useState<"ACTIVE" | "ARCHIVED" | "ALL">(
@@ -158,6 +164,9 @@ export function VolunteerDirectory({
     newRole: AssignableRole;
   } | null>(null);
   const [changingRole, setChangingRole] = useState(false);
+  const [impersonateTarget, setImpersonateTarget] =
+    useState<VolunteerListItem | null>(null);
+  const [impersonating, setImpersonating] = useState(false);
 
   function reload(next: {
     status?: string;
@@ -237,6 +246,35 @@ export function VolunteerDirectory({
     }
     toast.success(`${volunteer.user.name || "Volunteer"} restored.`);
     reload({});
+  }
+
+  async function handleImpersonateConfirm() {
+    const volunteer = impersonateTarget;
+    if (!volunteer) return;
+    setImpersonating(true);
+    const result = await startImpersonation(volunteer.user.id);
+    if ("error" in result) {
+      setImpersonating(false);
+      toast.error(result.error);
+      return;
+    }
+    // Swap the session token to the target (the jwt callback enforces authority
+    // and opens the audit row). `update()` resolves to the new session, so read
+    // it back: if the swap was silently refused — e.g. the target was archived
+    // between the precheck above and here — `impersonator` won't be set, and we
+    // must not pretend it worked. Only navigate on a confirmed swap; the layouts
+    // route coordinators on to /staff/dashboard.
+    const updated = await update({ impersonate: volunteer.user.id });
+    if (!updated?.user?.impersonator) {
+      setImpersonating(false);
+      toast.error(
+        `Couldn't start viewing as ${volunteer.user.name || "this person"}. Please try again.`
+      );
+      return;
+    }
+    setImpersonateTarget(null);
+    router.push("/dashboard");
+    router.refresh();
   }
 
   async function handleRoleChangeConfirm() {
@@ -438,6 +476,7 @@ export function VolunteerDirectory({
                           onChangeRole={(v, newRole) =>
                             setRoleTarget({ volunteer: v, newRole })
                           }
+                          onImpersonate={(v) => setImpersonateTarget(v)}
                         />
                       </TableCell>
                     </TableRow>
@@ -528,6 +567,7 @@ export function VolunteerDirectory({
                     onChangeRole={(v, newRole) =>
                       setRoleTarget({ volunteer: v, newRole })
                     }
+                    onImpersonate={(v) => setImpersonateTarget(v)}
                   />
                 </li>
               ))}
@@ -639,6 +679,50 @@ export function VolunteerDirectory({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={impersonateTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !impersonating) setImpersonateTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              View the app as {impersonateTarget?.user.name || "this person"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You&apos;ll see everything exactly as they do, and a banner will
+              show you&apos;re viewing as them. Anything you do while viewing as
+              them - signing up for a shift, marking attendance - is recorded as{" "}
+              <span className="font-medium">their</span> action, not yours, so
+              only act on their behalf if you mean to. Use{" "}
+              <span className="font-medium">Return to your account</span>{" "}
+              when you&apos;re done.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={impersonating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Keep the dialog open while the session swaps and navigates.
+                e.preventDefault();
+                void handleImpersonateConfirm();
+              }}
+              disabled={impersonating}
+            >
+              {impersonating ? (
+                <>
+                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "View as this person"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -651,6 +735,7 @@ function StatusMenu({
   onArchive,
   onRestore,
   onChangeRole,
+  onImpersonate,
 }: {
   volunteer: VolunteerListItem;
   isAdmin: boolean;
@@ -666,6 +751,7 @@ function StatusMenu({
   onArchive: (vol: VolunteerListItem) => void;
   onRestore: (vol: VolunteerListItem) => void;
   onChangeRole: (vol: VolunteerListItem, newRole: AssignableRole) => void;
+  onImpersonate: (vol: VolunteerListItem) => void;
 }) {
   const isArchived = volunteer.user.status === "ARCHIVED";
   // Admins can change anyone's role except their own (guards against
@@ -681,6 +767,14 @@ function StatusMenu({
   const roleOptions = ASSIGNABLE_ROLES.filter(
     (r) => r !== volunteer.user.role
   );
+
+  // Admins can view the app as any active non-admin - but never themselves or
+  // another admin. The server (and the jwt callback) enforce this too.
+  const canImpersonate =
+    isAdmin &&
+    !isArchived &&
+    volunteer.user.id !== currentUserId &&
+    volunteer.user.role !== "ADMIN";
 
   if (isArchived) {
     return (
@@ -776,6 +870,15 @@ function StatusMenu({
                 })}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+          </>
+        )}
+        {canImpersonate && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onImpersonate(volunteer)}>
+              <RiEyeLine className="mr-2 size-4" />
+              View as this person
+            </DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />
