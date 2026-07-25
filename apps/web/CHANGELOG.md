@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.10.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.9.0...v1.10.0) (2026-07-25)
+
+
+### Features
+
+* **web:** add self-service account page for staff ([d50d70e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/d50d70e6e78405896002e5ea1e924c49aeb68bb4))
+* **web:** add self-service account page for staff ([6c98143](https://github.com/compassion-soup-kitchen/volunteer-app/commit/6c98143380d845c1444bc8219a9d752182105a06))
+* **web:** admin user impersonation ([4d8e451](https://github.com/compassion-soup-kitchen/volunteer-app/commit/4d8e45160e4040f22674d53e63c9c07150413ce3))
+* **web:** admin user impersonation ([98a4a14](https://github.com/compassion-soup-kitchen/volunteer-app/commit/98a4a14c3d9f3a45c2efd6cb63ea7f67b01431ff))
+* **web:** confirm before impersonating + document write attribution ([cc1d946](https://github.com/compassion-soup-kitchen/volunteer-app/commit/cc1d946227b76aa95b2cddc8ed7e8bba977a359f))
+* **web:** fix shift dates, add first refusal and shift editing ([d2a1a9a](https://github.com/compassion-soup-kitchen/volunteer-app/commit/d2a1a9a7d1faf3a5d189284e2e76f9a1103228f0))
+* **web:** redesign logged-in pages to the editorial design system ([16e5b64](https://github.com/compassion-soup-kitchen/volunteer-app/commit/16e5b64251075a1b55c16d3ed6a648a6bc185255))
+* **web:** redesign logged-in pages to the editorial design system ([a1d920b](https://github.com/compassion-soup-kitchen/volunteer-app/commit/a1d920b3fdbf5fe7c7641dd0879c19e8403e80b7))
+
+
+### Bug Fixes
+
+* **web:** address impersonation review feedback ([b78d72d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/b78d72d11b2cc3f8117938a0419b897014b16716))
+* **web:** anchor the shift form's today to the kitchen's calendar ([44beca3](https://github.com/compassion-soup-kitchen/volunteer-app/commit/44beca3c0dcce9ae1e4d14e987c490bd7c1c5d15))
+* **web:** apply the bcrypt password bounds to every path that sets one ([467eeb9](https://github.com/compassion-soup-kitchen/volunteer-app/commit/467eeb90ac66b01e7279a501d9eaf374f51da146))
+* **web:** confirm impersonation swap before redirecting ([655ff07](https://github.com/compassion-soup-kitchen/volunteer-app/commit/655ff07b3bd48b6ce755f1805ba43e757869d395))
+* **web:** keep demo credentials out of the client bundle ([6662bea](https://github.com/compassion-soup-kitchen/volunteer-app/commit/6662bea0f605795a37b7ac61c5e4f5c40bf89c9b))
+* **web:** keep editable shifts editable once first refusal closes ([14a923d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/14a923d47a9e65ca5a9cc7b978edaacd0e394f67))
+* **web:** key account form effects on state identity, not message text ([e51e087](https://github.com/compassion-soup-kitchen/volunteer-app/commit/e51e087159cb251f34a95afb1cc08120419e44a1))
+* **web:** measure the bcrypt password limit in bytes, bound current password ([858109c](https://github.com/compassion-soup-kitchen/volunteer-app/commit/858109c2ad89b882980e91c1d8afd35d25d717f8))
+
 ## [1.9.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.8.0...v1.9.0) (2026-07-23)
 
 
