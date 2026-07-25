@@ -251,7 +251,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
             <AlertDialogCancel>Keep registration</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => cancelId && handleCancel(cancelId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
             >
               Cancel registration
             </AlertDialogAction>

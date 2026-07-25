@@ -48,6 +48,7 @@ import {
   RiShieldUserLine,
   RiUserStarLine,
   RiEyeLine,
+  RiDeleteBin6Line,
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -77,6 +78,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { DeleteUserDialog } from "./delete-user-dialog";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All statuses" },
@@ -167,6 +169,9 @@ export function VolunteerDirectory({
   const [impersonateTarget, setImpersonateTarget] =
     useState<VolunteerListItem | null>(null);
   const [impersonating, setImpersonating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<VolunteerListItem | null>(
+    null
+  );
 
   function reload(next: {
     status?: string;
@@ -477,6 +482,7 @@ export function VolunteerDirectory({
                             setRoleTarget({ volunteer: v, newRole })
                           }
                           onImpersonate={(v) => setImpersonateTarget(v)}
+                          onDelete={(v) => setDeleteTarget(v)}
                         />
                       </TableCell>
                     </TableRow>
@@ -568,6 +574,7 @@ export function VolunteerDirectory({
                       setRoleTarget({ volunteer: v, newRole })
                     }
                     onImpersonate={(v) => setImpersonateTarget(v)}
+                    onDelete={(v) => setDeleteTarget(v)}
                   />
                 </li>
               ))}
@@ -613,7 +620,7 @@ export function VolunteerDirectory({
             <AlertDialogAction
               onClick={handleArchiveConfirm}
               disabled={archiving}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
             >
               {archiving ? (
                 <>
@@ -723,6 +730,23 @@ export function VolunteerDirectory({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DeleteUserDialog
+        target={
+          deleteTarget && {
+            userId: deleteTarget.user.id,
+            name: deleteTarget.user.name,
+            email: deleteTarget.user.email,
+          }
+        }
+        onClose={() => setDeleteTarget(null)}
+        onError={(message) => toast.error(message)}
+        onDeleted={(name) => {
+          setDeleteTarget(null);
+          toast.success(`${name} has been permanently deleted.`);
+          reload({});
+        }}
+      />
     </div>
   );
 }
@@ -736,6 +760,7 @@ function StatusMenu({
   onRestore,
   onChangeRole,
   onImpersonate,
+  onDelete,
 }: {
   volunteer: VolunteerListItem;
   isAdmin: boolean;
@@ -752,8 +777,13 @@ function StatusMenu({
   onRestore: (vol: VolunteerListItem) => void;
   onChangeRole: (vol: VolunteerListItem, newRole: AssignableRole) => void;
   onImpersonate: (vol: VolunteerListItem) => void;
+  onDelete: (vol: VolunteerListItem) => void;
 }) {
   const isArchived = volunteer.user.status === "ARCHIVED";
+  // Permanent deletion is ADMIN-only and never applies to yourself. Everything
+  // else that blocks it (last admin, records they authored) needs a database
+  // read, so the dialog reports it — the server enforces all of it either way.
+  const canDelete = isAdmin && volunteer.user.id !== currentUserId;
   // Admins can change anyone's role except their own (guards against
   // self-lockout; the server enforces this too). Pending applicants (PUBLIC
   // *with* a profile) go through application approval, not this control. But
@@ -793,6 +823,18 @@ function StatusMenu({
             <RiArrowGoBackLine className="mr-2 size-4" />
             Restore account
           </DropdownMenuItem>
+          {canDelete && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(volunteer)}
+                className="text-destructive focus:text-destructive"
+              >
+                <RiDeleteBin6Line className="mr-2 size-4" />
+                Delete permanently
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -889,6 +931,15 @@ function StatusMenu({
           <RiArchive2Line className="mr-2 size-4" />
           Archive account
         </DropdownMenuItem>
+        {canDelete && (
+          <DropdownMenuItem
+            onClick={() => onDelete(volunteer)}
+            className="text-destructive focus:text-destructive"
+          >
+            <RiDeleteBin6Line className="mr-2 size-4" />
+            Delete permanently
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
