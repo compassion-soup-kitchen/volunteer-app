@@ -382,7 +382,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
             >
               {isDeleting && (
                 <RiLoader4Line className="mr-2 size-4 animate-spin" />
