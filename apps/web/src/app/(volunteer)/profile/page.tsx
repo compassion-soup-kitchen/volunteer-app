@@ -220,13 +220,7 @@ export default async function ProfilePage() {
                           year: "numeric",
                         })}
                         {" · "}
-                        {item.type === "INDUCTION"
-                          ? "Induction"
-                          : item.type === "DE_ESCALATION"
-                            ? "De-escalation"
-                            : item.type === "HEALTH_SAFETY"
-                              ? "Health & Safety"
-                              : "Other"}
+                        {item.type.name}
                       </p>
                     </div>
                     <StatusBadge

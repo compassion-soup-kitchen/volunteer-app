@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
 import { DateBlock } from "@/components/brand/date-block";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { SectionHeader } from "@/components/brand/section-header";
@@ -19,20 +20,6 @@ import { isPastInAppZone, isTodayInAppZone } from "@/lib/date-only";
 interface TrainingListProps {
   sessions: StaffTrainingSession[];
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  INDUCTION: "Induction",
-  DE_ESCALATION: "De-escalation",
-  HEALTH_SAFETY: "Health & Safety",
-  OTHER: "Other",
-};
-
-const TYPE_VARIANTS: Record<string, "info" | "amber" | "success" | "neutral"> = {
-  INDUCTION: "info",
-  DE_ESCALATION: "amber",
-  HEALTH_SAFETY: "success",
-  OTHER: "neutral",
-};
 
 export function TrainingList({ sessions }: TrainingListProps) {
   if (sessions.length === 0) {
@@ -122,9 +109,7 @@ function SessionRow({
             <p className="truncate font-serif text-base/snug font-medium tracking-tight">
               {session.title}
             </p>
-            <Badge variant={TYPE_VARIANTS[session.type] || "neutral"}>
-              {TYPE_LABELS[session.type] || session.type}
-            </Badge>
+            <TrainingTypeBadge type={session.type} />
             {today && <Badge>Today</Badge>}
             {past && <Badge variant="neutral">Past</Badge>}
           </div>

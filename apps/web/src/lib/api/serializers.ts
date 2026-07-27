@@ -133,7 +133,11 @@ export function emptyHours() {
 export function serializeTrainingSession(session: VolunteerTrainingSession) {
   return {
     id: session.id,
-    type: session.type,
+    // Training types became rows, but the wire format keeps sending the key so
+    // installed apps keep matching on INDUCTION / HEALTH_SAFETY / DE_ESCALATION.
+    // `typeName` carries the staff-editable label for newer clients.
+    type: session.type.key,
+    typeName: session.type.name,
     title: session.title,
     description: session.description ?? "",
     date: dateOnly(session.date),
@@ -150,7 +154,8 @@ export function serializeTrainingSession(session: VolunteerTrainingSession) {
 export function serializeTrainingHistoryItem(item: TrainingHistoryItem) {
   return {
     id: item.id,
-    type: item.type,
+    type: item.type.key,
+    typeName: item.type.name,
     title: item.title,
     date: dateOnly(item.date),
     status: item.status,

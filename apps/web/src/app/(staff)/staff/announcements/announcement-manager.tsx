@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +40,9 @@ import {
 } from "@/components/ui/select";
 import {
   RiAddLine,
+  RiAttachment2,
   RiCalendarLine,
+  RiCloseLine,
   RiDeleteBinLine,
   RiEditLine,
   RiEyeOffLine,
@@ -52,8 +54,17 @@ import {
 import { SectionHeader } from "@/components/brand/section-header";
 import { Illustration } from "@/components/brand/illustration";
 import { toast } from "sonner";
+import { AnnouncementAttachments } from "@/components/announcement-attachments";
+import {
+  checkUploadFile,
+  formatFileSize,
+  MAX_UPLOAD_BYTES,
+  UPLOAD_ACCEPT_ATTR,
+} from "@/lib/uploads";
 import {
   createAnnouncement,
+  deleteAnnouncementAttachment,
+  uploadAnnouncementAttachment,
   updateAnnouncement,
   publishAnnouncement,
   unpublishAnnouncement,
@@ -65,6 +76,7 @@ import {
   ANNOUNCEMENT_BODY_MAX,
   ANNOUNCEMENT_TITLE_MAX,
   audienceIncludesVolunteers,
+  MAX_ANNOUNCEMENT_ATTACHMENTS,
   type AnnouncementAudience,
 } from "@/lib/announcement-schema";
 
@@ -107,6 +119,97 @@ export function AnnouncementManager({
   const [dialogError, setDialogError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Files chosen but not yet uploaded. A new pānui has no id to hang them off
+  // until it's saved, so they queue here and upload straight after the create.
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const existingAttachments = editTarget?.attachments ?? [];
+  const attachmentCount = existingAttachments.length + pendingFiles.length;
+  const canAttachMore = attachmentCount < MAX_ANNOUNCEMENT_ATTACHMENTS;
+
+  function handleFilesChosen(e: React.ChangeEvent<HTMLInputElement>) {
+    const chosen = Array.from(e.target.files ?? []);
+    if (fileRef.current) fileRef.current.value = "";
+    if (chosen.length === 0) return;
+
+    const room = MAX_ANNOUNCEMENT_ATTACHMENTS - attachmentCount;
+    if (chosen.length > room) {
+      toast.error(
+        `A pānui can carry ${MAX_ANNOUNCEMENT_ATTACHMENTS} files at most.`
+      );
+    }
+
+    const accepted: File[] = [];
+    for (const file of chosen.slice(0, Math.max(room, 0))) {
+      const rejection = checkUploadFile(file);
+      if (rejection) {
+        toast.error(`${file.name}: ${rejection}`);
+        continue;
+      }
+      accepted.push(file);
+    }
+    setPendingFiles((current) => [...current, ...accepted]);
+  }
+
+  function removePendingFile(index: number) {
+    setPendingFiles((current) => current.filter((_, i) => i !== index));
+  }
+
+  async function handleRemoveAttachment(attachment: { id: string; fileName: string }) {
+    setRemovingId(attachment.id);
+    const result = await deleteAnnouncementAttachment(attachment.id);
+    setRemovingId(null);
+
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    // Keep the open dialog honest about what's still attached.
+    setEditTarget((current) =>
+      current
+        ? {
+            ...current,
+            attachments: current.attachments.filter(
+              (a) => a.id !== attachment.id
+            ),
+          }
+        : current
+    );
+    toast.success(`"${attachment.fileName}" removed.`);
+    refresh();
+  }
+
+  /**
+   * Uploads the queued files against a saved pānui, returning the ones that
+   * didn't make it. Each failure is reported by name rather than failing the
+   * save — the pānui itself is already stored — and only the failures are
+   * handed back, so a retry can't upload the same file twice.
+   */
+  async function uploadPendingFiles(announcementId: string): Promise<File[]> {
+    const failed: File[] = [];
+    for (const file of pendingFiles) {
+      const formData = new FormData();
+      formData.set("file", file);
+      try {
+        const result = await uploadAnnouncementAttachment(
+          announcementId,
+          formData
+        );
+        if (result.error) {
+          failed.push(file);
+          toast.error(`${file.name}: ${result.error}`);
+        }
+      } catch (err) {
+        failed.push(file);
+        console.error("Attachment upload failed:", err);
+        toast.error(`${file.name} couldn't be attached.`);
+      }
+    }
+    return failed;
+  }
+
   // Confirm dialogs
   const [publishTarget, setPublishTarget] = useState<StaffAnnouncement | null>(
     null
@@ -128,6 +231,7 @@ export function AnnouncementManager({
     setBody("");
     setAudience("ALL");
     setDialogError("");
+    setPendingFiles([]);
     setDialogOpen(true);
   }
 
@@ -137,6 +241,7 @@ export function AnnouncementManager({
     setBody(announcement.body);
     setAudience(announcement.audience);
     setDialogError("");
+    setPendingFiles([]);
     setDialogOpen(true);
   }
 
@@ -144,15 +249,39 @@ export function AnnouncementManager({
     setIsSaving(true);
     setDialogError("");
 
-    const result = editTarget
-      ? await updateAnnouncement(editTarget.id, { title, body, audience })
-      : await createAnnouncement({ title, body, audience, publish });
-
-    if (result.error) {
-      setDialogError(result.error);
-      setIsSaving(false);
-      return;
+    // Kept as separate branches so the created id is actually in scope — only
+    // createAnnouncement returns one.
+    let announcementId: string | undefined;
+    if (editTarget) {
+      const result = await updateAnnouncement(editTarget.id, {
+        title,
+        body,
+        audience,
+      });
+      if (result.error) {
+        setDialogError(result.error);
+        setIsSaving(false);
+        return;
+      }
+      announcementId = editTarget.id;
+    } else {
+      const result = await createAnnouncement({
+        title,
+        body,
+        audience,
+        publish,
+      });
+      if (result.error) {
+        setDialogError(result.error);
+        setIsSaving(false);
+        return;
+      }
+      announcementId = result.id;
     }
+    const failed =
+      pendingFiles.length > 0 && announcementId
+        ? await uploadPendingFiles(announcementId)
+        : [];
 
     toast.success(
       editTarget
@@ -161,8 +290,27 @@ export function AnnouncementManager({
           ? "Pānui published — it's live now."
           : "Draft saved."
     );
-    setDialogOpen(false);
+
     setIsSaving(false);
+
+    // On an edit, saving again is idempotent, so failed files stay queued for a
+    // retry. On a create it isn't — saving again would make a second pānui — so
+    // the dialog closes and the files are added by editing the saved one.
+    if (failed.length > 0 && editTarget) {
+      setPendingFiles(failed);
+      setDialogError("Some files couldn't be attached — try those again.");
+      refresh();
+      return;
+    }
+
+    if (failed.length > 0) {
+      toast.error(
+        "The pānui was saved, but some files weren't attached. Edit it to try again."
+      );
+    }
+
+    setPendingFiles([]);
+    setDialogOpen(false);
     refresh();
   }
 
@@ -325,6 +473,73 @@ export function AnnouncementManager({
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between gap-3">
+                <Label htmlFor="announcement-files">
+                  Attachments (optional)
+                </Label>
+                <span className="text-xs text-muted-foreground">
+                  {attachmentCount}/{MAX_ANNOUNCEMENT_ATTACHMENTS}
+                </span>
+              </div>
+
+              {existingAttachments.length > 0 && (
+                <AnnouncementAttachments
+                  attachments={existingAttachments}
+                  onRemove={handleRemoveAttachment}
+                  removingId={removingId}
+                />
+              )}
+
+              {pendingFiles.length > 0 && (
+                <ul className="space-y-1.5">
+                  {pendingFiles.map((file, index) => (
+                    <li
+                      key={`${file.name}-${index}`}
+                      className="flex items-center gap-2.5 rounded-md bg-muted px-3 py-2"
+                    >
+                      <RiAttachment2
+                        aria-hidden
+                        className="size-4 shrink-0 text-muted-foreground"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatFileSize(file.size)} · attaches when you save
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => removePendingFile(index)}
+                        disabled={isSaving}
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <RiCloseLine className="size-3.5" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <Input
+                ref={fileRef}
+                id="announcement-files"
+                type="file"
+                multiple
+                accept={UPLOAD_ACCEPT_ATTR}
+                onChange={handleFilesChosen}
+                disabled={isSaving || !canAttachMore}
+              />
+              <p className="text-xs text-muted-foreground">
+                {canAttachMore
+                  ? `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)} each`
+                  : "Remove a file before adding another."}
+              </p>
+            </div>
+
             {dialogError && (
               <p className="text-sm text-destructive">{dialogError}</p>
             )}
@@ -465,6 +680,13 @@ function AnnouncementRow({
             <span className="flex items-center gap-1.5">
               <RiUserLine className="size-3.5" aria-hidden />
               {announcement.authorName}
+            </span>
+          )}
+          {announcement.attachments.length > 0 && (
+            <span className="flex items-center gap-1.5">
+              <RiAttachment2 className="size-3.5" aria-hidden />
+              {announcement.attachments.length}{" "}
+              {announcement.attachments.length === 1 ? "file" : "files"}
             </span>
           )}
         </div>

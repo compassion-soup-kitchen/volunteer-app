@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAnnouncements } from "@/lib/announcement-actions";
 import { PageHeader } from "@/components/brand/page-header";
 import { Illustration } from "@/components/brand/illustration";
+import { AnnouncementAttachments } from "@/components/announcement-attachments";
 
 export const metadata: Metadata = {
   title: "News & Updates | Te Pūaroha",
@@ -62,6 +63,16 @@ export default async function NewsPage() {
                     {a.body}
                   </div>
                 </div>
+                {a.attachments.length > 0 && (
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                      {a.attachments.length === 1
+                        ? "Attachment"
+                        : `${a.attachments.length} attachments`}
+                    </p>
+                    <AnnouncementAttachments attachments={a.attachments} />
+                  </div>
+                )}
                 {a.authorName && (
                   <div className="flex items-center gap-2 border-t border-border pt-3">
                     <span

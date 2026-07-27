@@ -9,7 +9,9 @@ import {
   uploadFile,
   getSignedDownloadUrl,
   deleteFile,
+  isStorageConfigured,
 } from "@/lib/storage";
+import { buildStorageKey, checkUploadFile } from "@/lib/uploads";
 import { STAFF_ROLES } from "@/lib/role-change";
 import { revalidatePath } from "next/cache";
 
@@ -416,36 +418,32 @@ export async function getPendingResignCount(): Promise<number> {
 
 // ─── Staff: Upload Document ─────────────────────────────
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
-
-const ALLOWED_UPLOAD_CONTENT_TYPES = new Set([
-  "application/pdf",
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-
 const uploadDocumentSchema = z.object({
   type: z.enum(DocumentType),
-  file: z
-    .instanceof(File)
-    .refine((f) => f.size > 0, "File is empty")
-    .refine(
-      (f) => f.size <= MAX_UPLOAD_BYTES,
-      "File is too large (10 MB max)"
-    )
-    .refine(
-      (f) => ALLOWED_UPLOAD_CONTENT_TYPES.has(f.type),
-      "Unsupported file type — upload a PDF, Word document, or image"
-    ),
+  file: z.instanceof(File),
 });
 
-export async function uploadDocument(formData: FormData) {
+/**
+ * Stores a policy or training document.
+ *
+ * Returns its failures rather than throwing: an uncaught throw in a Server
+ * Action reaches the browser as an opaque "unexpected error", which is exactly
+ * what made a too-large upload impossible to diagnose from the UI.
+ */
+export async function uploadDocument(
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
   const session = await auth();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
-    throw new Error("Unauthorized");
+    return { error: "Not authorised." };
+  }
+
+  if (!isStorageConfigured()) {
+    console.error("uploadDocument: S3 storage env vars are not configured");
+    return {
+      error:
+        "File storage isn't set up on the server yet. Let your administrator know.",
+    };
   }
 
   const parsed = uploadDocumentSchema.safeParse({
@@ -453,34 +451,44 @@ export async function uploadDocument(formData: FormData) {
     type: formData.get("type"),
   });
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid upload");
+    return { error: "Choose a file and a document type." };
   }
   const { file, type } = parsed.data;
 
+  const rejection = checkUploadFile(file);
+  if (rejection) return { error: rejection };
+
   const db = getDb();
-
-  const storagePath = `${type.toLowerCase()}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const storagePath = buildStorageKey(type.toLowerCase(), file.name, Date.now());
 
   try {
+    const buffer = Buffer.from(await file.arrayBuffer());
     await uploadFile(storagePath, buffer, file.type);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "unknown error";
-    throw new Error(`Upload failed: ${message}`);
+    console.error("uploadDocument: storage upload failed", err);
+    return { error: "The upload didn't reach storage. Please try again." };
   }
 
-  await db.document.create({
-    data: {
-      type,
-      fileName: file.name,
-      fileUrl: storagePath,
-      uploadedById: session.user.id,
-    },
-  });
+  try {
+    await db.document.create({
+      data: {
+        type,
+        fileName: file.name,
+        fileUrl: storagePath,
+        uploadedById: session.user.id,
+      },
+    });
+  } catch (err) {
+    // The bytes are in the bucket but the row isn't — drop the orphan so the
+    // key doesn't linger unreferenced.
+    console.error("uploadDocument: could not record the document", err);
+    await deleteFile(storagePath).catch(() => {});
+    return { error: "Something went wrong. Please try again." };
+  }
 
   revalidatePath("/staff/documents");
   revalidatePath("/documents");
+  return { success: true };
 }
 
 // ─── Staff: Get Uploaded Documents ──────────────────────
@@ -554,10 +562,12 @@ export async function getDocumentDownloadUrl(
 
 // ─── Staff: Delete Document ─────────────────────────────
 
-export async function deleteDocument(documentId: string) {
+export async function deleteDocument(
+  documentId: string
+): Promise<{ error?: string; success?: boolean }> {
   const session = await auth();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
-    throw new Error("Unauthorized");
+    return { error: "Not authorised." };
   }
 
   const db = getDb();
@@ -567,14 +577,24 @@ export async function deleteDocument(documentId: string) {
     select: { id: true, fileUrl: true },
   });
 
-  if (!doc) throw new Error("Document not found");
+  if (!doc) return { error: "That document no longer exists." };
 
-  await deleteFile(doc.fileUrl);
+  // A bucket object that's already gone shouldn't strand the row it belongs to,
+  // so a failed delete here is logged and the row goes regardless.
+  await deleteFile(doc.fileUrl).catch((err) => {
+    console.error("deleteDocument: could not remove the stored file", err);
+  });
 
-  await db.document.delete({ where: { id: doc.id } });
+  try {
+    await db.document.delete({ where: { id: doc.id } });
+  } catch (err) {
+    console.error("deleteDocument: could not delete the document row", err);
+    return { error: "Something went wrong. Please try again." };
+  }
 
   revalidatePath("/staff/documents");
   revalidatePath("/documents");
+  return { success: true };
 }
 
 // ─── Volunteer: Get Available Documents ─────────────────

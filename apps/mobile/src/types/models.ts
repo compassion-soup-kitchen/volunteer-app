@@ -25,7 +25,20 @@ export type SignupStatus = 'SIGNED_UP' | 'ATTENDED' | 'NO_SHOW' | 'CANCELLED';
 
 export type AttendanceStatus = 'REGISTERED' | 'ATTENDED' | 'NO_SHOW' | 'CANCELLED';
 
-export type TrainingType = 'INDUCTION' | 'DE_ESCALATION' | 'HEALTH_SAFETY' | 'OTHER';
+/**
+ * The training types the app treats specially — these drive the core-training
+ * readiness hero and each has its own icon and tone.
+ */
+export type CoreTrainingType = 'INDUCTION' | 'DE_ESCALATION' | 'HEALTH_SAFETY' | 'OTHER';
+
+/**
+ * A training type key.
+ *
+ * Staff manage training types in the web app, so the server can send keys this
+ * app has never heard of. The `string & {}` arm accepts those while keeping
+ * autocomplete for the core four.
+ */
+export type TrainingType = CoreTrainingType | (string & {});
 
 /* -------------------------------------------------------------------------- */
 /*  Auth                                                                       */

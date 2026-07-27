@@ -137,24 +137,47 @@ describe("emptyDashboard", () => {
 });
 
 describe("serializeTrainingSession", () => {
+  const session = {
+    id: "ts-1",
+    type: { key: "INDUCTION", name: "Induction" },
+    title: "Welcome induction",
+    description: null,
+    date: new Date("2026-07-20T00:00:00.000Z"),
+    startTime: "10:00",
+    endTime: "12:00",
+    capacity: 12,
+    location: "Te Pūaroha",
+    registeredCount: 3,
+    userAttendanceId: null,
+    userAttendanceStatus: null,
+  };
+
   it("defaults a missing description to an empty string", () => {
-    const result = serializeTrainingSession({
-      id: "ts-1",
-      type: "INDUCTION",
-      title: "Welcome induction",
-      description: null,
-      date: new Date("2026-07-20T00:00:00.000Z"),
-      startTime: "10:00",
-      endTime: "12:00",
-      capacity: 12,
-      location: "Te Pūaroha",
-      registeredCount: 3,
-      userAttendanceId: null,
-      userAttendanceStatus: null,
-    });
+    const result = serializeTrainingSession(session);
 
     expect(result.description).toBe("");
     expect(result.date).toBe("2026-07-20");
+  });
+
+  // Training types became editable rows, but installed apps still match on the
+  // key — so `type` must keep being the key, not the display name.
+  it("sends the stable key as `type` and the label as `typeName`", () => {
+    const result = serializeTrainingSession({
+      ...session,
+      type: { key: "HEALTH_SAFETY", name: "Food safety" },
+    });
+
+    expect(result.type).toBe("HEALTH_SAFETY");
+    expect(result.typeName).toBe("Food safety");
+  });
+
+  it("keeps the key of a staff-created type", () => {
+    const result = serializeTrainingSession({
+      ...session,
+      type: { key: "FIRST_AID", name: "First aid" },
+    });
+
+    expect(result.type).toBe("FIRST_AID");
   });
 });
 
@@ -167,6 +190,7 @@ describe("serializeAnnouncement", () => {
       audience: "VOLUNTEERS",
       sentAt: new Date("2026-07-01T02:30:00.000Z"),
       authorName: null,
+      attachments: [],
     });
 
     expect(result.publishedAt).toBe("2026-07-01T02:30:00.000Z");

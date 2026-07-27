@@ -88,6 +88,25 @@ async function main() {
   }
   console.log(`🏠 Created ${serviceAreas.length} service areas`);
 
+  // Training types. The migration seeds these four, so this is a no-op on any
+  // migrated database — it's here so a seed against a hand-built schema still
+  // has something for sessions to point at.
+  const trainingTypes = [
+    { key: "INDUCTION", name: "Induction", description: "Welcome and orientation for new volunteers" },
+    { key: "DE_ESCALATION", name: "De-escalation", description: "Handling difficult situations calmly and safely" },
+    { key: "HEALTH_SAFETY", name: "Health & Safety", description: "Kitchen safety, food handling, and emergency procedures" },
+    { key: "OTHER", name: "Other", description: "Anything that does not fit the other types" },
+  ];
+
+  for (const type of trainingTypes) {
+    await prisma.trainingType.upsert({
+      where: { key: type.key },
+      update: {},
+      create: type,
+    });
+  }
+  console.log(`🎓 Created ${trainingTypes.length} training types`);
+
   // Create agreement templates
   await prisma.agreementTemplate.upsert({
     where: { agreementType: "CODE_OF_CONDUCT" },
@@ -645,9 +664,12 @@ async function main() {
 
     // ─── Training Sessions ────────────────────────────────
 
+    const trainingTypeId = async (key: string) =>
+      (await prisma.trainingType.findUniqueOrThrow({ where: { key } })).id;
+
     const pastTraining = await prisma.trainingSession.create({
       data: {
-        type: "INDUCTION",
+        typeId: await trainingTypeId("INDUCTION"),
         title: "Volunteer Induction — Nau Mai",
         description: "Welcome session covering health & safety, kitchen procedures, and our kaupapa",
         date: toDate(-21),
@@ -661,7 +683,7 @@ async function main() {
 
     const upcomingTraining = await prisma.trainingSession.create({
       data: {
-        type: "HEALTH_SAFETY",
+        typeId: await trainingTypeId("HEALTH_SAFETY"),
         title: "Food Safety Refresher",
         description: "Annual food safety and hygiene training — required for kitchen volunteers",
         date: toDate(12),
@@ -675,7 +697,7 @@ async function main() {
 
     await prisma.trainingSession.create({
       data: {
-        type: "DE_ESCALATION",
+        typeId: await trainingTypeId("DE_ESCALATION"),
         title: "De-escalation & Tika Communication",
         description: "Skills for handling difficult situations with aroha and respect",
         date: toDate(20),

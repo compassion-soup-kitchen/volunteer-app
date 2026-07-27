@@ -5,9 +5,18 @@ import type { MutationResult } from "./volunteer-shifts";
 
 // ─── Types ──────────────────────────────────────────────
 
+/**
+ * A training type as the UI needs it: `key` picks the badge colour and stays
+ * stable across renames, `name` is what people read.
+ */
+export type TrainingTypeRef = {
+  key: string;
+  name: string;
+};
+
 export type VolunteerTrainingSession = {
   id: string;
-  type: string;
+  type: TrainingTypeRef;
   title: string;
   description: string | null;
   date: Date;
@@ -22,7 +31,7 @@ export type VolunteerTrainingSession = {
 
 export type TrainingHistoryItem = {
   id: string;
-  type: string;
+  type: TrainingTypeRef;
   title: string;
   date: Date;
   status: string;
@@ -30,9 +39,12 @@ export type TrainingHistoryItem = {
 
 // ─── Reads ──────────────────────────────────────────────
 
+/** Everything a session read needs from its type — nothing more. */
+const typeSelect = { select: { key: true, name: true } } as const;
+
 type SessionWithAttendances = {
   id: string;
-  type: string;
+  type: TrainingTypeRef;
   title: string;
   description: string | null;
   date: Date;
@@ -84,6 +96,7 @@ export async function getAvailableTrainingForUser(
       date: { gte: now },
     },
     include: {
+      type: typeSelect,
       attendances: {
         where: { status: { in: ["REGISTERED", "ATTENDED"] } },
         select: { id: true, volunteerId: true, status: true },
@@ -108,6 +121,7 @@ export async function getTrainingSessionForUser(
   const ts = await db.trainingSession.findUnique({
     where: { id: sessionId },
     include: {
+      type: typeSelect,
       attendances: {
         where: { status: { in: ["REGISTERED", "ATTENDED"] } },
         select: { id: true, volunteerId: true, status: true },
@@ -131,7 +145,7 @@ export async function getTrainingHistoryForUser(
     where: { volunteerId: profile.id },
     include: {
       session: {
-        select: { id: true, type: true, title: true, date: true },
+        select: { id: true, type: typeSelect, title: true, date: true },
       },
     },
     orderBy: { session: { date: "desc" } },

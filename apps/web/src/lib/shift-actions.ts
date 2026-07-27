@@ -20,7 +20,16 @@ import {
   type ShiftFilters,
   type ShiftWithDetails,
 } from "@/lib/data/volunteer-shifts";
-import { safeParseDateOnly, todayInAppZone } from "@/lib/date-only";
+import {
+  parseDateOnly,
+  safeParseDateOnly,
+  todayInAppZone,
+} from "@/lib/date-only";
+import {
+  expandRecurrence,
+  partitionExistingDates,
+  type RecurrenceInput,
+} from "@/lib/shift-series";
 import { formatHoldUntil, type OfferStatus } from "@/lib/shift-offers";
 import {
   holdIsLive,
@@ -341,6 +350,101 @@ export async function createShift(
     revalidatePath("/shifts");
     return { success: true, shiftId: shift.id };
   } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+export type CreateShiftSeriesResult = {
+  error?: string;
+  success?: boolean;
+  created?: number;
+  /** Days that already had a shift in this service area, so were left alone. */
+  skipped?: string[];
+};
+
+/**
+ * Creates the same shift across a repeating pattern — a month of breakfasts in
+ * one go rather than one form submission per day.
+ *
+ * First refusal is deliberately not offered here: holding a whole series for
+ * named volunteers is a per-shift judgement, and the shift editor is the place
+ * to make it.
+ */
+export async function createShiftSeries(
+  data: Omit<ShiftFormData, "date" | "offeredVolunteerIds" | "offersCloseOn"> & {
+    recurrence: RecurrenceInput;
+  }
+): Promise<CreateShiftSeriesResult> {
+  const session = await auth();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
+  ) {
+    return { error: "Not authorised." };
+  }
+
+  const expanded = expandRecurrence(data.recurrence);
+  if (!expanded.ok) return { error: expanded.error };
+
+  // Validate the whole shift against the first day, so a bad time or capacity
+  // is reported before anything is written.
+  const today = todayInAppZone();
+  const sample = parseShiftForm(
+    { ...data, date: expanded.dates[0], offeredVolunteerIds: [], offersCloseOn: null },
+    { today }
+  );
+  if (!sample.ok) return { error: sample.error };
+
+  const dates = expanded.dates.filter((date) => date >= today);
+  if (dates.length === 0) {
+    return { error: "Every date in that range has already passed." };
+  }
+
+  const db = getDb();
+
+  // Skip days this service area already has a shift on rather than doubling it
+  // up — extending an existing pattern by a month is a normal thing to do.
+  const existing = await db.shift.findMany({
+    where: {
+      serviceAreaId: sample.value.serviceAreaId,
+      date: {
+        gte: parseDateOnly(dates[0]),
+        lte: parseDateOnly(dates[dates.length - 1]),
+      },
+      startTime: sample.value.startTime,
+    },
+    select: { date: true },
+  });
+
+  const { toCreate, skipped } = partitionExistingDates(
+    dates,
+    existing.map((shift) => shift.date)
+  );
+
+  if (toCreate.length === 0) {
+    return {
+      error: "Every one of those dates already has this shift on the roster.",
+    };
+  }
+
+  try {
+    const result = await db.shift.createMany({
+      data: toCreate.map((date) => ({
+        serviceAreaId: sample.value.serviceAreaId,
+        date: parseDateOnly(date),
+        startTime: sample.value.startTime,
+        endTime: sample.value.endTime,
+        capacity: sample.value.capacity,
+        notes: sample.value.notes,
+        createdById: session.user!.id,
+      })),
+    });
+
+    revalidatePath("/staff/shifts");
+    revalidatePath("/shifts");
+    return { success: true, created: result.count, skipped };
+  } catch (err) {
+    console.error("createShiftSeries failed:", err);
     return { error: "Something went wrong. Please try again." };
   }
 }

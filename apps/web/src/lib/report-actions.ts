@@ -5,6 +5,10 @@ import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { STAFF_ROLES } from "@/lib/role-change";
 import {
+  INDUCTION_TYPE_KEY,
+  type MonthlySummary,
+} from "@/lib/report-summary";
+import {
   startOfMonth,
   endOfMonth,
   subMonths,
@@ -520,6 +524,87 @@ export async function getVolunteerExportData(
   });
 }
 
+// ─── Monthly Summary Export ──────────────────────────
+
+/**
+ * The headline numbers for a period: how many volunteers joined, how many
+ * completed their induction, and per service area how many people turned up
+ * and how many hours they gave.
+ *
+ * Everything respects the dashboard's current date range and service-area
+ * filter, so the export always matches what's on screen.
+ */
+export async function getMonthlySummary(
+  filters?: ReportFilters
+): Promise<MonthlySummary | null> {
+  const session = await requireStaff();
+  if (!session) return null;
+
+  const db = getDb();
+
+  // No service-area filter here: signups and shifts are filtered inside the
+  // two helpers below, and neither joining nor completing an induction belongs
+  // to a service area at all.
+  const dateFilter = buildDateFilter(filters);
+
+  // "New volunteers" is about when someone joined, so it keys off the profile's
+  // own createdAt rather than any shift they may or may not have worked.
+  const profileWindow = buildCreatedAtFilter(filters);
+
+  const [byArea, summary, newVolunteers, inductions, selectedArea] =
+    await Promise.all([
+      getHoursByServiceArea(filters),
+      getReportSummary(filters),
+      db.volunteerProfile.count({
+        where: {
+          user: { role: { notIn: STAFF_ROLES } },
+          ...profileWindow,
+        },
+      }),
+      // Induction attendance is matched on the type's stable key, so renaming
+      // "Induction" in the training-types screen doesn't break the count.
+      db.trainingAttendance.count({
+        where: {
+          status: "ATTENDED",
+          session: {
+            type: { key: INDUCTION_TYPE_KEY },
+            ...dateFilter,
+          },
+        },
+      }),
+      filters?.serviceAreaId
+        ? db.serviceArea.findUnique({
+            where: { id: filters.serviceAreaId },
+            select: { name: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+  // Areas with no activity in the period are noise in a monthly report.
+  const activeAreas = byArea.filter(
+    (area) => area.totalShifts > 0 || area.totalHours > 0
+  );
+
+  return {
+    fromDate: filters?.fromDate ?? null,
+    toDate: filters?.toDate ?? null,
+    serviceAreaName: selectedArea?.name ?? null,
+    newVolunteers,
+    inductionsCompleted: inductions,
+    volunteersAttended: summary?.uniqueVolunteers ?? 0,
+    totalHours: summary?.totalHours ?? 0,
+    totalShifts: summary?.totalShifts ?? 0,
+    attendanceRate: summary?.overallAttendanceRate ?? 0,
+    byArea: activeAreas.map((area) => ({
+      serviceAreaName: area.serviceAreaName,
+      volunteersAttended: area.uniqueVolunteers,
+      shifts: area.totalShifts,
+      hours: area.totalHours,
+      attendanceRate: area.attendanceRate,
+    })),
+  };
+}
+
 // ─── Helpers ─────────────────────────────────────────
 
 function calcHours(startTime: string, endTime: string): number {
@@ -534,6 +619,25 @@ function buildDateFilter(filters?: ReportFilters) {
     date: {
       ...(filters.fromDate ? { gte: new Date(filters.fromDate) } : {}),
       ...(filters.toDate ? { lte: new Date(filters.toDate) } : {}),
+    },
+  };
+}
+
+/**
+ * The same window applied to a `createdAt` timestamp rather than a `@db.Date`
+ * day. The end of the range is pushed to the end of that day, so a volunteer
+ * who signed up on the last afternoon of the month still counts.
+ */
+function buildCreatedAtFilter(filters?: ReportFilters) {
+  if (!filters?.fromDate && !filters?.toDate) return {};
+
+  const to = filters.toDate ? new Date(filters.toDate) : null;
+  if (to) to.setUTCHours(23, 59, 59, 999);
+
+  return {
+    createdAt: {
+      ...(filters.fromDate ? { gte: new Date(filters.fromDate) } : {}),
+      ...(to ? { lte: to } : {}),
     },
   };
 }

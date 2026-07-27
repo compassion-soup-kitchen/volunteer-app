@@ -12,19 +12,21 @@ import {
   getTrainingHistoryForUser,
   registerForTrainingAsUser,
   type TrainingHistoryItem,
+  type TrainingTypeRef,
   type VolunteerTrainingSession,
 } from "@/lib/data/volunteer-training";
 
 export type {
   VolunteerTrainingSession,
   TrainingHistoryItem,
+  TrainingTypeRef,
 } from "@/lib/data/volunteer-training";
 
 // ─── Types ──────────────────────────────────────────────
 
 export type StaffTrainingSession = {
   id: string;
-  type: string;
+  type: TrainingTypeRef;
   title: string;
   description: string | null;
   date: Date;
@@ -44,7 +46,8 @@ export type StaffTrainingSession = {
 };
 
 export type CreateTrainingData = {
-  type: string;
+  /** `TrainingType.id` — types are rows now, not enum members. */
+  typeId: string;
   title: string;
   description?: string;
   date: string; // YYYY-MM-DD
@@ -68,6 +71,7 @@ export async function getStaffTrainingSessions(): Promise<StaffTrainingSession[]
   const db = getDb();
   return db.trainingSession.findMany({
     include: {
+      type: { select: { key: true, name: true } },
       createdBy: { select: { name: true } },
       attendances: {
         where: { status: { in: ["REGISTERED", "ATTENDED"] } },
@@ -102,6 +106,7 @@ export async function getTrainingDetail(
   return db.trainingSession.findUnique({
     where: { id: sessionId },
     include: {
+      type: { select: { key: true, name: true } },
       createdBy: { select: { name: true } },
       attendances: {
         select: {
@@ -131,7 +136,7 @@ export async function createTrainingSession(
     return { error: "Not authorised." };
   }
 
-  if (!data.title || !data.startTime || !data.endTime || !data.type) {
+  if (!data.title || !data.startTime || !data.endTime || !data.typeId) {
     return { error: "All fields are required." };
   }
 
@@ -148,10 +153,21 @@ export async function createTrainingSession(
 
   const db = getDb();
 
+  // Never trust the client's type id — it could name a type that has since been
+  // archived or deleted, and the foreign key would fail with nothing readable.
+  const type = await db.trainingType.findUnique({
+    where: { id: data.typeId },
+    select: { id: true, isArchived: true },
+  });
+  if (!type) return { error: "Please select a training type." };
+  if (type.isArchived) {
+    return { error: "That training type has been archived. Pick another." };
+  }
+
   try {
     const ts = await db.trainingSession.create({
       data: {
-        type: data.type as "INDUCTION" | "DE_ESCALATION" | "HEALTH_SAFETY" | "OTHER",
+        typeId: type.id,
         title: data.title,
         description: data.description || null,
         date,

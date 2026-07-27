@@ -8,29 +8,34 @@
  * `components/meta.ts`; this file is only domain truth.
  */
 
-import type { TrainingModule, TrainingReadiness, TrainingType } from '@/types/models';
+import type {
+  CoreTrainingType,
+  TrainingModule,
+  TrainingReadiness,
+  TrainingType,
+} from '@/types/models';
 
 /**
  * The modules every active volunteer is expected to complete, in the order they
  * should be tackled. Induction first, then the two safety modules. `OTHER`
  * (workshops) is enrichment, never part of readiness.
  */
-export const CORE_TRAINING_TYPES: readonly TrainingType[] = [
+export const CORE_TRAINING_TYPES: readonly CoreTrainingType[] = [
   'INDUCTION',
   'HEALTH_SAFETY',
   'DE_ESCALATION',
 ] as const;
 
 /** Short, human labels for the core modules (domain copy, theme-independent). */
-const CORE_LABELS: Record<TrainingType, string> = {
+const CORE_LABELS: Record<CoreTrainingType, string> = {
   INDUCTION: 'Induction',
   HEALTH_SAFETY: 'Health & safety',
   DE_ESCALATION: 'De-escalation',
   OTHER: 'Workshop',
 };
 
-export function isCoreTraining(type: TrainingType): boolean {
-  return CORE_TRAINING_TYPES.includes(type);
+export function isCoreTraining(type: TrainingType): type is CoreTrainingType {
+  return (CORE_TRAINING_TYPES as readonly string[]).includes(type);
 }
 
 export interface ReadinessInput {

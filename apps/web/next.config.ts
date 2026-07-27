@@ -13,6 +13,16 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  experimental: {
+    serverActions: {
+      // Uploads (policies, training material, pānui attachments) travel as
+      // Server Action payloads. Next's default cap is 1 MB, which silently
+      // rejected any policy PDF worth uploading long before the 10 MB limit
+      // in document-actions.ts got a look in. Keep this comfortably above
+      // MAX_UPLOAD_BYTES so the app's own message is what people see.
+      bodySizeLimit: "12mb",
+    },
+  },
   // In a monorepo, trace the workspace root so the standalone bundle includes
   // hoisted dependencies from the root node_modules. Output lands under
   // apps/web/.next/standalone/apps/web/server.js with a sibling node_modules.

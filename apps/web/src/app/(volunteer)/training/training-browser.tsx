@@ -1,8 +1,7 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Badge, type badgeVariants } from "@/components/ui/badge";
-import type { VariantProps } from "class-variance-authority";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,6 +23,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
+import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
 import {
   registerForTraining,
   cancelTrainingRegistration,
@@ -35,22 +35,6 @@ import { formatDateOnly } from "@/lib/date-only";
 interface TrainingBrowserProps {
   sessions: VolunteerTrainingSession[];
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  INDUCTION: "Induction",
-  DE_ESCALATION: "De-escalation",
-  HEALTH_SAFETY: "Health & Safety",
-  OTHER: "Other",
-};
-
-type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
-
-const TYPE_VARIANTS: Record<string, BadgeVariant> = {
-  INDUCTION: "info",
-  DE_ESCALATION: "warning",
-  HEALTH_SAFETY: "success",
-  OTHER: "neutral",
-};
 
 function formatDate(date: Date): string {
   return formatDateOnly(date, {
@@ -135,11 +119,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       <h3 className="font-serif text-lg/snug font-medium tracking-tight">
                         {session.title}
                       </h3>
-                      <Badge
-                        variant={TYPE_VARIANTS[session.type] ?? "neutral"}
-                      >
-                        {TYPE_LABELS[session.type] || session.type}
-                      </Badge>
+                      <TrainingTypeBadge type={session.type} />
                     </div>
                     {session.description && (
                       <p className="line-clamp-2 text-sm text-muted-foreground">
