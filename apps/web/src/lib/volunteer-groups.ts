@@ -69,10 +69,21 @@ export type GroupInput = {
 
 export type ValidatedGroup = {
   name: string;
+  /** Lowercased `name`, carrying the case-insensitive unique index. */
+  nameKey: string;
   description: string | null;
   tone: GroupTone;
   visibleToVolunteers: boolean;
 };
+
+/**
+ * The stored form of a name for uniqueness. Two groups may not differ by case
+ * alone - "Team Leaders" and "team leaders" are the same crew to everyone
+ * reading the roster, so they are the same row to Postgres.
+ */
+export function groupNameKey(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
 
 /**
  * Validate a create/edit submission. Returns the tidied values or a single
@@ -104,6 +115,7 @@ export function validateGroupInput(
   return {
     data: {
       name,
+      nameKey: groupNameKey(name),
       description,
       tone: input.tone,
       visibleToVolunteers: input.visibleToVolunteers,

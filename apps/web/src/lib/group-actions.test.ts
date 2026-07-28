@@ -1,4 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Prisma } from "@prisma/client";
+
+// What Postgres raises when a save loses the race for a name.
+const duplicateNameError = () =>
+  new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+    code: "P2002",
+    clientVersion: "7.9.0",
+    meta: { target: ["nameKey"] },
+  });
 
 const authMock = vi.fn();
 const groupFindManyMock = vi.fn();
@@ -123,6 +132,7 @@ describe("staff gate", () => {
     expect(groupCreateMock).toHaveBeenCalledWith({
       data: {
         name: "Team Leaders",
+        nameKey: "team leaders",
         description: "Runs the shift on the day",
         tone: "BRAND",
         visibleToVolunteers: true,
@@ -141,6 +151,36 @@ describe("createVolunteerGroup", () => {
       error: "A group with this name already exists.",
     });
     expect(groupCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("reports a duplicate when the database rejects the write", async () => {
+    // Nothing clashed at read time, so two saves raced and this one lost the
+    // nameKey unique index - the person should see the same message either way.
+    groupFindManyMock.mockResolvedValue([]);
+    groupCreateMock.mockRejectedValue(duplicateNameError());
+
+    expect(await createVolunteerGroup(validForm)).toEqual({
+      error: "A group with this name already exists.",
+    });
+  });
+
+  it("keeps the generic message for any other failure", async () => {
+    groupCreateMock.mockRejectedValue(new Error("connection lost"));
+
+    expect(await createVolunteerGroup(validForm)).toEqual({
+      error: "Something went wrong. Please try again.",
+    });
+  });
+
+  it("stores a lowercased key alongside the name", async () => {
+    await createVolunteerGroup({ ...validForm, name: "  Guardian   ANGELS " });
+
+    expect(groupCreateMock).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        name: "Guardian ANGELS",
+        nameKey: "guardian angels",
+      }),
+    });
   });
 
   it("passes validation failures straight back", async () => {
@@ -185,6 +225,15 @@ describe("updateVolunteerGroup", () => {
 
     expect(await updateVolunteerGroup("gone", validForm)).toEqual({
       error: "Group not found.",
+    });
+  });
+
+  it("reports a duplicate when the database rejects the rename", async () => {
+    groupFindManyMock.mockResolvedValue([{ id: "g1", name: "Guardian Angels" }]);
+    groupUpdateMock.mockRejectedValue(duplicateNameError());
+
+    expect(await updateVolunteerGroup("g1", validForm)).toEqual({
+      error: "A group with this name already exists.",
     });
   });
 });

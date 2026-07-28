@@ -6,6 +6,7 @@ import {
   describeMembershipChange,
   diffMembership,
   findNameClash,
+  groupNameKey,
   groupToneVariant,
   isGroupTone,
   memberCountLabel,
@@ -55,6 +56,7 @@ describe("validateGroupInput", () => {
     expect(result).toEqual({
       data: {
         name: "Guardian Angels",
+        nameKey: "guardian angels",
         description: "Step in at short notice",
         tone: "BRAND",
         visibleToVolunteers: true,
@@ -95,6 +97,17 @@ describe("validateGroupInput", () => {
     expect(validateGroupInput({ ...base, tone: "PUCE" })).toEqual({
       error: "Choose a colour for the group.",
     });
+  });
+});
+
+describe("groupNameKey", () => {
+  it("folds case and surrounding space so near-duplicates collide", () => {
+    expect(groupNameKey("  Team   Leaders ")).toBe("team leaders");
+    expect(groupNameKey("TEAM LEADERS")).toBe(groupNameKey("team leaders"));
+  });
+
+  it("keeps genuinely different names apart", () => {
+    expect(groupNameKey("Team Leaders")).not.toBe(groupNameKey("Team Leader"));
   });
 });
 

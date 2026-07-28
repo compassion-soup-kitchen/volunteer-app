@@ -112,7 +112,9 @@ async function main() {
     await prisma.volunteerGroup.upsert({
       where: { name: group.name },
       update: {},
-      create: group,
+      // nameKey carries the case-insensitive unique index; it always mirrors
+      // the name (see groupNameKey in src/lib/volunteer-groups.ts).
+      create: { ...group, nameKey: group.name.toLowerCase() },
     });
   }
   console.log(`🫂 Created ${volunteerGroups.length} volunteer groups`);

@@ -193,8 +193,14 @@ enum GroupTone {
 /// side. Groups volunteers should be able to turn to - team leaders, guardian
 /// angels - are visible; a private coordination list can be kept staff-only.
 model VolunteerGroup {
-  id                  String    @id @default(cuid())
-  name                String    @unique
+  id String @id @default(cuid())
+  /// What staff typed, shown everywhere.
+  name String @unique
+  /// `name` lowercased. Postgres unique indexes are case-sensitive, so without
+  /// this two coordinators saving "Team Leaders" and "team leaders" at the same
+  /// moment would both clear the application-level check and land side by side.
+  /// Written from `name` on every save - never edited directly.
+  nameKey             String    @unique
   description         String?
   tone                GroupTone @default(NEUTRAL)
   visibleToVolunteers Boolean   @default(true)

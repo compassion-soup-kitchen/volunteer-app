@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import type { GroupTone } from "@prisma/client";
+import { Prisma, type GroupTone } from "@prisma/client";
 import {
   describeMembershipChange,
   diffMembership,
@@ -108,6 +108,21 @@ export async function getGroupCandidates(): Promise<GroupCandidate[]> {
   }));
 }
 
+const DUPLICATE_NAME = "A group with this name already exists." as const;
+
+/**
+ * Whether a write failed because the name is taken. `findNameClash` reads
+ * before writing, so two saves racing with the same name can both pass it - the
+ * `nameKey` unique index settles it, and the loser gets the same message the
+ * pre-check would have given.
+ */
+function isDuplicateNameError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  );
+}
+
 type GroupFormInput = {
   name: string;
   description?: string | null;
@@ -122,9 +137,11 @@ function revalidateGroupSurfaces() {
   revalidatePath("/staff/groups");
   revalidatePath("/staff/volunteers");
   // Every shift detail page draws these badges beside its signups and offers,
-  // and a group edit belongs to no shift in particular - so revalidate the
-  // segment as a layout, which takes the nested /staff/shifts/[shiftId] pages
-  // with it rather than leaving a stale badge behind client-side navigation.
+  // and a group edit belongs to no shift in particular. The "layout" type is a
+  // path-derived tag, not a layout.tsx boundary: Next tags each rendered route
+  // with a `/layout` entry for every ancestor path (see getDerivedTags in
+  // next/dist/server/lib/implicit-tags), so this reaches the nested
+  // /staff/shifts/[shiftId] pages without needing a layout file to exist here.
   revalidatePath("/staff/shifts", "layout");
   revalidatePath("/team");
   revalidatePath("/profile");
@@ -144,14 +161,15 @@ export async function createVolunteerGroup(
     select: { id: true, name: true },
   });
   if (findNameClash(existing, validated.data.name)) {
-    return { error: "A group with this name already exists." };
+    return { error: DUPLICATE_NAME };
   }
 
   try {
     await db.volunteerGroup.create({ data: validated.data });
     revalidateGroupSurfaces();
     return { success: true };
-  } catch {
+  } catch (error) {
+    if (isDuplicateNameError(error)) return { error: DUPLICATE_NAME };
     return { error: "Something went wrong. Please try again." };
   }
 }
@@ -174,14 +192,15 @@ export async function updateVolunteerGroup(
     return { error: "Group not found." };
   }
   if (findNameClash(existing, validated.data.name, id)) {
-    return { error: "A group with this name already exists." };
+    return { error: DUPLICATE_NAME };
   }
 
   try {
     await db.volunteerGroup.update({ where: { id }, data: validated.data });
     revalidateGroupSurfaces();
     return { success: true };
-  } catch {
+  } catch (error) {
+    if (isDuplicateNameError(error)) return { error: DUPLICATE_NAME };
     return { error: "Something went wrong. Please try again." };
   }
 }
