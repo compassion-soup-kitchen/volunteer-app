@@ -4,7 +4,9 @@ import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { STAFF_ROLES } from "@/lib/role-change";
+import { dateOnlyOf, timestampToDateOnly } from "@/lib/date-only";
 import {
+  buildAppZoneTimestampWindow,
   INDUCTION_TYPE_KEY,
   type MonthlySummary,
 } from "@/lib/report-summary";
@@ -449,7 +451,9 @@ export async function getShiftExportData(
   });
 
   return shifts.map((shift) => ({
-    date: format(shift.date, "yyyy-MM-dd"),
+    // A stored calendar day, so read it back as one — `format` would render
+    // it in the server's timezone and shift it a day on any host behind UTC.
+    date: dateOnlyOf(shift.date),
     serviceArea: shift.serviceArea.name,
     startTime: shift.startTime,
     endTime: shift.endTime,
@@ -519,7 +523,9 @@ export async function getVolunteerExportData(
       mojStatus: v.mojStatus,
       totalShifts: v.shiftSignups.length,
       totalHours: Math.round(hours * 10) / 10,
-      joinedDate: format(v.createdAt, "yyyy-MM-dd"),
+      // `createdAt` is a real timestamp, not a stored day: the calendar date
+      // someone joined on is a question about Wellington, not the server.
+      joinedDate: timestampToDateOnly(v.createdAt),
     };
   });
 }
@@ -549,7 +555,7 @@ export async function getMonthlySummary(
 
   // "New volunteers" is about when someone joined, so it keys off the profile's
   // own createdAt rather than any shift they may or may not have worked.
-  const profileWindow = buildCreatedAtFilter(filters);
+  const profileWindow = buildAppZoneTimestampWindow(filters);
 
   const [byArea, summary, newVolunteers, inductions, selectedArea] =
     await Promise.all([
@@ -623,21 +629,3 @@ function buildDateFilter(filters?: ReportFilters) {
   };
 }
 
-/**
- * The same window applied to a `createdAt` timestamp rather than a `@db.Date`
- * day. The end of the range is pushed to the end of that day, so a volunteer
- * who signed up on the last afternoon of the month still counts.
- */
-function buildCreatedAtFilter(filters?: ReportFilters) {
-  if (!filters?.fromDate && !filters?.toDate) return {};
-
-  const to = filters.toDate ? new Date(filters.toDate) : null;
-  if (to) to.setUTCHours(23, 59, 59, 999);
-
-  return {
-    createdAt: {
-      ...(filters.fromDate ? { gte: new Date(filters.fromDate) } : {}),
-      ...(to ? { lte: to } : {}),
-    },
-  };
-}

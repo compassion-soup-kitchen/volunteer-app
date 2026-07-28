@@ -30,6 +30,18 @@ const appZoneParts = new Intl.DateTimeFormat("en-NZ", {
   day: "2-digit",
 });
 
+/** Wall-clock reading in the kitchen's timezone, used to measure its offset. */
+const appZoneClock = new Intl.DateTimeFormat("en-US", {
+  timeZone: APP_TIME_ZONE,
+  hour12: false,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
 function pad(value: number, length = 2): string {
   return String(value).padStart(length, "0");
 }
@@ -101,6 +113,71 @@ export function todayInAppZone(now: Date = new Date()): DateOnly {
  */
 export function startOfTodayInAppZone(now: Date = new Date()): Date {
   return parseDateOnly(todayInAppZone(now));
+}
+
+/**
+ * The kitchen's offset from UTC at a given instant, in milliseconds.
+ *
+ * Read back out of `Intl` rather than hard-coded, because Aotearoa is UTC+12
+ * in winter and UTC+13 over daylight saving.
+ */
+function appZoneOffsetMs(at: Date): number {
+  const parts = appZoneClock.formatToParts(at);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? 0);
+
+  // `hour12: false` yields hour 24 rather than 0 at midnight in some engines.
+  const asIfUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour") % 24,
+    get("minute"),
+    get("second")
+  );
+  return asIfUtc - at.getTime();
+}
+
+/**
+ * The instant a calendar day *starts* in the kitchen's timezone.
+ *
+ * For real timestamp columns — `VolunteerProfile.createdAt` and friends — this
+ * is the only correct way to bound a range picked as wall-calendar days.
+ * `@db.Date` columns are a different problem: those store the day itself as
+ * midnight UTC, so `parseDateOnly` is what they want.
+ *
+ * Parsing "2026-07-01" as UTC midnight would land 12 hours *after* the day
+ * actually began in Wellington, quietly dropping everything recorded that
+ * morning.
+ */
+export function startOfDayInAppZone(value: DateOnly): Date {
+  const utcMidnight = parseDateOnly(value);
+
+  // Guess using the offset at UTC midnight, then re-measure at the candidate
+  // instant: on a DST changeover the two differ, and the second reading is the
+  // one that belongs to the day being asked about.
+  const firstGuess = new Date(utcMidnight.getTime() - appZoneOffsetMs(utcMidnight));
+  const settledOffset = appZoneOffsetMs(firstGuess);
+  return new Date(utcMidnight.getTime() - settledOffset);
+}
+
+/**
+ * The instant *after* a calendar day ends in the kitchen's timezone — the
+ * exclusive upper bound of a range.
+ *
+ * Exclusive rather than 23:59:59.999 so nothing recorded in the final
+ * millisecond of the day can slip through the gap.
+ */
+export function endOfDayExclusiveInAppZone(value: DateOnly): Date {
+  return startOfDayInAppZone(addDaysToDateOnly(value, 1));
+}
+
+/**
+ * Formats a real timestamp as the calendar day it fell on in the kitchen's
+ * timezone. The counterpart to `formatDateOnly`, which is for stored days.
+ */
+export function timestampToDateOnly(at: Date): DateOnly {
+  return todayInAppZone(at);
 }
 
 /** Whether a stored day is today on the kitchen's wall calendar. */

@@ -6,8 +6,51 @@
  * database; report-actions.ts does the querying.
  */
 
+import {
+  endOfDayExclusiveInAppZone,
+  isDateOnly,
+  startOfDayInAppZone,
+} from "@/lib/date-only";
+
 /** The key of the seeded induction training type — see training-types.ts. */
 export const INDUCTION_TYPE_KEY = "INDUCTION";
+
+/** A Prisma range over a real timestamp column, or `{}` for no bound. */
+export type TimestampWindow = {
+  createdAt?: { gte?: Date; lt?: Date };
+};
+
+/**
+ * Turns a wall-calendar range into a window over a real timestamp column.
+ *
+ * `Shift.date` is a `@db.Date` and can be compared with `parseDateOnly`, but
+ * `VolunteerProfile.createdAt` is an ordinary UTC timestamp. Parsing
+ * "2026-07-01" as UTC midnight would put the boundary 12–13 hours after the
+ * day actually began in Wellington — dropping everyone who signed up that
+ * morning and pulling in the next morning at the other end. Both edges are
+ * therefore resolved in the kitchen's timezone.
+ *
+ * The upper bound is exclusive (`lt` the start of the following day) so the
+ * last millisecond of the range can't fall through.
+ */
+export function buildAppZoneTimestampWindow(filters?: {
+  fromDate?: string;
+  toDate?: string;
+}): TimestampWindow {
+  const from = filters?.fromDate;
+  const to = filters?.toDate;
+
+  const gte = from && isDateOnly(from) ? startOfDayInAppZone(from) : undefined;
+  const lt = to && isDateOnly(to) ? endOfDayExclusiveInAppZone(to) : undefined;
+
+  if (!gte && !lt) return {};
+  return {
+    createdAt: {
+      ...(gte ? { gte } : {}),
+      ...(lt ? { lt } : {}),
+    },
+  };
+}
 
 export type MonthlySummaryArea = {
   serviceAreaName: string;

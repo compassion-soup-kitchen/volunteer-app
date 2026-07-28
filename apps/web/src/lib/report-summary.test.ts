@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildAppZoneTimestampWindow,
   buildMonthlySummaryCsv,
   monthlySummaryFileName,
   type MonthlySummary,
@@ -152,5 +153,73 @@ describe("monthlySummaryFileName", () => {
     expect(monthlySummaryFileName({ ...summary, toDate: null })).toBe(
       "volunteer-summary-from-2026-07-01.csv"
     );
+  });
+});
+
+describe("buildAppZoneTimestampWindow", () => {
+  it("has no bounds when no dates are filtered", () => {
+    expect(buildAppZoneTimestampWindow({})).toEqual({});
+    expect(buildAppZoneTimestampWindow(undefined)).toEqual({});
+  });
+
+  // The bug this replaces: `new Date("2026-07-01")` is UTC midnight, which is
+  // noon on 1 July in Wellington — half the day's signups fall outside it.
+  it("starts at the instant the NZ day began, not UTC midnight", () => {
+    const window = buildAppZoneTimestampWindow({ fromDate: "2026-07-01" });
+    expect(window.createdAt?.gte?.toISOString()).toBe(
+      "2026-06-30T12:00:00.000Z"
+    );
+  });
+
+  it("ends exclusively at the start of the day after the range", () => {
+    const window = buildAppZoneTimestampWindow({ toDate: "2026-07-31" });
+    // Exclusive: the bound is the *start* of 1 August NZ, not the end of
+    // 31 July, so nothing in the final millisecond can fall through.
+    expect(window.createdAt?.lt?.toISOString()).toBe("2026-07-31T12:00:00.000Z");
+  });
+
+  it("covers a whole NZ month exactly", () => {
+    const window = buildAppZoneTimestampWindow({
+      fromDate: "2026-07-01",
+      toDate: "2026-07-31",
+    });
+    const span =
+      window.createdAt!.lt!.getTime() - window.createdAt!.gte!.getTime();
+    expect(span).toBe(31 * 24 * 60 * 60 * 1000);
+  });
+
+  // A volunteer signing up at 9am on 1 July NZ is 2026-06-30T21:00Z — before
+  // UTC midnight on the 1st, so the old boundary silently dropped them.
+  it("includes a volunteer who signed up on the morning of the first day", () => {
+    const window = buildAppZoneTimestampWindow({
+      fromDate: "2026-07-01",
+      toDate: "2026-07-31",
+    });
+    const signedUp = new Date("2026-06-30T21:00:00.000Z");
+    expect(signedUp >= window.createdAt!.gte!).toBe(true);
+  });
+
+  // ...and one signing up at 9am on 1 August must fall outside it.
+  it("excludes a volunteer who signed up the morning after the range", () => {
+    const window = buildAppZoneTimestampWindow({
+      fromDate: "2026-07-01",
+      toDate: "2026-07-31",
+    });
+    const signedUp = new Date("2026-07-31T21:00:00.000Z");
+    expect(signedUp < window.createdAt!.lt!).toBe(false);
+  });
+
+  it("accounts for daylight saving across a summer month", () => {
+    const window = buildAppZoneTimestampWindow({
+      fromDate: "2026-01-01",
+      toDate: "2026-01-31",
+    });
+    expect(window.createdAt?.gte?.toISOString()).toBe(
+      "2025-12-31T11:00:00.000Z"
+    );
+  });
+
+  it("ignores a malformed date rather than bounding on garbage", () => {
+    expect(buildAppZoneTimestampWindow({ fromDate: "not-a-date" })).toEqual({});
   });
 });
