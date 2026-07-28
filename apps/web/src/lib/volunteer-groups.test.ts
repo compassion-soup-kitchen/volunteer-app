@@ -10,6 +10,7 @@ import {
   isGroupTone,
   memberCountLabel,
   sortGroups,
+  toggleGroupMembership,
   validateGroupInput,
 } from "./volunteer-groups";
 
@@ -146,6 +147,34 @@ describe("diffMembership", () => {
       added: [],
       removed: [],
     });
+  });
+});
+
+describe("toggleGroupMembership", () => {
+  it("adds a group the person isn't in", () => {
+    expect(toggleGroupMembership(["a"], "b")).toEqual({
+      ids: ["a", "b"],
+      isMember: true,
+    });
+  });
+
+  it("removes a group the person is in", () => {
+    expect(toggleGroupMembership(["a", "b"], "b")).toEqual({
+      ids: ["a"],
+      isMember: false,
+    });
+  });
+
+  it("folds successive toggles together rather than losing the first", () => {
+    const first = toggleGroupMembership([], "a");
+    const second = toggleGroupMembership(first.ids, "b");
+    expect(second.ids).toEqual(["a", "b"]);
+  });
+
+  it("leaves the input untouched", () => {
+    const current = ["a"];
+    toggleGroupMembership(current, "b");
+    expect(current).toEqual(["a"]);
   });
 });
 

@@ -155,6 +155,25 @@ export function diffMembership(
   };
 }
 
+/**
+ * Add or drop one group from a set of ids. Membership is saved as a whole set,
+ * so a caller ticking several groups in a row must fold each change into the
+ * previous result rather than into whatever the last render showed.
+ */
+export function toggleGroupMembership(
+  currentIds: string[],
+  groupId: string
+): { ids: string[]; isMember: boolean } {
+  const isMember = currentIds.includes(groupId);
+  return {
+    ids: isMember
+      ? currentIds.filter((id) => id !== groupId)
+      : [...currentIds, groupId],
+    // Whether they are in the group *after* the toggle - what the toast reports.
+    isMember: !isMember,
+  };
+}
+
 /** Plain-language summary of a membership change, for the toast. */
 export function describeMembershipChange(
   added: number,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -66,7 +66,10 @@ import {
 } from "@/lib/staff-actions";
 import { startImpersonation } from "@/lib/impersonation-actions";
 import { setVolunteerGroups } from "@/lib/group-actions";
-import type { GroupChip } from "@/lib/volunteer-groups";
+import {
+  toggleGroupMembership,
+  type GroupChip,
+} from "@/lib/volunteer-groups";
 import {
   ASSIGNABLE_ROLES,
   isAssignableRole,
@@ -181,6 +184,12 @@ export function VolunteerDirectory({
   const [deleteTarget, setDeleteTarget] = useState<VolunteerListItem | null>(
     null
   );
+  // Group membership a coordinator has ticked but the server hasn't confirmed
+  // yet, keyed by volunteer id, plus a per-person queue that keeps their saves
+  // in click order. See handleGroupToggle.
+  const pendingGroupIds = useRef(new Map<string, string[]>());
+  const groupSaveQueues = useRef(new Map<string, Promise<void>>());
+  const inFlightGroupSaves = useRef(0);
 
   function reload(next: {
     status?: string;
@@ -204,24 +213,70 @@ export function VolunteerDirectory({
     reload({ groupId });
   }
 
+  /**
+   * Tick a group on or off for one person.
+   *
+   * The submenu stays open so several groups can be set in a row, and each save
+   * replaces the whole set - so a second tick must fold into the first rather
+   * than into the row React last rendered, or the earlier change is silently
+   * dropped. `pendingGroupIds` carries the latest intent forward synchronously,
+   * and each person's saves run one after another so the last request to reach
+   * the server is also the last one clicked.
+   */
   async function handleGroupToggle(volunteer: VolunteerListItem, group: GroupChip) {
-    const isMember = volunteer.groups.some((g) => g.id === group.id);
-    const nextIds = isMember
-      ? volunteer.groups.filter((g) => g.id !== group.id).map((g) => g.id)
-      : [...volunteer.groups.map((g) => g.id), group.id];
-
-    const result = await setVolunteerGroups(volunteer.id, nextIds);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    const who = volunteer.user.name || "This person";
-    toast.success(
-      isMember
-        ? `${who} removed from ${group.name}.`
-        : `${who} added to ${group.name}.`
+    const currentIds =
+      pendingGroupIds.current.get(volunteer.id) ??
+      volunteer.groups.map((g) => g.id);
+    const { ids: nextIds, isMember } = toggleGroupMembership(
+      currentIds,
+      group.id
     );
-    reload({});
+    pendingGroupIds.current.set(volunteer.id, nextIds);
+
+    // Show the change straight away - the row is the only feedback while the
+    // menu is open, and re-fetching after every tick would fight the next one.
+    setVolunteers((current) =>
+      current.map((v) =>
+        v.id === volunteer.id
+          ? {
+              ...v,
+              groups: nextIds
+                .map((id) => groups.find((g) => g.id === id))
+                .filter((g): g is GroupChip => Boolean(g)),
+            }
+          : v
+      )
+    );
+
+    inFlightGroupSaves.current += 1;
+    const queued = (groupSaveQueues.current.get(volunteer.id) ?? Promise.resolve())
+      .then(() => setVolunteerGroups(volunteer.id, nextIds))
+      .then((result) => {
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        const who = volunteer.user.name || "This person";
+        toast.success(
+          isMember
+            ? `${who} added to ${group.name}.`
+            : `${who} removed from ${group.name}.`
+        );
+      })
+      .finally(() => {
+        inFlightGroupSaves.current -= 1;
+        // Reconcile with the server once the flurry of ticks has settled: the
+        // list may need to drop someone who no longer matches the group filter,
+        // and a failed save must not leave the optimistic row standing.
+        if (inFlightGroupSaves.current === 0) {
+          pendingGroupIds.current.clear();
+          groupSaveQueues.current.clear();
+          reload({});
+        }
+      });
+
+    groupSaveQueues.current.set(volunteer.id, queued);
+    await queued;
   }
 
   function handleFilterChange(status: string) {
