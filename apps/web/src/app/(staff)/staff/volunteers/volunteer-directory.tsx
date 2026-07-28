@@ -258,6 +258,17 @@ export function VolunteerDirectory({
           return;
         }
         const who = volunteer.user.name || "This person";
+        // Report what the server actually saved. This list was read when the
+        // page loaded, so the group may have been archived by someone else
+        // since - saying "added" then would be a lie the row corrects a moment
+        // later.
+        const saved = result.groupIds ?? nextIds;
+        if (isMember && !saved.includes(group.id)) {
+          toast.error(
+            `${group.name} has been archived, so ${who} wasn't added to it.`
+          );
+          return;
+        }
         toast.success(
           isMember
             ? `${who} added to ${group.name}.`

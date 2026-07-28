@@ -320,11 +320,19 @@ export async function setGroupMembers(
   }
 }
 
-/** Set one person's groups - the directory's per-row shortcut. */
+/**
+ * Set one person's groups - the directory's per-row shortcut.
+ *
+ * Returns the membership that actually stuck. The directory reads its group
+ * list once and keeps it for the life of the page, so a coordinator can tick a
+ * group another coordinator archived in the meantime; the id is dropped here,
+ * and the caller needs to know that rather than reporting an addition that
+ * never happened.
+ */
 export async function setVolunteerGroups(
   volunteerProfileId: string,
   groupIds: string[]
-): Promise<{ error?: string; success?: boolean }> {
+): Promise<{ error?: string; success?: boolean; groupIds?: string[] }> {
   const session = await requireStaff();
   if (!session) return { error: "Not authorised." };
 
@@ -353,13 +361,15 @@ export async function setVolunteerGroups(
     select: { id: true },
   });
 
+  const savedIds = active.map((group) => group.id);
+
   try {
     await db.volunteerProfile.update({
       where: { id: volunteerProfileId },
-      data: { groups: { set: active.map((group) => ({ id: group.id })) } },
+      data: { groups: { set: savedIds.map((id) => ({ id })) } },
     });
     revalidateGroupSurfaces();
-    return { success: true };
+    return { success: true, groupIds: savedIds };
   } catch {
     return { error: "Something went wrong. Please try again." };
   }

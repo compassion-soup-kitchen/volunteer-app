@@ -388,8 +388,11 @@ describe("setVolunteerGroups", () => {
     // Only the live group comes back from the archived-excluding query.
     groupFindManyMock.mockResolvedValue([{ id: "g1" }]);
 
+    // The caller is told what stuck, so it can't report an addition the server
+    // discarded - the directory holds its group list for the life of the page.
     expect(await setVolunteerGroups("p1", ["g1", "g-archived"])).toEqual({
       success: true,
+      groupIds: ["g1"],
     });
     expect(groupFindManyMock).toHaveBeenCalledWith({
       where: { id: { in: ["g1", "g-archived"] }, isArchived: false },
