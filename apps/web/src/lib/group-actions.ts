@@ -339,7 +339,17 @@ export async function setVolunteerGroups(
   const db = getDb();
   const profile = await db.volunteerProfile.findUnique({
     where: { id: volunteerProfileId },
-    select: { id: true, status: true, user: { select: { status: true } } },
+    select: {
+      id: true,
+      status: true,
+      user: { select: { status: true } },
+      // Membership in archived groups, which the directory never sees and so
+      // can never send back. Archiving a group keeps its people (the page says
+      // as much), and a write here replaces the whole relation - so these have
+      // to be carried through by hand or restoring the group would find it
+      // half empty.
+      groups: { where: { isArchived: true }, select: { id: true } },
+    },
   });
   if (!profile) return { error: "This person doesn't have a volunteer profile yet." };
   // The directory hides the Groups menu for archived and unvetted people, but
@@ -361,7 +371,10 @@ export async function setVolunteerGroups(
     select: { id: true },
   });
 
-  const savedIds = active.map((group) => group.id);
+  const savedIds = [
+    ...active.map((group) => group.id),
+    ...profile.groups.map((group) => group.id),
+  ];
 
   try {
     await db.volunteerProfile.update({

@@ -384,6 +384,7 @@ describe("setVolunteerGroups", () => {
       id: "p1",
       status: "ACTIVE",
       user: { status: "ACTIVE" },
+      groups: [],
     });
     // Only the live group comes back from the archived-excluding query.
     groupFindManyMock.mockResolvedValue([{ id: "g1" }]);
@@ -411,6 +412,7 @@ describe("setVolunteerGroups", () => {
       id: "p1",
       status: "ACTIVE",
       user: { status: "ARCHIVED" },
+      groups: [],
     });
 
     expect(await setVolunteerGroups("p1", ["g1"])).toEqual({
@@ -426,12 +428,34 @@ describe("setVolunteerGroups", () => {
       id: "p1",
       status: "AWAITING_VETTING",
       user: { status: "ACTIVE" },
+      groups: [],
     });
 
     expect(await setVolunteerGroups("p1", ["g1"])).toEqual({
       error: "Finish their application and vetting before adding them to a group.",
     });
     expect(profileUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("carries archived-group membership through a toggle", async () => {
+    // The directory only ever sends the active groups it can see, and the write
+    // replaces the whole relation - so a retired crew would lose its people the
+    // first time anyone ticked anything, and restoring it would come back short.
+    profileFindUniqueMock.mockResolvedValue({
+      id: "p1",
+      status: "ACTIVE",
+      user: { status: "ACTIVE" },
+      groups: [{ id: "g-retired" }],
+    });
+    groupFindManyMock.mockResolvedValue([{ id: "g1" }]);
+
+    const result = await setVolunteerGroups("p1", ["g1"]);
+
+    expect(profileUpdateMock).toHaveBeenCalledWith({
+      where: { id: "p1" },
+      data: { groups: { set: [{ id: "g1" }, { id: "g-retired" }] } },
+    });
+    expect(result.groupIds).toEqual(["g1", "g-retired"]);
   });
 
   it("refuses someone without a volunteer profile", async () => {
