@@ -9,6 +9,7 @@ import { Wordmark } from "@/components/brand/wordmark";
 import {
   RiDashboardLine,
   RiTeamLine,
+  RiGroupLine,
   RiFileListLine,
   RiCalendarLine,
   RiLogoutBoxLine,
@@ -47,6 +48,7 @@ export function StaffNav({
       items: [
         { href: "/staff/applications", label: "Applications", icon: RiFileListLine },
         { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
+        { href: "/staff/groups", label: "Groups", icon: RiGroupLine },
       ],
     },
     {

@@ -31,6 +31,7 @@ import {
   type RecurrenceInput,
 } from "@/lib/shift-series";
 import { formatHoldUntil, type OfferStatus } from "@/lib/shift-offers";
+import type { GroupChip } from "@/lib/volunteer-groups";
 import {
   holdIsLive,
   parseShiftForm,
@@ -64,6 +65,7 @@ export type StaffShift = {
     volunteer: {
       id: string;
       user: { name: string | null; email: string };
+      groups: GroupChip[];
     };
   }[];
   offers: {
@@ -73,6 +75,7 @@ export type StaffShift = {
     volunteer: {
       id: string;
       user: { name: string | null; email: string };
+      groups: GroupChip[];
     };
   }[];
 };
@@ -82,7 +85,16 @@ export type VolunteerOption = {
   id: string;
   name: string;
   email: string;
+  groups: GroupChip[];
 };
+
+// Groups ride along with every volunteer a coordinator sees on a shift, so the
+// roster answers "is a team leader on tonight?" without a second lookup.
+const VOLUNTEER_GROUPS_SELECT = {
+  where: { isArchived: false },
+  orderBy: { name: "asc" },
+  select: { id: true, name: true, tone: true },
+} as const;
 
 // ─── Volunteer Actions ──────────────────────────────────
 
@@ -179,6 +191,7 @@ export async function getStaffShifts(
             select: {
               id: true,
               user: { select: { name: true, email: true } },
+              groups: VOLUNTEER_GROUPS_SELECT,
             },
           },
         },
@@ -192,6 +205,7 @@ export async function getStaffShifts(
             select: {
               id: true,
               user: { select: { name: true, email: true } },
+              groups: VOLUNTEER_GROUPS_SELECT,
             },
           },
         },
@@ -221,7 +235,11 @@ export async function getVolunteerOptions(): Promise<VolunteerOption[]> {
   const db = getDb();
   const profiles = await db.volunteerProfile.findMany({
     where: { status: "ACTIVE", user: { status: "ACTIVE" } },
-    select: { id: true, user: { select: { name: true, email: true } } },
+    select: {
+      id: true,
+      user: { select: { name: true, email: true } },
+      groups: VOLUNTEER_GROUPS_SELECT,
+    },
     orderBy: { user: { name: "asc" } },
   });
 
@@ -229,6 +247,7 @@ export async function getVolunteerOptions(): Promise<VolunteerOption[]> {
     id: profile.id,
     name: profile.user.name?.trim() || profile.user.email,
     email: profile.user.email,
+    groups: profile.groups,
   }));
 }
 
@@ -256,6 +275,7 @@ export async function getShiftDetail(shiftId: string): Promise<StaffShift | null
             select: {
               id: true,
               user: { select: { name: true, email: true } },
+              groups: VOLUNTEER_GROUPS_SELECT,
             },
           },
         },
@@ -270,6 +290,7 @@ export async function getShiftDetail(shiftId: string): Promise<StaffShift | null
             select: {
               id: true,
               user: { select: { name: true, email: true } },
+              groups: VOLUNTEER_GROUPS_SELECT,
             },
           },
         },

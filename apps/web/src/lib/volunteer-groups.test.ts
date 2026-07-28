@@ -1,0 +1,288 @@
+import { describe, expect, it } from "vitest";
+import {
+  GROUP_DESCRIPTION_MAX,
+  GROUP_NAME_MAX,
+  GROUP_INELIGIBLE_STATUSES,
+  GROUP_TONES,
+  canHoldGroups,
+  describeMembershipChange,
+  diffMembership,
+  findNameClash,
+  groupNameKey,
+  groupToneVariant,
+  isGroupTone,
+  memberCountLabel,
+  resolveGroupMemberIds,
+  sortGroups,
+  toggleGroupMembership,
+  validateGroupInput,
+} from "./volunteer-groups";
+
+const base = {
+  name: "Team Leaders",
+  description: "Runs the shift on the day",
+  tone: "BRAND",
+  visibleToVolunteers: true,
+};
+
+describe("isGroupTone", () => {
+  it("accepts every tone offered in the picker", () => {
+    for (const tone of GROUP_TONES) {
+      expect(isGroupTone(tone.value)).toBe(true);
+    }
+  });
+
+  it("rejects anything else", () => {
+    expect(isGroupTone("DESTRUCTIVE")).toBe(false);
+    expect(isGroupTone("")).toBe(false);
+  });
+});
+
+describe("groupToneVariant", () => {
+  it("keeps brand groups tinted rather than solid", () => {
+    expect(groupToneVariant("BRAND")).toBe("default");
+  });
+
+  it("maps each tone to its own badge variant", () => {
+    const variants = GROUP_TONES.map((tone) => groupToneVariant(tone.value));
+    expect(new Set(variants).size).toBe(GROUP_TONES.length);
+  });
+});
+
+describe("validateGroupInput", () => {
+  it("tidies the name and description", () => {
+    const result = validateGroupInput({
+      ...base,
+      name: "  Guardian   Angels  ",
+      description: "  Step in at short notice  ",
+    });
+    expect(result).toEqual({
+      data: {
+        name: "Guardian Angels",
+        nameKey: "guardian angels",
+        description: "Step in at short notice",
+        tone: "BRAND",
+        visibleToVolunteers: true,
+      },
+    });
+  });
+
+  it("treats an empty description as none", () => {
+    const result = validateGroupInput({ ...base, description: "   " });
+    expect(result).toEqual({
+      data: expect.objectContaining({ description: null }),
+    });
+  });
+
+  it("requires a name", () => {
+    expect(validateGroupInput({ ...base, name: "   " })).toEqual({
+      error: "Give the group a name.",
+    });
+  });
+
+  it("caps the name length", () => {
+    const result = validateGroupInput({
+      ...base,
+      name: "a".repeat(GROUP_NAME_MAX + 1),
+    });
+    expect(result).toHaveProperty("error");
+  });
+
+  it("caps the description length", () => {
+    const result = validateGroupInput({
+      ...base,
+      description: "a".repeat(GROUP_DESCRIPTION_MAX + 1),
+    });
+    expect(result).toHaveProperty("error");
+  });
+
+  it("rejects a tone that isn't on offer", () => {
+    expect(validateGroupInput({ ...base, tone: "PUCE" })).toEqual({
+      error: "Choose a colour for the group.",
+    });
+  });
+});
+
+describe("canHoldGroups", () => {
+  it("keeps people still going through vetting out of groups", () => {
+    for (const status of GROUP_INELIGIBLE_STATUSES) {
+      expect(canHoldGroups(status)).toBe(false);
+    }
+  });
+
+  it("lets everyone past that bar hold one", () => {
+    expect(canHoldGroups("APPROVED_FOR_INDUCTION")).toBe(true);
+    expect(canHoldGroups("ACTIVE")).toBe(true);
+    // Someone who has stepped back still keeps their history and badges.
+    expect(canHoldGroups("INACTIVE")).toBe(true);
+  });
+
+  it("says no when there's no profile status at all", () => {
+    expect(canHoldGroups(null)).toBe(false);
+    expect(canHoldGroups(undefined)).toBe(false);
+  });
+});
+
+describe("groupNameKey", () => {
+  it("folds case and surrounding space so near-duplicates collide", () => {
+    expect(groupNameKey("  Team   Leaders ")).toBe("team leaders");
+    expect(groupNameKey("TEAM LEADERS")).toBe(groupNameKey("team leaders"));
+  });
+
+  it("keeps genuinely different names apart", () => {
+    expect(groupNameKey("Team Leaders")).not.toBe(groupNameKey("Team Leader"));
+  });
+});
+
+describe("findNameClash", () => {
+  const groups = [
+    { id: "a", name: "Team Leaders" },
+    { id: "b", name: "Guardian Angels" },
+  ];
+
+  it("matches regardless of case and surrounding space", () => {
+    expect(findNameClash(groups, "  team leaders ")?.id).toBe("a");
+  });
+
+  it("ignores the group being edited", () => {
+    expect(findNameClash(groups, "Team Leaders", "a")).toBeUndefined();
+  });
+
+  it("returns undefined when the name is free", () => {
+    expect(findNameClash(groups, "Kitchen Regulars")).toBeUndefined();
+  });
+});
+
+describe("sortGroups", () => {
+  it("orders by name without mutating the input", () => {
+    const groups = [{ name: "Kitchen" }, { name: "angels" }, { name: "Beta" }];
+    const sorted = sortGroups(groups);
+    expect(sorted.map((g) => g.name)).toEqual(["angels", "Beta", "Kitchen"]);
+    expect(groups[0].name).toBe("Kitchen");
+  });
+});
+
+describe("memberCountLabel", () => {
+  it("reads naturally at each boundary", () => {
+    expect(memberCountLabel(0)).toBe("No one yet");
+    expect(memberCountLabel(1)).toBe("1 person");
+    expect(memberCountLabel(4)).toBe("4 people");
+  });
+});
+
+describe("diffMembership", () => {
+  it("reports both directions of a change", () => {
+    expect(diffMembership(["a", "b"], ["b", "c"])).toEqual({
+      added: ["c"],
+      removed: ["a"],
+    });
+  });
+
+  it("reports nothing when the set is unchanged", () => {
+    expect(diffMembership(["a", "b"], ["b", "a"])).toEqual({
+      added: [],
+      removed: [],
+    });
+  });
+});
+
+describe("resolveGroupMemberIds", () => {
+  it("keeps an existing member who no longer clears the bar", () => {
+    // p2 was archived after joining: an untouched save must not evict them.
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "p2"],
+        eligible: ["p1"],
+        existing: ["p1", "p2"],
+      })
+    ).toEqual(["p1", "p2"]);
+  });
+
+  it("removes that member once they're left out", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1"],
+        eligible: ["p1"],
+        existing: ["p1", "p2"],
+      })
+    ).toEqual(["p1"]);
+  });
+
+  it("refuses to add someone ineligible who isn't already in", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "p-unvetted"],
+        eligible: ["p1"],
+        existing: ["p1"],
+      })
+    ).toEqual(["p1"]);
+  });
+
+  it("drops ids that match nothing at all", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "made-up"],
+        eligible: ["p1"],
+        existing: [],
+      })
+    ).toEqual(["p1"]);
+  });
+
+  it("collapses duplicates", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "p1"],
+        eligible: ["p1"],
+        existing: [],
+      })
+    ).toEqual(["p1"]);
+  });
+});
+
+describe("toggleGroupMembership", () => {
+  it("adds a group the person isn't in", () => {
+    expect(toggleGroupMembership(["a"], "b")).toEqual({
+      ids: ["a", "b"],
+      isMember: true,
+    });
+  });
+
+  it("removes a group the person is in", () => {
+    expect(toggleGroupMembership(["a", "b"], "b")).toEqual({
+      ids: ["a"],
+      isMember: false,
+    });
+  });
+
+  it("folds successive toggles together rather than losing the first", () => {
+    const first = toggleGroupMembership([], "a");
+    const second = toggleGroupMembership(first.ids, "b");
+    expect(second.ids).toEqual(["a", "b"]);
+  });
+
+  it("leaves the input untouched", () => {
+    const current = ["a"];
+    toggleGroupMembership(current, "b");
+    expect(current).toEqual(["a"]);
+  });
+});
+
+describe("describeMembershipChange", () => {
+  it("says plainly when nothing moved", () => {
+    expect(describeMembershipChange(0, 0, "Team Leaders")).toBe(
+      "No change to Team Leaders."
+    );
+  });
+
+  it("names each direction that happened", () => {
+    expect(describeMembershipChange(2, 0, "Team Leaders")).toBe(
+      "Team Leaders: 2 added."
+    );
+    expect(describeMembershipChange(0, 1, "Team Leaders")).toBe(
+      "Team Leaders: 1 removed."
+    );
+    expect(describeMembershipChange(2, 1, "Team Leaders")).toBe(
+      "Team Leaders: 2 added, 1 removed."
+    );
+  });
+});

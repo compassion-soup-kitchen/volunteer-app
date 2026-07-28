@@ -35,6 +35,7 @@ import {
 } from "./user-deletion";
 import { deleteFile } from "@/lib/storage";
 import { resolveVolunteerListBuckets } from "./volunteer-list-filter";
+import type { GroupChip } from "./volunteer-groups";
 
 // Thrown inside the role-change transaction to roll back a demotion that would
 // leave zero active admins; caught and mapped to a user-facing message.
@@ -434,6 +435,8 @@ export type VolunteerListItem = {
     archivedReason: string | null;
   };
   interests: { id: string; name: string }[];
+  // Active groups this person belongs to - the crews staff label them with.
+  groups: GroupChip[];
   _count: {
     shiftSignups: number;
   };
@@ -444,6 +447,8 @@ export type VolunteerFilters = {
   // User account status: "ACTIVE" (default), "ARCHIVED", or "ALL"
   userStatus?: "ACTIVE" | "ARCHIVED" | "ALL";
   search?: string;
+  // Narrow to one volunteer group. "ALL" (or unset) leaves the list alone.
+  groupId?: string;
 };
 
 export async function getVolunteersList(
@@ -463,12 +468,21 @@ export async function getVolunteersList(
   const { includeApplicants, includeNoApplication, applicantStatus } =
     resolveVolunteerListBuckets(statusFilter);
 
+  // Group membership hangs off the profile, so filtering by one necessarily
+  // excludes the "no application yet" bucket - those people have no profile to
+  // belong with.
+  const groupId =
+    filters?.groupId && filters.groupId !== "ALL" ? filters.groupId : null;
+
   const where: Record<string, unknown> = {};
   if (applicantStatus) {
     where.status = applicantStatus;
   }
   if (userStatus !== "ALL") {
     where.user = { status: userStatus };
+  }
+  if (groupId) {
+    where.groups = { some: { id: groupId } };
   }
 
   const [profiles, noApplicationUsers] = await Promise.all([
@@ -489,6 +503,11 @@ export async function getVolunteersList(
               },
             },
             interests: { select: { id: true, name: true } },
+            groups: {
+              where: { isArchived: false },
+              orderBy: { name: "asc" },
+              select: { id: true, name: true, tone: true },
+            },
             _count: {
               select: {
                 shiftSignups: { where: { status: { not: "CANCELLED" } } },
@@ -497,7 +516,7 @@ export async function getVolunteersList(
           },
         })
       : Promise.resolve([]),
-    includeNoApplication
+    includeNoApplication && !groupId
       ? db.user.findMany({
           where: {
             role: "PUBLIC",
@@ -528,6 +547,7 @@ export async function getVolunteersList(
     createdAt: p.createdAt,
     user: p.user,
     interests: p.interests,
+    groups: p.groups,
     _count: p._count,
   }));
 
@@ -549,6 +569,7 @@ export async function getVolunteersList(
         archivedReason: u.archivedReason,
       },
       interests: [],
+      groups: [],
       _count: { shiftSignups: 0 },
     })
   );

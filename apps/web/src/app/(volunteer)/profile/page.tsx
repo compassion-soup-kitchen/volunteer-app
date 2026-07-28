@@ -28,6 +28,8 @@ import {
   RiGraduationCapLine,
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
+import { getMyGroups } from "@/lib/group-actions";
+import { GroupBadge } from "@/components/brand/group-badge";
 import { getVolunteerTrainingHistory } from "@/lib/training-actions";
 import { formatDateOnly, formatTimestampInAppZone } from "@/lib/date-only";
 
@@ -48,9 +50,10 @@ const DAYS_LONG: Record<string, string> = {
 export default async function ProfilePage() {
   await connection();
   const session = await auth();
-  const [profile, trainingHistory] = await Promise.all([
+  const [profile, trainingHistory, myGroups] = await Promise.all([
     getVolunteerProfile(),
     getVolunteerTrainingHistory(),
+    getMyGroups(),
   ]);
 
   const firstName = session?.user?.name?.split(" ")[0] || "there";
@@ -305,6 +308,35 @@ export default async function ProfilePage() {
 
         {/* Quiet rail — when you can help and what you bring */}
         <div className="min-w-0 space-y-6">
+          {/* Groups - where you sit in the wider crew */}
+          <Card className="gap-0 pb-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Ō rōpū · Your groups</CardTitle>
+              <CardAction>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/team">
+                    Our team
+                    <RiArrowRightLine className="size-3.5" />
+                  </Link>
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="border-t border-border pt-3 pb-2">
+              {myGroups.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {myGroups.map((group) => (
+                    <GroupBadge key={group.id} group={group} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  You&apos;re not in a group yet. Have a look at who&apos;s who
+                  on the team page.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Availability */}
           <Card className="gap-0 pb-2">
             <CardHeader className="pb-3">

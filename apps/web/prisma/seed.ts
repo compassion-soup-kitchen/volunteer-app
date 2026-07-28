@@ -88,6 +88,37 @@ async function main() {
   }
   console.log(`🏠 Created ${serviceAreas.length} service areas`);
 
+  // Volunteer groups - the crews inside the whānau. Descriptive only: being a
+  // team leader here grants no extra access, it just says who to turn to.
+  const volunteerGroups = [
+    {
+      name: "Team Leaders",
+      description: "Run the shift on the day - the person to check in with when you arrive.",
+      tone: "BRAND" as const,
+    },
+    {
+      name: "Guardian Angels",
+      description: "Step in at short notice when a shift is short-handed.",
+      tone: "INFO" as const,
+    },
+    {
+      name: "Kitchen Regulars",
+      description: "Our steady weekly crew in the kitchen.",
+      tone: "SUCCESS" as const,
+    },
+  ];
+
+  for (const group of volunteerGroups) {
+    await prisma.volunteerGroup.upsert({
+      where: { name: group.name },
+      update: {},
+      // nameKey carries the case-insensitive unique index; it always mirrors
+      // the name (see groupNameKey in src/lib/volunteer-groups.ts).
+      create: { ...group, nameKey: group.name.toLowerCase() },
+    });
+  }
+  console.log(`🫂 Created ${volunteerGroups.length} volunteer groups`);
+
   // Training types. The migration seeds these four, so this is a no-op on any
   // migrated database — it's here so a seed against a hand-built schema still
   // has something for sessions to point at.
@@ -561,6 +592,22 @@ async function main() {
     }
 
     console.log("👥 Created additional volunteers: Hemi, Mere, Tāne");
+
+    // Put a few people in groups so the directory, roster and team page all
+    // have something to show.
+    const groupMemberships: Record<string, string[]> = {
+      "Team Leaders": [profile.id, vol3Profile.id],
+      "Guardian Angels": [vol2Profile.id],
+      "Kitchen Regulars": [profile.id, vol2Profile.id, vol4Profile.id],
+    };
+
+    for (const [name, memberIds] of Object.entries(groupMemberships)) {
+      await prisma.volunteerGroup.update({
+        where: { name },
+        data: { members: { set: memberIds.map((id) => ({ id })) } },
+      });
+    }
+    console.log("🫂 Assigned volunteers to groups");
 
     // ─── Past shift with UNMARKED signups (for testing attendance) ─
 

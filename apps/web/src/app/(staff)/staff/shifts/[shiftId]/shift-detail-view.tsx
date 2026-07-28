@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { GroupBadges } from "@/components/brand/group-badge";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { IconChip } from "@/components/brand/icon-chip";
 import {
@@ -282,6 +283,11 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                     <p className="truncate text-xs text-muted-foreground">
                       {offer.volunteer.user.email}
                     </p>
+                    <GroupBadges
+                      groups={offer.volunteer.groups}
+                      max={2}
+                      className="mt-1"
+                    />
                   </div>
                   <Badge
                     variant={OFFER_BADGES[offer.status].variant}
@@ -360,9 +366,12 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {signup.volunteer.user.name || "—"}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="truncate text-sm font-semibold">
+                      {signup.volunteer.user.name || "—"}
+                    </p>
+                    <GroupBadges groups={signup.volunteer.groups} max={2} />
+                  </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {signup.volunteer.user.email}
                   </p>

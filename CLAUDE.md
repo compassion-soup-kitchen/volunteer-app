@@ -81,6 +81,7 @@ src/
 │   │   ├── training/                 # Browse & register — training-browser.tsx
 │   │   ├── hours/                    # Personal hours log — hours-detail.tsx
 │   │   ├── documents/                # View signed agreements + downloadable policies
+│   │   ├── team/                     # Who's who — members of volunteer-visible groups
 │   │   └── news/                     # Announcements feed
 │   ├── (staff)/staff/                # COORDINATOR / ADMIN routes (desktop-first, sidebar layout)
 │   │   ├── layout.tsx                # Auth gate, redirects volunteers → /dashboard
@@ -88,6 +89,7 @@ src/
 │   │   ├── dashboard/                # Staff overview
 │   │   ├── applications/             # Review pending applications
 │   │   ├── volunteers/               # Volunteer directory + per-volunteer detail
+│   │   ├── groups/                   # CRUD volunteer groups + membership (group-manager.tsx)
 │   │   ├── shifts/                   # Create/manage shifts, mark attendance, record meals
 │   │   ├── service-areas/            # CRUD service areas
 │   │   ├── training/                 # Create/manage training sessions
@@ -124,6 +126,8 @@ src/
 │   ├── shift-actions.ts              # CRUD shifts, signups, attendance, meals
 │   ├── training-actions.ts           # CRUD training sessions + attendance
 │   ├── service-area-actions.ts       # CRUD service areas
+│   ├── group-actions.ts              # CRUD volunteer groups, membership, volunteer-facing team reads
+│   ├── volunteer-groups.ts           # Pure group helpers (tones → badge variants, validation, diffing)
 │   ├── document-actions.ts           # Uploads, agreement templates, signed agreements
 │   ├── announcement-actions.ts       # CRUD announcements
 │   ├── staff-actions.ts              # Volunteer directory, archiving, role changes
@@ -163,6 +167,7 @@ prisma/
 - **Auth**: `User`, `Account`, `Session`, `VerificationToken` — NextAuth standard tables. `User.role` ∈ `{PUBLIC, VOLUNTEER, COORDINATOR, ADMIN}`. `User.status` ∈ `{ACTIVE, ARCHIVED}` (archived users blocked at sign-in).
 - **Onboarding**: `VolunteerProfile` (status: APPLICATION_SUBMITTED → AWAITING_VETTING → APPROVED_FOR_INDUCTION → ACTIVE / INACTIVE; `mojStatus` ∈ NOT_STARTED/SUBMITTED/CLEARED/FLAGGED), `Application`, `Document`, `SignedAgreement`, `AgreementTemplate` (versioned, supports re-acknowledgement).
 - **Operations**: `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `ShiftOffer` (right of first refusal: PENDING/ACCEPTED/DECLINED, paired with `Shift.offersCloseOn`), `TrainingSession`, `TrainingAttendance`.
+- **People**: `VolunteerGroup` (staff-named crews - Team Leaders, Guardian Angels - many-to-many with `VolunteerProfile`; `tone` picks the badge colour, `visibleToVolunteers` decides whether volunteers see it on /team and their profile). Purely descriptive: membership grants no access, that stays with `User.role`.
 - **Communication**: `Announcement` (audience: ALL / VOLUNTEERS / COORDINATORS).
 
 ### Auth Roles
