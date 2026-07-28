@@ -181,7 +181,7 @@ describe("<FileDropzone />", () => {
     expect(onFilesAccepted).toHaveBeenCalledTimes(1);
   });
 
-  it("ignores a drop while disabled", () => {
+  it("swallows a drop while disabled rather than ignoring it", () => {
     const onFilesAccepted = vi.fn();
     render(
       <FileDropzone
@@ -190,11 +190,30 @@ describe("<FileDropzone />", () => {
         onFilesAccepted={onFilesAccepted}
       />
     );
+    const zone = screen.getByText(/drop a file here/i).closest("label")!;
 
-    fireEvent.drop(screen.getByText(/drop a file here/i).closest("label")!, {
+    // fireEvent returns false when the event was cancelled. Both of these must
+    // be: leave the dragover default alone and the browser handles the drop
+    // itself, navigating the tab to file:///… and taking any open form with it.
+    const dragOverRan = fireEvent.dragOver(zone, {
       dataTransfer: { files: [pdf()] },
     });
+    const dropRan = fireEvent.drop(zone, { dataTransfer: { files: [pdf()] } });
 
+    expect(dragOverRan).toBe(false);
+    expect(dropRan).toBe(false);
     expect(onFilesAccepted).not.toHaveBeenCalled();
+  });
+
+  it("swallows the browser's drop handling when enabled too", () => {
+    render(<FileDropzone id="attachments" onFilesAccepted={vi.fn()} />);
+    const zone = screen.getByText(/drop a file here/i).closest("label")!;
+
+    expect(
+      fireEvent.dragOver(zone, { dataTransfer: { files: [pdf()] } })
+    ).toBe(false);
+    expect(fireEvent.drop(zone, { dataTransfer: { files: [pdf()] } })).toBe(
+      false
+    );
   });
 });

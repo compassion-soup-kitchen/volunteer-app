@@ -96,23 +96,32 @@ export function FileDropzone({
     if (accepted.length > 0) onFilesAccepted(accepted);
   }
 
+  // Every handler calls preventDefault before it checks `disabled`, and that
+  // order matters: leaving the dragover default in place means the browser
+  // handles the drop itself and navigates the tab to file:///…, which on the
+  // pānui dialog takes the half-written announcement with it. A disabled zone
+  // has to swallow the drop, not ignore it.
   function handleDragEnter(e: React.DragEvent) {
-    if (disabled) return;
     e.preventDefault();
+    if (disabled) return;
     dragDepth.current += 1;
     setIsDragging(true);
   }
 
-  function handleDragLeave(e: React.DragEvent) {
-    if (disabled) return;
+  function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    if (disabled) return;
     dragDepth.current = Math.max(0, dragDepth.current - 1);
     if (dragDepth.current === 0) setIsDragging(false);
   }
 
   function handleDrop(e: React.DragEvent) {
-    if (disabled) return;
     e.preventDefault();
+    if (disabled) return;
     dragDepth.current = 0;
     setIsDragging(false);
     takeFiles(e.dataTransfer.files);
@@ -123,7 +132,7 @@ export function FileDropzone({
       <label
         htmlFor={inputId}
         onDragEnter={handleDragEnter}
-        onDragOver={(e) => !disabled && e.preventDefault()}
+        onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
