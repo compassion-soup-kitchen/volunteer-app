@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.11.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.10.0...v1.11.0) (2026-07-28)
+
+
+### Features
+
+* **web:** give staff a real dropzone for uploading files ([2a5c41e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2a5c41e485f906d1b9334c8ae7f21247fbf8860b))
+* **web:** move document storage to Cloudflare R2 ([720d70c](https://github.com/compassion-soup-kitchen/volunteer-app/commit/720d70ce18aa93c8a84081f4d6585afec6510a7d))
+* **web:** name the crews with volunteer groups ([c14aae6](https://github.com/compassion-soup-kitchen/volunteer-app/commit/c14aae6db5a5d6ec477ccbb25ba8497e5f4ea1cb))
+* **web:** permanently delete user accounts ([28478ae](https://github.com/compassion-soup-kitchen/volunteer-app/commit/28478aebfa8f6c028e6529ff0112f7c4b24a2a2c))
+* **web:** permanently delete user accounts ([358639e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/358639e17ea3c4ab4c9f24019d81e77d09e51206))
+* **web:** training types, bulk shifts, pānui files, monthly export ([0824896](https://github.com/compassion-soup-kitchen/volunteer-app/commit/082489613f33ca750952c21f9b8ca73e1008f07b))
+* **web:** volunteer groups - make it clear who the team leaders and guardian angels are ([25bb18e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/25bb18e0fc15f6e999400729160b0d427a335873))
+
+
+### Bug Fixes
+
+* **web:** apply NZ time consistently to dates across the app ([92e8fa3](https://github.com/compassion-soup-kitchen/volunteer-app/commit/92e8fa3bbbf22a76592f3227739092f7545482b3))
+* **web:** bound the new-volunteer count in NZ time, not UTC ([9a32c6a](https://github.com/compassion-soup-kitchen/volunteer-app/commit/9a32c6aeffef22ddc97c279b53d9cb2c9e7600d8))
+* **web:** confirm before removing a pānui attachment ([db17bc8](https://github.com/compassion-soup-kitchen/volunteer-app/commit/db17bc83a93a5f34264ca12d0ed2ecdf6e794229))
+* **web:** don't claim someone joined a group that was archived ([965b567](https://github.com/compassion-soup-kitchen/volunteer-app/commit/965b5672429a5e68b6198971027b646eebda4eaf))
+* **web:** don't evict a group member the dialog never showed ([2c00888](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2c00888ec43a2f0cece5bd87bb4f6d02209ed5f3))
+* **web:** don't let an archived account take on new groups ([720105b](https://github.com/compassion-soup-kitchen/volunteer-app/commit/720105b3bb0e6ddf364734588ba97547d2563922))
+* **web:** don't lose a group tick made before the last one saves ([154cb60](https://github.com/compassion-soup-kitchen/volunteer-app/commit/154cb608e4761a455186ecff4d556ecc2d2d4e77))
+* **web:** don't silently swallow extra files dropped on a single-file zone ([eb1d9e6](https://github.com/compassion-soup-kitchen/volunteer-app/commit/eb1d9e67669865423f8396679b538450e34f643b))
+* **web:** hold one eligibility bar for group membership ([52a1c79](https://github.com/compassion-soup-kitchen/volunteer-app/commit/52a1c79f0789365373fbf709c93d3bb267fe4307))
+* **web:** keep archived-group membership through a directory toggle ([6035364](https://github.com/compassion-soup-kitchen/volunteer-app/commit/60353645028b2f49d9354dbdffbc1022076e54e6))
+* **web:** make group names unique regardless of case ([2792fe1](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2792fe17db672ebde683bd545ee77d58b69f9881))
+* **web:** render destructive confirm buttons in the destructive colour ([f98dca7](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f98dca726a447227666605a1eabcc752d8f98567))
+* **web:** revalidate nested shift pages when a group changes ([e13dafc](https://github.com/compassion-soup-kitchen/volunteer-app/commit/e13dafc8e7fdf3e36c0ccb6512b818152c22a35e))
+* **web:** swallow drops on a disabled dropzone instead of ignoring them ([716442f](https://github.com/compassion-soup-kitchen/volunteer-app/commit/716442f5463c0a1119d282e50037c9271d977efd))
+
 ## [1.10.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.9.0...v1.10.0) (2026-07-25)
 
 
