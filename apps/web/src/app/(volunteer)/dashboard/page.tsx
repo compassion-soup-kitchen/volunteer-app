@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { APP_TIME_ZONE, formatDateOnly } from "@/lib/date-only";
 import { auth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,12 +40,11 @@ export const metadata: Metadata = {
 };
 
 const SUPPORT_LINK = "https://www.compassion.org.nz/donate";
-const NZ_TZ = "Pacific/Auckland";
 
 function nzHour() {
   return Number(
     new Intl.DateTimeFormat("en-NZ", {
-      timeZone: NZ_TZ,
+      timeZone: APP_TIME_ZONE,
       hour: "numeric",
       hourCycle: "h23",
     }).format(new Date())
@@ -61,7 +61,7 @@ function greeting() {
 
 function formatToday() {
   return new Date().toLocaleDateString("en-NZ", {
-    timeZone: NZ_TZ,
+    timeZone: APP_TIME_ZONE,
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -69,7 +69,8 @@ function formatToday() {
 }
 
 function formatShiftDate(date: Date) {
-  return new Date(date).toLocaleDateString("en-NZ", {
+  // A stored calendar day: a shift on the 3rd is on the 3rd wherever it's read.
+  return formatDateOnly(date, {
     weekday: "short",
     day: "numeric",
     month: "short",

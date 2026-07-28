@@ -180,6 +180,69 @@ export function timestampToDateOnly(at: Date): DateOnly {
   return todayInAppZone(at);
 }
 
+// ─── Calendar arithmetic ─────────────────────────────────
+//
+// Pure string maths on `YYYY-MM-DD`. No `Date` arithmetic, so no timezone can
+// creep in: "the first of this month" is a calendar question, not a clock one.
+
+/** The first day of the month a calendar day falls in. */
+export function startOfMonthOf(value: DateOnly): DateOnly {
+  return `${parseDateOnly(value).toISOString().slice(0, 7)}-01`;
+}
+
+/** The last day of the month a calendar day falls in. */
+export function endOfMonthOf(value: DateOnly): DateOnly {
+  const [year, month] = value.split("-").map(Number);
+  // Day 0 of the next month is the last day of this one.
+  return dateOnlyOf(new Date(Date.UTC(year, month, 0)));
+}
+
+/**
+ * The same day-of-month `months` away, clamped to the end of a shorter month
+ * so 31 January plus one month is 28 February rather than spilling into March.
+ */
+export function addMonthsToDateOnly(value: DateOnly, months: number): DateOnly {
+  const [year, month, day] = value.split("-").map(Number);
+  const target = new Date(Date.UTC(year, month - 1 + months, 1));
+  const lastDay = Number(
+    endOfMonthOf(dateOnlyOf(target)).slice(8)
+  );
+  target.setUTCDate(Math.min(day, lastDay));
+  return dateOnlyOf(target);
+}
+
+/** The Monday of the week a calendar day falls in. */
+export function startOfWeekOf(value: DateOnly): DateOnly {
+  const weekday = parseDateOnly(value).getUTCDay(); // 0 = Sunday
+  return addDaysToDateOnly(value, weekday === 0 ? -6 : 1 - weekday);
+}
+
+/** The Sunday of the week a calendar day falls in. */
+export function endOfWeekOf(value: DateOnly): DateOnly {
+  return addDaysToDateOnly(startOfWeekOf(value), 6);
+}
+
+// The kitchen's current week and month. "This month" is a question about the
+// wall calendar in Wellington, so asking the server's clock gets it wrong for
+// the twelve hours between NZ midnight and UTC midnight — the whole NZ morning
+// of the 1st would still be reported against the month just gone.
+
+export function startOfWeekInAppZone(now: Date = new Date()): DateOnly {
+  return startOfWeekOf(todayInAppZone(now));
+}
+
+export function endOfWeekInAppZone(now: Date = new Date()): DateOnly {
+  return endOfWeekOf(todayInAppZone(now));
+}
+
+export function startOfMonthInAppZone(now: Date = new Date()): DateOnly {
+  return startOfMonthOf(todayInAppZone(now));
+}
+
+export function endOfMonthInAppZone(now: Date = new Date()): DateOnly {
+  return endOfMonthOf(todayInAppZone(now));
+}
+
 /** Whether a stored day is today on the kitchen's wall calendar. */
 export function isTodayInAppZone(date: Date, now: Date = new Date()): boolean {
   return dateOnlyOf(date) === todayInAppZone(now);
@@ -204,4 +267,25 @@ export function formatDateOnly(
   }
 ): string {
   return date.toLocaleDateString("en-NZ", { ...options, timeZone: "UTC" });
+}
+
+/**
+ * Formats a real timestamp — `createdAt`, `sentAt`, `signedAt` — as the date it
+ * happened on in Wellington.
+ *
+ * The counterpart to `formatDateOnly`, and the one to reach for in a Server
+ * Component: rendering a timestamp without a timezone uses the *server's*,
+ * which in a UTC container shows the day before for the whole NZ morning.
+ * Client components can format without this, since the browser is already on
+ * the reader's clock.
+ */
+export function formatTimestampInAppZone(
+  at: Date,
+  options: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }
+): string {
+  return at.toLocaleDateString("en-NZ", { ...options, timeZone: APP_TIME_ZONE });
 }

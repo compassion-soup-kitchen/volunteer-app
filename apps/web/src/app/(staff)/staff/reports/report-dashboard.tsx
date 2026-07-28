@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/date-picker";
-import { toDateOnly, toPickerDate } from "@/lib/date-only";
+import { toDateOnly, todayInAppZone, toPickerDate } from "@/lib/date-only";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
@@ -149,7 +149,7 @@ export function ReportDashboard({
     try {
       const data = await getShiftExportData(filters);
       downloadCsv(
-        `shifts-report-${new Date().toISOString().split("T")[0]}.csv`,
+        `shifts-report-${todayInAppZone()}.csv`,
         [
           "Date",
           "Service Area",
@@ -183,7 +183,7 @@ export function ReportDashboard({
     try {
       const data = await getVolunteerExportData(filters);
       downloadCsv(
-        `volunteers-report-${new Date().toISOString().split("T")[0]}.csv`,
+        `volunteers-report-${todayInAppZone()}.csv`,
         [
           "Name",
           "Email",

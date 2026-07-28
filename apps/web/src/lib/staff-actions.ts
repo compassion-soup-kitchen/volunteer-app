@@ -13,11 +13,12 @@ import {
 import { applicationDecisionEmail } from "@/lib/email-templates";
 import { revalidatePath } from "next/cache";
 import {
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-} from "date-fns";
+  endOfMonthInAppZone,
+  endOfWeekInAppZone,
+  parseDateOnly,
+  startOfMonthInAppZone,
+  startOfWeekInAppZone,
+} from "@/lib/date-only";
 import { Prisma, type Role } from "@prisma/client";
 import {
   validateRoleChange,
@@ -77,11 +78,14 @@ export async function getStaffDashboardStats(): Promise<DashboardStats | null> {
   if (!session) return null;
 
   const db = getDb();
-  const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+  // "This week" and "this month" are questions about the kitchen's wall
+  // calendar. Asking the server's clock reported the previous week or month
+  // for the whole NZ morning, so a coordinator checking the dashboard on
+  // Monday before noon saw last week's shift count.
+  const weekStart = parseDateOnly(startOfWeekInAppZone());
+  const weekEnd = parseDateOnly(endOfWeekInAppZone());
+  const monthStart = parseDateOnly(startOfMonthInAppZone());
+  const monthEnd = parseDateOnly(endOfMonthInAppZone());
 
   const [activeVolunteers, pendingApplications, shiftsThisWeek, attendedSignups] =
     await Promise.all([

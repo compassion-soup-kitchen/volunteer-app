@@ -1,5 +1,9 @@
 import { getDb } from "@/lib/db";
-import { startOfTodayInAppZone } from "@/lib/date-only";
+import {
+  dateOnlyOf,
+  formatDateOnly,
+  startOfTodayInAppZone,
+} from "@/lib/date-only";
 import { getMilestones, type Milestone } from "@/lib/milestones";
 import { isHeldForOffers } from "@/lib/shift-offers";
 import { diffHours } from "./time";
@@ -283,12 +287,11 @@ export async function getVolunteerHoursDataForUser(
     }
 
     // By month
-    const d = new Date(signup.shift.date);
-    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const monthLabel = d.toLocaleDateString("en-NZ", {
-      month: "long",
-      year: "numeric",
-    });
+    // `shift.date` is a stored calendar day, so read it as one — the local
+    // getters would shift the month on any host behind UTC.
+    const d = signup.shift.date;
+    const monthKey = dateOnlyOf(d).slice(0, 7);
+    const monthLabel = formatDateOnly(d, { month: "long", year: "numeric" });
     const existingMonth = monthMap.get(monthKey);
     if (existingMonth) {
       existingMonth.hours += h;

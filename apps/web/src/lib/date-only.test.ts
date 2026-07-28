@@ -1,20 +1,31 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addDaysToDateOnly,
+  addMonthsToDateOnly,
   dateOnlyOf,
   endOfDayExclusiveInAppZone,
+  endOfMonthInAppZone,
+  endOfMonthOf,
+  endOfWeekInAppZone,
+  endOfWeekOf,
   formatDateOnly,
+  formatTimestampInAppZone,
   isDateOnly,
   isPastInAppZone,
   isTodayInAppZone,
   parseDateOnly,
   safeParseDateOnly,
   startOfDayInAppZone,
+  startOfMonthInAppZone,
+  startOfMonthOf,
   startOfTodayInAppZone,
+  startOfWeekInAppZone,
+  startOfWeekOf,
   timestampToDateOnly,
   toDateOnly,
-  todayInAppZone,
   toPickerDate,
+  todayInAppZone,
 } from "@/lib/date-only";
 
 describe("toDateOnly", () => {
@@ -240,5 +251,119 @@ describe("timestampToDateOnly", () => {
     expect(timestampToDateOnly(new Date("2026-07-01T02:00:00.000Z"))).toBe(
       "2026-07-01"
     );
+  });
+});
+
+describe("calendar arithmetic", () => {
+  describe("startOfMonthOf / endOfMonthOf", () => {
+    it("brackets an ordinary month", () => {
+      expect(startOfMonthOf("2026-07-15")).toBe("2026-07-01");
+      expect(endOfMonthOf("2026-07-15")).toBe("2026-07-31");
+    });
+
+    it("handles 30-day months and February", () => {
+      expect(endOfMonthOf("2026-09-10")).toBe("2026-09-30");
+      expect(endOfMonthOf("2026-02-10")).toBe("2026-02-28");
+    });
+
+    it("handles a leap February", () => {
+      expect(endOfMonthOf("2028-02-10")).toBe("2028-02-29");
+    });
+
+    it("is idempotent on a month boundary", () => {
+      expect(startOfMonthOf("2026-07-01")).toBe("2026-07-01");
+      expect(endOfMonthOf("2026-07-31")).toBe("2026-07-31");
+    });
+  });
+
+  describe("addMonthsToDateOnly", () => {
+    it("steps forward and back", () => {
+      expect(addMonthsToDateOnly("2026-07-01", 1)).toBe("2026-08-01");
+      expect(addMonthsToDateOnly("2026-07-01", -5)).toBe("2026-02-01");
+    });
+
+    it("crosses a year boundary", () => {
+      expect(addMonthsToDateOnly("2026-12-01", 1)).toBe("2027-01-01");
+      expect(addMonthsToDateOnly("2026-01-01", -1)).toBe("2025-12-01");
+    });
+
+    it("clamps rather than spilling into the next month", () => {
+      expect(addMonthsToDateOnly("2026-01-31", 1)).toBe("2026-02-28");
+      expect(addMonthsToDateOnly("2026-08-31", 1)).toBe("2026-09-30");
+    });
+  });
+
+  describe("startOfWeekOf / endOfWeekOf", () => {
+    // 2026-08-03 is a Monday, 2026-08-09 the Sunday that ends its week.
+    it("runs Monday to Sunday", () => {
+      expect(startOfWeekOf("2026-08-05")).toBe("2026-08-03");
+      expect(endOfWeekOf("2026-08-05")).toBe("2026-08-09");
+    });
+
+    it("treats Sunday as the end of the week it closes, not the start", () => {
+      expect(startOfWeekOf("2026-08-09")).toBe("2026-08-03");
+      expect(endOfWeekOf("2026-08-09")).toBe("2026-08-09");
+    });
+
+    it("is stable on a Monday", () => {
+      expect(startOfWeekOf("2026-08-03")).toBe("2026-08-03");
+    });
+
+    it("spans seven days", () => {
+      expect(addDaysToDateOnly(startOfWeekOf("2026-08-05"), 6)).toBe(
+        endOfWeekOf("2026-08-05")
+      );
+    });
+  });
+});
+
+describe("app-zone week and month", () => {
+  // 2026-08-01T00:30Z is already 12:30pm on 1 August in Wellington, so "this
+  // month" is August. Reading the server's UTC clock agreed here...
+  it("agrees with UTC when both are on the same calendar day", () => {
+    const at = new Date("2026-08-01T00:30:00.000Z");
+    expect(startOfMonthInAppZone(at)).toBe("2026-08-01");
+  });
+
+  // ...but 2026-07-31T20:00Z is 8am on 1 August in Wellington. The server's
+  // clock still says July, which is the bug: the dashboard reported last
+  // month's hours through the whole NZ morning of the 1st.
+  it("rolls into the new month on NZ time, not UTC", () => {
+    const at = new Date("2026-07-31T20:00:00.000Z");
+    expect(startOfMonthInAppZone(at)).toBe("2026-08-01");
+    expect(endOfMonthInAppZone(at)).toBe("2026-08-31");
+  });
+
+  // Same trap for the week: 2026-08-02T20:00Z is Monday 3 August 8am in NZ.
+  it("rolls into the new week on NZ time, not UTC", () => {
+    const at = new Date("2026-08-02T20:00:00.000Z");
+    expect(startOfWeekInAppZone(at)).toBe("2026-08-03");
+    expect(endOfWeekInAppZone(at)).toBe("2026-08-09");
+  });
+
+  it("brackets the current NZ week consistently", () => {
+    const at = new Date("2026-08-05T03:00:00.000Z");
+    expect(startOfWeekInAppZone(at)).toBe("2026-08-03");
+    expect(endOfWeekInAppZone(at)).toBe("2026-08-09");
+  });
+});
+
+describe("formatTimestampInAppZone", () => {
+  // 2026-06-30T21:00Z is 9am on 1 July in Wellington. Formatting without a
+  // timezone on a UTC server would print 30 June.
+  it("names the NZ day a timestamp fell on", () => {
+    expect(formatTimestampInAppZone(new Date("2026-06-30T21:00:00.000Z"))).toBe(
+      "1 Jul 2026"
+    );
+  });
+
+  it("takes format options", () => {
+    expect(
+      formatTimestampInAppZone(new Date("2026-06-30T21:00:00.000Z"), {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    ).toBe("1 July 2026");
   });
 });

@@ -22,11 +22,20 @@ import type {
 import type { AnnouncementSummary } from "@/lib/data/announcements";
 import type { getProfileForUser } from "@/lib/data/volunteer-profile";
 import { getMilestones } from "@/lib/milestones";
+import { timestampToDateOnly } from "@/lib/date-only";
 import type { ApiUser } from "./auth";
 
 /** `Shift.date` is `@db.Date` (UTC midnight), so the ISO date part is exact. */
 export function dateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * For columns that are real timestamps rather than `@db.Date` — the calendar
+ * day they land on is a question about Wellington, not UTC.
+ */
+function timestampDay(at: Date): string {
+  return timestampToDateOnly(at);
 }
 
 // ─── Shifts ─────────────────────────────────────────────
@@ -194,7 +203,9 @@ export function serializeProfile(
     email: user.email,
     phone: profile.phone,
     address: profile.address,
-    dateOfBirth: profile.dateOfBirth ? dateOnly(profile.dateOfBirth) : null,
+    dateOfBirth: profile.dateOfBirth
+      ? timestampDay(profile.dateOfBirth)
+      : null,
     bio: profile.bio,
     skills: profile.skills,
     emergencyContactName: profile.emergencyContactName,
@@ -207,7 +218,7 @@ export function serializeProfile(
       name: area.name,
       description: area.description,
     })),
-    memberSince: dateOnly(profile.createdAt),
+    memberSince: timestampDay(profile.createdAt),
     trainingHistory: trainingHistory.map(serializeTrainingHistoryItem),
   };
 }

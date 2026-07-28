@@ -29,6 +29,7 @@ import {
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
 import { getVolunteerTrainingHistory } from "@/lib/training-actions";
+import { formatDateOnly, formatTimestampInAppZone } from "@/lib/date-only";
 
 export const metadata: Metadata = {
   title: "My Profile | Te Pūaroha",
@@ -160,7 +161,7 @@ export default async function ProfilePage() {
                 label="Date of birth"
                 value={
                   profile.dateOfBirth
-                    ? new Date(profile.dateOfBirth).toLocaleDateString("en-NZ", {
+                    ? formatTimestampInAppZone(profile.dateOfBirth, {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
@@ -214,7 +215,7 @@ export default async function ProfilePage() {
                         {item.title}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(item.date).toLocaleDateString("en-NZ", {
+                        {formatDateOnly(item.date, {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -279,14 +280,11 @@ export default async function ProfilePage() {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Signed{" "}
-                        {new Date(agreement.signedAt).toLocaleDateString(
-                          "en-NZ",
-                          {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          }
-                        )}
+                        {formatTimestampInAppZone(agreement.signedAt, {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
                     <Badge variant="success" className="shrink-0">

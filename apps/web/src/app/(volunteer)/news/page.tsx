@@ -6,17 +6,16 @@ import { getAnnouncements } from "@/lib/announcement-actions";
 import { PageHeader } from "@/components/brand/page-header";
 import { Illustration } from "@/components/brand/illustration";
 import { AnnouncementAttachments } from "@/components/announcement-attachments";
+import { formatTimestampInAppZone } from "@/lib/date-only";
 
 export const metadata: Metadata = {
   title: "News & Updates | Te Pūaroha",
 };
 
 function formatNoticeDate(date: Date) {
-  return new Date(date).toLocaleDateString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  // Server-rendered, so the timezone has to be named: the container's UTC
+  // clock would date a 9am pānui to the day before.
+  return formatTimestampInAppZone(date);
 }
 
 function initials(name: string) {

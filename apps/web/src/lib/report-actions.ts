@@ -4,18 +4,23 @@ import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { STAFF_ROLES } from "@/lib/role-change";
-import { dateOnlyOf, timestampToDateOnly } from "@/lib/date-only";
+import {
+  addMonthsToDateOnly,
+  dateOnlyOf,
+  endOfMonthInAppZone,
+  endOfMonthOf,
+  formatDateOnly,
+  isDateOnly,
+  parseDateOnly,
+  startOfMonthInAppZone,
+  startOfMonthOf,
+  timestampToDateOnly,
+} from "@/lib/date-only";
 import {
   buildAppZoneTimestampWindow,
   INDUCTION_TYPE_KEY,
   type MonthlySummary,
 } from "@/lib/report-summary";
-import {
-  startOfMonth,
-  endOfMonth,
-  subMonths,
-  format,
-} from "date-fns";
 
 // ─── Auth ────────────────────────────────────────────
 
@@ -225,18 +230,24 @@ export async function getMonthlyTrends(
     ? { serviceAreaId: filters.serviceAreaId }
     : {};
 
-  // Default to last 6 months if no date range
-  const now = new Date();
-  const fromDate = filters?.fromDate
-    ? new Date(filters.fromDate)
-    : subMonths(startOfMonth(now), 5);
-  const toDate = filters?.toDate ? new Date(filters.toDate) : endOfMonth(now);
+  // Months are walked as calendar days on the kitchen's wall calendar. Reading
+  // the server's clock put "this month" a month behind for the whole NZ
+  // morning of the 1st, and dropped the newest bar off the chart with it.
+  const fromDay =
+    filters?.fromDate && isDateOnly(filters.fromDate)
+      ? filters.fromDate
+      : addMonthsToDateOnly(startOfMonthInAppZone(), -5);
+  const toDay =
+    filters?.toDate && isDateOnly(filters.toDate)
+      ? filters.toDate
+      : endOfMonthInAppZone();
 
   const trends: MonthlyTrend[] = [];
-  let current = startOfMonth(fromDate);
+  let currentDay = startOfMonthOf(fromDay);
 
-  while (current <= toDate) {
-    const monthEnd = endOfMonth(current);
+  while (currentDay <= toDay) {
+    const current = parseDateOnly(currentDay);
+    const monthEnd = parseDateOnly(endOfMonthOf(currentDay));
 
     const signups = await db.shiftSignup.findMany({
       where: {
@@ -266,14 +277,14 @@ export async function getMonthlyTrends(
     const uniqueVolunteers = new Set(signups.map((s) => s.volunteerId)).size;
 
     trends.push({
-      month: format(current, "yyyy-MM"),
-      label: format(current, "MMM yyyy"),
+      month: currentDay.slice(0, 7),
+      label: formatDateOnly(current, { month: "short", year: "numeric" }),
       hours: Math.round(hours * 10) / 10,
       shifts,
       uniqueVolunteers,
     });
 
-    current = startOfMonth(subMonths(current, -1));
+    currentDay = addMonthsToDateOnly(currentDay, 1);
   }
 
   return trends;
