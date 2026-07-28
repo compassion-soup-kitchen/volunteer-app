@@ -217,6 +217,7 @@ export async function deleteTrainingSession(
     await db.trainingSession.delete({ where: { id: sessionId } });
     revalidatePath("/staff/training");
     revalidatePath("/training");
+    revalidatePath("/profile");
     return { success: true };
   } catch {
     return { error: "Something went wrong. Please try again." };
@@ -250,6 +251,8 @@ export async function markTrainingAttendance(
 
     revalidatePath(`/staff/training/${attendance.sessionId}`);
     revalidatePath("/staff/training");
+    // The volunteer's own history shows this as completed or missed.
+    revalidatePath("/profile");
     return { success: true };
   } catch {
     return { error: "Something went wrong. Please try again." };
@@ -282,6 +285,7 @@ export async function markBulkTrainingAttendance(
 
     revalidatePath(`/staff/training/${sessionId}`);
     revalidatePath("/staff/training");
+    revalidatePath("/profile");
     return { success: true };
   } catch {
     return { error: "Something went wrong. Please try again." };

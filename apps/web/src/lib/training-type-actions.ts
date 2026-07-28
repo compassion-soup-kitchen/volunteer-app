@@ -42,11 +42,27 @@ async function requireStaff() {
   return session;
 }
 
+/**
+ * Every surface that renders a type's name or badge.
+ *
+ * These routes are all auth-gated and therefore render dynamically today, so
+ * a rename already shows up without any of this. The calls are here so the
+ * set stays complete if any of them later gains caching (`'use cache'` is the
+ * house style for shared reads) — at which point a missing entry would leave
+ * the old name on screen with nothing to suggest why.
+ *
+ * The session detail route is listed by its pattern rather than a concrete
+ * path: `revalidatePath("/staff/training")` does not reach `[sessionId]`, and
+ * one session's path would not clear the others.
+ */
 function revalidateTrainingPaths() {
   revalidatePath("/staff/training/types");
   revalidatePath("/staff/training");
   revalidatePath("/staff/training/new");
+  revalidatePath("/staff/training/[sessionId]", "page");
   revalidatePath("/training");
+  // A volunteer's training history lists the type name against each session.
+  revalidatePath("/profile");
 }
 
 // ─── Reads ───────────────────────────────────────────────

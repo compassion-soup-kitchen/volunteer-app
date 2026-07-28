@@ -132,31 +132,84 @@ describe("expandRecurrence", () => {
       ).toMatchObject({ ok: false });
     });
 
-    it("rejects malformed dates", () => {
+    it("rejects a malformed start date", () => {
       expect(
         expandRecurrence({ startDate: "nope", endDate: MONDAY, weekdays: [] })
       ).toMatchObject({ ok: false });
     });
 
-    it("rejects a weekday outside 0-6", () => {
+    // The mirrored branch: an end date is validated just as strictly.
+    it("rejects a malformed end date", () => {
+      expect(
+        expandRecurrence({ startDate: MONDAY, endDate: "nope", weekdays: [] })
+      ).toMatchObject({ ok: false });
+    });
+
+    // Later than the start date, so this can only be caught by the calendar
+    // check rather than the ordering one — September has 30 days.
+    it("rejects a date that looks well-formed but does not exist", () => {
       expect(
         expandRecurrence({
           startDate: MONDAY,
-          endDate: "2026-08-31",
-          weekdays: [9],
+          endDate: "2026-09-31",
+          weekdays: [1],
         })
       ).toMatchObject({ ok: false });
     });
 
-    it("rejects an interval outside the supported range", () => {
+    it.each([[9], [-1], [1.5], [7]])(
+      "rejects the weekday set %j",
+      (weekday) => {
+        expect(
+          expandRecurrence({
+            startDate: MONDAY,
+            endDate: "2026-08-31",
+            weekdays: [weekday],
+          })
+        ).toMatchObject({ ok: false });
+      }
+    );
+
+    it("accepts the ends of the valid weekday range", () => {
+      expect(
+        expandRecurrence({
+          startDate: MONDAY,
+          endDate: "2026-08-31",
+          weekdays: [0, 6],
+        }).ok
+      ).toBe(true);
+    });
+
+    it("rejects one bad weekday even among valid ones", () => {
+      expect(
+        expandRecurrence({
+          startDate: MONDAY,
+          endDate: "2026-08-31",
+          weekdays: [1, 9],
+        })
+      ).toMatchObject({ ok: false });
+    });
+
+    it.each([0, -1, 9, 2.5])("rejects the interval %s", (interval) => {
       expect(
         expandRecurrence({
           startDate: MONDAY,
           endDate: "2026-08-31",
           weekdays: [1],
-          interval: 0,
+          interval,
         })
       ).toMatchObject({ ok: false });
+    });
+
+    it.each([1, 8])("accepts the interval %s", (interval) => {
+      expect(
+        expandRecurrence({
+          startDate: MONDAY,
+          endDate: "2026-09-30",
+          weekdays: [1],
+          interval,
+        }).ok
+      ).toBe(true);
     });
 
     it("rejects a range longer than the guard allows", () => {
