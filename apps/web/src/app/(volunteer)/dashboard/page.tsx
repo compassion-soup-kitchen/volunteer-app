@@ -19,6 +19,7 @@ import {
   RiCheckLine,
   RiFileTextLine,
   RiGraduationCapLine,
+  RiGroupLine,
   RiHandHeartLine,
   RiInformationLine,
   RiMegaphoneLine,
@@ -600,6 +601,26 @@ export default async function VolunteerDashboard() {
                 <p className="text-sm font-semibold">Policies &amp; procedures</p>
                 <p className="text-xs text-muted-foreground">
                   Read and confirm the kaupapa we work by
+                </p>
+              </div>
+              <RiArrowRightSLine className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card size="sm">
+          <Link
+            href="/team"
+            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+          >
+            <CardContent className="flex items-center gap-3">
+              <IconChip size="sm">
+                <RiGroupLine />
+              </IconChip>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Tō mātou tīma · Our team</p>
+                <p className="text-xs text-muted-foreground">
+                  Team leaders, guardian angels - who to turn to
                 </p>
               </div>
               <RiArrowRightSLine className="size-4 shrink-0 text-muted-foreground" aria-hidden />

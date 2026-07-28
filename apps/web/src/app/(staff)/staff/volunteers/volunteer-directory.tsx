@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -33,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { GroupBadges } from "@/components/brand/group-badge";
 import { IconChip } from "@/components/brand/icon-chip";
 import {
   RiSearchLine,
@@ -49,6 +51,7 @@ import {
   RiUserStarLine,
   RiEyeLine,
   RiDeleteBin6Line,
+  RiGroupLine,
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -62,6 +65,8 @@ import {
   type VolunteerListItem,
 } from "@/lib/staff-actions";
 import { startImpersonation } from "@/lib/impersonation-actions";
+import { setVolunteerGroups } from "@/lib/group-actions";
+import type { GroupChip } from "@/lib/volunteer-groups";
 import {
   ASSIGNABLE_ROLES,
   isAssignableRole,
@@ -129,6 +134,8 @@ function initials(name: string | null | undefined) {
 
 interface VolunteerDirectoryProps {
   initialVolunteers: VolunteerListItem[];
+  // Active groups people can be filtered by and filed into.
+  groups: GroupChip[];
   // The signed-in admin's user id — used to stop them changing their own role.
   currentUserId: string;
   // Role controls are ADMIN-only; coordinators see the directory without them.
@@ -144,6 +151,7 @@ const ACCOUNT_OPTIONS: { value: "ACTIVE" | "ARCHIVED" | "ALL"; label: string }[]
 
 export function VolunteerDirectory({
   initialVolunteers,
+  groups,
   currentUserId,
   isAdmin,
 }: VolunteerDirectoryProps) {
@@ -151,6 +159,7 @@ export function VolunteerDirectory({
   const router = useRouter();
   const [volunteers, setVolunteers] = useState(initialVolunteers);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [groupFilter, setGroupFilter] = useState("ALL");
   const [accountFilter, setAccountFilter] = useState<"ACTIVE" | "ARCHIVED" | "ALL">(
     "ACTIVE"
   );
@@ -177,15 +186,42 @@ export function VolunteerDirectory({
     status?: string;
     account?: "ACTIVE" | "ARCHIVED" | "ALL";
     search?: string;
+    groupId?: string;
   }) {
     startTransition(async () => {
       const result = await getVolunteersList({
         status: next.status ?? statusFilter,
         userStatus: next.account ?? accountFilter,
         search: next.search ?? search,
+        groupId: next.groupId ?? groupFilter,
       });
       setVolunteers(result);
     });
+  }
+
+  function handleGroupFilterChange(groupId: string) {
+    setGroupFilter(groupId);
+    reload({ groupId });
+  }
+
+  async function handleGroupToggle(volunteer: VolunteerListItem, group: GroupChip) {
+    const isMember = volunteer.groups.some((g) => g.id === group.id);
+    const nextIds = isMember
+      ? volunteer.groups.filter((g) => g.id !== group.id).map((g) => g.id)
+      : [...volunteer.groups.map((g) => g.id), group.id];
+
+    const result = await setVolunteerGroups(volunteer.id, nextIds);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    const who = volunteer.user.name || "This person";
+    toast.success(
+      isMember
+        ? `${who} removed from ${group.name}.`
+        : `${who} added to ${group.name}.`
+    );
+    reload({});
   }
 
   function handleFilterChange(status: string) {
@@ -350,6 +386,21 @@ export function VolunteerDirectory({
               ))}
             </SelectContent>
           </Select>
+          {groups.length > 0 && (
+            <Select value={groupFilter} onValueChange={handleGroupFilterChange}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All groups</SelectItem>
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Badge variant="neutral" className="tnum shrink-0 sm:ml-auto">
             {volunteers.length} {volunteers.length === 1 ? "person" : "people"}
           </Badge>
@@ -390,6 +441,7 @@ export function VolunteerDirectory({
                     <TableHead>Volunteer</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>MoJ</TableHead>
+                    <TableHead>Groups</TableHead>
                     <TableHead>Interests</TableHead>
                     <TableHead className="text-right">Shifts</TableHead>
                     <TableHead className="text-right">Joined</TableHead>
@@ -451,6 +503,13 @@ export function VolunteerDirectory({
                         )}
                       </TableCell>
                       <TableCell>
+                        {vol.groups.length > 0 ? (
+                          <GroupBadges groups={vol.groups} max={2} />
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {vol.interests.slice(0, 2).map((i) => (
                             <Badge key={i.id} variant="outline">
@@ -483,6 +542,8 @@ export function VolunteerDirectory({
                           }
                           onImpersonate={(v) => setImpersonateTarget(v)}
                           onDelete={(v) => setDeleteTarget(v)}
+                          groups={groups}
+                          onToggleGroup={handleGroupToggle}
                         />
                       </TableCell>
                     </TableRow>
@@ -546,6 +607,13 @@ export function VolunteerDirectory({
                       )}
                     </div>
 
+                    {vol.groups.length > 0 && (
+                      <GroupBadges
+                        groups={vol.groups}
+                        className="mt-2 flex"
+                      />
+                    )}
+
                     {vol.interests.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {vol.interests.map((i) => (
@@ -575,6 +643,8 @@ export function VolunteerDirectory({
                     }
                     onImpersonate={(v) => setImpersonateTarget(v)}
                     onDelete={(v) => setDeleteTarget(v)}
+                    groups={groups}
+                    onToggleGroup={handleGroupToggle}
                   />
                 </li>
               ))}
@@ -755,16 +825,19 @@ function StatusMenu({
   volunteer,
   isAdmin,
   currentUserId,
+  groups,
   onStatusChange,
   onArchive,
   onRestore,
   onChangeRole,
   onImpersonate,
   onDelete,
+  onToggleGroup,
 }: {
   volunteer: VolunteerListItem;
   isAdmin: boolean;
   currentUserId: string;
+  groups: GroupChip[];
   onStatusChange: (
     vol: VolunteerListItem,
     status:
@@ -778,6 +851,7 @@ function StatusMenu({
   onChangeRole: (vol: VolunteerListItem, newRole: AssignableRole) => void;
   onImpersonate: (vol: VolunteerListItem) => void;
   onDelete: (vol: VolunteerListItem) => void;
+  onToggleGroup: (vol: VolunteerListItem, group: GroupChip) => void;
 }) {
   const isArchived = volunteer.user.status === "ARCHIVED";
   // Permanent deletion is ADMIN-only and never applies to yourself. Everything
@@ -794,6 +868,9 @@ function StatusMenu({
     !isArchived &&
     volunteer.user.id !== currentUserId &&
     (isAssignableRole(volunteer.user.role) || !volunteer.hasProfile);
+  // Groups hang off the volunteer profile, so only people who have one can be
+  // filed into a crew.
+  const canManageGroups = !isArchived && volunteer.hasProfile && groups.length > 0;
   const roleOptions = ASSIGNABLE_ROLES.filter(
     (r) => r !== volunteer.user.role
   );
@@ -889,9 +966,43 @@ function StatusMenu({
             {s.label}
           </DropdownMenuItem>
         ))}
-        {canChangeRole && (
+        {canManageGroups && (
           <>
             {availableStatuses.length > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <RiGroupLine className="mr-2 size-4" />
+                Groups
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {groups.map((group) => {
+                  const isMember = volunteer.groups.some(
+                    (g) => g.id === group.id
+                  );
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={group.id}
+                      checked={isMember}
+                      onSelect={(event) => {
+                        // Keep the menu open so several groups can be set in
+                        // one pass.
+                        event.preventDefault();
+                        onToggleGroup(volunteer, group);
+                      }}
+                    >
+                      {group.name}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </>
+        )}
+        {canChangeRole && (
+          <>
+            {(availableStatuses.length > 0 || canManageGroups) && (
+              <DropdownMenuSeparator />
+            )}
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <RiUserSettingsLine className="mr-2 size-4" />

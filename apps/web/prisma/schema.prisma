@@ -165,12 +165,44 @@ model VolunteerProfile {
 
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   interests           ServiceArea[]        @relation("VolunteerInterests")
+  groups              VolunteerGroup[]     @relation("VolunteerGroupMembers")
   applications        Application[]
   documents           Document[]
   signedAgreements    SignedAgreement[]
   shiftSignups        ShiftSignup[]
   shiftOffers         ShiftOffer[]
   trainingAttendances TrainingAttendance[]
+}
+
+/// The colour a group's badge carries. Stored as intent, not hex - each maps to
+/// a shared badge variant so groups stay inside the theme in both light and dark.
+enum GroupTone {
+  BRAND
+  INFO
+  SUCCESS
+  WARNING
+  NEUTRAL
+}
+
+/// A named crew inside the wider whānau - Team Leaders, Guardian Angels, the
+/// Thursday regulars. Membership is many-to-many and purely descriptive: it
+/// grants no access at all (that is `User.role`), it just makes who's who
+/// legible on the roster, in the directory, and to volunteers themselves.
+///
+/// `visibleToVolunteers` decides whether the group shows outside the staff
+/// side. Groups volunteers should be able to turn to - team leaders, guardian
+/// angels - are visible; a private coordination list can be kept staff-only.
+model VolunteerGroup {
+  id                  String    @id @default(cuid())
+  name                String    @unique
+  description         String?
+  tone                GroupTone @default(NEUTRAL)
+  visibleToVolunteers Boolean   @default(true)
+  isArchived          Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  members VolunteerProfile[] @relation("VolunteerGroupMembers")
 }
 
 enum ApplicationStatus {

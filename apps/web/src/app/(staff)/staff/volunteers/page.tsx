@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getVolunteersList } from "@/lib/staff-actions";
+import { getAssignableGroups } from "@/lib/group-actions";
 import { VolunteerDirectory } from "./volunteer-directory";
 import { PageHeader } from "@/components/brand/page-header";
 
@@ -11,8 +12,9 @@ export const metadata: Metadata = {
 
 export default async function VolunteersPage() {
   await connection();
-  const [volunteers, session] = await Promise.all([
+  const [volunteers, groups, session] = await Promise.all([
     getVolunteersList(),
+    getAssignableGroups(),
     auth(),
   ]);
 
@@ -26,6 +28,7 @@ export default async function VolunteersPage() {
 
       <VolunteerDirectory
         initialVolunteers={volunteers}
+        groups={groups}
         currentUserId={session?.user?.id ?? ""}
         isAdmin={session?.user?.role === "ADMIN"}
       />
