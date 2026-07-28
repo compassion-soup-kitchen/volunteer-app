@@ -121,7 +121,11 @@ type GroupFormInput = {
 function revalidateGroupSurfaces() {
   revalidatePath("/staff/groups");
   revalidatePath("/staff/volunteers");
-  revalidatePath("/staff/shifts");
+  // Every shift detail page draws these badges beside its signups and offers,
+  // and a group edit belongs to no shift in particular - so revalidate the
+  // segment as a layout, which takes the nested /staff/shifts/[shiftId] pages
+  // with it rather than leaving a stale badge behind client-side navigation.
+  revalidatePath("/staff/shifts", "layout");
   revalidatePath("/team");
   revalidatePath("/profile");
 }
