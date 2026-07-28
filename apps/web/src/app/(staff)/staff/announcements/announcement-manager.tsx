@@ -70,6 +70,7 @@ import {
   unpublishAnnouncement,
   deleteAnnouncement,
   getStaffAnnouncements,
+  type AnnouncementAttachmentSummary,
   type StaffAnnouncement,
 } from "@/lib/announcement-actions";
 import {
@@ -123,6 +124,10 @@ export function AnnouncementManager({
   // until it's saved, so they queue here and upload straight after the create.
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // Removing an attachment deletes the stored file for good, so it's confirmed
+  // the same way document and training-type deletions are.
+  const [removeTarget, setRemoveTarget] =
+    useState<AnnouncementAttachmentSummary | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const existingAttachments = editTarget?.attachments ?? [];
@@ -157,7 +162,8 @@ export function AnnouncementManager({
     setPendingFiles((current) => current.filter((_, i) => i !== index));
   }
 
-  async function handleRemoveAttachment(attachment: { id: string; fileName: string }) {
+  async function handleRemoveAttachment(attachment: AnnouncementAttachmentSummary) {
+    setRemoveTarget(null);
     setRemovingId(attachment.id);
     const result = await deleteAnnouncementAttachment(attachment.id);
     setRemovingId(null);
@@ -486,7 +492,7 @@ export function AnnouncementManager({
               {existingAttachments.length > 0 && (
                 <AnnouncementAttachments
                   attachments={existingAttachments}
-                  onRemove={handleRemoveAttachment}
+                  onRemove={setRemoveTarget}
                   removingId={removingId}
                 />
               )}
@@ -605,6 +611,32 @@ export function AnnouncementManager({
               }}
             >
               Publish
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove-attachment confirm */}
+      <AlertDialog
+        open={removeTarget !== null}
+        onOpenChange={(open) => !open && setRemoveTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this file?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`"${removeTarget?.fileName}" will be deleted from the pānui and from storage. This can't be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (removeTarget) handleRemoveAttachment(removeTarget);
+              }}
+            >
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
