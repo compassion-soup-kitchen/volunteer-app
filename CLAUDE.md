@@ -30,7 +30,7 @@ packages/     # Shared workspace packages (currently none beyond a placeholder)
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Styling**: Tailwind v4 + shadcn/ui (preset `aw5FzQe`, style `radix-lyra`, base `mist`, icon library `remixicon`)
 - **DB**: Prisma 7 ORM → self-hosted PostgreSQL (Coolify-managed) via `@prisma/adapter-pg` + `pg` Pool. Migrations via `prisma migrate` (history in `prisma/migrations/`); `prisma migrate deploy` runs on container start.
-- **Storage**: Garage (S3-compatible, self-hosted via Coolify) — accessed through the AWS S3 SDK in `src/lib/storage.ts`. Any S3-compatible backend works (Garage, R2, B2, …); only env values change.
+- **Storage**: Cloudflare R2, reached over its S3-compatible API through the AWS S3 SDK in `src/lib/storage.ts`. Any S3-compatible backend works; only env values change. `pnpm run storage:check` round-trips a real object to prove the config.
 - **Auth**: NextAuth v5 (beta) — Credentials + Google providers, JWT sessions, PrismaAdapter
 - **Email**: Resend HTTP API via `src/lib/email.ts` (plain fetch, no SDK; sending is skipped when `RESEND_API_KEY` is unset)
 - **Animation**: `motion/react`
@@ -114,7 +114,7 @@ src/
 ├── lib/
 │   ├── auth.ts                       # NextAuth config (Google + Credentials, JWT, role on session)
 │   ├── db.ts                         # Lazy-init Prisma client (PrismaPg adapter, pool size via DATABASE_POOL_MAX, default 10)
-│   ├── storage.ts                    # S3-compatible storage client (Garage) — uploads/presigned URLs
+│   ├── storage.ts                    # S3-compatible storage client (Cloudflare R2) - uploads/presigned URLs
 │   ├── utils.ts                      # `cn()` helper (clsx + tailwind-merge)
 │   ├── milestones.ts                 # Volunteer milestone definitions
 │   ├── push.ts                       # Expo push notifications — batch send via exp.host, dead-token pruning
@@ -252,5 +252,5 @@ Required env vars for `apps/web` (see `apps/web/.env.example`):
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` — address autocomplete on the application form (optional; falls back to manual entry)
 - `RESEND_API_KEY`, `EMAIL_FROM` — transactional email via Resend (optional; sending is skipped when unset)
-- `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` — S3-compatible storage (Garage) for document uploads
+- `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` - Cloudflare R2 for document uploads. `S3_ENDPOINT` is the bucket-less account endpoint (`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`) and `S3_REGION` is `auto`
 - `DATABASE_POOL_MAX` — optional pg pool size (default 10)

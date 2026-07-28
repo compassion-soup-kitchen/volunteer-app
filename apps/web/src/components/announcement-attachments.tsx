@@ -5,12 +5,11 @@ import { toast } from "sonner";
 import {
   RiDeleteBinLine,
   RiDownloadLine,
-  RiFileTextLine,
-  RiImageLine,
   RiLoader4Line,
 } from "@remixicon/react";
 
 import { Button } from "@/components/ui/button";
+import { FileRow } from "@/components/file-row";
 import {
   getAnnouncementAttachmentUrl,
   type AnnouncementAttachmentSummary,
@@ -60,63 +59,46 @@ export function AnnouncementAttachments({
 
   return (
     <ul className="space-y-1.5">
-      {attachments.map((attachment) => {
-        const isImage = attachment.contentType.startsWith("image/");
-        return (
-          <li
-            key={attachment.id}
-            className="flex items-center gap-2.5 rounded-md bg-muted px-3 py-2"
-          >
-            {isImage ? (
-              <RiImageLine
-                aria-hidden
-                className="size-4 shrink-0 text-muted-foreground"
-              />
-            ) : (
-              <RiFileTextLine
-                aria-hidden
-                className="size-4 shrink-0 text-muted-foreground"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {attachment.fileName}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatFileSize(attachment.fileSize)}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => handleDownload(attachment)}
-              disabled={downloading === attachment.id}
-              aria-label={`Download ${attachment.fileName}`}
-            >
-              {downloading === attachment.id ? (
-                <RiLoader4Line className="size-3.5 animate-spin" />
-              ) : (
-                <RiDownloadLine className="size-3.5" />
-              )}
-            </Button>
-            {onRemove && (
+      {attachments.map((attachment) => (
+        <FileRow
+          key={attachment.id}
+          fileName={attachment.fileName}
+          contentType={attachment.contentType}
+          meta={formatFileSize(attachment.fileSize)}
+          actions={
+            <>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={() => onRemove(attachment)}
-                disabled={removingId === attachment.id}
-                aria-label={`Remove ${attachment.fileName}`}
+                onClick={() => handleDownload(attachment)}
+                disabled={downloading === attachment.id}
+                aria-label={`Download ${attachment.fileName}`}
               >
-                {removingId === attachment.id ? (
+                {downloading === attachment.id ? (
                   <RiLoader4Line className="size-3.5 animate-spin" />
                 ) : (
-                  <RiDeleteBinLine className="size-3.5 text-destructive" />
+                  <RiDownloadLine className="size-3.5" />
                 )}
               </Button>
-            )}
-          </li>
-        );
-      })}
+              {onRemove && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => onRemove(attachment)}
+                  disabled={removingId === attachment.id}
+                  aria-label={`Remove ${attachment.fileName}`}
+                >
+                  {removingId === attachment.id ? (
+                    <RiLoader4Line className="size-3.5 animate-spin" />
+                  ) : (
+                    <RiDeleteBinLine className="size-3.5 text-destructive" />
+                  )}
+                </Button>
+              )}
+            </>
+          }
+        />
+      ))}
     </ul>
   );
 }

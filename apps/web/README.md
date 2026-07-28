@@ -36,7 +36,7 @@ Nau mai, haere mai. This app supports the ~100 volunteers who serve kai, build c
 | 🖼️ Framework | Next.js 16 (App Router) + React 19 + TypeScript |
 | 🎨 Styling | Tailwind v4 + shadcn/ui (`radix-lyra` style, `mist` base, `remixicon`) |
 | 🗄️ Database | Prisma 7 → self-hosted PostgreSQL (Coolify-managed) |
-| 📦 Storage | Garage (S3-compatible, self-hosted) for document uploads |
+| 📦 Storage | Cloudflare R2 (S3-compatible API) for document uploads |
 | 🔐 Auth | NextAuth v5 — Credentials + Google, JWT sessions |
 | ✉️ Email | Resend HTTP API via `src/lib/email.ts` (no-ops when `RESEND_API_KEY` unset) |
 | ✨ Animation | `motion/react` |
@@ -51,7 +51,7 @@ Nau mai, haere mai. This app supports the ~100 volunteers who serve kai, build c
 ### Prerequisites
 - Node.js ≥ 20
 - pnpm (enabled via `corepack enable`, or `npm i -g pnpm`)
-- A PostgreSQL database and an S3-compatible bucket (e.g. Garage) — see `.env.example`
+- A PostgreSQL database and a Cloudflare R2 bucket - see `.env.example`
 - Google OAuth credentials (optional but recommended)
 
 ### 1️⃣ Install dependencies
@@ -216,12 +216,37 @@ Coolify). `prisma migrate deploy` runs automatically on container start, and
 `DATABASE_URL`, `NEXTAUTH_URL` (the real https:// domain), `NEXTAUTH_SECRET`
 (generate a fresh one — never reuse dev's), `GOOGLE_CLIENT_ID` +
 `GOOGLE_CLIENT_SECRET` (with the prod domain added to the OAuth redirect
-allowlist), and `S3_*` for Garage document storage.
+allowlist), and `S3_*` for R2 document storage (see below).
 
 **Optional but recommended**: `RESEND_API_KEY` + `EMAIL_FROM` (password reset
 and application emails are skipped without them), and
 `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (address autocomplete; falls back to manual
 entry — restrict the key to the prod domain).
+
+**Storage (Cloudflare R2)** - uploaded policies, agreement templates and pānui
+attachments live in an R2 bucket, reached over its S3-compatible API. Set it up
+once in the Cloudflare dashboard:
+
+1. **R2 → Create bucket**, e.g. `volunteer-app-documents`. Pick a location hint
+   near the kitchen (APAC). Leave public access **off** - the app hands out
+   short-lived signed URLs, and nothing here should be world-readable.
+2. On the bucket, **Settings → S3 API** gives the endpoint. Copy only the
+   account part into `S3_ENDPOINT` - `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`,
+   with no bucket on the end. The bucket goes in `S3_BUCKET`.
+3. **R2 → API → Manage API tokens → Create**. Permission **Object Read & Write**,
+   scoped to just this bucket. The Access Key ID → `S3_ACCESS_KEY`, the Secret
+   Access Key → `S3_SECRET_KEY`. The secret shows once.
+4. `S3_REGION="auto"` (R2 has no regions; the SDK insists on a value).
+
+Then prove it works rather than waiting for a coordinator to find out:
+
+```
+cd /app/apps/web && ./node_modules/.bin/tsx scripts/check-storage.ts
+```
+
+(Locally: `pnpm run storage:check`.) It uploads a small object, downloads it
+back through a signed URL, compares the bytes and deletes it - so a wrong
+bucket, a read-only token or a bucket-suffixed endpoint fails loudly here.
 
 **First admin** — the seed is dev-only (it refuses to run in production, since
 it creates demo accounts with known passwords). Bootstrap the first admin from
@@ -236,9 +261,9 @@ cd /app/apps/web && ./node_modules/.bin/tsx scripts/create-admin.ts \
 raise an existing account to ADMIN instead. The generated password prints once
 — change it after first sign-in.)
 
-**Before flicking the switch**: set up automated Postgres backups (and a Garage
-bucket backup) in Coolify, and confirm the privacy page's contact details are
-correct for the kitchen.
+**Before flicking the switch**: set up automated Postgres backups in Coolify,
+turn on object versioning or a lifecycle rule on the R2 bucket, and confirm the
+privacy page's contact details are correct for the kitchen.
 
 ---
 

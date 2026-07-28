@@ -864,8 +864,8 @@ export async function deleteUser(
   if (validationError) return { error: validationError };
 
   // Read the storage keys before the rows go: deleting the User cascades the
-  // Document rows away, but the files behind them live in Garage and would be
-  // orphaned with no row left to find them by.
+  // Document rows away, but the files behind them live in the bucket and would
+  // be orphaned with no row left to find them by.
   const documentKeys = context.profileId
     ? (
         await db.document.findMany({
