@@ -1,3 +1,12 @@
+/**
+ * Object storage for everything staff upload - policies, agreement templates
+ * and pānui attachments.
+ *
+ * Backed by Cloudflare R2, spoken to over its S3-compatible API. Nothing here
+ * is R2-specific beyond the defaults below, so any S3-compatible bucket works
+ * by changing env values alone. Run `pnpm run storage:check` after pointing it
+ * somewhere new - it round-trips a real object rather than trusting the config.
+ */
 import {
   S3Client,
   PutObjectCommand,
@@ -30,11 +39,16 @@ function getClient(): S3Client {
   if (!_client) {
     _client = new S3Client({
       endpoint: process.env.S3_ENDPOINT!,
-      region: process.env.S3_REGION || "us-east-1",
+      // R2 has no regions but the SDK demands one, and "auto" is the value
+      // Cloudflare asks for. Other backends pin their own via S3_REGION.
+      region: process.env.S3_REGION || "auto",
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY!,
         secretAccessKey: process.env.S3_SECRET_KEY!,
       },
+      // Not merely a preference on R2: its account endpoint is covered by a
+      // single-level wildcard certificate, so the virtual-hosted form
+      // (bucket.<account>.r2.cloudflarestorage.com) fails the TLS handshake.
       forcePathStyle: true,
     });
   }
