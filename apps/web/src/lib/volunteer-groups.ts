@@ -11,6 +11,7 @@
  * rules can be unit-tested without mocking Prisma.
  */
 
+import { z } from "zod";
 import type { GroupTone } from "@prisma/client";
 
 export const GROUP_NAME_MAX = 40;
@@ -25,7 +26,10 @@ export const GROUP_TONES: { value: GroupTone; label: string }[] = [
   { value: "NEUTRAL", label: "Stone" },
 ];
 
-const TONE_VALUES = GROUP_TONES.map((tone) => tone.value);
+const TONE_VALUES = GROUP_TONES.map((tone) => tone.value) as [
+  GroupTone,
+  ...GroupTone[],
+];
 
 export function isGroupTone(value: string): value is GroupTone {
   return (TONE_VALUES as string[]).includes(value);
@@ -85,41 +89,58 @@ export function groupNameKey(name: string): string {
   return name.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+export const groupInputSchema = z.object({
+  name: z
+    .string("Give the group a name.")
+    // Collapse runs of whitespace so "Team  Leaders" and "Team Leaders" are the
+    // same name to the eye and to the unique index.
+    .transform((value) => value.trim().replace(/\s+/g, " "))
+    .pipe(
+      z
+        .string()
+        .min(1, "Give the group a name.")
+        .max(
+          GROUP_NAME_MAX,
+          `Keep the name to ${GROUP_NAME_MAX} characters or fewer.`
+        )
+    ),
+  description: z
+    .string()
+    .nullish()
+    // An empty box means no description, not an empty one.
+    .transform((value) => value?.trim() || null)
+    .pipe(
+      z
+        .string()
+        .max(
+          GROUP_DESCRIPTION_MAX,
+          `Keep the description to ${GROUP_DESCRIPTION_MAX} characters or fewer.`
+        )
+        .nullable()
+    ),
+  tone: z.enum(TONE_VALUES, "Choose a colour for the group."),
+  visibleToVolunteers: z.boolean(),
+});
+
 /**
- * Validate a create/edit submission. Returns the tidied values or a single
- * message to show against the form - the same check runs on both sides, so a
- * client that skips it can't write anything the server wouldn't.
+ * Validate a create/edit submission. Returns the tidied values - name key and
+ * all - or the first human-readable issue to show against the form. The same
+ * check runs on both sides, so a client that skips it can't write anything the
+ * server wouldn't.
  */
 export function validateGroupInput(
   input: GroupInput
 ): { error: string } | { data: ValidatedGroup } {
-  const name = input.name.trim().replace(/\s+/g, " ");
-  if (!name) {
-    return { error: "Give the group a name." };
-  }
-  if (name.length > GROUP_NAME_MAX) {
-    return { error: `Keep the name to ${GROUP_NAME_MAX} characters or fewer.` };
-  }
-
-  const description = input.description?.trim() || null;
-  if (description && description.length > GROUP_DESCRIPTION_MAX) {
+  const parsed = groupInputSchema.safeParse(input);
+  if (!parsed.success) {
     return {
-      error: `Keep the description to ${GROUP_DESCRIPTION_MAX} characters or fewer.`,
+      error:
+        parsed.error.issues[0]?.message ?? "That group doesn't look right.",
     };
   }
 
-  if (!isGroupTone(input.tone)) {
-    return { error: "Choose a colour for the group." };
-  }
-
   return {
-    data: {
-      name,
-      nameKey: groupNameKey(name),
-      description,
-      tone: input.tone,
-      visibleToVolunteers: input.visibleToVolunteers,
-    },
+    data: { ...parsed.data, nameKey: groupNameKey(parsed.data.name) },
   };
 }
 

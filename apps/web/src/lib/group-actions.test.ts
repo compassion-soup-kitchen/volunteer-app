@@ -290,7 +290,10 @@ describe("setVolunteerGroups", () => {
   beforeEach(() => authMock.mockResolvedValue(coordinator));
 
   it("drops archived groups the client sent", async () => {
-    profileFindUniqueMock.mockResolvedValue({ id: "p1" });
+    profileFindUniqueMock.mockResolvedValue({
+      id: "p1",
+      user: { status: "ACTIVE" },
+    });
     // Only the live group comes back from the archived-excluding query.
     groupFindManyMock.mockResolvedValue([{ id: "g1" }]);
 
@@ -305,6 +308,20 @@ describe("setVolunteerGroups", () => {
       where: { id: "p1" },
       data: { groups: { set: [{ id: "g1" }] } },
     });
+  });
+
+  it("refuses an archived account, whatever the client sends", async () => {
+    // The directory hides the menu for archived people; the action is exported,
+    // so it has to say no itself.
+    profileFindUniqueMock.mockResolvedValue({
+      id: "p1",
+      user: { status: "ARCHIVED" },
+    });
+
+    expect(await setVolunteerGroups("p1", ["g1"])).toEqual({
+      error: "Restore this account before changing their groups.",
+    });
+    expect(profileUpdateMock).not.toHaveBeenCalled();
   });
 
   it("refuses someone without a volunteer profile", async () => {

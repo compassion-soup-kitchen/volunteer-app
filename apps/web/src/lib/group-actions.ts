@@ -306,9 +306,15 @@ export async function setVolunteerGroups(
   const db = getDb();
   const profile = await db.volunteerProfile.findUnique({
     where: { id: volunteerProfileId },
-    select: { id: true },
+    select: { id: true, user: { select: { status: true } } },
   });
   if (!profile) return { error: "This person doesn't have a volunteer profile yet." };
+  // The directory hides the Groups menu for archived people, but that is the
+  // client talking - `setGroupMembers` filters them out on the server for the
+  // same reason, so an archived account can't pick up a badge either way.
+  if (profile.user.status !== "ACTIVE") {
+    return { error: "Restore this account before changing their groups." };
+  }
 
   // Archived groups are kept off the picker, so a submission that names one is
   // stale - drop it rather than silently re-filing someone under a retired crew.
