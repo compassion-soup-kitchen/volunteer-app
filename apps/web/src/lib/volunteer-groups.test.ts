@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   GROUP_DESCRIPTION_MAX,
   GROUP_NAME_MAX,
+  GROUP_INELIGIBLE_STATUSES,
   GROUP_TONES,
+  canHoldGroups,
   describeMembershipChange,
   diffMembership,
   findNameClash,
@@ -97,6 +99,26 @@ describe("validateGroupInput", () => {
     expect(validateGroupInput({ ...base, tone: "PUCE" })).toEqual({
       error: "Choose a colour for the group.",
     });
+  });
+});
+
+describe("canHoldGroups", () => {
+  it("keeps people still going through vetting out of groups", () => {
+    for (const status of GROUP_INELIGIBLE_STATUSES) {
+      expect(canHoldGroups(status)).toBe(false);
+    }
+  });
+
+  it("lets everyone past that bar hold one", () => {
+    expect(canHoldGroups("APPROVED_FOR_INDUCTION")).toBe(true);
+    expect(canHoldGroups("ACTIVE")).toBe(true);
+    // Someone who has stepped back still keeps their history and badges.
+    expect(canHoldGroups("INACTIVE")).toBe(true);
+  });
+
+  it("says no when there's no profile status at all", () => {
+    expect(canHoldGroups(null)).toBe(false);
+    expect(canHoldGroups(undefined)).toBe(false);
   });
 });
 

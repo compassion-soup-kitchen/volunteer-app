@@ -141,6 +141,37 @@ describe("staff gate", () => {
   });
 });
 
+describe("getVolunteerGroups", () => {
+  it("names its members from the membership, not the candidate list", async () => {
+    authMock.mockResolvedValue(coordinator);
+    groupFindManyMock.mockResolvedValue([
+      {
+        id: "g1",
+        name: "Team Leaders",
+        description: null,
+        tone: "BRAND",
+        visibleToVolunteers: true,
+        isArchived: false,
+        members: [
+          { id: "p1", user: { name: "Aroha Williams", email: "a@example.nz" } },
+          // Someone who has since moved back into vetting is still a member -
+          // the card must count and name the same people.
+          { id: "p2", user: { name: null, email: "hemi@example.nz" } },
+        ],
+        _count: { members: 2 },
+      },
+    ]);
+
+    const [group] = await getVolunteerGroups();
+
+    expect(group.members).toEqual([
+      { id: "p1", name: "Aroha Williams" },
+      { id: "p2", name: "hemi@example.nz" },
+    ]);
+    expect(group._count.members).toBe(group.members.length);
+  });
+});
+
 describe("createVolunteerGroup", () => {
   beforeEach(() => authMock.mockResolvedValue(admin));
 
@@ -241,7 +272,7 @@ describe("updateVolunteerGroup", () => {
 describe("setGroupMembers", () => {
   beforeEach(() => authMock.mockResolvedValue(coordinator));
 
-  it("drops ids the client sent that aren't active profiles", async () => {
+  it("only accepts ids the picker would have offered", async () => {
     groupFindUniqueMock.mockResolvedValue({
       id: "g1",
       name: "Team Leaders",
@@ -252,8 +283,14 @@ describe("setGroupMembers", () => {
 
     const result = await setGroupMembers("g1", ["p1", "p2", "p-archived", "p2"]);
 
+    // Archived accounts and people still in vetting are both excluded, matching
+    // getGroupCandidates - the client can't widen the field by sending ids.
     expect(profileFindManyMock).toHaveBeenCalledWith({
-      where: { id: { in: ["p1", "p2", "p-archived"] }, user: { status: "ACTIVE" } },
+      where: {
+        id: { in: ["p1", "p2", "p-archived"] },
+        user: { status: "ACTIVE" },
+        status: { notIn: ["APPLICATION_SUBMITTED", "AWAITING_VETTING"] },
+      },
       select: { id: true },
     });
     expect(groupUpdateMock).toHaveBeenCalledWith({
@@ -292,6 +329,7 @@ describe("setVolunteerGroups", () => {
   it("drops archived groups the client sent", async () => {
     profileFindUniqueMock.mockResolvedValue({
       id: "p1",
+      status: "ACTIVE",
       user: { status: "ACTIVE" },
     });
     // Only the live group comes back from the archived-excluding query.
@@ -315,11 +353,27 @@ describe("setVolunteerGroups", () => {
     // so it has to say no itself.
     profileFindUniqueMock.mockResolvedValue({
       id: "p1",
+      status: "ACTIVE",
       user: { status: "ARCHIVED" },
     });
 
     expect(await setVolunteerGroups("p1", ["g1"])).toEqual({
       error: "Restore this account before changing their groups.",
+    });
+    expect(profileUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an applicant who hasn't been through vetting", async () => {
+    // The directory hides the menu for them and the picker never lists them;
+    // the action has to hold the same line for a crafted request.
+    profileFindUniqueMock.mockResolvedValue({
+      id: "p1",
+      status: "AWAITING_VETTING",
+      user: { status: "ACTIVE" },
+    });
+
+    expect(await setVolunteerGroups("p1", ["g1"])).toEqual({
+      error: "Finish their application and vetting before adding them to a group.",
     });
     expect(profileUpdateMock).not.toHaveBeenCalled();
   });

@@ -5,6 +5,8 @@ import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { Prisma, type GroupTone } from "@prisma/client";
 import {
+  GROUP_INELIGIBLE_STATUSES,
+  canHoldGroups,
   describeMembershipChange,
   diffMembership,
   findNameClash,
@@ -33,7 +35,13 @@ export type VolunteerGroupWithCount = {
   tone: GroupTone;
   visibleToVolunteers: boolean;
   isArchived: boolean;
-  memberIds: string[];
+  /**
+   * Who is in the group, straight from the membership rather than resolved
+   * through the candidate list - someone who has since been archived or moved
+   * back into vetting is still a member, and the card should say so rather than
+   * quietly counting them and not naming them.
+   */
+  members: { id: string; name: string }[];
   _count: { members: number };
 };
 
@@ -46,7 +54,10 @@ export async function getVolunteerGroups(): Promise<VolunteerGroupWithCount[]> {
   const groups = await db.volunteerGroup.findMany({
     orderBy: [{ isArchived: "asc" }, { name: "asc" }],
     include: {
-      members: { select: { id: true } },
+      members: {
+        orderBy: { user: { name: "asc" } },
+        select: { id: true, user: { select: { name: true, email: true } } },
+      },
       _count: { select: { members: true } },
     },
   });
@@ -58,7 +69,10 @@ export async function getVolunteerGroups(): Promise<VolunteerGroupWithCount[]> {
     tone: group.tone,
     visibleToVolunteers: group.visibleToVolunteers,
     isArchived: group.isArchived,
-    memberIds: group.members.map((member) => member.id),
+    members: group.members.map((member) => ({
+      id: member.id,
+      name: member.user.name || member.user.email,
+    })),
     _count: group._count,
   }));
 }
@@ -83,17 +97,22 @@ export type GroupCandidate = {
   email: string;
 };
 
-/** Everyone who can be put in a group: active people with a profile. */
+// Who may hold a group, as a Prisma filter. Shared by the picker that offers
+// candidates and the writes that accept them, so the rule can't drift between
+// what staff are shown and what the server will save.
+const GROUP_ELIGIBLE_WHERE = {
+  user: { status: "ACTIVE" },
+  status: { notIn: GROUP_INELIGIBLE_STATUSES },
+} as const;
+
+/** Everyone who can be put in a group: active, vetted people with a profile. */
 export async function getGroupCandidates(): Promise<GroupCandidate[]> {
   const session = await requireStaff();
   if (!session) return [];
 
   const db = getDb();
   const profiles = await db.volunteerProfile.findMany({
-    where: {
-      user: { status: "ACTIVE" },
-      status: { notIn: ["APPLICATION_SUBMITTED", "AWAITING_VETTING"] },
-    },
+    where: GROUP_ELIGIBLE_WHERE,
     orderBy: { user: { name: "asc" } },
     select: {
       id: true,
@@ -267,10 +286,11 @@ export async function setGroupMembers(
   if (!group) return { error: "Group not found." };
 
   const unique = [...new Set(memberIds)];
-  // Only people who still have an active profile can be members - a stale id
-  // from an open dialog shouldn't resurrect someone who was archived meanwhile.
+  // Only people the picker would have offered can be members: a stale id from
+  // an open dialog shouldn't resurrect someone archived meanwhile, and nobody
+  // should be filed into a crew before they've been through vetting.
   const valid = await db.volunteerProfile.findMany({
-    where: { id: { in: unique }, user: { status: "ACTIVE" } },
+    where: { id: { in: unique }, ...GROUP_ELIGIBLE_WHERE },
     select: { id: true },
   });
   const validIds = valid.map((profile) => profile.id);
@@ -306,14 +326,19 @@ export async function setVolunteerGroups(
   const db = getDb();
   const profile = await db.volunteerProfile.findUnique({
     where: { id: volunteerProfileId },
-    select: { id: true, user: { select: { status: true } } },
+    select: { id: true, status: true, user: { select: { status: true } } },
   });
   if (!profile) return { error: "This person doesn't have a volunteer profile yet." };
-  // The directory hides the Groups menu for archived people, but that is the
-  // client talking - `setGroupMembers` filters them out on the server for the
-  // same reason, so an archived account can't pick up a badge either way.
+  // The directory hides the Groups menu for archived and unvetted people, but
+  // that is the client talking - this action is exported, and the membership
+  // picker filters the same two cases out on the server.
   if (profile.user.status !== "ACTIVE") {
     return { error: "Restore this account before changing their groups." };
+  }
+  if (!canHoldGroups(profile.status)) {
+    return {
+      error: "Finish their application and vetting before adding them to a group.",
+    };
   }
 
   // Archived groups are kept off the picker, so a submission that names one is

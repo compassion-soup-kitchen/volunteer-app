@@ -109,11 +109,6 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
     useState<VolunteerGroupWithCount | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const candidatesById = useMemo(
-    () => new Map(candidates.map((person) => [person.id, person])),
-    [candidates]
-  );
-
   function refresh() {
     startTransition(async () => {
       setGroups(await getVolunteerGroups());
@@ -142,7 +137,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
 
   function openMembers(group: VolunteerGroupWithCount) {
     setMemberTarget(group);
-    setSelectedIds(group.memberIds);
+    setSelectedIds(group.members.map((member) => member.id));
     setMemberSearch("");
   }
 
@@ -271,7 +266,6 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
               <GroupCard
                 key={group.id}
                 group={group}
-                candidatesById={candidatesById}
                 onManageMembers={() => openMembers(group)}
                 onEdit={() => openEdit(group)}
                 onToggleArchive={() => handleToggleArchive(group)}
@@ -290,7 +284,6 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
               <GroupCard
                 key={group.id}
                 group={group}
-                candidatesById={candidatesById}
                 onManageMembers={() => openMembers(group)}
                 onEdit={() => openEdit(group)}
                 onToggleArchive={() => handleToggleArchive(group)}
@@ -533,24 +526,19 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
 
 function GroupCard({
   group,
-  candidatesById,
   onManageMembers,
   onEdit,
   onToggleArchive,
   onDelete,
 }: {
   group: VolunteerGroupWithCount;
-  candidatesById: Map<string, GroupCandidate>;
   onManageMembers: () => void;
   onEdit: () => void;
   onToggleArchive: () => void;
   onDelete: () => void;
 }) {
-  const names = group.memberIds
-    .map((id) => candidatesById.get(id)?.name)
-    .filter((name): name is string => Boolean(name));
-  const shown = names.slice(0, 4);
-  const hidden = names.length - shown.length;
+  const shown = group.members.slice(0, 4);
+  const hidden = group.members.length - shown.length;
 
   return (
     <Card className={group.isArchived ? "opacity-70" : undefined}>
@@ -625,7 +613,7 @@ function GroupCard({
 
         {shown.length > 0 && (
           <p className="text-sm text-muted-foreground">
-            {shown.join(", ")}
+            {shown.map((member) => member.name).join(", ")}
             {hidden > 0 && ` and ${hidden} more`}
           </p>
         )}

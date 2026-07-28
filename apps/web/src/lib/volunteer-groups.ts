@@ -12,7 +12,7 @@
  */
 
 import { z } from "zod";
-import type { GroupTone } from "@prisma/client";
+import type { GroupTone, VolunteerStatus } from "@prisma/client";
 
 export const GROUP_NAME_MAX = 40;
 export const GROUP_DESCRIPTION_MAX = 200;
@@ -55,6 +55,25 @@ export function groupToneVariant(
     default:
       return "neutral";
   }
+}
+
+/**
+ * Where someone has to have got to before they can hold a group.
+ *
+ * Groups say who a person is to the crew - a team leader, a guardian angel -
+ * so someone still going through application and vetting isn't one yet. The
+ * rule lives here because every surface has to agree on it: the picker that
+ * offers candidates, the directory menu that files people, and the actions
+ * that write the membership.
+ */
+export const GROUP_INELIGIBLE_STATUSES: VolunteerStatus[] = [
+  "APPLICATION_SUBMITTED",
+  "AWAITING_VETTING",
+];
+
+export function canHoldGroups(status: string | null | undefined): boolean {
+  if (!status) return false;
+  return !(GROUP_INELIGIBLE_STATUSES as string[]).includes(status);
 }
 
 /** The shape every surface needs to draw a group badge. */

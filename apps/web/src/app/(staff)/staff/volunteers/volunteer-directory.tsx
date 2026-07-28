@@ -67,6 +67,7 @@ import {
 import { startImpersonation } from "@/lib/impersonation-actions";
 import { setVolunteerGroups } from "@/lib/group-actions";
 import {
+  canHoldGroups,
   toggleGroupMembership,
   type GroupChip,
 } from "@/lib/volunteer-groups";
@@ -924,8 +925,13 @@ function StatusMenu({
     volunteer.user.id !== currentUserId &&
     (isAssignableRole(volunteer.user.role) || !volunteer.hasProfile);
   // Groups hang off the volunteer profile, so only people who have one can be
-  // filed into a crew.
-  const canManageGroups = !isArchived && volunteer.hasProfile && groups.length > 0;
+  // filed into a crew - and only once they're through vetting, the same bar the
+  // membership picker applies. The server enforces both.
+  const canManageGroups =
+    !isArchived &&
+    volunteer.hasProfile &&
+    canHoldGroups(volunteer.status) &&
+    groups.length > 0;
   const roleOptions = ASSIGNABLE_ROLES.filter(
     (r) => r !== volunteer.user.role
   );
