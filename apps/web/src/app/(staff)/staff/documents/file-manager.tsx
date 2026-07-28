@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IconChip } from "@/components/brand/icon-chip";
+import { FileDropzone } from "@/components/file-dropzone";
+import { FileRow } from "@/components/file-row";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ import {
   RiDownloadLine,
   RiLoader4Line,
   RiFileTextLine,
+  RiCloseLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import {
@@ -40,7 +42,6 @@ import {
   type UploadedDocument,
 } from "@/lib/document-actions";
 import {
-  checkUploadFile,
   formatFileSize,
   MAX_UPLOAD_BYTES,
   UPLOAD_ACCEPT_ATTR,
@@ -71,27 +72,19 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [docType, setDocType] = useState("POLICY");
-  const fileRef = useRef<HTMLInputElement>(null);
+  // Held until Upload is pressed, so the type can be corrected after choosing.
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const file = pendingFile;
+    if (!file) return;
+
+    // The dropzone already refused anything oversized or of the wrong type,
+    // and the action checks again - the client is never trusted.
+    const formData = new FormData();
     formData.set("type", docType);
-
-    const file = formData.get("file");
-    if (!(file instanceof File) || file.size === 0) {
-      toast.error("Choose a file to upload.");
-      return;
-    }
-
-    // Catch the obvious rejections here so nobody waits out an upload that was
-    // never going to be accepted. The action re-checks all of this.
-    const rejection = checkUploadFile(file);
-    if (rejection) {
-      toast.error(rejection);
-      return;
-    }
+    formData.set("file", file);
 
     startUpload(async () => {
       try {
@@ -101,8 +94,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
           return;
         }
         toast.success(`"${file.name}" uploaded.`);
-        form.reset();
-        if (fileRef.current) fileRef.current.value = "";
+        setPendingFile(null);
       } catch (err) {
         // A payload past the server's body limit never reaches the action, so
         // this is the only place that failure can be reported.
@@ -161,43 +153,65 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpload} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="doc-type">Document type</Label>
-                <Select value={docType} onValueChange={setDocType}>
-                  <SelectTrigger id="doc-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="POLICY">Policy</SelectItem>
-                    <SelectItem value="TRAINING_MATERIAL">
-                      Training material
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="file">File</Label>
-                <Input
-                  ref={fileRef}
-                  id="file"
-                  name="file"
-                  type="file"
-                  accept={UPLOAD_ACCEPT_ATTR}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  PDF, Word, or image — up to {formatFileSize(MAX_UPLOAD_BYTES)}
-                </p>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="doc-type">Document type</Label>
+              <Select value={docType} onValueChange={setDocType}>
+                <SelectTrigger id="doc-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POLICY">Policy</SelectItem>
+                  <SelectItem value="TRAINING_MATERIAL">
+                    Training material
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button type="submit" disabled={uploading} size="sm">
+
+            <div className="space-y-2">
+              <Label htmlFor="doc-file">File</Label>
+              {pendingFile ? (
+                <ul>
+                  <FileRow
+                    fileName={pendingFile.name}
+                    contentType={pendingFile.type}
+                    meta={`${formatFileSize(pendingFile.size)} · uploads when you press Upload`}
+                    actions={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setPendingFile(null)}
+                        disabled={uploading}
+                        aria-label={`Remove ${pendingFile.name}`}
+                      >
+                        <RiCloseLine className="size-3.5" />
+                      </Button>
+                    }
+                  />
+                </ul>
+              ) : (
+                <FileDropzone
+                  id="doc-file"
+                  accept={UPLOAD_ACCEPT_ATTR}
+                  disabled={uploading}
+                  hint={`PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)}`}
+                  onFilesAccepted={([file]) => setPendingFile(file)}
+                />
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              disabled={uploading || !pendingFile}
+              size="sm"
+            >
               {uploading ? (
                 <RiLoader4Line className="size-3.5 animate-spin" />
               ) : (
                 <RiUploadLine className="size-3.5" />
               )}
-              Upload
+              {uploading ? "Uploading…" : "Upload"}
             </Button>
           </form>
         </CardContent>
@@ -208,79 +222,79 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
         <Card>
           <ul className="divide-y divide-border">
             {documents.map((doc) => (
-              <li key={doc.id} className="flex items-center gap-3 px-5 py-3">
-                <IconChip size="sm">
-                  <RiFileTextLine />
-                </IconChip>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {doc.fileName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
+              <FileRow
+                key={doc.id}
+                variant="list"
+                fileName={doc.fileName}
+                meta={
+                  <>
                     {new Date(doc.uploadedAt).toLocaleDateString("en-NZ", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
                     })}
                     {doc.uploadedByName && ` · ${doc.uploadedByName}`}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Badge
-                    variant={TYPE_VARIANTS[doc.type] ?? "neutral"}
-                    className="hidden sm:inline-flex"
-                  >
-                    {TYPE_LABELS[doc.type] || doc.type}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => handleDownload(doc.id, doc.fileName)}
-                    disabled={downloading === doc.id}
-                    aria-label="Download"
-                  >
-                    {downloading === doc.id ? (
-                      <RiLoader4Line className="size-3.5 animate-spin" />
-                    ) : (
-                      <RiDownloadLine className="size-3.5" />
-                    )}
-                  </Button>
+                  </>
+                }
+                actions={
+                  <>
+                    <Badge
+                      variant={TYPE_VARIANTS[doc.type] ?? "neutral"}
+                      className="mr-1 hidden sm:inline-flex"
+                    >
+                      {TYPE_LABELS[doc.type] || doc.type}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleDownload(doc.id, doc.fileName)}
+                      disabled={downloading === doc.id}
+                      aria-label={`Download ${doc.fileName}`}
+                    >
+                      {downloading === doc.id ? (
+                        <RiLoader4Line className="size-3.5 animate-spin" />
+                      ) : (
+                        <RiDownloadLine className="size-3.5" />
+                      )}
+                    </Button>
 
-                  <AlertDialog
-                    open={deletingId === doc.id}
-                    onOpenChange={(open) => !open && setDeletingId(null)}
-                  >
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setDeletingId(doc.id)}
-                        aria-label="Delete"
-                      >
-                        <RiDeleteBinLine className="size-3.5 text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete document</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete &ldquo;{doc.fileName}
-                          &rdquo;? This cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          variant="destructive"
-                          onClick={() => handleDelete(doc.id, doc.fileName)}
+                    <AlertDialog
+                      open={deletingId === doc.id}
+                      onOpenChange={(open) => !open && setDeletingId(null)}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => setDeletingId(doc.id)}
+                          aria-label={`Delete ${doc.fileName}`}
                         >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </li>
+                          <RiDeleteBinLine className="size-3.5 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete document</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete &ldquo;
+                            {doc.fileName}&rdquo;? This cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => handleDelete(doc.id, doc.fileName)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                }
+              />
+
             ))}
           </ul>
         </Card>

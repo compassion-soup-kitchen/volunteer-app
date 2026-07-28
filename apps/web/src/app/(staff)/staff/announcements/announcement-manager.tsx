@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FileDropzone } from "@/components/file-dropzone";
+import { FileRow } from "@/components/file-row";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,7 +58,6 @@ import { Illustration } from "@/components/brand/illustration";
 import { toast } from "sonner";
 import { AnnouncementAttachments } from "@/components/announcement-attachments";
 import {
-  checkUploadFile,
   formatFileSize,
   MAX_UPLOAD_BYTES,
   UPLOAD_ACCEPT_ATTR,
@@ -128,33 +129,12 @@ export function AnnouncementManager({
   // the same way document and training-type deletions are.
   const [removeTarget, setRemoveTarget] =
     useState<AnnouncementAttachmentSummary | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const existingAttachments = editTarget?.attachments ?? [];
   const attachmentCount = existingAttachments.length + pendingFiles.length;
   const canAttachMore = attachmentCount < MAX_ANNOUNCEMENT_ATTACHMENTS;
 
-  function handleFilesChosen(e: React.ChangeEvent<HTMLInputElement>) {
-    const chosen = Array.from(e.target.files ?? []);
-    if (fileRef.current) fileRef.current.value = "";
-    if (chosen.length === 0) return;
-
-    const room = MAX_ANNOUNCEMENT_ATTACHMENTS - attachmentCount;
-    if (chosen.length > room) {
-      toast.error(
-        `A pānui can carry ${MAX_ANNOUNCEMENT_ATTACHMENTS} files at most.`
-      );
-    }
-
-    const accepted: File[] = [];
-    for (const file of chosen.slice(0, Math.max(room, 0))) {
-      const rejection = checkUploadFile(file);
-      if (rejection) {
-        toast.error(`${file.name}: ${rejection}`);
-        continue;
-      }
-      accepted.push(file);
-    }
+  function handleFilesChosen(accepted: File[]) {
     setPendingFiles((current) => [...current, ...accepted]);
   }
 
@@ -500,50 +480,42 @@ export function AnnouncementManager({
               {pendingFiles.length > 0 && (
                 <ul className="space-y-1.5">
                   {pendingFiles.map((file, index) => (
-                    <li
+                    <FileRow
                       key={`${file.name}-${index}`}
-                      className="flex items-center gap-2.5 rounded-md bg-muted px-3 py-2"
-                    >
-                      <RiAttachment2
-                        aria-hidden
-                        className="size-4 shrink-0 text-muted-foreground"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatFileSize(file.size)} · attaches when you save
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => removePendingFile(index)}
-                        disabled={isSaving}
-                        aria-label={`Remove ${file.name}`}
-                      >
-                        <RiCloseLine className="size-3.5" />
-                      </Button>
-                    </li>
+                      fileName={file.name}
+                      contentType={file.type}
+                      meta={`${formatFileSize(file.size)} · attaches when you save`}
+                      actions={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => removePendingFile(index)}
+                          disabled={isSaving}
+                          aria-label={`Remove ${file.name}`}
+                        >
+                          <RiCloseLine className="size-3.5" />
+                        </Button>
+                      }
+                    />
                   ))}
                 </ul>
               )}
 
-              <Input
-                ref={fileRef}
+              <FileDropzone
                 id="announcement-files"
-                type="file"
                 multiple
                 accept={UPLOAD_ACCEPT_ATTR}
-                onChange={handleFilesChosen}
                 disabled={isSaving || !canAttachMore}
+                maxFiles={MAX_ANNOUNCEMENT_ATTACHMENTS - attachmentCount}
+                maxFilesMessage={`A pānui can carry ${MAX_ANNOUNCEMENT_ATTACHMENTS} files at most.`}
+                hint={
+                  canAttachMore
+                    ? `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)} each`
+                    : "Remove a file before adding another."
+                }
+                onFilesAccepted={handleFilesChosen}
               />
-              <p className="text-xs text-muted-foreground">
-                {canAttachMore
-                  ? `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)} each`
-                  : "Remove a file before adding another."}
-              </p>
+
             </div>
 
             {dialogError && (
