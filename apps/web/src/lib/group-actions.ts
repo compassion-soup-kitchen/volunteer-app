@@ -10,6 +10,7 @@ import {
   describeMembershipChange,
   diffMembership,
   findNameClash,
+  resolveGroupMemberIds,
   validateGroupInput,
   type GroupChip,
 } from "@/lib/volunteer-groups";
@@ -286,19 +287,23 @@ export async function setGroupMembers(
   if (!group) return { error: "Group not found." };
 
   const unique = [...new Set(memberIds)];
-  // Only people the picker would have offered can be members: a stale id from
-  // an open dialog shouldn't resurrect someone archived meanwhile, and nobody
-  // should be filed into a crew before they've been through vetting.
-  const valid = await db.volunteerProfile.findMany({
+  // Joining a crew means clearing the eligibility bar - a stale id from an open
+  // dialog shouldn't resurrect someone archived meanwhile, and nobody should be
+  // filed in before they've been through vetting. Staying in it doesn't: an
+  // existing member who has since been archived or sent back to vetting keeps
+  // their place until someone actually unticks them.
+  const eligible = await db.volunteerProfile.findMany({
     where: { id: { in: unique }, ...GROUP_ELIGIBLE_WHERE },
     select: { id: true },
   });
-  const validIds = valid.map((profile) => profile.id);
+  const existingIds = group.members.map((member) => member.id);
+  const validIds = resolveGroupMemberIds({
+    submitted: unique,
+    eligible: eligible.map((profile) => profile.id),
+    existing: existingIds,
+  });
 
-  const { added, removed } = diffMembership(
-    group.members.map((member) => member.id),
-    validIds
-  );
+  const { added, removed } = diffMembership(existingIds, validIds);
 
   try {
     await db.volunteerGroup.update({

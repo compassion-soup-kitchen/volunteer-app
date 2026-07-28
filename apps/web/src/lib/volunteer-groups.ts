@@ -226,6 +226,31 @@ export function toggleGroupMembership(
   };
 }
 
+/**
+ * Which submitted ids actually become the group's membership.
+ *
+ * New members have to clear the eligibility bar, but someone already in the
+ * group keeps their place even if they no longer would - a coordinator saving
+ * the dialog without touching them must not quietly evict someone who was
+ * archived or sent back to vetting last week. Removing them stays possible:
+ * leave them out of the submission and they go.
+ */
+export function resolveGroupMemberIds({
+  submitted,
+  eligible,
+  existing,
+}: {
+  submitted: string[];
+  eligible: string[];
+  existing: string[];
+}): string[] {
+  const eligibleIds = new Set(eligible);
+  const existingIds = new Set(existing);
+  return [...new Set(submitted)].filter(
+    (id) => eligibleIds.has(id) || existingIds.has(id)
+  );
+}
+
 /** Plain-language summary of a membership change, for the toast. */
 export function describeMembershipChange(
   added: number,

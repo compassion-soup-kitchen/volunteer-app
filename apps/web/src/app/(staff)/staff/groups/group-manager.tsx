@@ -216,15 +216,40 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
   const active = groups.filter((group) => !group.isArchived);
   const archived = groups.filter((group) => group.isArchived);
 
+  /**
+   * Everyone the dialog offers: the people eligible to join, plus anyone
+   * already in the group who no longer is. Leaving the latter out would hide
+   * them from the coordinator while still saving them - or, worse, drop them on
+   * a save that touched nothing.
+   */
+  const memberOptions = useMemo(() => {
+    const options = candidates.map((person) => ({
+      ...person,
+      stillEligible: true,
+    }));
+    const offered = new Set(candidates.map((person) => person.id));
+    for (const member of memberTarget?.members ?? []) {
+      if (!offered.has(member.id)) {
+        options.push({
+          id: member.id,
+          name: member.name,
+          email: "",
+          stillEligible: false,
+        });
+      }
+    }
+    return options.sort((a, b) => a.name.localeCompare(b.name, "en-NZ"));
+  }, [candidates, memberTarget]);
+
   const memberMatches = useMemo(() => {
     const needle = memberSearch.trim().toLowerCase();
-    if (!needle) return candidates;
-    return candidates.filter(
+    if (!needle) return memberOptions;
+    return memberOptions.filter(
       (person) =>
         person.name.toLowerCase().includes(needle) ||
         person.email.toLowerCase().includes(needle)
     );
-  }, [candidates, memberSearch]);
+  }, [memberOptions, memberSearch]);
 
   return (
     <div className="space-y-6">
@@ -451,7 +476,9 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
                             {person.name}
                           </span>
                           <span className="block truncate text-xs text-muted-foreground">
-                            {person.email}
+                            {person.stillEligible
+                              ? person.email
+                              : "Archived or back in vetting - untick to remove them"}
                           </span>
                         </span>
                       </label>

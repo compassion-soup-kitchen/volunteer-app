@@ -300,6 +300,59 @@ describe("setGroupMembers", () => {
     expect(result.message).toBe("Team Leaders: 1 added.");
   });
 
+  it("keeps an existing member who is no longer eligible", async () => {
+    // p2 was archived after joining. The dialog still lists them, still ticked,
+    // so a save that didn't touch them has to leave them where they are.
+    groupFindUniqueMock.mockResolvedValue({
+      id: "g1",
+      name: "Team Leaders",
+      members: [{ id: "p1" }, { id: "p2" }],
+    });
+    profileFindManyMock.mockResolvedValue([{ id: "p1" }]);
+
+    const result = await setGroupMembers("g1", ["p1", "p2"]);
+
+    expect(groupUpdateMock).toHaveBeenCalledWith({
+      where: { id: "g1" },
+      data: { members: { set: [{ id: "p1" }, { id: "p2" }] } },
+    });
+    expect(result.message).toBe("No change to Team Leaders.");
+  });
+
+  it("removes that member when they are unticked", async () => {
+    groupFindUniqueMock.mockResolvedValue({
+      id: "g1",
+      name: "Team Leaders",
+      members: [{ id: "p1" }, { id: "p2" }],
+    });
+    profileFindManyMock.mockResolvedValue([{ id: "p1" }]);
+
+    const result = await setGroupMembers("g1", ["p1"]);
+
+    expect(groupUpdateMock).toHaveBeenCalledWith({
+      where: { id: "g1" },
+      data: { members: { set: [{ id: "p1" }] } },
+    });
+    expect(result.message).toBe("Team Leaders: 1 removed.");
+  });
+
+  it("still refuses to add someone ineligible who isn't in the group", async () => {
+    groupFindUniqueMock.mockResolvedValue({
+      id: "g1",
+      name: "Team Leaders",
+      members: [{ id: "p1" }],
+    });
+    profileFindManyMock.mockResolvedValue([{ id: "p1" }]);
+
+    const result = await setGroupMembers("g1", ["p1", "p-unvetted"]);
+
+    expect(groupUpdateMock).toHaveBeenCalledWith({
+      where: { id: "g1" },
+      data: { members: { set: [{ id: "p1" }] } },
+    });
+    expect(result.message).toBe("No change to Team Leaders.");
+  });
+
   it("reports both directions of a change", async () => {
     groupFindUniqueMock.mockResolvedValue({
       id: "g1",

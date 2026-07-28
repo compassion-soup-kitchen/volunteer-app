@@ -12,6 +12,7 @@ import {
   groupToneVariant,
   isGroupTone,
   memberCountLabel,
+  resolveGroupMemberIds,
   sortGroups,
   toggleGroupMembership,
   validateGroupInput,
@@ -182,6 +183,59 @@ describe("diffMembership", () => {
       added: [],
       removed: [],
     });
+  });
+});
+
+describe("resolveGroupMemberIds", () => {
+  it("keeps an existing member who no longer clears the bar", () => {
+    // p2 was archived after joining: an untouched save must not evict them.
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "p2"],
+        eligible: ["p1"],
+        existing: ["p1", "p2"],
+      })
+    ).toEqual(["p1", "p2"]);
+  });
+
+  it("removes that member once they're left out", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1"],
+        eligible: ["p1"],
+        existing: ["p1", "p2"],
+      })
+    ).toEqual(["p1"]);
+  });
+
+  it("refuses to add someone ineligible who isn't already in", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "p-unvetted"],
+        eligible: ["p1"],
+        existing: ["p1"],
+      })
+    ).toEqual(["p1"]);
+  });
+
+  it("drops ids that match nothing at all", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "made-up"],
+        eligible: ["p1"],
+        existing: [],
+      })
+    ).toEqual(["p1"]);
+  });
+
+  it("collapses duplicates", () => {
+    expect(
+      resolveGroupMemberIds({
+        submitted: ["p1", "p1"],
+        eligible: ["p1"],
+        existing: [],
+      })
+    ).toEqual(["p1"]);
   });
 });
 
