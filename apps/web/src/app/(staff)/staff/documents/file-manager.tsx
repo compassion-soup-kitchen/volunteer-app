@@ -170,7 +170,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
 
             <div className="space-y-2">
               <Label htmlFor="doc-file">File</Label>
-              {pendingFile ? (
+              {pendingFile && (
                 <ul>
                   <FileRow
                     fileName={pendingFile.name}
@@ -190,15 +190,20 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                     }
                   />
                 </ul>
-              ) : (
-                <FileDropzone
-                  id="doc-file"
-                  accept={UPLOAD_ACCEPT_ATTR}
-                  disabled={uploading}
-                  hint={`PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)}`}
-                  onFilesAccepted={([file]) => setPendingFile(file)}
-                />
               )}
+              {/* Stays mounted once a file is chosen: it owns the "that didn't
+                  fit" message, which would vanish with it. */}
+              <FileDropzone
+                id="doc-file"
+                accept={UPLOAD_ACCEPT_ATTR}
+                disabled={uploading}
+                hint={
+                  pendingFile
+                    ? "Drop another to replace it"
+                    : `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)}`
+                }
+                onFilesAccepted={([file]) => setPendingFile(file)}
+              />
             </div>
 
             <Button

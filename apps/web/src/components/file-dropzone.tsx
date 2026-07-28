@@ -41,9 +41,12 @@ export function FileDropzone({
   disabled?: boolean;
   /** Persistent helper text - the formats and size ceiling. */
   hint?: React.ReactNode;
-  /** How many more files this zone will take right now. */
+  /**
+   * How many more files this zone will take right now. Defaults to 1 unless
+   * `multiple` is set, since a drag ignores the input's `multiple` attribute.
+   */
   maxFiles?: number;
-  /** Shown when a drop carries more than `maxFiles`. */
+  /** Shown when a drop carries more than there's room for. */
   maxFilesMessage?: string;
   onFilesAccepted: (files: File[]) => void;
   className?: string;
@@ -62,12 +65,20 @@ export function FileDropzone({
     if (chosen.length === 0) return;
 
     const refused: Rejection[] = [];
-    const room = maxFiles ?? chosen.length;
+    // `multiple` only constrains the OS file picker - a drag can carry any
+    // number of files whatever it says - so a single-file zone has to hold
+    // that line itself, or the extras vanish without a word.
+    const room = maxFiles ?? (multiple ? chosen.length : 1);
 
-    if (chosen.length > room && maxFilesMessage) {
+    if (chosen.length > room) {
+      const dropped = chosen.length - room;
       refused.push({
-        fileName: `${chosen.length - room} file${chosen.length - room === 1 ? "" : "s"} not added`,
-        reason: maxFilesMessage,
+        fileName: `${dropped} file${dropped === 1 ? "" : "s"} not added`,
+        reason:
+          maxFilesMessage ??
+          (multiple
+            ? "That's more files than this will take."
+            : "This takes one file at a time."),
       });
     }
 

@@ -118,6 +118,58 @@ describe("<FileDropzone />", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("keeps one file and says so when several are dropped on a single-file zone", () => {
+    const onFilesAccepted = vi.fn();
+    render(<FileDropzone id="attachments" onFilesAccepted={onFilesAccepted} />);
+
+    // A drag ignores the input's `multiple` attribute, so this is the only
+    // thing standing between a two-file drop and one silently discarded file.
+    fireEvent.drop(screen.getByText(/drop a file here/i).closest("label")!, {
+      dataTransfer: { files: [pdf("first.pdf"), pdf("second.pdf")] },
+    });
+
+    expect(onFilesAccepted.mock.calls[0][0].map((f: File) => f.name)).toEqual([
+      "first.pdf",
+    ]);
+    expect(screen.getByRole("alert")).toHaveTextContent("1 file not added");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "This takes one file at a time."
+    );
+  });
+
+  it("keeps every file when the zone takes many", () => {
+    const onFilesAccepted = vi.fn();
+    render(
+      <FileDropzone id="attachments" multiple onFilesAccepted={onFilesAccepted} />
+    );
+
+    fireEvent.drop(screen.getByText(/drop files here/i).closest("label")!, {
+      dataTransfer: { files: [pdf("one.pdf"), pdf("two.pdf"), pdf("three.pdf")] },
+    });
+
+    expect(onFilesAccepted.mock.calls[0][0]).toHaveLength(3);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("names the overflow even without a caller-supplied message", () => {
+    const onFilesAccepted = vi.fn();
+    render(
+      <FileDropzone
+        id="attachments"
+        multiple
+        maxFiles={1}
+        onFilesAccepted={onFilesAccepted}
+      />
+    );
+
+    fireEvent.drop(screen.getByText(/drop files here/i).closest("label")!, {
+      dataTransfer: { files: [pdf("one.pdf"), pdf("two.pdf")] },
+    });
+
+    expect(onFilesAccepted.mock.calls[0][0]).toHaveLength(1);
+    expect(screen.getByRole("alert")).toHaveTextContent("1 file not added");
+  });
+
   it("takes files dropped onto the zone", () => {
     const onFilesAccepted = vi.fn();
     render(<FileDropzone id="attachments" onFilesAccepted={onFilesAccepted} />);
