@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,19 +20,17 @@ import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
 import { toDateOnly } from "@/lib/date-only";
 import { createTrainingSession, type CreateTrainingData } from "@/lib/training-actions";
+import type { TrainingTypeOption } from "@/lib/training-type-actions";
 
-const TRAINING_TYPES = [
-  { value: "INDUCTION", label: "Induction" },
-  { value: "DE_ESCALATION", label: "De-escalation" },
-  { value: "HEALTH_SAFETY", label: "Health & Safety" },
-  { value: "OTHER", label: "Other" },
-];
-
-export function TrainingForm() {
+export function TrainingForm({
+  trainingTypes,
+}: {
+  trainingTypes: TrainingTypeOption[];
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [type, setType] = useState("");
+  const [typeId, setTypeId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -44,7 +43,7 @@ export function TrainingForm() {
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
 
-    if (!type) newErrors.type = "Please select a training type.";
+    if (!typeId) newErrors.type = "Please select a training type.";
     if (!title.trim()) newErrors.title = "Title is required.";
     if (!date) newErrors.date = "Please select a date.";
     if (!startTime) newErrors.startTime = "Start time is required.";
@@ -66,7 +65,7 @@ export function TrainingForm() {
 
     startTransition(async () => {
       const data: CreateTrainingData = {
-        type,
+        typeId,
         title: title.trim(),
         description: description.trim() || undefined,
         date: toDateOnly(date!),
@@ -99,19 +98,43 @@ export function TrainingForm() {
 
           {/* Type */}
           <div className="space-y-2">
-            <Label htmlFor="type">Training type</Label>
-            <Select value={type} onValueChange={setType}>
+            <div className="flex items-baseline justify-between gap-3">
+              <Label htmlFor="type">Training type</Label>
+              <Link
+                href="/staff/training/types"
+                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Manage types
+              </Link>
+            </div>
+            <Select
+              value={typeId}
+              onValueChange={setTypeId}
+              disabled={trainingTypes.length === 0}
+            >
               <SelectTrigger id="type">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                {TRAINING_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
+                {trainingTypes.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {trainingTypes.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No training types yet —{" "}
+                <Link
+                  href="/staff/training/types"
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  add one first
+                </Link>
+                .
+              </p>
+            )}
             {errors.type && (
               <p className="text-sm text-destructive">{errors.type}</p>
             )}

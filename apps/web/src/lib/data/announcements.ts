@@ -1,5 +1,13 @@
 import { getDb } from "@/lib/db";
 
+/** A file riding along with a pānui — a roster PDF, a flyer, a menu. */
+export type AnnouncementAttachmentSummary = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+};
+
 export type AnnouncementSummary = {
   id: string;
   title: string;
@@ -7,7 +15,19 @@ export type AnnouncementSummary = {
   audience: "ALL" | "VOLUNTEERS";
   sentAt: Date;
   authorName: string | null;
+  attachments: AnnouncementAttachmentSummary[];
 };
+
+/** Attachment fields every read needs — the storage key is never sent out. */
+const attachmentSelect = {
+  select: {
+    id: true,
+    fileName: true,
+    contentType: true,
+    fileSize: true,
+  },
+  orderBy: { uploadedAt: "asc" },
+} as const;
 
 /** Published announcements a volunteer may see (ALL + VOLUNTEERS audiences). */
 export async function listVolunteerAnnouncements(
@@ -29,6 +49,7 @@ export async function listVolunteerAnnouncements(
       audience: true,
       sentAt: true,
       createdBy: { select: { name: true } },
+      attachments: attachmentSelect,
     },
   });
 
@@ -39,6 +60,7 @@ export async function listVolunteerAnnouncements(
     audience: a.audience === "ALL" ? ("ALL" as const) : ("VOLUNTEERS" as const),
     sentAt: a.sentAt!,
     authorName: a.createdBy?.name ?? null,
+    attachments: a.attachments,
   }));
 }
 
@@ -57,6 +79,7 @@ export async function getVolunteerAnnouncement(
       sentAt: true,
       audience: true,
       createdBy: { select: { name: true } },
+      attachments: attachmentSelect,
     },
   });
 
@@ -71,5 +94,6 @@ export async function getVolunteerAnnouncement(
     audience: a.audience === "ALL" ? "ALL" : "VOLUNTEERS",
     sentAt: a.sentAt,
     authorName: a.createdBy?.name ?? null,
+    attachments: a.attachments,
   };
 }

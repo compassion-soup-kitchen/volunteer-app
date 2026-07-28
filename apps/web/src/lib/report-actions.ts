@@ -5,11 +5,22 @@ import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { STAFF_ROLES } from "@/lib/role-change";
 import {
-  startOfMonth,
-  endOfMonth,
-  subMonths,
-  format,
-} from "date-fns";
+  addMonthsToDateOnly,
+  dateOnlyOf,
+  endOfMonthInAppZone,
+  endOfMonthOf,
+  formatDateOnly,
+  isDateOnly,
+  parseDateOnly,
+  startOfMonthInAppZone,
+  startOfMonthOf,
+  timestampToDateOnly,
+} from "@/lib/date-only";
+import {
+  buildAppZoneTimestampWindow,
+  INDUCTION_TYPE_KEY,
+  type MonthlySummary,
+} from "@/lib/report-summary";
 
 // ─── Auth ────────────────────────────────────────────
 
@@ -219,18 +230,24 @@ export async function getMonthlyTrends(
     ? { serviceAreaId: filters.serviceAreaId }
     : {};
 
-  // Default to last 6 months if no date range
-  const now = new Date();
-  const fromDate = filters?.fromDate
-    ? new Date(filters.fromDate)
-    : subMonths(startOfMonth(now), 5);
-  const toDate = filters?.toDate ? new Date(filters.toDate) : endOfMonth(now);
+  // Months are walked as calendar days on the kitchen's wall calendar. Reading
+  // the server's clock put "this month" a month behind for the whole NZ
+  // morning of the 1st, and dropped the newest bar off the chart with it.
+  const fromDay =
+    filters?.fromDate && isDateOnly(filters.fromDate)
+      ? filters.fromDate
+      : addMonthsToDateOnly(startOfMonthInAppZone(), -5);
+  const toDay =
+    filters?.toDate && isDateOnly(filters.toDate)
+      ? filters.toDate
+      : endOfMonthInAppZone();
 
   const trends: MonthlyTrend[] = [];
-  let current = startOfMonth(fromDate);
+  let currentDay = startOfMonthOf(fromDay);
 
-  while (current <= toDate) {
-    const monthEnd = endOfMonth(current);
+  while (currentDay <= toDay) {
+    const current = parseDateOnly(currentDay);
+    const monthEnd = parseDateOnly(endOfMonthOf(currentDay));
 
     const signups = await db.shiftSignup.findMany({
       where: {
@@ -260,14 +277,14 @@ export async function getMonthlyTrends(
     const uniqueVolunteers = new Set(signups.map((s) => s.volunteerId)).size;
 
     trends.push({
-      month: format(current, "yyyy-MM"),
-      label: format(current, "MMM yyyy"),
+      month: currentDay.slice(0, 7),
+      label: formatDateOnly(current, { month: "short", year: "numeric" }),
       hours: Math.round(hours * 10) / 10,
       shifts,
       uniqueVolunteers,
     });
 
-    current = startOfMonth(subMonths(current, -1));
+    currentDay = addMonthsToDateOnly(currentDay, 1);
   }
 
   return trends;
@@ -445,7 +462,9 @@ export async function getShiftExportData(
   });
 
   return shifts.map((shift) => ({
-    date: format(shift.date, "yyyy-MM-dd"),
+    // A stored calendar day, so read it back as one — `format` would render
+    // it in the server's timezone and shift it a day on any host behind UTC.
+    date: dateOnlyOf(shift.date),
     serviceArea: shift.serviceArea.name,
     startTime: shift.startTime,
     endTime: shift.endTime,
@@ -515,9 +534,92 @@ export async function getVolunteerExportData(
       mojStatus: v.mojStatus,
       totalShifts: v.shiftSignups.length,
       totalHours: Math.round(hours * 10) / 10,
-      joinedDate: format(v.createdAt, "yyyy-MM-dd"),
+      // `createdAt` is a real timestamp, not a stored day: the calendar date
+      // someone joined on is a question about Wellington, not the server.
+      joinedDate: timestampToDateOnly(v.createdAt),
     };
   });
+}
+
+// ─── Monthly Summary Export ──────────────────────────
+
+/**
+ * The headline numbers for a period: how many volunteers joined, how many
+ * completed their induction, and per service area how many people turned up
+ * and how many hours they gave.
+ *
+ * Everything respects the dashboard's current date range and service-area
+ * filter, so the export always matches what's on screen.
+ */
+export async function getMonthlySummary(
+  filters?: ReportFilters
+): Promise<MonthlySummary | null> {
+  const session = await requireStaff();
+  if (!session) return null;
+
+  const db = getDb();
+
+  // No service-area filter here: signups and shifts are filtered inside the
+  // two helpers below, and neither joining nor completing an induction belongs
+  // to a service area at all.
+  const dateFilter = buildDateFilter(filters);
+
+  // "New volunteers" is about when someone joined, so it keys off the profile's
+  // own createdAt rather than any shift they may or may not have worked.
+  const profileWindow = buildAppZoneTimestampWindow(filters);
+
+  const [byArea, summary, newVolunteers, inductions, selectedArea] =
+    await Promise.all([
+      getHoursByServiceArea(filters),
+      getReportSummary(filters),
+      db.volunteerProfile.count({
+        where: {
+          user: { role: { notIn: STAFF_ROLES } },
+          ...profileWindow,
+        },
+      }),
+      // Induction attendance is matched on the type's stable key, so renaming
+      // "Induction" in the training-types screen doesn't break the count.
+      db.trainingAttendance.count({
+        where: {
+          status: "ATTENDED",
+          session: {
+            type: { key: INDUCTION_TYPE_KEY },
+            ...dateFilter,
+          },
+        },
+      }),
+      filters?.serviceAreaId
+        ? db.serviceArea.findUnique({
+            where: { id: filters.serviceAreaId },
+            select: { name: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+  // Areas with no activity in the period are noise in a monthly report.
+  const activeAreas = byArea.filter(
+    (area) => area.totalShifts > 0 || area.totalHours > 0
+  );
+
+  return {
+    fromDate: filters?.fromDate ?? null,
+    toDate: filters?.toDate ?? null,
+    serviceAreaName: selectedArea?.name ?? null,
+    newVolunteers,
+    inductionsCompleted: inductions,
+    volunteersAttended: summary?.uniqueVolunteers ?? 0,
+    totalHours: summary?.totalHours ?? 0,
+    totalShifts: summary?.totalShifts ?? 0,
+    attendanceRate: summary?.overallAttendanceRate ?? 0,
+    byArea: activeAreas.map((area) => ({
+      serviceAreaName: area.serviceAreaName,
+      volunteersAttended: area.uniqueVolunteers,
+      shifts: area.totalShifts,
+      hours: area.totalHours,
+      attendanceRate: area.attendanceRate,
+    })),
+  };
 }
 
 // ─── Helpers ─────────────────────────────────────────
@@ -537,3 +639,4 @@ function buildDateFilter(filters?: ReportFilters) {
     },
   };
 }
+

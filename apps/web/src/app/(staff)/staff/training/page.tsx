@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RiAddLine } from "@remixicon/react";
+import { RiAddLine, RiSettings3Line } from "@remixicon/react";
 import { getStaffTrainingSessions } from "@/lib/training-actions";
 import { TrainingList } from "./training-list";
 import { PageHeader } from "@/components/brand/page-header";
@@ -35,12 +35,20 @@ export default function StaffTrainingPage() {
         title="Training"
         description="Manage training sessions for volunteers"
         actions={
-          <Button asChild>
-            <Link href="/staff/training/new">
-              <RiAddLine className="size-4" />
-              Schedule training
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href="/staff/training/types">
+                <RiSettings3Line className="size-4" />
+                Training types
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/staff/training/new">
+                <RiAddLine className="size-4" />
+                Schedule training
+              </Link>
+            </Button>
+          </>
         }
       />
       <Suspense fallback={<TrainingListSkeleton />}>

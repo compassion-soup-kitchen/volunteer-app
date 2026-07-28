@@ -21,6 +21,16 @@ export function serviceAreaMeta(id: string): { icon: IconName; tone: Tone } {
   }
 }
 
+/**
+ * Turns an unrecognised key into something readable — 'FIRST_AID' → 'First aid'
+ * — so a training type staff added in the web app still reads properly here.
+ */
+function labelFromKey(key: string): string {
+  const words = key.replace(/_/g, ' ').trim().toLowerCase();
+  if (!words) return 'Training';
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function trainingTypeMeta(type: TrainingType): { label: string; tone: Tone; icon: IconName } {
   switch (type) {
     case 'INDUCTION':
@@ -31,5 +41,8 @@ export function trainingTypeMeta(type: TrainingType): { label: string; tone: Ton
       return { label: 'Health & safety', tone: 'success', icon: 'medkit' };
     case 'OTHER':
       return { label: 'Workshop', tone: 'brand', icon: 'book' };
+    default:
+      // A type staff created since this build shipped.
+      return { label: labelFromKey(type), tone: 'neutral', icon: 'book' };
   }
 }

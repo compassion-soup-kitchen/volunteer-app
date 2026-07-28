@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/date-picker";
-import { toDateOnly, toPickerDate } from "@/lib/date-only";
+import { toDateOnly, todayInAppZone, toPickerDate } from "@/lib/date-only";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
@@ -25,8 +25,10 @@ import {
   RiCheckLine,
   RiFilterLine,
   RiDownloadLine,
+  RiFileChartLine,
   RiLoader4Line,
 } from "@remixicon/react";
+import { toast } from "sonner";
 import type {
   ReportSummary,
   HoursByServiceArea,
@@ -37,11 +39,27 @@ import type {
   ReportFilters,
 } from "@/lib/report-actions";
 import {
+  getMonthlySummary,
   getShiftExportData,
   getVolunteerExportData,
 } from "@/lib/report-actions";
+import {
+  buildMonthlySummaryCsv,
+  monthlySummaryFileName,
+} from "@/lib/report-summary";
 import { HoursChart } from "./hours-chart";
 import { TrendsChart } from "./trends-chart";
+
+/** Hands the browser a generated file to save. */
+function downloadFile(filename: string, contents: string) {
+  const blob = new Blob([contents], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function downloadCsv(filename: string, headers: string[], rows: string[][]) {
   const csvContent = [
@@ -50,13 +68,7 @@ function downloadCsv(filename: string, headers: string[], rows: string[][]) {
       row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
     ),
   ].join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadFile(filename, csvContent);
 }
 
 export function ReportDashboard({
@@ -108,12 +120,36 @@ export function ReportDashboard({
     });
   }
 
+  /**
+   * The monthly reporting figures as one file — new volunteers, inductions
+   * completed, and per-area turnout and hours, matching what's on screen.
+   */
+  async function handleExportSummary() {
+    setExporting("summary");
+    try {
+      const summary = await getMonthlySummary(filters);
+      if (!summary) {
+        toast.error("Couldn't build that summary. Please try again.");
+        return;
+      }
+      downloadFile(
+        monthlySummaryFileName(summary),
+        buildMonthlySummaryCsv(summary)
+      );
+    } catch (err) {
+      console.error("Summary export failed:", err);
+      toast.error("Couldn't build that summary. Please try again.");
+    } finally {
+      setExporting(null);
+    }
+  }
+
   async function handleExportShifts() {
     setExporting("shifts");
     try {
       const data = await getShiftExportData(filters);
       downloadCsv(
-        `shifts-report-${new Date().toISOString().split("T")[0]}.csv`,
+        `shifts-report-${todayInAppZone()}.csv`,
         [
           "Date",
           "Service Area",
@@ -147,7 +183,7 @@ export function ReportDashboard({
     try {
       const data = await getVolunteerExportData(filters);
       downloadCsv(
-        `volunteers-report-${new Date().toISOString().split("T")[0]}.csv`,
+        `volunteers-report-${todayInAppZone()}.csv`,
         [
           "Name",
           "Email",
@@ -465,6 +501,18 @@ export function ReportDashboard({
         <CardContent>
           <div className="flex flex-wrap gap-3">
             <Button
+              size="sm"
+              onClick={handleExportSummary}
+              disabled={exporting !== null}
+            >
+              {exporting === "summary" ? (
+                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+              ) : (
+                <RiFileChartLine className="mr-1.5 size-3.5" />
+              )}
+              Monthly summary
+            </Button>
+            <Button
               variant="outline"
               size="sm"
               onClick={handleExportShifts}
@@ -492,7 +540,9 @@ export function ReportDashboard({
             </Button>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Exports respect the current date range and service area filters
+            Exports respect the current date range and service area filters.
+            The monthly summary covers new volunteers, inductions completed,
+            and turnout and hours per service area.
           </p>
         </CardContent>
       </Card>

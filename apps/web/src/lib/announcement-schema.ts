@@ -17,6 +17,12 @@ export type AnnouncementAudience = (typeof ANNOUNCEMENT_AUDIENCES)[number];
 export const ANNOUNCEMENT_TITLE_MAX = 120;
 export const ANNOUNCEMENT_BODY_MAX = 5000;
 
+/**
+ * How many files one pānui may carry. Lives here rather than beside the upload
+ * action because a `"use server"` module may only export async functions.
+ */
+export const MAX_ANNOUNCEMENT_ATTACHMENTS = 5;
+
 export const announcementInputSchema = z.object({
   title: z
     .string("Give the pānui a title.")

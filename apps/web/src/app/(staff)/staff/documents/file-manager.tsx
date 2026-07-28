@@ -32,12 +32,19 @@ import {
   RiLoader4Line,
   RiFileTextLine,
 } from "@remixicon/react";
+import { toast } from "sonner";
 import {
   uploadDocument,
   deleteDocument,
   getDocumentDownloadUrl,
   type UploadedDocument,
 } from "@/lib/document-actions";
+import {
+  checkUploadFile,
+  formatFileSize,
+  MAX_UPLOAD_BYTES,
+  UPLOAD_ACCEPT_ATTR,
+} from "@/lib/uploads";
 
 const TYPE_LABELS: Record<string, string> = {
   POLICY: "Policy",
@@ -68,19 +75,59 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
 
   function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     formData.set("type", docType);
 
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      toast.error("Choose a file to upload.");
+      return;
+    }
+
+    // Catch the obvious rejections here so nobody waits out an upload that was
+    // never going to be accepted. The action re-checks all of this.
+    const rejection = checkUploadFile(file);
+    if (rejection) {
+      toast.error(rejection);
+      return;
+    }
+
     startUpload(async () => {
-      await uploadDocument(formData);
-      if (fileRef.current) fileRef.current.value = "";
+      try {
+        const result = await uploadDocument(formData);
+        if (result?.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success(`"${file.name}" uploaded.`);
+        form.reset();
+        if (fileRef.current) fileRef.current.value = "";
+      } catch (err) {
+        // A payload past the server's body limit never reaches the action, so
+        // this is the only place that failure can be reported.
+        console.error("Document upload failed:", err);
+        toast.error(
+          "The upload failed. If the file is large, try a smaller one."
+        );
+      }
     });
   }
 
-  function handleDelete(id: string) {
+  function handleDelete(id: string, fileName: string) {
     setDeletingId(null);
     startDelete(async () => {
-      await deleteDocument(id);
+      try {
+        const result = await deleteDocument(id);
+        if (result?.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success(`"${fileName}" deleted.`);
+      } catch (err) {
+        console.error("Document delete failed:", err);
+        toast.error("Something went wrong. Please try again.");
+      }
     });
   }
 
@@ -88,13 +135,18 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
     setDownloading(id);
     try {
       const url = await getDocumentDownloadUrl(id);
-      if (url) {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName;
-        a.target = "_blank";
-        a.click();
+      if (!url) {
+        toast.error("That file couldn't be opened. Please try again.");
+        return;
       }
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.target = "_blank";
+      a.click();
+    } catch (err) {
+      console.error("Document download failed:", err);
+      toast.error("That file couldn't be opened. Please try again.");
     } finally {
       setDownloading(null);
     }
@@ -131,9 +183,12 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                   id="file"
                   name="file"
                   type="file"
-                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                  accept={UPLOAD_ACCEPT_ATTR}
                   required
                 />
+                <p className="text-xs text-muted-foreground">
+                  PDF, Word, or image — up to {formatFileSize(MAX_UPLOAD_BYTES)}
+                </p>
               </div>
             </div>
             <Button type="submit" disabled={uploading} size="sm">
@@ -217,7 +272,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           variant="destructive"
-                          onClick={() => handleDelete(doc.id)}
+                          onClick={() => handleDelete(doc.id, doc.fileName)}
                         >
                           Delete
                         </AlertDialogAction>

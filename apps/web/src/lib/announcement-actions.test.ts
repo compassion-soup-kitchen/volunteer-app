@@ -10,6 +10,7 @@ const announcementCreateMock = vi.fn();
 const announcementUpdateMock = vi.fn();
 const announcementDeleteMock = vi.fn();
 const userFindManyMock = vi.fn();
+const deleteFileMock = vi.fn();
 
 vi.mock("next/server", () => ({
   connection: vi.fn(async () => {}),
@@ -27,6 +28,13 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/push", () => ({
   sendPushToUsers: (...args: unknown[]) => sendPushMock(...args),
+}));
+
+vi.mock("@/lib/storage", () => ({
+  deleteFile: (...args: unknown[]) => deleteFileMock(...args),
+  uploadFile: vi.fn(),
+  getSignedDownloadUrl: vi.fn(),
+  isStorageConfigured: () => true,
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -77,6 +85,7 @@ beforeEach(() => {
   announcementUpdateMock.mockReset();
   announcementDeleteMock.mockReset();
   userFindManyMock.mockReset();
+  deleteFileMock.mockReset().mockResolvedValue(undefined);
 
   authMock.mockResolvedValue(staffSession);
   userFindManyMock.mockResolvedValue([{ id: "vol-1" }, { id: "vol-2" }]);
@@ -142,7 +151,8 @@ describe("createAnnouncement", () => {
 
     const result = await createAnnouncement(validInput);
 
-    expect(result).toEqual({ success: true });
+    // The id comes back so the caller can attach files to what it just made.
+    expect(result).toEqual({ success: true, id: "a1" });
     expect(announcementCreateMock).toHaveBeenCalledWith({
       data: expect.objectContaining({
         title: validInput.title,
@@ -162,7 +172,7 @@ describe("createAnnouncement", () => {
 
     const result = await createAnnouncement({ ...validInput, publish: true });
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, id: "a1" });
     expect(announcementCreateMock).toHaveBeenCalledWith({
       data: expect.objectContaining({ sentAt: expect.any(Date) }),
     });
@@ -292,7 +302,7 @@ describe("deleteAnnouncement", () => {
   });
 
   it("deletes an existing announcement", async () => {
-    announcementFindUniqueMock.mockResolvedValue({ id: "a1" });
+    announcementFindUniqueMock.mockResolvedValue({ id: "a1", attachments: [] });
     announcementDeleteMock.mockResolvedValue({ id: "a1" });
 
     const result = await deleteAnnouncement("a1");
@@ -302,5 +312,38 @@ describe("deleteAnnouncement", () => {
       where: { id: "a1" },
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/news");
+  });
+
+  // The attachment rows cascade, but the stored files don't — deleting a pānui
+  // has to clear its bucket objects or they linger unreferenced forever.
+  it("removes the stored files of a deleted announcement", async () => {
+    announcementFindUniqueMock.mockResolvedValue({
+      id: "a1",
+      attachments: [
+        { fileUrl: "announcement/a1/1-roster.pdf" },
+        { fileUrl: "announcement/a1/2-menu.pdf" },
+      ],
+    });
+    announcementDeleteMock.mockResolvedValue({ id: "a1" });
+
+    const result = await deleteAnnouncement("a1");
+
+    expect(result).toEqual({ success: true });
+    expect(deleteFileMock).toHaveBeenCalledWith("announcement/a1/1-roster.pdf");
+    expect(deleteFileMock).toHaveBeenCalledWith("announcement/a1/2-menu.pdf");
+  });
+
+  it("still deletes the pānui when a stored file has already gone", async () => {
+    announcementFindUniqueMock.mockResolvedValue({
+      id: "a1",
+      attachments: [{ fileUrl: "announcement/a1/gone.pdf" }],
+    });
+    announcementDeleteMock.mockResolvedValue({ id: "a1" });
+    deleteFileMock.mockRejectedValueOnce(new Error("NoSuchKey"));
+
+    const result = await deleteAnnouncement("a1");
+
+    expect(result).toEqual({ success: true });
+    expect(announcementDeleteMock).toHaveBeenCalled();
   });
 });

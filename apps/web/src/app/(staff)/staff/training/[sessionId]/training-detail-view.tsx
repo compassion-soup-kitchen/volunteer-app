@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { IconChip } from "@/components/brand/icon-chip";
 import {
@@ -55,20 +56,6 @@ import {
 interface TrainingDetailViewProps {
   session: StaffTrainingSession;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  INDUCTION: "Induction",
-  DE_ESCALATION: "De-escalation",
-  HEALTH_SAFETY: "Health & Safety",
-  OTHER: "Other",
-};
-
-const TYPE_VARIANTS: Record<string, "info" | "amber" | "success" | "neutral"> = {
-  INDUCTION: "info",
-  DE_ESCALATION: "amber",
-  HEALTH_SAFETY: "success",
-  OTHER: "neutral",
-};
 
 const LONG_DATE: Intl.DateTimeFormatOptions = {
   weekday: "long",
@@ -171,9 +158,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
           <div className="space-y-2.5">
             <div className="flex items-center gap-2.5 text-sm">
               <RiGraduationCapLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-              <Badge variant={TYPE_VARIANTS[session.type] || "neutral"}>
-                {TYPE_LABELS[session.type] || session.type}
-              </Badge>
+              <TrainingTypeBadge type={session.type} />
             </div>
             <div className="flex items-center gap-2.5 text-sm">
               <RiTimeLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />

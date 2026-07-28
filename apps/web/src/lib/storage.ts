@@ -8,6 +8,24 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 let _client: S3Client | null = null;
 
+/** Every env var the S3 client needs before it can talk to the bucket. */
+const REQUIRED_ENV = [
+  "S3_ENDPOINT",
+  "S3_ACCESS_KEY",
+  "S3_SECRET_KEY",
+  "S3_BUCKET",
+] as const;
+
+/**
+ * Whether storage is wired up. Uploads fail deep inside the AWS SDK when it
+ * isn't — a connection refused or a signature error rather than anything a
+ * coordinator could act on — so callers check this first and say plainly that
+ * the server is misconfigured.
+ */
+export function isStorageConfigured(): boolean {
+  return REQUIRED_ENV.every((key) => Boolean(process.env[key]));
+}
+
 function getClient(): S3Client {
   if (!_client) {
     _client = new S3Client({

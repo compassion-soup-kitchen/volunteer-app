@@ -7,16 +7,28 @@ import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
 import {
   announcementPushBody,
+  MAX_ANNOUNCEMENT_ATTACHMENTS,
   parseAnnouncementInput,
   shouldNotifyVolunteersOnPublish,
   type AnnouncementAudience,
 } from "@/lib/announcement-schema";
 import {
   listVolunteerAnnouncements,
+  type AnnouncementAttachmentSummary,
   type AnnouncementSummary,
 } from "@/lib/data/announcements";
+import {
+  deleteFile,
+  getSignedDownloadUrl,
+  isStorageConfigured,
+  uploadFile,
+} from "@/lib/storage";
+import { buildStorageKey, checkUploadFile } from "@/lib/uploads";
 
-export type { AnnouncementSummary } from "@/lib/data/announcements";
+export type {
+  AnnouncementSummary,
+  AnnouncementAttachmentSummary,
+} from "@/lib/data/announcements";
 
 // ─── Volunteer reads ─────────────────────────────────
 
@@ -94,6 +106,7 @@ export type StaffAnnouncement = {
   createdAt: Date;
   sentAt: Date | null;
   authorName: string | null;
+  attachments: AnnouncementAttachmentSummary[];
 };
 
 /** All announcements, drafts included, newest first — staff only. */
@@ -113,6 +126,15 @@ export async function getStaffAnnouncements(): Promise<StaffAnnouncement[]> {
       createdAt: true,
       sentAt: true,
       createdBy: { select: { name: true } },
+      attachments: {
+        select: {
+          id: true,
+          fileName: true,
+          contentType: true,
+          fileSize: true,
+        },
+        orderBy: { uploadedAt: "asc" },
+      },
     },
   });
 
@@ -124,6 +146,7 @@ export async function getStaffAnnouncements(): Promise<StaffAnnouncement[]> {
     createdAt: a.createdAt,
     sentAt: a.sentAt,
     authorName: a.createdBy?.name ?? null,
+    attachments: a.attachments,
   }));
 }
 
@@ -134,7 +157,7 @@ export async function createAnnouncement(input: {
   body: string;
   audience: string;
   publish?: boolean;
-}): Promise<{ error?: string; success?: boolean }> {
+}): Promise<{ error?: string; success?: boolean; id?: string }> {
   const session = await requireStaff();
   if (!session) return { error: "Not authorised." };
 
@@ -163,7 +186,8 @@ export async function createAnnouncement(input: {
     }
 
     revalidateAnnouncementPaths();
-    return { success: true };
+    // The id goes back so the caller can attach files to what it just created.
+    return { success: true, id: announcement.id };
   } catch (e) {
     console.error("Create announcement error:", e);
     return { error: "Something went wrong. Please try again." };
@@ -264,16 +288,169 @@ export async function deleteAnnouncement(
   if (!session) return { error: "Not authorised." };
 
   const db = getDb();
-  const existing = await db.announcement.findUnique({ where: { id } });
+  const existing = await db.announcement.findUnique({
+    where: { id },
+    select: { id: true, attachments: { select: { fileUrl: true } } },
+  });
   if (!existing) return { error: "Announcement not found." };
 
   try {
     await db.announcement.delete({ where: { id } });
+
+    // The rows cascade, but the bucket objects don't — clear them so deleting a
+    // pānui doesn't leave its files behind paying for storage forever.
+    await Promise.all(
+      existing.attachments.map((a) =>
+        deleteFile(a.fileUrl).catch((err) => {
+          console.error("deleteAnnouncement: orphaned attachment file", err);
+        })
+      )
+    );
 
     revalidateAnnouncementPaths();
     return { success: true };
   } catch (e) {
     console.error("Delete announcement error:", e);
     return { error: "Something went wrong. Please try again." };
+  }
+}
+
+// ─── Attachments ─────────────────────────────────────
+
+/**
+ * Attaches a file to a pānui.
+ *
+ * Mirrors uploadDocument: errors come back as values, because a Server Action
+ * that throws surfaces in the browser as an unattributable "unexpected error".
+ */
+export async function uploadAnnouncementAttachment(
+  announcementId: string,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireStaff();
+  if (!session) return { error: "Not authorised." };
+
+  if (!isStorageConfigured()) {
+    console.error("uploadAnnouncementAttachment: storage is not configured");
+    return {
+      error:
+        "File storage isn't set up on the server yet. Let your administrator know.",
+    };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "Choose a file to attach." };
+
+  const rejection = checkUploadFile(file);
+  if (rejection) return { error: rejection };
+
+  const db = getDb();
+  const announcement = await db.announcement.findUnique({
+    where: { id: announcementId },
+    select: { id: true, _count: { select: { attachments: true } } },
+  });
+  if (!announcement) return { error: "Announcement not found." };
+
+  if (announcement._count.attachments >= MAX_ANNOUNCEMENT_ATTACHMENTS) {
+    return {
+      error: `A pānui can carry ${MAX_ANNOUNCEMENT_ATTACHMENTS} files at most.`,
+    };
+  }
+
+  const storagePath = buildStorageKey(
+    `announcement/${announcementId}`,
+    file.name,
+    Date.now()
+  );
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await uploadFile(storagePath, buffer, file.type);
+  } catch (err) {
+    console.error("uploadAnnouncementAttachment: storage upload failed", err);
+    return { error: "The upload didn't reach storage. Please try again." };
+  }
+
+  try {
+    await db.announcementAttachment.create({
+      data: {
+        announcementId,
+        fileName: file.name,
+        fileUrl: storagePath,
+        contentType: file.type,
+        fileSize: file.size,
+      },
+    });
+  } catch (err) {
+    console.error("uploadAnnouncementAttachment: could not record file", err);
+    await deleteFile(storagePath).catch(() => {});
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  revalidateAnnouncementPaths();
+  return { success: true };
+}
+
+export async function deleteAnnouncementAttachment(
+  attachmentId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireStaff();
+  if (!session) return { error: "Not authorised." };
+
+  const db = getDb();
+  const attachment = await db.announcementAttachment.findUnique({
+    where: { id: attachmentId },
+    select: { id: true, fileUrl: true },
+  });
+  if (!attachment) return { error: "That file no longer exists." };
+
+  await deleteFile(attachment.fileUrl).catch((err) => {
+    console.error("deleteAnnouncementAttachment: could not remove file", err);
+  });
+
+  try {
+    await db.announcementAttachment.delete({ where: { id: attachment.id } });
+  } catch (err) {
+    console.error("deleteAnnouncementAttachment: could not delete row", err);
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  revalidateAnnouncementPaths();
+  return { success: true };
+}
+
+/**
+ * A short-lived link to an attachment.
+ *
+ * Staff can reach any attachment; everyone else only files on a pānui that is
+ * actually published to them, so an unpublished draft's roster stays private.
+ */
+export async function getAnnouncementAttachmentUrl(
+  attachmentId: string
+): Promise<string | null> {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const db = getDb();
+  const attachment = await db.announcementAttachment.findUnique({
+    where: { id: attachmentId },
+    select: {
+      fileUrl: true,
+      announcement: { select: { sentAt: true, audience: true } },
+    },
+  });
+  if (!attachment) return null;
+
+  const isStaff = ["COORDINATOR", "ADMIN"].includes(session.user.role);
+  if (!isStaff) {
+    const { sentAt, audience } = attachment.announcement;
+    if (!sentAt || !["ALL", "VOLUNTEERS"].includes(audience)) return null;
+  }
+
+  try {
+    return await getSignedDownloadUrl(attachment.fileUrl, 60 * 5);
+  } catch (err) {
+    console.error("getAnnouncementAttachmentUrl: could not sign URL", err);
+    return null;
   }
 }
