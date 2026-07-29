@@ -25,6 +25,7 @@
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.6",
     "expo-system-ui": "~56.0.5",
+    "expo-updates": "~56.0.23",
     "expo-video": "~56.1.4",
     "expo-web-browser": "~56.0.5",
     "react": "19.2.3",
@@ -62,7 +63,12 @@
     "submit:ios": "eas submit --platform ios --profile production",
     "release:ios": "eas build --platform ios --profile production --auto-submit",
     "version:ios": "eas build:version:get --platform ios",
-    "credentials:ios": "eas credentials --platform ios"
+    "credentials:ios": "eas credentials --platform ios",
+    "update:preview": "eas update --channel preview --environment preview",
+    "update:production": "eas update --channel production --environment production",
+    "update:list": "eas update:list",
+    "update:rollback": "eas update:rollback",
+    "fingerprint": "eas fingerprint:generate"
   },
   "private": true
 }

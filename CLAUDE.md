@@ -264,6 +264,25 @@ pnpm mobile prebuild:ios       # regenerate ios/ locally — needed after a conf
 - **Env vars come from EAS, not `.env`.** `apps/mobile/.env` is gitignored, so it is never uploaded to a cloud build; each profile names an EAS environment (`development` / `preview` / `production`) and the variables are read from there. Manage them with `eas env:list --environment production` / `eas env:create`. Anything the app needs at build time — `EXPO_PUBLIC_API_URL`, the `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` pair — must exist in that environment or the build ships without it.
 - **`submit.production` is empty on purpose.** The first `eas submit` prompts for the Apple ID, team and App Store Connect app id, and offers to save them.
 
+### Over-the-air updates (EAS Update)
+
+`expo-updates` ships JS/asset-only fixes straight to installed builds - no rebuild, no App Store review. Every build profile in `eas.json` names a `channel` matching its own name, and `app.json` carries `updates.url` plus `runtimeVersion: { policy: "fingerprint" }`.
+
+```
+pnpm mobile update:preview     # publish to the preview channel (internal / TestFlight builds)
+pnpm mobile update:production  # publish to the production channel (App Store builds)
+pnpm mobile update:list        # recent updates per branch
+pnpm mobile update:rollback    # interactive: republish the previous update, or revert to embedded
+pnpm mobile fingerprint        # the runtime fingerprint of the working tree
+```
+
+- **The channel is baked into the binary at build time.** A build made before this was wired up can never receive an update - it has no channel and no `updates.url`. Adding a channel, or renaming one, means a new build.
+- **`--environment` is not optional on `eas update`.** Expo SDK 55+ requires it, and without it the OTA bundle is built with none of the EAS environment variables - it would ship with no `EXPO_PUBLIC_API_URL` and no Google client id. Both publish scripts pass the environment matching their channel; keep that pairing if you add another.
+- **The fingerprint policy means JS-only.** `@expo/fingerprint` hashes the native side (autolinked modules, config plugins, app config), and an update only reaches builds whose fingerprint matches. Anything native - a new native dependency, a config-plugin change, an icon or entitlement change - shifts the fingerprint, so `eas update` simply will not reach the old build and you need `build:ios`. Run `pnpm mobile fingerprint` before publishing if unsure, or `eas fingerprint:compare` against the build.
+- **Updates apply on a boundary, never mid-task.** `checkAutomatically: ON_LOAD` + `fallbackToCacheTimeout: 0` means launch never blocks on the network: the app starts on the cached bundle and downloads in the background. `src/components/app-updates.tsx` adds the resume half - it checks when the app returns to the foreground, and only reloads into a downloaded update after the app has been backgrounded for `RESUME_RELOAD_AFTER_MS` (15 min), so a reload can never discard a half-filled application form. `src/components/app-version.tsx` puts a manual check in the profile footer.
+- **OTA cannot be tested in Expo Go or a dev build.** Both serve the bundle from Metro, and both report `Updates.isEnabled === true` with a non-embedded launch - so `IS_OTA_MANAGED` in `src/lib/updates.ts` (channel present, not `__DEV__`) is the flag to gate on, not `isEnabled`. Real testing needs `build:ios:preview` or a TestFlight build.
+- **Publishing does not need the app to be on the App Store.** Preview and TestFlight builds take updates the same way, which makes this the fast path for fixing tester-reported bugs pre-launch.
+
 ## Environment
 Required env vars for `apps/web` (see `apps/web/.env.example`):
 - `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
