@@ -10,9 +10,23 @@ import { verifyGoogleIdToken } from "@/lib/google-id-token";
  *
  * The native app completes the Google flow on-device and posts the resulting
  * ID token here; we verify it against Google's keys, map it to an account, and
- * hand back the same bearer token `/api/v1/auth/login` issues. There is no
- * rate limit: nobody can mint tokens Google's signature will accept, so a
- * budget here would only lock real volunteers out of their own accounts.
+ * hand back the same bearer token `/api/v1/auth/login` issues.
+ *
+ * Unlike its sibling `/login`, this route carries no rate limit. That budget
+ * exists because bcrypt is a CPU amplifier - a password comparison costs
+ * ~278ms, so a flood of guesses is a denial-of-service in its own right.
+ * Verifying a signature is ~0.018ms, four orders of magnitude cheaper and no
+ * dearer than parsing the JSON body, and a token bearing an unknown key id
+ * can't amplify outbound either: `createRemoteJWKSet` refetches Google's keys
+ * at most once per cooldown window. The remaining budget-worthy asset is
+ * account creation, which is already gated on a signature nobody can forge.
+ *
+ * The obvious key for a pre-verification budget would be the client IP, and
+ * that is the reason not to: behind the reverse proxy it comes from
+ * `x-forwarded-for`, which a flooder sets freely - the limit would be evaded
+ * by the attacker and land on whichever volunteer's address they chose to
+ * spoof. Keying on email isn't available either; the token has to be verified
+ * before we know it.
  */
 
 const googleSchema = z.object({

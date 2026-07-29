@@ -41,28 +41,27 @@ export type GoogleIdTokenResult =
   | { ok: true; identity: GoogleIdentity }
   | { ok: false; reason: GoogleIdTokenFailure };
 
-/**
- * Every OAuth client that may sign a token we accept. iOS tokens carry the iOS
- * client id in `aud`, Android tokens carry the web ("server") client id, and
- * the web client is listed so the same endpoint works from an Expo web build.
- * Client ids are public identifiers, not secrets - the signature is what makes
- * the token trustworthy.
- */
 /** Just the env this reads, so tests can hand it a plain object. */
 export type GoogleClientEnv = {
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_IOS_CLIENT_ID?: string;
-  GOOGLE_ANDROID_CLIENT_ID?: string;
 };
 
+/**
+ * Every OAuth client that may sign a token we accept.
+ *
+ * Only two, because only two ever appear in `aud`: iOS tokens carry the iOS
+ * client id, and Android tokens carry the web ("server") client id - Android's
+ * own OAuth client is matched on package name plus signing certificate and is
+ * never named in a token. The web client also covers an Expo web build.
+ *
+ * Client ids are public identifiers, not secrets - the signature is what makes
+ * the token trustworthy.
+ */
 export function googleAudiences(
   env: GoogleClientEnv = process.env as GoogleClientEnv
 ): string[] {
-  const ids = [
-    env.GOOGLE_CLIENT_ID,
-    env.GOOGLE_IOS_CLIENT_ID,
-    env.GOOGLE_ANDROID_CLIENT_ID,
-  ]
+  const ids = [env.GOOGLE_CLIENT_ID, env.GOOGLE_IOS_CLIENT_ID]
     .map((id) => id?.trim())
     .filter((id): id is string => Boolean(id));
 

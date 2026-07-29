@@ -3,17 +3,17 @@ import { describe, expect, it } from "vitest";
 import { googleAudiences, readGoogleClaims } from "./google-id-token";
 
 describe("googleAudiences", () => {
-  it("collects every configured client id", () => {
+  // Android tokens carry the web client id, so there is no third audience -
+  // an Android-specific client id never appears in `aud`.
+  it("collects the web and iOS client ids", () => {
     expect(
       googleAudiences({
         GOOGLE_CLIENT_ID: "web.apps.googleusercontent.com",
         GOOGLE_IOS_CLIENT_ID: "ios.apps.googleusercontent.com",
-        GOOGLE_ANDROID_CLIENT_ID: "android.apps.googleusercontent.com",
       })
     ).toEqual([
       "web.apps.googleusercontent.com",
       "ios.apps.googleusercontent.com",
-      "android.apps.googleusercontent.com",
     ]);
   });
 
@@ -22,7 +22,6 @@ describe("googleAudiences", () => {
       googleAudiences({
         GOOGLE_CLIENT_ID: "web.apps.googleusercontent.com",
         GOOGLE_IOS_CLIENT_ID: "  ",
-        GOOGLE_ANDROID_CLIENT_ID: "web.apps.googleusercontent.com",
       })
     ).toEqual(["web.apps.googleusercontent.com"]);
   });
