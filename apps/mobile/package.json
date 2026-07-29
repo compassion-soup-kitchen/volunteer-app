@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eas-cli": "^21.3.0",
     "eslint": "^9.39.4",
     "eslint-config-expo": "^57.0.0",
     "react-native-svg-transformer": "^1.5.3",
@@ -52,7 +53,15 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prebuild:ios": "expo prebuild --platform ios --clean",
+    "build:ios:dev": "eas build --platform ios --profile development",
+    "build:ios:preview": "eas build --platform ios --profile preview",
+    "build:ios": "eas build --platform ios --profile production",
+    "submit:ios": "eas submit --platform ios --profile production",
+    "release:ios": "eas build --platform ios --profile production --auto-submit",
+    "version:ios": "eas build:version:get --platform ios",
+    "credentials:ios": "eas credentials --platform ios"
   },
   "private": true
 }

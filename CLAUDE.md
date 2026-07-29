@@ -245,6 +245,25 @@ Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-
 - **Expo has changed** — `apps/mobile/AGENTS.md` (loaded via the `@AGENTS.md` include in `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
 - Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
 
+### Releasing to iOS
+
+Builds run on **EAS** (`eas.json` profiles + EAS project `@malinmw/compassion-volunteer`). `eas-cli` is a pinned devDependency, so the scripts use the workspace copy — no global install needed. None of these go through Turbo; run them with `pnpm mobile <script>`.
+
+```
+pnpm mobile build:ios:dev      # development build (dev client, internal distribution)
+pnpm mobile build:ios:preview  # release build on a device, internal distribution
+pnpm mobile build:ios          # production build for App Store Connect
+pnpm mobile submit:ios         # upload the latest production build to App Store Connect
+pnpm mobile release:ios        # build + auto-submit in one go
+pnpm mobile version:ios        # current remote build number (appVersionSource: remote)
+pnpm mobile credentials:ios    # manage signing certificates / provisioning profiles
+pnpm mobile prebuild:ios       # regenerate ios/ locally — needed after a config-plugin change
+```
+
+- **A development build is not optional.** `@react-native-google-signin/google-signin` and the other native modules aren't in Expo Go, so anything touching Google sign-in must be tested on `build:ios:dev`.
+- **Env vars come from EAS, not `.env`.** `apps/mobile/.env` is gitignored, so it is never uploaded to a cloud build; each profile names an EAS environment (`development` / `preview` / `production`) and the variables are read from there. Manage them with `eas env:list --environment production` / `eas env:create`. Anything the app needs at build time — `EXPO_PUBLIC_API_URL`, the `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` pair — must exist in that environment or the build ships without it.
+- **`submit.production` is empty on purpose.** The first `eas submit` prompts for the Apple ID, team and App Store Connect app id, and offers to save them.
+
 ## Environment
 Required env vars for `apps/web` (see `apps/web/.env.example`):
 - `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
