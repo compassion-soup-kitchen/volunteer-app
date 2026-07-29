@@ -9,7 +9,7 @@ describe("googleAudiences", () => {
         GOOGLE_CLIENT_ID: "web.apps.googleusercontent.com",
         GOOGLE_IOS_CLIENT_ID: "ios.apps.googleusercontent.com",
         GOOGLE_ANDROID_CLIENT_ID: "android.apps.googleusercontent.com",
-      } as NodeJS.ProcessEnv)
+      })
     ).toEqual([
       "web.apps.googleusercontent.com",
       "ios.apps.googleusercontent.com",
@@ -23,12 +23,12 @@ describe("googleAudiences", () => {
         GOOGLE_CLIENT_ID: "web.apps.googleusercontent.com",
         GOOGLE_IOS_CLIENT_ID: "  ",
         GOOGLE_ANDROID_CLIENT_ID: "web.apps.googleusercontent.com",
-      } as NodeJS.ProcessEnv)
+      })
     ).toEqual(["web.apps.googleusercontent.com"]);
   });
 
   it("is empty when nothing is configured", () => {
-    expect(googleAudiences({} as NodeJS.ProcessEnv)).toEqual([]);
+    expect(googleAudiences({})).toEqual([]);
   });
 });
 
@@ -68,8 +68,7 @@ describe("readGoogleClaims", () => {
   });
 
   it("refuses a missing email_verified claim", () => {
-    const { email_verified: _omitted, ...withoutFlag } = claims;
-    expect(readGoogleClaims(withoutFlag)).toEqual({
+    expect(readGoogleClaims({ ...claims, email_verified: undefined })).toEqual({
       ok: false,
       reason: "email-unverified",
     });

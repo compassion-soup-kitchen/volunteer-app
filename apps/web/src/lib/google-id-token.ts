@@ -48,7 +48,16 @@ export type GoogleIdTokenResult =
  * Client ids are public identifiers, not secrets - the signature is what makes
  * the token trustworthy.
  */
-export function googleAudiences(env: NodeJS.ProcessEnv = process.env): string[] {
+/** Just the env this reads, so tests can hand it a plain object. */
+export type GoogleClientEnv = {
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_IOS_CLIENT_ID?: string;
+  GOOGLE_ANDROID_CLIENT_ID?: string;
+};
+
+export function googleAudiences(
+  env: GoogleClientEnv = process.env as GoogleClientEnv
+): string[] {
   const ids = [
     env.GOOGLE_CLIENT_ID,
     env.GOOGLE_IOS_CLIENT_ID,
