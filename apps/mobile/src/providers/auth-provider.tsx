@@ -9,6 +9,8 @@ interface AuthState {
   /** True until the persisted session has been restored on launch */
   initializing: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  /** Google sign-in, which doubles as sign-up for a first-time account. */
+  signInWithGoogle: () => Promise<{ error?: string; cancelled?: boolean }>;
   signUp: (
     name: string,
     email: string,
@@ -42,6 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: result.error };
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    const result = await authService.loginWithGoogle();
+    if (result.user) setUser(result.user);
+    return { error: result.error, cancelled: result.cancelled };
+  }, []);
+
   const signUp = useCallback(async (name: string, email: string, password: string) => {
     const result = await authService.register(name, email, password);
     if (result.user) setUser(result.user);
@@ -56,8 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(
-    () => ({ user, initializing, signIn, signUp, signOut }),
-    [user, initializing, signIn, signUp, signOut],
+    () => ({ user, initializing, signIn, signInWithGoogle, signUp, signOut }),
+    [user, initializing, signIn, signInWithGoogle, signUp, signOut],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;
