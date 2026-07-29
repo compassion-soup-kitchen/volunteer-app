@@ -6,6 +6,7 @@ export { Chip } from './chip';
 export { DateField, formatDateNZ } from './date-field';
 export { Divider } from './divider';
 export { EmptyState } from './empty-state';
+export { GoogleButton } from './google-button';
 export { Icon, type IconName } from './icon';
 export { IconChip } from './icon-chip';
 export { PageHeader } from './page-header';

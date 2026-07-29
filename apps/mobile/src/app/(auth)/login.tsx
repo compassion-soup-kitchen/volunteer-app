@@ -6,11 +6,11 @@ import Animated, { FadeIn, FadeInDown, ReduceMotion } from 'react-native-reanima
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Kowhaiwhai, Wordmark } from '@/components/brand';
-import { Button, Card, Icon, Text, TextField } from '@/components/ui';
-import { Duration, Layout, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Button, Card, GoogleButton, Text, TextField } from '@/components/ui';
+import { Duration, Layout, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/providers/auth-provider';
-import { useToast } from '@/providers/toast-provider';
+import { GOOGLE_SIGN_IN_AVAILABLE } from '@/services/auth-service';
 
 /** How far the sign-in card rises into the ink masthead, breaking the seam. */
 const CARD_OVERLAP = 44;
@@ -22,13 +22,13 @@ export default function LoginScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { signIn } = useAuth();
-  const toast = useToast();
+  const { signIn, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('aroha@compassion.org.nz');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function onSubmit() {
     setError(null);
@@ -37,6 +37,15 @@ export default function LoginScreen() {
     setLoading(false);
     if (result.error) setError(result.error);
     // On success the (auth) layout guard redirects into the app automatically.
+  }
+
+  async function onGoogle() {
+    setError(null);
+    setGoogleLoading(true);
+    const result = await signInWithGoogle();
+    setGoogleLoading(false);
+    // Backing out of Google's sheet is a decision, not a failure - say nothing.
+    if (result.error && !result.cancelled) setError(result.error);
   }
 
   return (
@@ -126,41 +135,33 @@ export default function LoginScreen() {
                   </Text>
                 ) : null}
 
-                <Button title="Sign in" icon="log-in-outline" loading={loading} onPress={onSubmit} />
+                <Button
+                  title="Sign in"
+                  icon="log-in-outline"
+                  loading={loading}
+                  disabled={googleLoading}
+                  onPress={onSubmit}
+                />
               </Card>
             </Animated.View>
 
             <Animated.View entering={enter(160)} style={{ gap: Spacing.xl }}>
-              {/* Divider */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-                <Text variant="caption" color="textTertiary">
-                  or
-                </Text>
-                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-              </View>
+              {/* Google — hidden outright on builds with no Google credentials,
+                  rather than offered as a button that could only fail. */}
+              {GOOGLE_SIGN_IN_AVAILABLE ? (
+                <>
+                  {/* Divider */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                    <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                    <Text variant="caption" color="textTertiary">
+                      or
+                    </Text>
+                    <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                  </View>
 
-              {/* Google */}
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => toast.show('Google sign-in is coming soon.')}
-                style={({ pressed }) => ({
-                  height: 54,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: Spacing.sm,
-                  paddingHorizontal: Spacing.xxl,
-                  borderRadius: Radius.button,
-                  borderCurve: 'continuous',
-                  borderWidth: 1,
-                  borderColor: colors.borderStrong,
-                  backgroundColor: pressed ? colors.surfacePressed : colors.surface,
-                  boxShadow: pressed ? Shadows.none : Shadows.sm,
-                })}>
-                <Icon name="logo-google" size={20} color="text" />
-                <Text variant="bodyStrong">Continue with Google</Text>
-              </Pressable>
+                  <GoogleButton onPress={onGoogle} loading={googleLoading} disabled={loading} />
+                </>
+              ) : null}
 
               {/* Register */}
               <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>

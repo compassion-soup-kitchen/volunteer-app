@@ -2,7 +2,8 @@
  * Auth service.
  *
  * Against the real API (`EXPO_PUBLIC_API_URL` set) this signs in via
- * `/api/v1/auth/*`, stores the bearer token + user in SecureStore, and
+ * `/api/v1/auth/*` - with an email and password, or with a Google ID token
+ * from the native sheet - stores the bearer token + user in SecureStore, and
  * refreshes the user from `/api/v1/me` on launch so role changes (e.g. an
  * approved application) are picked up. In mock mode it signs the user in as
  * the seeded volunteer.
@@ -17,6 +18,15 @@ import { db, nextId, SEED_USER } from '@/data/mock-db';
 import type { SessionUser } from '@/types/models';
 
 import { apiFetch, ApiError, delay, setAuthToken, toActionError, USE_MOCK } from './client';
+import { GOOGLE_SIGN_IN_CONFIGURED, signInWithGoogle, signOutFromGoogle } from './google-sign-in';
+
+/**
+ * Whether to offer the Google button at all. Mock mode always offers it (it
+ * signs in as the seeded volunteer); a real build only does so once the app
+ * has Google client ids, so an unconfigured build shows email sign-in alone
+ * rather than a button that could only fail.
+ */
+export const GOOGLE_SIGN_IN_AVAILABLE = USE_MOCK || GOOGLE_SIGN_IN_CONFIGURED;
 
 const SESSION_KEY = 'csk.session';
 const TOKEN_KEY = 'csk.token';
@@ -48,6 +58,8 @@ export interface AuthResult {
   error?: string;
   /** Set when the account was created but a verification email must be clicked before signing in. */
   pendingVerification?: boolean;
+  /** Set when the person backed out of Google's sheet - nothing to report. */
+  cancelled?: boolean;
 }
 
 type AuthResponse = { token: string; user: SessionUser };
@@ -109,6 +121,42 @@ export async function login(email: string, password: string): Promise<AuthResult
   }
 }
 
+/**
+ * Signs in with Google: the native sheet issues an ID token, and the API
+ * verifies it before handing back the same bearer token a password sign-in
+ * would. Doubles as sign-up - a first-time Google account is created there as
+ * a PUBLIC applicant, exactly like registering by email.
+ */
+export async function loginWithGoogle(): Promise<AuthResult> {
+  if (USE_MOCK) {
+    await delay();
+    const user: SessionUser = { ...SEED_USER };
+    db.session = user;
+    await persist(user, null);
+    return { user };
+  }
+
+  const outcome = await signInWithGoogle();
+  if (outcome.type === 'cancelled') return { cancelled: true };
+  if (outcome.type === 'error') return { error: outcome.message };
+
+  try {
+    const { token, user } = await apiFetch<AuthResponse>('/api/v1/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken: outcome.idToken }),
+    });
+    setAuthToken(token);
+    await persist(user, token);
+    return { user };
+  } catch (err) {
+    // The device is signed in to Google but we aren't signed in to the app;
+    // clear it so a retry starts from the account picker rather than silently
+    // reusing the account that was just refused.
+    await signOutFromGoogle();
+    return toActionError(err);
+  }
+}
+
 export async function register(name: string, email: string, password: string): Promise<AuthResult> {
   const n = name.trim();
   const e = email.trim().toLowerCase();
@@ -149,5 +197,6 @@ export async function register(name: string, email: string, password: string): P
 export async function logout(): Promise<void> {
   db.session = null;
   setAuthToken(null);
+  await signOutFromGoogle();
   await persist(null, null);
 }
