@@ -63,15 +63,22 @@ export function AnnounceEventDialog({
   // fields need no resetting between openings.
   useEffect(() => {
     let current = true;
-    draftEventAnnouncement(event.id).then((draft) => {
-      if (!current) return;
-      if (draft) {
+    draftEventAnnouncement(event.id)
+      .then((draft) => {
+        if (!current || !draft) return;
         setTitle(draft.title);
         setBody(draft.body);
         setAudience(draft.audience as AnnouncementAudience);
-      }
-      setLoading(false);
-    });
+      })
+      .catch((err) => {
+        // The event's title is already in hand, so the coordinator can still
+        // write the pānui themselves rather than staring at a spinner.
+        console.error("Could not draft the event announcement:", err);
+        if (current) toast.error("Couldn't write a draft — please write your own.");
+      })
+      .finally(() => {
+        if (current) setLoading(false);
+      });
     return () => {
       current = false;
     };
@@ -156,8 +163,9 @@ export function AnnounceEventDialog({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Set to match who&apos;s invited — only people the event is for can
-                reply to it.
+                Set this to match who&apos;s invited. Anyone the event isn&apos;t
+                for reads the message without the event attached, so they can&apos;t
+                see its details or reply.
               </p>
             </div>
 

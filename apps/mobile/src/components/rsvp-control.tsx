@@ -89,10 +89,13 @@ export function RsvpControl({ event, showNote = true }: RsvpControlProps) {
     toast.success(successMessage);
 
     // The tallies live on the server (or the mock store) — re-read every
-    // surface that shows this event.
+    // surface that shows this event. A pānui detail screen renders the tally
+    // from its own cached announcement, and this control doesn't know which
+    // notice it was opened from, so every notice is invalidated by prefix.
     qc.invalidateQueries({ queryKey: qk.event(event.id) });
     qc.invalidateQueries({ queryKey: qk.events });
     qc.invalidateQueries({ queryKey: qk.announcements });
+    qc.invalidateQueries({ queryKey: qk.noticesAll });
     qc.invalidateQueries({ queryKey: qk.dashboard });
   }
 

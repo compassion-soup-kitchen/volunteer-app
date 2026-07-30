@@ -7,6 +7,8 @@ export const qk = {
   dashboard: ['dashboard'] as const,
   announcements: ['announcements'] as const,
   notice: (id: string) => ['notice', id] as const,
+  /** Every notice, for invalidating them all without knowing which one is open. */
+  noticesAll: ['notice'] as const,
   events: ['events'] as const,
   pastEvents: ['events', 'past'] as const,
   event: (id: string) => ['event', id] as const,

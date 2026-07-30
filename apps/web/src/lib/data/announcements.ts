@@ -1,7 +1,12 @@
 import type { Audience, EventStatus, Role } from "@prisma/client";
 
 import { getDb } from "@/lib/db";
-import { summariseRsvps, type RsvpCounts, type RsvpResponse } from "@/lib/event-rsvp";
+import {
+  rolesForAudience,
+  summariseRsvps,
+  type RsvpCounts,
+  type RsvpResponse,
+} from "@/lib/event-rsvp";
 
 /** A file riding along with a pānui — a roster PDF, a flyer, a menu. */
 export type AnnouncementAttachmentSummary = {
@@ -71,6 +76,9 @@ const eventSelect = {
   },
 } as const;
 
+/** Who is reading, so their own reply to any linked event comes back with it. */
+export type AnnouncementReader = { userId: string; role: Role };
+
 type EventRow = {
   id: string;
   title: string;
@@ -89,16 +97,26 @@ type EventRow = {
 /**
  * Attaches the reader's own reply and the tallies.
  *
- * A draft event is dropped: the pānui announcing it might have gone out early,
- * and an invitation to something nobody can see yet is just confusing.
+ * The event is dropped unless this reader is genuinely invited to it, because a
+ * pānui's audience and its event's audience are set separately: a coordinators-
+ * only hui can be mentioned in a pānui addressed to everyone, and the event's
+ * title, place and guest numbers must not ride along to people it isn't for.
+ * The event's own audience decides, exactly as it does in `getEventForUser`.
+ *
+ * A draft is dropped for everyone: the pānui may have gone out ahead of it, and
+ * an invitation to something nobody can see yet only confuses.
+ *
+ * No reader means no way to check, so nothing is attached.
  */
 function toAnnouncementEvent(
   event: EventRow | null,
-  userId: string | null
+  reader: AnnouncementReader | null
 ): AnnouncementEvent | null {
   if (!event || event.status === "DRAFT") return null;
+  if (!reader) return null;
+  if (!rolesForAudience(event.audience).includes(reader.role)) return null;
 
-  const mine = userId ? event.rsvps.find((r) => r.userId === userId) : undefined;
+  const mine = event.rsvps.find((r) => r.userId === reader.userId);
 
   return {
     id: event.id,
@@ -116,9 +134,6 @@ function toAnnouncementEvent(
     myRsvp: mine ? { response: mine.response, note: mine.note } : null,
   };
 }
-
-/** Who is reading, so their own reply to any linked event comes back with it. */
-export type AnnouncementReader = { userId: string; role: Role };
 
 /** Published announcements a volunteer may see (ALL + VOLUNTEERS audiences). */
 export async function listVolunteerAnnouncements(
@@ -154,7 +169,7 @@ export async function listVolunteerAnnouncements(
     sentAt: a.sentAt!,
     authorName: a.createdBy?.name ?? null,
     attachments: a.attachments,
-    event: toAnnouncementEvent(a.event, reader?.userId ?? null),
+    event: toAnnouncementEvent(a.event, reader ?? null),
   }));
 }
 
@@ -191,6 +206,6 @@ export async function getVolunteerAnnouncement(
     sentAt: a.sentAt,
     authorName: a.createdBy?.name ?? null,
     attachments: a.attachments,
-    event: toAnnouncementEvent(a.event, reader?.userId ?? null),
+    event: toAnnouncementEvent(a.event, reader ?? null),
   };
 }

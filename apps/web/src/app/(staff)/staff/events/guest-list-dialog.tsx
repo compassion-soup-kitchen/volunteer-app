@@ -5,6 +5,7 @@ import type { Role } from "@prisma/client";
 import { RiLoader4Line } from "@remixicon/react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -72,14 +73,22 @@ export function GuestListDialog({
   // Null while it loads. The dialog is mounted per event (keyed by id), so this
   // starts fresh every time rather than being reset in an effect.
   const [guests, setGuests] = useState<EventGuest[] | null>(null);
+  // A failed read has to be told apart from an empty list, or "nobody is
+  // invited" would be shown for what is really a broken connection.
+  const [failed, setFailed] = useState(false);
   // Bumped after a reply, to re-read the list the reply just changed.
   const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
     let current = true;
-    getEventGuests(event.id).then((list) => {
-      if (current) setGuests(list);
-    });
+    getEventGuests(event.id)
+      .then((list) => {
+        if (current) setGuests(list);
+      })
+      .catch((err) => {
+        console.error("Could not load the guest list:", err);
+        if (current) setFailed(true);
+      });
     return () => {
       current = false;
     };
@@ -138,7 +147,24 @@ export function GuestListDialog({
         <Separator />
 
         <div className="max-h-[45vh] overflow-y-auto">
-          {guests === null ? (
+          {failed ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                The guest list didn&apos;t load.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setFailed(false);
+                  setGuests(null);
+                  setReloads((n) => n + 1);
+                }}
+              >
+                Try again
+              </Button>
+            </div>
+          ) : guests === null ? (
             <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
               <RiLoader4Line className="size-4 animate-spin" aria-hidden />
               Loading the guest list…
