@@ -4,6 +4,7 @@ import { Fragment } from 'react';
 import { Linking, Platform, Pressable, View } from 'react-native';
 
 import { AnnouncementCard } from '@/components/announcement-card';
+import { EventCard } from '@/components/event-card';
 import { Wordmark } from '@/components/brand';
 import { HomeVideoHeader } from '@/components/home-video-header';
 import { MilestoneProgress } from '@/components/milestone-progress';
@@ -29,6 +30,8 @@ import { formatTimeRange, relativeDay } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
 import { getAnnouncements } from '@/services/announcements-service';
+import { getUpcomingEvents } from '@/services/events-service';
+import { canReply } from '@/lib/events';
 import { getDashboardData } from '@/services/dashboard-service';
 import { getAvailableTraining } from '@/services/training-service';
 
@@ -128,11 +131,15 @@ export default function DashboardScreen() {
   });
   const { data: training } = useQuery({ queryKey: qk.training, queryFn: getAvailableTraining });
   const { data: announcements } = useQuery({ queryKey: qk.announcements, queryFn: getAnnouncements });
+  const { data: events } = useQuery({ queryKey: qk.events, queryFn: getUpcomingEvents });
 
   const nextTraining = training?.find((t) => t.userAttendanceStatus === 'REGISTERED') ?? null;
   const rosterOverflow = data ? Math.max(0, data.upcomingShifts.length - 1) : 0;
   const notices = announcements ?? [];
   const topNotices = notices.slice(0, 2);
+  const unanswered = (events ?? [])
+    .filter((event) => event.myResponse === null && canReply(event))
+    .slice(0, 2);
 
   return (
     <Screen
@@ -202,6 +209,27 @@ export default function DashboardScreen() {
                 </View>
                 <Badge label="Booked" tone="navy" icon="checkmark" />
               </Card>
+            </View>
+          ) : null}
+
+          {/* Invitations still waiting on an answer. Answered ones drop out —
+              the nudge is the whole point of putting them on the home screen. */}
+          {unanswered.length > 0 ? (
+            <View style={{ gap: Spacing.md }}>
+              <SectionHeader
+                overline="He pōwhiri"
+                title="You're invited"
+                divider
+                actionLabel="All events"
+                onAction={() => router.push('/events')}
+              />
+              {unanswered.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.id } })}
+                />
+              ))}
             </View>
           ) : null}
 

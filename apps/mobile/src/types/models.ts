@@ -207,6 +207,49 @@ export interface Announcement {
   publishedAt: string;
   /** Pinned notices float to the top and read as time-sensitive */
   pinned: boolean;
+  /**
+   * The gathering this pānui is announcing, when it is announcing one, so the
+   * reply can be offered right there in the feed. Null on an ordinary notice.
+   */
+  event: VolunteerEvent | null;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Events & RSVPs                                                             */
+/* -------------------------------------------------------------------------- */
+
+export type RsvpResponse = 'GOING' | 'MAYBE' | 'NOT_GOING';
+
+export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+
+/**
+ * A gathering the volunteer is invited to — the Christmas party, a hui, a
+ * working bee. Mirrors the web `Event` model plus this reader's own reply.
+ *
+ * Separate from a `Shift`: nobody is rostered and there's no service area, and
+ * separate from the pānui that announces it, which may be one of several.
+ */
+export interface VolunteerEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  /** Calendar day, `YYYY-MM-DD` */
+  date: string;
+  /** `HH:mm`, or null when the time isn't set */
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+  audience: AnnouncementAudience;
+  status: EventStatus;
+  /** Off for a save-the-date nobody needs to reply to */
+  rsvpEnabled: boolean;
+  /** Last calendar day to reply, or null for right up until the event */
+  rsvpDeadline: string | null;
+  goingCount: number;
+  maybeCount: number;
+  /** This volunteer's own reply, or null if they haven't answered */
+  myResponse: RsvpResponse | null;
+  myNote: string | null;
 }
 
 /* -------------------------------------------------------------------------- */

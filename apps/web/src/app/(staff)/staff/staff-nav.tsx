@@ -12,6 +12,7 @@ import {
   RiGroupLine,
   RiFileListLine,
   RiCalendarLine,
+  RiCalendarEventLine,
   RiLogoutBoxLine,
   RiMenuLine,
   RiCloseLine,
@@ -56,6 +57,7 @@ export function StaffNav({
       items: [
         { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
         { href: "/staff/training", label: "Training", icon: RiGraduationCapLine },
+        { href: "/staff/events", label: "Events", icon: RiCalendarEventLine },
         ...(user.role === "ADMIN"
           ? [{ href: "/staff/service-areas", label: "Service areas", icon: RiMapPinLine }]
           : []),

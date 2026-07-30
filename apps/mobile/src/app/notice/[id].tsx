@@ -3,9 +3,11 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { RsvpControl } from '@/components/rsvp-control';
 import { Avatar, Badge, EmptyState, Icon, Text } from '@/components/ui';
 import { Layout, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { canReply, formatRsvpTally, rsvpClosedMessage } from '@/lib/events';
 import { formatLongDate, formatRelativeTime } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
 import { getAnnouncementById } from '@/services/announcements-service';
@@ -89,6 +91,54 @@ export default function NoticeDetailScreen() {
         <Text variant="body" color="text" style={{ marginTop: Spacing.xl, lineHeight: 26 }}>
           {notice.body}
         </Text>
+
+        {/* When this pānui is announcing a gathering, the reply belongs here —
+            the reader has just finished the invitation. */}
+        {notice.event ? (
+          <View
+            style={{
+              marginTop: Spacing.xl,
+              paddingTop: Spacing.lg,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              gap: Spacing.md,
+            }}>
+            <View style={{ gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                <Icon name="calendar-outline" size={17} color="primary" />
+                <Text variant="callout" style={{ flex: 1 }}>
+                  {formatLongDate(notice.event.date)}
+                </Text>
+              </View>
+              {notice.event.location ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                  <Icon name="location-outline" size={17} color="primary" />
+                  <Text variant="callout" style={{ flex: 1 }}>
+                    {notice.event.location}
+                  </Text>
+                </View>
+              ) : null}
+              {notice.event.rsvpEnabled && notice.event.status !== 'CANCELLED' ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                  <Icon name="people-outline" size={17} color="primary" />
+                  <Text variant="callout" style={{ flex: 1 }}>
+                    {formatRsvpTally(notice.event)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            {canReply(notice.event) ? (
+              <View style={{ gap: Spacing.sm }}>
+                <Text variant="label">Can you come?</Text>
+                <RsvpControl event={notice.event} />
+              </View>
+            ) : (
+              <Text variant="caption" color="textTertiary">
+                {rsvpClosedMessage(notice.event)}
+              </Text>
+            )}
+          </View>
+        ) : null}
       </View>
     </View>
   );
