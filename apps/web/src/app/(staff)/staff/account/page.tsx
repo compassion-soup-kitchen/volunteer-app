@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/brand/page-header";
 import { getMyAccount } from "@/lib/account-actions";
+import { DeleteAccountCard } from "@/components/account/delete-account-card";
 import { AccountDetailsForm } from "./account-details-form";
 import { ChangePasswordForm } from "./change-password-form";
-import { DeleteAccountCard } from "./delete-account-card";
 
 export const metadata: Metadata = {
   title: "My Account | Te Pūaroha",

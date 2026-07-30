@@ -37,9 +37,15 @@ import {
  *
  * The counterpart to the mobile app's Delete account screen, and the same
  * rules underneath - both call `deleteOwnAccount`. Kept as a dialog rather
- * than its own page because, unlike the app, there is a whole account page to
- * hang it off; the summary is still loaded from the server so the numbers
- * someone agrees to are real rather than described in the abstract.
+ * than its own page because, unlike the app, there is a whole page to hang it
+ * off; the summary is still loaded from the server so the numbers someone
+ * agrees to are real rather than described in the abstract.
+ *
+ * Rendered for volunteers on /profile and for staff on /staff/account, which
+ * is why it lives here rather than under either route group. `deleteOwnAccount`
+ * is gated on identity rather than role - it can only ever reach the caller's
+ * own row - so every signed-in person needs a way to it, not just the ones who
+ * happen to have a staff account page.
  */
 export function DeleteAccountCard() {
   const [open, setOpen] = useState(false);
@@ -100,8 +106,8 @@ export function DeleteAccountCard() {
         Deleting your account erases it and everything recorded against it -
         your profile, shifts, training and documents. It can&apos;t be undone,
         and your hours leave the kitchen&apos;s reporting with them. If
-        you&apos;re only stepping back for a while, ask another coordinator to
-        archive you instead.
+        you&apos;re only stepping back for a while, ask a coordinator to
+        archive you instead - your record stays for when you come back.
       </p>
 
       <AlertDialog

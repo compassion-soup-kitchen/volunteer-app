@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DeleteAccountCard } from "@/components/account/delete-account-card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { PageHeader } from "@/components/brand/page-header";
 import { StatusBadge } from "@/components/brand/status-badge";
@@ -409,6 +410,21 @@ export default async function ProfilePage() {
                   No details provided
                 </p>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Deleting your own account. Last in the rail and visually apart,
+              the way irreversible things should be - but present, because
+              erasure isn't a staff-only right and a volunteer who never
+              installs the app would otherwise have nowhere to do it. */}
+          <Card className="gap-0 border-destructive/40 pb-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-destructive">
+                Delete account
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="border-t border-border pt-4 pb-2">
+              <DeleteAccountCard />
             </CardContent>
           </Card>
         </div>
