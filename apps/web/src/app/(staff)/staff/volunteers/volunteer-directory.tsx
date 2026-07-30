@@ -1034,6 +1034,15 @@ function StatusMenu({
           <RiMoreLine className="size-4" />
         </Button>
       </DropdownMenuTrigger>
+      {/*
+        Every section below owns the separator *above* it, unconditionally -
+        "View full record" is always the first item, so there is always
+        something to divide from. Don't gate these on what the sections above
+        happen to render: that was the old arrangement, and it broke the moment
+        a new first item appeared (an admin looking at someone who never
+        applied has no statuses and no groups, but can still change their role,
+        so both gates read false and the two ran together).
+      */}
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
           <Link href={`/staff/volunteers/${volunteer.user.id}`}>
@@ -1062,7 +1071,7 @@ function StatusMenu({
         ))}
         {canManageGroups && (
           <>
-            {availableStatuses.length > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <RiGroupLine className="mr-2 size-4" />
@@ -1094,9 +1103,7 @@ function StatusMenu({
         )}
         {canChangeRole && (
           <>
-            {(availableStatuses.length > 0 || canManageGroups) && (
-              <DropdownMenuSeparator />
-            )}
+            <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <RiUserSettingsLine className="mr-2 size-4" />
