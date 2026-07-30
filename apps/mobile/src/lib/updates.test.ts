@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { isSafeToReloadAfter, RESUME_RELOAD_AFTER_MS, versionLabel } from './updates';
+import {
+  isReadOnlySurface,
+  isSafeToReloadAfter,
+  RESUME_RELOAD_AFTER_MS,
+  versionLabel,
+} from './updates';
 
 // Hoisted above the import above. `src/lib/updates` derives IS_OTA_MANAGED from
 // these at import time; the values stand in for Expo Go (enabled, but no
@@ -24,6 +29,28 @@ describe('isSafeToReloadAfter', () => {
 
   it('allows a long absence', () => {
     expect(isSafeToReloadAfter(RESUME_RELOAD_AFTER_MS * 100)).toBe(true);
+  });
+});
+
+describe('isReadOnlySurface', () => {
+  it('accepts every tab screen', () => {
+    for (const tab of [[], ['index'], ['shifts'], ['hours'], ['training'], ['profile']]) {
+      expect(isReadOnlySurface(['(tabs)', ...tab])).toBe(true);
+    }
+  });
+
+  it('rejects the routes that hold unsaved form input', () => {
+    expect(isReadOnlySurface(['apply'])).toBe(false);
+    expect(isReadOnlySurface(['profile', 'edit'])).toBe(false);
+    expect(isReadOnlySurface(['(auth)', 'register'])).toBe(false);
+    expect(isReadOnlySurface(['(auth)', 'login'])).toBe(false);
+  });
+
+  it('rejects anything unrecognised, so a new form route is safe by default', () => {
+    expect(isReadOnlySurface([])).toBe(false);
+    expect(isReadOnlySurface(['some-future-form'])).toBe(false);
+    // A tab *name* is not enough - it has to be inside the tab group.
+    expect(isReadOnlySurface(['profile'])).toBe(false);
   });
 });
 

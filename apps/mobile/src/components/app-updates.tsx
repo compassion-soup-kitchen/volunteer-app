@@ -6,19 +6,22 @@
  * leaves the app open for days means never. This adds the missing half:
  *
  * - on returning to the foreground, check and download in the background, and
- * - apply a downloaded update only after a long enough absence that reloading
- *   cannot lose anything the volunteer was in the middle of.
+ * - apply a downloaded update only when reloading cannot lose anything: the app
+ *   was away long enough to read as a new session *and* the volunteer is on a
+ *   read-only tab screen. Time alone is not enough - a phone call outlasts the
+ *   threshold easily and can just as well arrive mid-registration.
  *
  * Nothing here runs unless EAS Update governs the bundle, which rules out
  * development and Expo Go (see `IS_OTA_MANAGED`). Testing OTA needs a release
  * build - `build:ios:preview` or a TestFlight build.
  */
 
+import { useSegments } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { IS_OTA_MANAGED, isSafeToReloadAfter } from '@/lib/updates';
+import { IS_OTA_MANAGED, isReadOnlySurface, isSafeToReloadAfter } from '@/lib/updates';
 
 async function downloadLatest(): Promise<void> {
   try {
@@ -32,13 +35,18 @@ async function downloadLatest(): Promise<void> {
 
 export function AppUpdates() {
   const { isUpdatePending } = Updates.useUpdates();
+  const segments = useSegments();
 
-  // Mirrored into a ref so the listener can read the latest value without being
-  // torn down and re-registered every time it changes.
+  // Mirrored into refs so the listener can read the latest values without being
+  // torn down and re-registered every time they change.
   const pending = useRef(isUpdatePending);
+  const onReadOnlySurface = useRef(false);
   useEffect(() => {
     pending.current = isUpdatePending;
   }, [isUpdatePending]);
+  useEffect(() => {
+    onReadOnlySurface.current = isReadOnlySurface(segments);
+  }, [segments]);
 
   const leftAt = useRef<number | null>(null);
 
@@ -62,8 +70,9 @@ export function AppUpdates() {
         // against the *running* update, so it would keep reporting this one as
         // available and re-download it on every resume - a volunteer's mobile
         // data for nothing. Just wait for a long enough absence to apply it.
-        if (isSafeToReloadAfter(awayMs)) {
-          // Reads as a fresh launch, which is what it effectively is.
+        if (isSafeToReloadAfter(awayMs) && onReadOnlySurface.current) {
+          // Reads as a fresh launch, which is what it effectively is - and on a
+          // read-only tab there is no typed input for it to throw away.
           Updates.reloadAsync().catch(() => {});
         }
         return;
@@ -77,3 +86,4 @@ export function AppUpdates() {
 
   return null;
 }
+

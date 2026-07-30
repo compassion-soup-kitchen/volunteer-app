@@ -30,11 +30,29 @@ export const IS_OTA_MANAGED = Updates.isEnabled && !__DEV__ && Boolean(Updates.c
 export const RESUME_RELOAD_AFTER_MS = 15 * 60 * 1000;
 
 /**
- * Whether an absence of `awayMs` was long enough that reloading on return
- * cannot plausibly interrupt anything the volunteer was in the middle of.
+ * Whether an absence of `awayMs` was long enough to read as a new session
+ * rather than a glance away.
+ *
+ * Not sufficient on its own: a phone call is easily this long, and it can just
+ * as well arrive mid-form. Pair it with `isReadOnlySurface`.
  */
 export function isSafeToReloadAfter(awayMs: number): boolean {
   return awayMs >= RESUME_RELOAD_AFTER_MS;
+}
+
+/**
+ * Whether the focused route is a screen with nothing to lose - one of the
+ * read-only tab screens (dashboard, shifts, hours, training, profile).
+ *
+ * An allowlist of safe surfaces rather than a blocklist of form routes, so the
+ * failure mode is the harmless one. Every form in the app is a pushed route or
+ * a modal outside the tab group (`apply`, `profile/edit`, `(auth)/register`,
+ * `(auth)/login`) and none of them persist a draft, so any form added later is
+ * excluded by default. Getting this wrong delays an update; getting it wrong the
+ * other way loses someone's half-finished application.
+ */
+export function isReadOnlySurface(segments: readonly string[]): boolean {
+  return segments[0] === '(tabs)';
 }
 
 /**
