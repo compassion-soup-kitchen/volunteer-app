@@ -134,26 +134,33 @@ function quoted(value: string): string {
  * token, and only ever reach the log.
  *
  * Pure over already-decoded claims (`null` when the token wasn't even a JWT)
- * so the rules can be tested without keys, network or a real token.
+ * and the env it judges them against, so the rules can be tested without keys,
+ * network or a real token.
  */
 export function describeRejectedToken(
   claims: JWTPayload | null,
-  configured: string[],
+  env: GoogleClientEnv,
   error: unknown
 ): string {
   if (!claims) return "not a well-formed JWT";
 
+  const configured = googleAudiences(env);
   const audience = [claims.aud]
     .flat()
     .filter((aud): aud is string => typeof aud === "string" && aud.length > 0);
 
-  // `configured` is our own env and goes in bare; everything else here was
+  // The client ids are our own env and go in bare; everything else here was
   // written by whoever sent the token, so it is quoted.
   if (audience.length > 0 && !audience.some((aud) => configured.includes(aud))) {
+    // Worth naming only while it is the likely cause. Once the iOS client id
+    // is set, pointing at it would send whoever is triaging a rotated web
+    // client id - or plain garbage in `aud` - off to check a correct variable.
+    const hint = env.GOOGLE_IOS_CLIENT_ID?.trim()
+      ? ""
+      : " - an iOS build's tokens carry GOOGLE_IOS_CLIENT_ID, which is not set";
     return (
       `audience ${audience.map(quoted).join(", ")} is not a client id this ` +
-      `server accepts (accepting ${configured.join(", ")}) - an iOS build's ` +
-      `tokens carry GOOGLE_IOS_CLIENT_ID, so check it is set and matches`
+      `server accepts (accepting ${configured.join(", ")})${hint}`
     );
   }
 
@@ -187,7 +194,8 @@ function decodeUnverified(idToken: string): JWTPayload | null {
 export async function verifyGoogleIdToken(
   idToken: string
 ): Promise<GoogleIdTokenResult> {
-  const audience = googleAudiences();
+  const env = process.env as GoogleClientEnv;
+  const audience = googleAudiences(env);
   // With no client ids configured every token would verify against an empty
   // audience list, so refuse outright rather than accept tokens minted for
   // somebody else's app.
@@ -204,7 +212,7 @@ export async function verifyGoogleIdToken(
     // but not to whoever has to work out why sign-in stopped working.
     console.warn(
       "[google-id-token] refused a token:",
-      describeRejectedToken(decodeUnverified(idToken), audience, error)
+      describeRejectedToken(decodeUnverified(idToken), env, error)
     );
     return { ok: false, reason: "invalid-token" };
   }

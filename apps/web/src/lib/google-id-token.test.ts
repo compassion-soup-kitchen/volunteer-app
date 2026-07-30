@@ -120,10 +120,11 @@ describe("readGoogleClaims", () => {
 });
 
 describe("describeRejectedToken", () => {
-  const configured = [
-    "web.apps.googleusercontent.com",
-    "ios.apps.googleusercontent.com",
-  ];
+  const env = {
+    GOOGLE_CLIENT_ID: "web.apps.googleusercontent.com",
+    GOOGLE_IOS_CLIENT_ID: "ios.apps.googleusercontent.com",
+  };
+  const configured = [env.GOOGLE_CLIENT_ID, env.GOOGLE_IOS_CLIENT_ID];
 
   // The failure this exists for: the iOS build's tokens are audienced to the
   // iOS client id, so a server missing GOOGLE_IOS_CLIENT_ID refuses every one
@@ -131,7 +132,7 @@ describe("describeRejectedToken", () => {
   it("names an audience the server was never configured with", () => {
     const diagnosis = describeRejectedToken(
       { aud: "ios.apps.googleusercontent.com", iss: "https://accounts.google.com" },
-      ["web.apps.googleusercontent.com"],
+      { GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID },
       new Error('unexpected "aud" claim value')
     );
 
@@ -139,14 +140,38 @@ describe("describeRejectedToken", () => {
     expect(diagnosis).toContain("GOOGLE_IOS_CLIENT_ID");
   });
 
+  // Once the iOS client id is set the hint is no longer the likely cause, and
+  // repeating it would send whoever is triaging a rotated web client id off to
+  // check a variable that is already right.
+  it("drops the iOS hint once that client id is configured", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: "someone-else.apps.googleusercontent.com" },
+      env,
+      new Error('unexpected "aud" claim value')
+    );
+
+    expect(diagnosis).toContain("someone-else.apps.googleusercontent.com");
+    expect(diagnosis).toContain(configured.join(", "));
+    expect(diagnosis).not.toContain("GOOGLE_IOS_CLIENT_ID");
+  });
+
+  it("treats a blank iOS client id as unset", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: "ios.apps.googleusercontent.com" },
+      { ...env, GOOGLE_IOS_CLIENT_ID: "  " },
+      new Error('unexpected "aud" claim value')
+    );
+
+    expect(diagnosis).toContain("GOOGLE_IOS_CLIENT_ID");
+  });
+
   it("accepts an audience array that contains a configured client id", () => {
     const diagnosis = describeRejectedToken(
       { aud: ["someone-else.apps.googleusercontent.com", configured[1]] },
-      configured,
+      env,
       new Error("signature verification failed")
     );
 
-    expect(diagnosis).not.toContain("GOOGLE_IOS_CLIENT_ID");
     expect(diagnosis).toContain("signature verification failed");
   });
 
@@ -154,7 +179,7 @@ describe("describeRejectedToken", () => {
     expect(
       describeRejectedToken(
         { aud: configured[0], iss: "https://login.example.com" },
-        configured,
+        env,
         new Error("nope")
       )
     ).toBe('issuer "https://login.example.com" is not Google');
@@ -166,7 +191,7 @@ describe("describeRejectedToken", () => {
   it("escapes claims that would otherwise forge extra log lines", () => {
     const diagnosis = describeRejectedToken(
       { aud: '\n[audit] user permanently deleted { "id": "usr_1" }' },
-      configured,
+      env,
       new Error("unexpected \"aud\" claim value")
     );
 
@@ -178,7 +203,7 @@ describe("describeRejectedToken", () => {
     expect(
       describeRejectedToken(
         { aud: configured[0], iss: "https://evil.example\nfake log line" },
-        configured,
+        env,
         new Error("boom")
       )
     ).not.toContain("\n");
@@ -186,7 +211,7 @@ describe("describeRejectedToken", () => {
     expect(
       describeRejectedToken(
         { aud: configured[0] },
-        configured,
+        env,
         new Error("boom\nfake log line")
       )
     ).not.toContain("\n");
@@ -199,13 +224,13 @@ describe("describeRejectedToken", () => {
       code: "ERR_JWKS_TIMEOUT",
     });
 
-    expect(describeRejectedToken({ aud: configured[0] }, configured, error)).toBe(
+    expect(describeRejectedToken({ aud: configured[0] }, env, error)).toBe(
       'signature or claim check failed ["ERR_JWKS_TIMEOUT"]: "request timed out"'
     );
   });
 
   it("reports a token that wasn't a JWT at all", () => {
-    expect(describeRejectedToken(null, configured, new Error("bad"))).toBe(
+    expect(describeRejectedToken(null, env, new Error("bad"))).toBe(
       "not a well-formed JWT"
     );
   });
