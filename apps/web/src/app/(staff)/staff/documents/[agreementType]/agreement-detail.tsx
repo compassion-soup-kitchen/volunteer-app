@@ -24,13 +24,7 @@ import {
   updateAgreementTemplate,
   type AgreementDetail,
 } from "@/lib/document-actions";
-
-const TYPE_LABELS: Record<string, string> = {
-  CODE_OF_CONDUCT: "Te Tikanga — Code of Conduct",
-  SAFEGUARDING: "Safeguarding Policy",
-  VOLUNTEER_APPLICATION: "Volunteer Application Agreement",
-  POLICIES: "General Policies",
-};
+import { agreementLabel } from "@/lib/agreement-labels";
 
 function initials(name: string) {
   return (
@@ -77,7 +71,7 @@ export function AgreementDetailView({
       <Card>
         <CardHeader>
           <CardTitle>
-            {TYPE_LABELS[detail.agreementType] || detail.title}
+            {agreementLabel(detail.agreementType, detail.title)}
           </CardTitle>
           <CardDescription>
             Current version: {detail.version} · Updated{" "}

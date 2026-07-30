@@ -31,6 +31,7 @@ import { getVolunteerProfile } from "@/lib/application-actions";
 import { getMyGroups } from "@/lib/group-actions";
 import { GroupBadge } from "@/components/brand/group-badge";
 import { getVolunteerTrainingHistory } from "@/lib/training-actions";
+import { agreementLabel } from "@/lib/agreement-labels";
 import { formatDateOnly, formatTimestampInAppZone } from "@/lib/date-only";
 
 export const metadata: Metadata = {
@@ -277,9 +278,7 @@ export default async function ProfilePage() {
                     </IconChip>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">
-                        {agreement.agreementType === "CODE_OF_CONDUCT"
-                          ? "Te Tikanga · Code of conduct"
-                          : "Safeguarding policy"}
+                        {agreementLabel(agreement.agreementType)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Signed{" "}
