@@ -8,7 +8,12 @@
  * the client says about who they are is taken at face value.
  */
 
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+import {
+  createRemoteJWKSet,
+  decodeJwt,
+  jwtVerify,
+  type JWTPayload,
+} from "jose";
 
 const GOOGLE_JWKS_URL = new URL("https://www.googleapis.com/oauth2/v3/certs");
 
@@ -105,11 +110,92 @@ export function readGoogleClaims(payload: JWTPayload): GoogleIdTokenResult {
   };
 }
 
+/**
+ * Renders untrusted text safe to put in a log line.
+ *
+ * Everything the diagnosis below quotes came out of an *unverified* token, so
+ * a hostile caller chooses it freely - and a claim carrying newlines would
+ * otherwise let them write extra lines into the log, forging entries for
+ * whoever is triaging it (CWE-117). `JSON.stringify` both escapes the control
+ * characters and delimits the value, so its extent is never in doubt.
+ */
+function quoted(value: string): string {
+  return JSON.stringify(value);
+}
+
+/**
+ * Explains, for the server log alone, why a token was refused.
+ *
+ * The API answers one deliberately opaque "we couldn't verify that" for every
+ * failure, which is right for the client and useless for us: an audience the
+ * server was never told about - a mobile client id missing from its env -
+ * looks exactly like a forged signature from the outside. So the claims are
+ * decoded *without* being trusted, purely to name the client that minted the
+ * token, and only ever reach the log.
+ *
+ * Pure over already-decoded claims (`null` when the token wasn't even a JWT)
+ * and the env it judges them against, so the rules can be tested without keys,
+ * network or a real token.
+ */
+export function describeRejectedToken(
+  claims: JWTPayload | null,
+  env: GoogleClientEnv,
+  error: unknown
+): string {
+  if (!claims) return "not a well-formed JWT";
+
+  const configured = googleAudiences(env);
+  const audience = [claims.aud]
+    .flat()
+    .filter((aud): aud is string => typeof aud === "string" && aud.length > 0);
+
+  // The client ids are our own env and go in bare; everything else here was
+  // written by whoever sent the token, so it is quoted.
+  if (audience.length > 0 && !audience.some((aud) => configured.includes(aud))) {
+    // Worth naming only while it is the likely cause. Once the iOS client id
+    // is set, pointing at it would send whoever is triaging a rotated web
+    // client id - or plain garbage in `aud` - off to check a correct variable.
+    const hint = env.GOOGLE_IOS_CLIENT_ID?.trim()
+      ? ""
+      : " - an iOS build's tokens carry GOOGLE_IOS_CLIENT_ID, which is not set";
+    return (
+      `audience ${audience.map(quoted).join(", ")} is not a client id this ` +
+      `server accepts (accepting ${configured.join(", ")})${hint}`
+    );
+  }
+
+  if (typeof claims.iss === "string" && !GOOGLE_ISSUERS.includes(claims.iss)) {
+    return `issuer ${quoted(claims.iss)} is not Google`;
+  }
+
+  // Everything left is jose's own verdict: a bad signature, an expired token,
+  // or - the one worth spotting - Google's keys being unreachable from here.
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? String((error as { code: unknown }).code)
+      : null;
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    `signature or claim check failed${code ? ` [${quoted(code)}]` : ""}: ` +
+    quoted(message)
+  );
+}
+
+/** The token's own claims, unverified - for diagnostics only, never trusted. */
+function decodeUnverified(idToken: string): JWTPayload | null {
+  try {
+    return decodeJwt(idToken);
+  } catch {
+    return null;
+  }
+}
+
 /** Verifies a Google ID token and returns the identity it vouches for. */
 export async function verifyGoogleIdToken(
   idToken: string
 ): Promise<GoogleIdTokenResult> {
-  const audience = googleAudiences();
+  const env = process.env as GoogleClientEnv;
+  const audience = googleAudiences(env);
   // With no client ids configured every token would verify against an empty
   // audience list, so refuse outright rather than accept tokens minted for
   // somebody else's app.
@@ -121,8 +207,13 @@ export async function verifyGoogleIdToken(
       audience,
     });
     return readGoogleClaims(payload);
-  } catch {
-    // Bad signature, wrong audience, expired - all the same to the caller.
+  } catch (error) {
+    // Bad signature, wrong audience, expired - all the same to the caller,
+    // but not to whoever has to work out why sign-in stopped working.
+    console.warn(
+      "[google-id-token] refused a token:",
+      describeRejectedToken(decodeUnverified(idToken), env, error)
+    );
     return { ok: false, reason: "invalid-token" };
   }
 }

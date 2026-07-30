@@ -289,6 +289,7 @@ Required env vars for `apps/web` (see `apps/web/.env.example`):
 - `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_IOS_CLIENT_ID` - the iOS OAuth client, needed by `POST /api/v1/auth/google` for the mobile app's Google sign-in. **Not optional in any environment the iOS app talks to**: without `serverClientID` the iOS SDK audiences its ID token to the iOS client, so the endpoint refuses every Google sign-in from the app ("We couldn't verify that Google sign-in") even though Google's own sheet completes. Must match `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in the app's EAS environment; the refusal reason and the token's actual audience are logged as `[google-id-token] refused a token: …`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` — address autocomplete on the application form (optional; falls back to manual entry)
 - `RESEND_API_KEY`, `EMAIL_FROM` — transactional email via Resend (optional; sending is skipped when unset)
 - `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` - Cloudflare R2 for document uploads. `S3_ENDPOINT` is the bucket-less account endpoint (`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`) and `S3_REGION` is `auto`

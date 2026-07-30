@@ -3,14 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Stands in for Google's key endpoint - the point of these tests is the
 // wiring around the signature check, not jose's own crypto.
 const jwtVerifyMock = vi.fn();
+const decodeJwtMock = vi.fn<(token: string) => unknown>(() => ({}));
 const createRemoteJWKSetMock = vi.fn<(url: URL) => string>(() => "remote-jwks");
 
 vi.mock("jose", () => ({
   createRemoteJWKSet: (url: URL) => createRemoteJWKSetMock(url),
   jwtVerify: (...args: unknown[]) => jwtVerifyMock(...args),
+  decodeJwt: (token: string) => decodeJwtMock(token),
 }));
 
 import {
+  describeRejectedToken,
   googleAudiences,
   readGoogleClaims,
   verifyGoogleIdToken,
@@ -116,6 +119,123 @@ describe("readGoogleClaims", () => {
   });
 });
 
+describe("describeRejectedToken", () => {
+  const env = {
+    GOOGLE_CLIENT_ID: "web.apps.googleusercontent.com",
+    GOOGLE_IOS_CLIENT_ID: "ios.apps.googleusercontent.com",
+  };
+  const configured = [env.GOOGLE_CLIENT_ID, env.GOOGLE_IOS_CLIENT_ID];
+
+  // The failure this exists for: the iOS build's tokens are audienced to the
+  // iOS client id, so a server missing GOOGLE_IOS_CLIENT_ID refuses every one
+  // of them with nothing in the response to say so.
+  it("names an audience the server was never configured with", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: "ios.apps.googleusercontent.com", iss: "https://accounts.google.com" },
+      { GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID },
+      new Error('unexpected "aud" claim value')
+    );
+
+    expect(diagnosis).toContain("ios.apps.googleusercontent.com");
+    expect(diagnosis).toContain("GOOGLE_IOS_CLIENT_ID");
+  });
+
+  // Once the iOS client id is set the hint is no longer the likely cause, and
+  // repeating it would send whoever is triaging a rotated web client id off to
+  // check a variable that is already right.
+  it("drops the iOS hint once that client id is configured", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: "someone-else.apps.googleusercontent.com" },
+      env,
+      new Error('unexpected "aud" claim value')
+    );
+
+    expect(diagnosis).toContain("someone-else.apps.googleusercontent.com");
+    expect(diagnosis).toContain(configured.join(", "));
+    expect(diagnosis).not.toContain("GOOGLE_IOS_CLIENT_ID");
+  });
+
+  it("treats a blank iOS client id as unset", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: "ios.apps.googleusercontent.com" },
+      { ...env, GOOGLE_IOS_CLIENT_ID: "  " },
+      new Error('unexpected "aud" claim value')
+    );
+
+    expect(diagnosis).toContain("GOOGLE_IOS_CLIENT_ID");
+  });
+
+  it("accepts an audience array that contains a configured client id", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: ["someone-else.apps.googleusercontent.com", configured[1]] },
+      env,
+      new Error("signature verification failed")
+    );
+
+    expect(diagnosis).toContain("signature verification failed");
+  });
+
+  it("calls out a foreign issuer", () => {
+    expect(
+      describeRejectedToken(
+        { aud: configured[0], iss: "https://login.example.com" },
+        env,
+        new Error("nope")
+      )
+    ).toBe('issuer "https://login.example.com" is not Google');
+  });
+
+  // The claims are decoded without being verified, so a hostile caller picks
+  // them: unescaped, a newline would let them forge whole log lines and drop a
+  // convincing `[audit]` entry in front of whoever is reading (CWE-117).
+  it("escapes claims that would otherwise forge extra log lines", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: '\n[audit] user permanently deleted { "id": "usr_1" }' },
+      env,
+      new Error("unexpected \"aud\" claim value")
+    );
+
+    expect(diagnosis).not.toContain("\n");
+    expect(diagnosis).toContain("\\n[audit]");
+  });
+
+  it("escapes a forged issuer and error message too", () => {
+    expect(
+      describeRejectedToken(
+        { aud: configured[0], iss: "https://evil.example\nfake log line" },
+        env,
+        new Error("boom")
+      )
+    ).not.toContain("\n");
+
+    expect(
+      describeRejectedToken(
+        { aud: configured[0] },
+        env,
+        new Error("boom\nfake log line")
+      )
+    ).not.toContain("\n");
+  });
+
+  // Distinguishes "somebody sent us rubbish" from "this container can't reach
+  // Google's certs endpoint", which look identical without the error code.
+  it("surfaces jose's error code for a right-audience failure", () => {
+    const error = Object.assign(new Error("request timed out"), {
+      code: "ERR_JWKS_TIMEOUT",
+    });
+
+    expect(describeRejectedToken({ aud: configured[0] }, env, error)).toBe(
+      'signature or claim check failed ["ERR_JWKS_TIMEOUT"]: "request timed out"'
+    );
+  });
+
+  it("reports a token that wasn't a JWT at all", () => {
+    expect(describeRejectedToken(null, env, new Error("bad"))).toBe(
+      "not a well-formed JWT"
+    );
+  });
+});
+
 describe("verifyGoogleIdToken", () => {
   const verifiedPayload = {
     sub: "google-123",
@@ -186,6 +306,25 @@ describe("verifyGoogleIdToken", () => {
       ok: false,
       reason: "invalid-token",
     });
+  });
+
+  // The response says nothing on purpose, so the log has to say everything.
+  it("logs why the token was refused", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    decodeJwtMock.mockReturnValueOnce({
+      aud: "some-other-app.apps.googleusercontent.com",
+    });
+    jwtVerifyMock.mockRejectedValueOnce(
+      new Error('unexpected "aud" claim value')
+    );
+
+    await verifyGoogleIdToken("wrong-audience");
+
+    expect(warn).toHaveBeenCalledWith(
+      "[google-id-token] refused a token:",
+      expect.stringContaining("some-other-app.apps.googleusercontent.com")
+    );
+    warn.mockRestore();
   });
 
   it("still applies the claim rules to a validly-signed token", async () => {

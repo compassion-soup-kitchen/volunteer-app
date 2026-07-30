@@ -216,7 +216,18 @@ Coolify). `prisma migrate deploy` runs automatically on container start, and
 `DATABASE_URL`, `NEXTAUTH_URL` (the real https:// domain), `NEXTAUTH_SECRET`
 (generate a fresh one — never reuse dev's), `GOOGLE_CLIENT_ID` +
 `GOOGLE_CLIENT_SECRET` (with the prod domain added to the OAuth redirect
-allowlist), and `S3_*` for R2 document storage (see below).
+allowlist), `GOOGLE_IOS_CLIENT_ID`, and `S3_*` for R2 document storage (see
+below).
+
+`GOOGLE_IOS_CLIENT_ID` is easy to miss and fails in a way that points nowhere:
+the iOS app's Google sign-in produces an ID token audienced to the **iOS**
+OAuth client, so without it `POST /api/v1/auth/google` refuses every Google
+sign-in from the app with "We couldn't verify that Google sign-in" while
+Google's own sheet works perfectly. It must be the iOS client from the same
+Google Cloud project as `GOOGLE_CLIENT_ID`, and match
+`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in the app's EAS environment. The refusal
+reason (including the audience the token actually carried) is logged as
+`[google-id-token] refused a token: …`.
 
 **Optional but recommended**: `RESEND_API_KEY` + `EMAIL_FROM` (password reset
 and application emails are skipped without them), and
