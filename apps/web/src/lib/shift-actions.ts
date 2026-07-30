@@ -55,7 +55,8 @@ export type StaffShift = {
   notes: string | null;
   offersCloseOn: Date | null;
   serviceArea: { id: string; name: string };
-  createdBy: { name: string | null };
+  /** Null once the coordinator who rostered it has deleted their account. */
+  createdBy: { name: string | null } | null;
   mealsServed: number | null;
   mealsRecordedAt: Date | null;
   mealsRecordedBy: { name: string | null } | null;

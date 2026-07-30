@@ -34,7 +34,8 @@ export type StaffTrainingSession = {
   endTime: string;
   capacity: number;
   location: string | null;
-  createdBy: { name: string | null };
+  /** Null once the person who scheduled it has deleted their account. */
+  createdBy: { name: string | null } | null;
   attendances: {
     id: string;
     status: string;

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { isSessionAccountActive } from "@/lib/data/session-account";
 import { VolunteerNav } from "./volunteer-nav";
 import { VolunteerFooter } from "./volunteer-footer";
 
@@ -17,6 +18,14 @@ export default async function VolunteerLayout({
   // Staff should use the staff dashboard
   if (session.user.role === "COORDINATOR" || session.user.role === "ADMIN") {
     redirect("/staff/dashboard");
+  }
+
+  // The session is a JWT, so it outlives the account it names - someone
+  // deleted or archived mid-session would otherwise keep browsing here. Sent
+  // via the sign-out route, not straight to /login: the token still reads as
+  // signed in, so the proxy would bounce it back here for ever.
+  if (!(await isSessionAccountActive(session.user.id))) {
+    redirect("/api/auth/session-ended");
   }
 
   return (

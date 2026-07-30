@@ -309,7 +309,10 @@ model Shift {
   endTime           String
   capacity          Int
   notes             String?
-  createdById       String
+  /// Nullable so the roster outlives the coordinator who wrote it: a shift
+  /// that happened still happened once their account is erased. See the note
+  /// on `Announcement.createdById`.
+  createdById       String?
   createdAt         DateTime  @default(now())
   mealsServed       Int?
   mealsRecordedAt   DateTime?
@@ -319,7 +322,7 @@ model Shift {
   offersCloseOn     DateTime? @db.Date
 
   serviceArea     ServiceArea   @relation(fields: [serviceAreaId], references: [id])
-  createdBy       User          @relation(fields: [createdById], references: [id])
+  createdBy       User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
   mealsRecordedBy User?         @relation("MealsRecordedBy", fields: [mealsRecordedById], references: [id])
   signups         ShiftSignup[]
   offers          ShiftOffer[]
@@ -399,11 +402,12 @@ model TrainingSession {
   endTime     String
   capacity    Int
   location    String?
-  createdById String
+  /// Nullable for the same reason as `Announcement.createdById`.
+  createdById String?
   createdAt   DateTime @default(now())
 
   type        TrainingType         @relation(fields: [typeId], references: [id])
-  createdBy   User                 @relation(fields: [createdById], references: [id])
+  createdBy   User?                @relation(fields: [createdById], references: [id], onDelete: SetNull)
   attendances TrainingAttendance[]
 
   @@index([typeId])
@@ -441,7 +445,11 @@ model Announcement {
   title       String
   body        String    @db.Text
   audience    Audience  @default(ALL)
-  createdById String
+  /// Nullable so a pānui outlives its author. Anyone may erase their account
+  /// (the App Store requires it, and so does the Privacy Act), but a message
+  /// that was sent stays sent - the same reasoning as `eventId` below. The
+  /// author's name simply drops off; the pānui itself is org history.
+  createdById String?
   createdAt   DateTime  @default(now())
   sentAt      DateTime?
   /// The gathering this pānui is about, when it is announcing one. Optional
@@ -449,7 +457,7 @@ model Announcement {
   /// more than once (the invitation, then "replies close Friday").
   eventId String?
 
-  createdBy   User                     @relation(fields: [createdById], references: [id])
+  createdBy   User?                    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   event       Event?                   @relation(fields: [eventId], references: [id], onDelete: SetNull)
   attachments AnnouncementAttachment[]
 
@@ -513,11 +521,12 @@ model Event {
   rsvpEnabled Boolean     @default(true)
   /// Last calendar day to reply. Null means right up until the event itself.
   rsvpDeadline DateTime? @db.Date
-  createdById  String
+  /// Nullable for the same reason as `Announcement.createdById`.
+  createdById  String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  createdBy     User           @relation(fields: [createdById], references: [id])
+  createdBy     User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
   rsvps         EventRsvp[]
   announcements Announcement[]
 

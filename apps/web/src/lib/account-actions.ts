@@ -14,6 +14,15 @@ import { passwordChangedEmail } from "@/lib/email-templates";
 import { parseAccountDetails, parsePasswordChange } from "@/lib/account-schema";
 import { passwordResetIdentifier } from "@/lib/password-reset";
 import { accountRateLimits, checkRateLimit } from "@/lib/rate-limit";
+import {
+  eraseUserAccount,
+  loadAccountErasureFacts,
+} from "@/lib/data/account-erasure";
+import {
+  summariseOwnAccountDeletion,
+  validateSelfDeletion,
+  type OwnAccountDeletionSummary,
+} from "@/lib/user-deletion";
 import type { Role } from "@prisma/client";
 
 /**
@@ -210,4 +219,59 @@ export async function changeMyPassword(
     success:
       "Ka pai — your password has been updated. You'll stay signed in here.",
   };
+}
+
+// ─── Deleting your own account ───────────────────────
+
+/**
+ * Erasing your own account, the self-service sibling of
+ * `staff-actions.deleteUser`.
+ *
+ * The authority is different, so the rules are: nobody has to approve this,
+ * and the only thing that can stand in the way is being the last admin (see
+ * `findSelfDeletionBlocker`). Required by the Privacy Act's erasure
+ * expectations, and by App Store guideline 5.1.1(v) — an app that lets you
+ * make an account has to let you unmake it, in the app, without ringing
+ * anybody. What "erased" means is shared with the admin path in
+ * `@/lib/data/account-erasure`, so the two can't drift.
+ *
+ * The mobile app reaches these same two steps over `GET`/`DELETE /api/v1/me`.
+ */
+
+/** Read-only: what `deleteOwnAccount` would destroy. */
+export async function getOwnAccountDeletionSummary(): Promise<
+  OwnAccountDeletionSummary | { error: string }
+> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: NOT_SIGNED_IN };
+
+  const facts = await loadAccountErasureFacts(session.user.id);
+  if (!facts) return { error: "That account no longer exists." };
+
+  return summariseOwnAccountDeletion(facts);
+}
+
+/**
+ * Permanently erase the signed-in person's own account. Confirmed by typing
+ * their own email address — the same friction the admin flow uses, and the
+ * "confirmation step to prevent accidental deletion" the guideline allows.
+ */
+export async function deleteOwnAccount(
+  confirmation: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: NOT_SIGNED_IN };
+
+  const facts = await loadAccountErasureFacts(session.user.id);
+  if (!facts) return { error: "That account no longer exists." };
+
+  const validationError = validateSelfDeletion({
+    isLastAdmin: facts.isLastAdmin,
+    email: facts.email,
+    confirmation,
+  });
+  if (validationError) return { error: validationError };
+
+  // Actor and target are the same person — that is the whole point.
+  return eraseUserAccount(facts, facts.userId);
 }

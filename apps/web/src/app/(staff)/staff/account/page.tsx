@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { getMyAccount } from "@/lib/account-actions";
 import { AccountDetailsForm } from "./account-details-form";
 import { ChangePasswordForm } from "./change-password-form";
+import { DeleteAccountCard } from "./delete-account-card";
 
 export const metadata: Metadata = {
   title: "My Account | Te Pūaroha",
@@ -115,6 +116,18 @@ export default async function StaffAccountPage() {
               </Link>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Deleting your own account. Last on the page and visually apart, the
+          way irreversible things should be - but self-service, because an
+          account you can't erase yourself isn't one we should be keeping. */}
+      <Card className="border-destructive/40">
+        <CardHeader className="border-b">
+          <CardTitle className="text-destructive">Delete account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DeleteAccountCard />
         </CardContent>
       </Card>
     </div>

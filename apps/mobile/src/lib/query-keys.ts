@@ -23,4 +23,6 @@ export const qk = {
   hours: ['hours'] as const,
   profile: ['profile'] as const,
   application: ['application'] as const,
+  /** What deleting your own account would erase. */
+  accountDeletion: ['account', 'deletion'] as const,
 };

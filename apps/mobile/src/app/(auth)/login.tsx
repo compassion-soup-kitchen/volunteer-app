@@ -1,16 +1,16 @@
 import { Link } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Kowhaiwhai, Wordmark } from '@/components/brand';
-import { Button, Card, GoogleButton, Text, TextField } from '@/components/ui';
+import { AppleButton, Button, Card, GoogleButton, Text, TextField } from '@/components/ui';
 import { Duration, Layout, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/providers/auth-provider';
-import { GOOGLE_SIGN_IN_AVAILABLE } from '@/services/auth-service';
+import { GOOGLE_SIGN_IN_AVAILABLE, isAppleSignInOffered } from '@/services/auth-service';
 
 /** How far the sign-in card rises into the ink masthead, breaking the seam. */
 const CARD_OVERLAP = 44;
@@ -22,13 +22,30 @@ export default function LoginScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
 
   const [email, setEmail] = useState('aroha@compassion.org.nz');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  // Whether this device can offer Apple's sheet at all - unlike Google's, it
+  // can only be answered asynchronously, so the button appears once it's known
+  // rather than flickering in and out.
+  const [appleOffered, setAppleOffered] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    isAppleSignInOffered().then((offered) => {
+      if (active) setAppleOffered(offered);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const busy = loading || googleLoading || appleLoading;
 
   async function onSubmit() {
     setError(null);
@@ -45,6 +62,14 @@ export default function LoginScreen() {
     const result = await signInWithGoogle();
     setGoogleLoading(false);
     // Backing out of Google's sheet is a decision, not a failure - say nothing.
+    if (result.error && !result.cancelled) setError(result.error);
+  }
+
+  async function onApple() {
+    setError(null);
+    setAppleLoading(true);
+    const result = await signInWithApple();
+    setAppleLoading(false);
     if (result.error && !result.cancelled) setError(result.error);
   }
 
@@ -139,16 +164,20 @@ export default function LoginScreen() {
                   title="Sign in"
                   icon="log-in-outline"
                   loading={loading}
-                  disabled={googleLoading}
+                  disabled={googleLoading || appleLoading}
                   onPress={onSubmit}
                 />
               </Card>
             </Animated.View>
 
             <Animated.View entering={enter(160)} style={{ gap: Spacing.xl }}>
-              {/* Google — hidden outright on builds with no Google credentials,
-                  rather than offered as a button that could only fail. */}
-              {GOOGLE_SIGN_IN_AVAILABLE ? (
+              {/* The identity providers. Each is hidden outright where it can't
+                  work - no Google credentials in the build, no Apple sheet on
+                  the device - rather than offered as a button that could only
+                  fail. Apple leads: App Store guideline 4.8 asks for it to be
+                  offered on equal terms with the other, and Apple's own HIG
+                  puts its button at the top of the stack. */}
+              {appleOffered || GOOGLE_SIGN_IN_AVAILABLE ? (
                 <>
                   {/* Divider */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
@@ -159,7 +188,18 @@ export default function LoginScreen() {
                     <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
                   </View>
 
-                  <GoogleButton onPress={onGoogle} loading={googleLoading} disabled={loading} />
+                  <View style={{ gap: Spacing.md }}>
+                    {appleOffered ? (
+                      <AppleButton onPress={onApple} loading={appleLoading} disabled={busy && !appleLoading} />
+                    ) : null}
+                    {GOOGLE_SIGN_IN_AVAILABLE ? (
+                      <GoogleButton
+                        onPress={onGoogle}
+                        loading={googleLoading}
+                        disabled={busy && !googleLoading}
+                      />
+                    ) : null}
+                  </View>
                 </>
               ) : null}
 
