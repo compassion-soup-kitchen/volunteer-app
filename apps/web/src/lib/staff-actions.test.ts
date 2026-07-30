@@ -8,6 +8,9 @@ const shiftCountMock = vi.fn();
 const shiftSignupFindManyMock = vi.fn();
 const volunteerProfileFindManyMock = vi.fn();
 const userFindManyMock = vi.fn();
+const userFindUniqueMock = vi.fn();
+const hoursForUserMock = vi.fn();
+const trainingForUserMock = vi.fn();
 
 vi.mock("next/server", () => ({
   connection: vi.fn(async () => {}),
@@ -35,11 +38,27 @@ vi.mock("@/lib/db", () => ({
     application: { count: applicationCountMock },
     shift: { count: shiftCountMock },
     shiftSignup: { findMany: shiftSignupFindManyMock },
-    user: { findMany: userFindManyMock },
+    user: { findMany: userFindManyMock, findUnique: userFindUniqueMock },
   }),
 }));
 
-import { getStaffDashboardStats, getVolunteersList } from "./staff-actions";
+// The record page borrows the volunteer-facing hours and training reads. Mocked
+// here so a test can assert *whether* they were called - the point of the
+// no-profile branch is that they aren't.
+vi.mock("@/lib/data/volunteer-dashboard", () => ({
+  getVolunteerHoursDataForUser: (...args: unknown[]) => hoursForUserMock(...args),
+}));
+
+vi.mock("@/lib/data/volunteer-training", () => ({
+  getTrainingHistoryForUser: (...args: unknown[]) =>
+    trainingForUserMock(...args),
+}));
+
+import {
+  getStaffDashboardStats,
+  getVolunteerDetail,
+  getVolunteersList,
+} from "./staff-actions";
 
 const staffSession = { user: { id: "staff-1", role: "COORDINATOR" } };
 
@@ -51,6 +70,9 @@ beforeEach(() => {
   shiftSignupFindManyMock.mockReset().mockResolvedValue([]);
   volunteerProfileFindManyMock.mockReset().mockResolvedValue([]);
   userFindManyMock.mockReset().mockResolvedValue([]);
+  userFindUniqueMock.mockReset().mockResolvedValue(null);
+  hoursForUserMock.mockReset().mockResolvedValue(null);
+  trainingForUserMock.mockReset().mockResolvedValue([]);
 });
 
 describe("getStaffDashboardStats", () => {
@@ -168,5 +190,211 @@ describe("getVolunteersList group filtering", () => {
       orderBy: { name: "asc" },
       select: { id: true, name: true, tone: true },
     });
+  });
+});
+
+describe("getVolunteerDetail", () => {
+  const signedUpAt = new Date("2026-07-01T00:00:00.000Z");
+
+  /** A user row shaped the way the action's `select` asks for it. */
+  function userRow(overrides: Record<string, unknown> = {}) {
+    return {
+      id: "user-1",
+      name: "Aroha Williams",
+      email: "aroha@example.org.nz",
+      image: null,
+      role: "VOLUNTEER",
+      status: "ACTIVE",
+      emailVerified: signedUpAt,
+      createdAt: signedUpAt,
+      archivedAt: null,
+      archivedReason: null,
+      archivedBy: null,
+      volunteerProfile: null,
+      ...overrides,
+    };
+  }
+
+  function profileRow(overrides: Record<string, unknown> = {}) {
+    return {
+      id: "profile-1",
+      phone: "021 555 1234",
+      address: "42 Tory Street",
+      dateOfBirth: null,
+      emergencyContactName: "Hemi Williams",
+      emergencyContactPhone: "021 555 5678",
+      emergencyContactRelationship: "Partner",
+      bio: null,
+      availability: { monday: ["morning"] },
+      skills: ["Cooking"],
+      status: "ACTIVE",
+      mojStatus: "CLEARED",
+      createdAt: signedUpAt,
+      updatedAt: signedUpAt,
+      interests: [{ id: "sa1", name: "Kitchen & Meals" }],
+      groups: [{ id: "g1", name: "Team Leaders", tone: "BRAND" }],
+      signedAgreements: [],
+      documents: [],
+      applications: [],
+      shiftSignups: [],
+      _count: { shiftSignups: 0 },
+      ...overrides,
+    };
+  }
+
+  it("returns nothing to a caller who isn't staff", async () => {
+    authMock.mockResolvedValue({ user: { id: "vol-1", role: "VOLUNTEER" } });
+
+    expect(await getVolunteerDetail("user-1")).toBeNull();
+    expect(userFindUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("returns nothing to a signed-out caller", async () => {
+    authMock.mockResolvedValue(null);
+
+    expect(await getVolunteerDetail("user-1")).toBeNull();
+    expect(userFindUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("returns null for a user who doesn't exist", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue(null);
+
+    expect(await getVolunteerDetail("nobody")).toBeNull();
+  });
+
+  // Someone who signed in but never applied still has an account worth
+  // reading; there is just no profile, and nothing for hours or training to
+  // count against.
+  it("returns the account with a null profile when there's no application", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue(
+      userRow({ name: "Rangi", emailVerified: null, volunteerProfile: null })
+    );
+
+    const detail = await getVolunteerDetail("user-1");
+
+    expect(detail?.profile).toBeNull();
+    expect(detail?.user).toMatchObject({ name: "Rangi", emailVerified: null });
+    expect(detail?.hours).toBeNull();
+    expect(detail?.training).toEqual([]);
+    expect(hoursForUserMock).not.toHaveBeenCalled();
+    expect(trainingForUserMock).not.toHaveBeenCalled();
+  });
+
+  it("reads hours and training for someone who has a profile", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue(
+      userRow({ volunteerProfile: profileRow() })
+    );
+    hoursForUserMock.mockResolvedValue({ totalHours: 11 });
+    trainingForUserMock.mockResolvedValue([{ id: "ta1" }]);
+
+    const detail = await getVolunteerDetail("user-1");
+
+    expect(hoursForUserMock).toHaveBeenCalledWith("user-1");
+    expect(trainingForUserMock).toHaveBeenCalledWith("user-1");
+    expect(detail?.hours).toEqual({ totalHours: 11 });
+    expect(detail?.training).toEqual([{ id: "ta1" }]);
+    expect(detail?.profile).toMatchObject({
+      emergencyContactName: "Hemi Williams",
+      emergencyContactPhone: "021 555 5678",
+      groups: [{ id: "g1", name: "Team Leaders", tone: "BRAND" }],
+    });
+  });
+
+  // The page reads flat names, not nested relations - a shape change here would
+  // silently render "by undefined".
+  it("flattens the nested relations the page reads by name", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue(
+      userRow({
+        archivedAt: signedUpAt,
+        archivedReason: "Moved away",
+        archivedBy: { name: "Admin User" },
+        volunteerProfile: profileRow({
+          documents: [
+            {
+              id: "doc1",
+              type: "MOJ_FORM",
+              fileName: "moj.pdf",
+              uploadedAt: signedUpAt,
+              uploadedBy: { name: "Admin User" },
+            },
+          ],
+          applications: [
+            {
+              id: "app1",
+              status: "APPROVED",
+              submittedAt: signedUpAt,
+              reviewedAt: signedUpAt,
+              notes: "All good",
+              reviewedBy: { name: "Admin User" },
+            },
+          ],
+          shiftSignups: [
+            {
+              id: "su1",
+              status: "ATTENDED",
+              shift: {
+                date: signedUpAt,
+                startTime: "09:00",
+                endTime: "12:00",
+                serviceArea: { id: "sa1", name: "Kitchen & Meals" },
+              },
+            },
+          ],
+          _count: { shiftSignups: 7 },
+        }),
+      })
+    );
+
+    const detail = await getVolunteerDetail("user-1");
+
+    expect(detail?.user.archivedByName).toBe("Admin User");
+    expect(detail?.profile?.documents[0]).toMatchObject({
+      fileName: "moj.pdf",
+      uploadedByName: "Admin User",
+    });
+    expect(detail?.profile?.applications[0]).toMatchObject({
+      status: "APPROVED",
+      reviewedByName: "Admin User",
+    });
+    expect(detail?.profile?.recentShifts[0]).toMatchObject({
+      id: "su1",
+      status: "ATTENDED",
+      startTime: "09:00",
+      serviceArea: { id: "sa1", name: "Kitchen & Meals" },
+    });
+    // "Showing the N most recent of M" needs the untruncated total.
+    expect(detail?.profile?.totalSignups).toBe(7);
+  });
+
+  it("reads a bounded, newest-first slice of someone's shifts", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue(
+      userRow({ volunteerProfile: profileRow() })
+    );
+
+    await getVolunteerDetail("user-1");
+
+    const signups =
+      userFindUniqueMock.mock.calls[0][0].select.volunteerProfile.select
+        .shiftSignups;
+    expect(signups.orderBy).toEqual({ shift: { date: "desc" } });
+    expect(signups.take).toBeGreaterThan(0);
+  });
+
+  it("asks only for groups that are still active", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue(
+      userRow({ volunteerProfile: profileRow() })
+    );
+
+    await getVolunteerDetail("user-1");
+
+    expect(
+      userFindUniqueMock.mock.calls[0][0].select.volunteerProfile.select.groups
+    ).toMatchObject({ where: { isArchived: false } });
   });
 });
