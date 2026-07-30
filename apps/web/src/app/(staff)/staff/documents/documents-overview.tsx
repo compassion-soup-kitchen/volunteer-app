@@ -7,13 +7,7 @@ import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { RiFileTextLine, RiArrowRightSLine } from "@remixicon/react";
 import type { AgreementOverview } from "@/lib/document-actions";
-
-const TYPE_LABELS: Record<string, string> = {
-  CODE_OF_CONDUCT: "Te Tikanga — Code of Conduct",
-  SAFEGUARDING: "Safeguarding Policy",
-  VOLUNTEER_APPLICATION: "Volunteer Application Agreement",
-  POLICIES: "General Policies",
-};
+import { agreementLabel } from "@/lib/agreement-labels";
 
 export function DocumentsOverview({
   agreements,
@@ -54,7 +48,7 @@ export function DocumentsOverview({
               </IconChip>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-serif text-base font-medium tracking-tight">
-                  {TYPE_LABELS[agreement.agreementType] || agreement.title}
+                  {agreementLabel(agreement.agreementType, agreement.title)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Version {agreement.version}

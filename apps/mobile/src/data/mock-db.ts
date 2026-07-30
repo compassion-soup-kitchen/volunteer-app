@@ -21,6 +21,7 @@ import type {
   SignupStatus,
   TrainingHistoryItem,
   TrainingType,
+  VolunteerEvent,
 } from '@/types/models';
 
 /* -------------------------------------------------------------------------- */
@@ -118,6 +119,12 @@ interface MockDb {
   myTraining: Record<string, MyTraining>;
   pastTraining: TrainingHistoryItem[];
   announcements: Announcement[];
+  /**
+   * Gatherings, shared with the announcements that link to them — an
+   * announcement holds the same object, so replying updates both at once, the
+   * way a single row does on the server.
+   */
+  events: VolunteerEvent[];
   profile: ProfileRecord;
 }
 
@@ -245,6 +252,47 @@ const pastTraining: TrainingHistoryItem[] = [
   { id: 'tr-h2', type: 'HEALTH_SAFETY', title: 'Food safety basics', date: isoDate(-100), status: 'ATTENDED' },
 ];
 
+// Gatherings the whānau is invited to. Separate from shifts (nobody is
+// rostered) and from the pānui that announce them.
+const events: VolunteerEvent[] = [
+  {
+    id: 'ev-party',
+    title: 'Christmas party for the whānau',
+    description:
+      "Kai, waiata and a Secret Santa to thank you all for a huge year. Bring a plate if you can, and tamariki are more than welcome.",
+    date: isoDate(24),
+    startTime: '18:00',
+    endTime: '21:00',
+    location: '132 Tory Street, Te Aro, Pōneke',
+    audience: 'ALL',
+    status: 'PUBLISHED',
+    rsvpEnabled: true,
+    rsvpDeadline: isoDate(14),
+    goingCount: 31,
+    maybeCount: 6,
+    myResponse: null,
+    myNote: null,
+  },
+  {
+    id: 'ev-hui',
+    title: 'Volunteer hui — how did the year go?',
+    description:
+      'A cuppa and an honest kōrero about what worked this year and what we should change. Everyone welcome.',
+    date: isoDate(9),
+    startTime: '10:30',
+    endTime: '12:00',
+    location: 'Upstairs meeting room, 132 Tory Street',
+    audience: 'ALL',
+    status: 'PUBLISHED',
+    rsvpEnabled: true,
+    rsvpDeadline: null,
+    goingCount: 12,
+    maybeCount: 4,
+    myResponse: 'GOING',
+    myNote: null,
+  },
+];
+
 // Team pānui — coordinator notices the volunteer sees on opening the app.
 const announcements: Announcement[] = [
   {
@@ -255,6 +303,18 @@ const announcements: Announcement[] = [
     authorName: 'Hana Wīremu',
     publishedAt: isoTimeAgo(3),
     pinned: true,
+    event: null,
+  },
+  {
+    id: 'an-party',
+    title: 'Christmas party for the whānau',
+    body: "Kai, waiata and a Secret Santa to thank you all for a huge year. Let us know if you can come so we can sort the kai.",
+    audience: 'ALL',
+    authorName: 'Wikitōria Grace',
+    publishedAt: isoTimeAgo(6),
+    pinned: true,
+    // The link is what puts the reply buttons in the feed.
+    event: events[0],
   },
   {
     id: 'an-2',
@@ -264,6 +324,7 @@ const announcements: Announcement[] = [
     authorName: 'Te Pūaroha kitchen',
     publishedAt: isoTimeAgo(27),
     pinned: false,
+    event: null,
   },
   {
     id: 'an-3',
@@ -273,6 +334,7 @@ const announcements: Announcement[] = [
     authorName: 'Wikitōria Grace',
     publishedAt: isoTimeAgo(50),
     pinned: false,
+    event: null,
   },
   {
     id: 'an-4',
@@ -282,6 +344,7 @@ const announcements: Announcement[] = [
     authorName: 'Hana Wīremu',
     publishedAt: isoTimeAgo(74),
     pinned: false,
+    event: null,
   },
 ];
 
@@ -295,6 +358,7 @@ export const db: MockDb = {
   myTraining: { 'tr-2': { id: 'ta-1', status: 'REGISTERED' } },
   pastTraining,
   announcements,
+  events,
   profile: {
     id: 'vol-aroha',
     phone: '021 555 0142',

@@ -26,13 +26,7 @@ import {
   resignAgreement,
   type VolunteerAgreementStatus,
 } from "@/lib/document-actions";
-
-const TYPE_LABELS: Record<string, string> = {
-  CODE_OF_CONDUCT: "Te Tikanga · Code of Conduct",
-  SAFEGUARDING: "Safeguarding Policy",
-  VOLUNTEER_APPLICATION: "Volunteer Application Agreement",
-  POLICIES: "General Policies",
-};
+import { agreementLabel } from "@/lib/agreement-labels";
 
 function agreementCaption(agreement: VolunteerAgreementStatus) {
   if (agreement.needsResign) {
@@ -104,8 +98,10 @@ export function DocumentsView({
       <Card>
         <ul className="divide-y divide-border">
           {agreements.map((agreement) => {
-            const label =
-              TYPE_LABELS[agreement.agreementType] || agreement.title;
+            const label = agreementLabel(
+              agreement.agreementType,
+              agreement.title
+            );
             return (
               <li
                 key={agreement.agreementType}
@@ -165,8 +161,10 @@ export function DocumentsView({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {viewingAgreement
-                ? TYPE_LABELS[viewingAgreement.agreementType] ||
-                  viewingAgreement.title
+                ? agreementLabel(
+                    viewingAgreement.agreementType,
+                    viewingAgreement.title
+                  )
                 : ""}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -196,8 +194,10 @@ export function DocumentsView({
             <AlertDialogTitle>
               {signingAgreement?.signedVersion ? "Re-sign" : "Sign"}{" "}
               {signingAgreement
-                ? TYPE_LABELS[signingAgreement.agreementType] ||
-                  signingAgreement.title
+                ? agreementLabel(
+                    signingAgreement.agreementType,
+                    signingAgreement.title
+                  )
                 : ""}
             </AlertDialogTitle>
             <AlertDialogDescription>

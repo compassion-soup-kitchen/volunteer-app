@@ -39,7 +39,10 @@ export async function getRecentAnnouncements(
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  return listVolunteerAnnouncements(limit);
+  return listVolunteerAnnouncements({
+    limit,
+    reader: { userId: session.user.id, role: session.user.role },
+  });
 }
 
 export async function getAnnouncements(): Promise<AnnouncementSummary[]> {
@@ -47,7 +50,9 @@ export async function getAnnouncements(): Promise<AnnouncementSummary[]> {
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  return listVolunteerAnnouncements();
+  return listVolunteerAnnouncements({
+    reader: { userId: session.user.id, role: session.user.role },
+  });
 }
 
 // ─── Staff helpers ───────────────────────────────────
@@ -66,8 +71,32 @@ async function requireStaff() {
 /** Every surface that renders announcements. */
 function revalidateAnnouncementPaths() {
   revalidatePath("/staff/announcements");
+  revalidatePath("/staff/events");
   revalidatePath("/news");
+  revalidatePath("/events");
   revalidatePath("/dashboard");
+}
+
+/**
+ * The event a pānui says it is announcing, or an error if there isn't one.
+ * Checked before the write so a stale id fails as a message rather than as a
+ * foreign-key crash.
+ */
+async function resolveLinkedEventId(
+  eventId: string | null | undefined
+): Promise<
+  { ok: true; eventId: string | null } | { ok: false; error: string }
+> {
+  if (!eventId) return { ok: true, eventId: null };
+
+  const db = getDb();
+  const event = await db.event.findUnique({
+    where: { id: eventId },
+    select: { id: true },
+  });
+  if (!event) return { ok: false, error: "That event no longer exists." };
+
+  return { ok: true, eventId: event.id };
 }
 
 /**
@@ -107,6 +136,8 @@ export type StaffAnnouncement = {
   sentAt: Date | null;
   authorName: string | null;
   attachments: AnnouncementAttachmentSummary[];
+  /** The event this pānui announces, when it is announcing one. */
+  event: { id: string; title: string; date: Date } | null;
 };
 
 /** All announcements, drafts included, newest first — staff only. */
@@ -135,6 +166,7 @@ export async function getStaffAnnouncements(): Promise<StaffAnnouncement[]> {
         },
         orderBy: { uploadedAt: "asc" },
       },
+      event: { select: { id: true, title: true, date: true } },
     },
   });
 
@@ -147,6 +179,7 @@ export async function getStaffAnnouncements(): Promise<StaffAnnouncement[]> {
     sentAt: a.sentAt,
     authorName: a.createdBy?.name ?? null,
     attachments: a.attachments,
+    event: a.event,
   }));
 }
 
@@ -157,6 +190,8 @@ export async function createAnnouncement(input: {
   body: string;
   audience: string;
   publish?: boolean;
+  /** The event this pānui announces, when it is announcing one. */
+  eventId?: string | null;
 }): Promise<{ error?: string; success?: boolean; id?: string }> {
   const session = await requireStaff();
   if (!session) return { error: "Not authorised." };
@@ -168,6 +203,9 @@ export async function createAnnouncement(input: {
   });
   if (parsed.error !== undefined) return { error: parsed.error };
 
+  const link = await resolveLinkedEventId(input.eventId);
+  if (!link.ok) return { error: link.error };
+
   const db = getDb();
   try {
     const publish = input.publish === true;
@@ -178,6 +216,7 @@ export async function createAnnouncement(input: {
         audience: parsed.data.audience,
         createdById: session.user!.id,
         sentAt: publish ? new Date() : null,
+        eventId: link.eventId,
       },
     });
 
@@ -196,7 +235,13 @@ export async function createAnnouncement(input: {
 
 export async function updateAnnouncement(
   id: string,
-  input: { title: string; body: string; audience: string }
+  input: {
+    title: string;
+    body: string;
+    audience: string;
+    /** Pass `null` to unlink the event, or omit the key to leave it alone. */
+    eventId?: string | null;
+  }
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await requireStaff();
   if (!session) return { error: "Not authorised." };
@@ -208,6 +253,10 @@ export async function updateAnnouncement(
   const existing = await db.announcement.findUnique({ where: { id } });
   if (!existing) return { error: "Announcement not found." };
 
+  const relinking = "eventId" in input;
+  const link = await resolveLinkedEventId(relinking ? input.eventId : null);
+  if (!link.ok) return { error: link.error };
+
   try {
     await db.announcement.update({
       where: { id },
@@ -215,6 +264,7 @@ export async function updateAnnouncement(
         title: parsed.data.title,
         body: parsed.data.body,
         audience: parsed.data.audience,
+        ...(relinking ? { eventId: link.eventId } : {}),
       },
     });
 

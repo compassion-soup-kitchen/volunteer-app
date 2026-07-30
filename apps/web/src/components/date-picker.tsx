@@ -56,7 +56,12 @@ export function DatePicker({
           {value ? format(value, "d MMMM yyyy") : placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      {/*
+        Above `z-50`, which is where both the dialog surface and a default
+        popover sit: inside a dialog the two tie, DOM order decides, and the
+        dialog's own fields paint through the calendar.
+      */}
+      <PopoverContent className="z-60 w-auto p-0" align="start">
         <Calendar
           mode="single"
           captionLayout="dropdown"

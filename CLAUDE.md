@@ -82,7 +82,8 @@ src/
 │   │   ├── hours/                    # Personal hours log — hours-detail.tsx
 │   │   ├── documents/                # View signed agreements + downloadable policies
 │   │   ├── team/                     # Who's who — members of volunteer-visible groups
-│   │   └── news/                     # Announcements feed
+│   │   ├── news/                     # Announcements feed (event pānui carry their RSVP inline)
+│   │   └── events/                   # Invitations + RSVP (parties, hui, working bees)
 │   ├── (staff)/staff/                # COORDINATOR / ADMIN routes (desktop-first, sidebar layout)
 │   │   ├── layout.tsx                # Auth gate, redirects volunteers → /dashboard
 │   │   ├── staff-nav.tsx             # Sidebar nav
@@ -95,9 +96,14 @@ src/
 │   │   ├── training/                 # Create/manage training sessions
 │   │   ├── documents/                # Upload templates, manage agreement templates
 │   │   ├── announcements/            # Create/publish pānui (news for volunteers)
+│   │   ├── events/                   # Create/share events, guest list, announce them
 │   │   └── reports/                  # Charts & exports
 │   └── api/
-│       └── auth/                     # NextAuth handlers (only API route — everything else uses Server Actions)
+│       ├── auth/                     # NextAuth handlers
+│       ├── health/                   # Liveness / readiness probes
+│       └── v1/                       # Bearer-token JSON API for the mobile app (shifts, training,
+│                                     #   announcements, events + RSVP …). The web app itself uses
+│                                     #   Server Actions, never these routes.
 │
 ├── components/
 │   ├── ui/                           # shadcn primitives (alert-dialog, avatar, badge, button, calendar,
@@ -129,7 +135,10 @@ src/
 │   ├── group-actions.ts              # CRUD volunteer groups, membership, volunteer-facing team reads
 │   ├── volunteer-groups.ts           # Pure group helpers (tones → badge variants, validation, diffing)
 │   ├── document-actions.ts           # Uploads, agreement templates, signed agreements
-│   ├── announcement-actions.ts       # CRUD announcements
+│   ├── announcement-actions.ts       # CRUD announcements (optionally linked to an Event)
+│   ├── event-actions.ts              # CRUD events, share/cancel, RSVPs, guest list, draft a pānui
+│   ├── event-form.ts                 # Pure event-form contract (calendar days, times, reply deadline)
+│   ├── event-rsvp.ts                 # Pure RSVP rules (who may reply, when replies close, tallies)
 │   ├── staff-actions.ts              # Volunteer directory, archiving, role changes
 │   └── report-actions.ts             # Aggregations / chart data
 │
@@ -168,7 +177,8 @@ prisma/
 - **Onboarding**: `VolunteerProfile` (status: APPLICATION_SUBMITTED → AWAITING_VETTING → APPROVED_FOR_INDUCTION → ACTIVE / INACTIVE; `mojStatus` ∈ NOT_STARTED/SUBMITTED/CLEARED/FLAGGED), `Application`, `Document`, `SignedAgreement`, `AgreementTemplate` (versioned, supports re-acknowledgement).
 - **Operations**: `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `ShiftOffer` (right of first refusal: PENDING/ACCEPTED/DECLINED, paired with `Shift.offersCloseOn`), `TrainingSession`, `TrainingAttendance`.
 - **People**: `VolunteerGroup` (staff-named crews - Team Leaders, Guardian Angels - many-to-many with `VolunteerProfile`; `tone` picks the badge colour, `visibleToVolunteers` decides whether volunteers see it on /team and their profile). Purely descriptive: membership grants no access, that stays with `User.role`.
-- **Communication**: `Announcement` (audience: ALL / VOLUNTEERS / COORDINATORS).
+- **Communication**: `Announcement` (audience: ALL / VOLUNTEERS / COORDINATORS; optional `eventId` links a pānui to the gathering it announces — `onDelete: SetNull`, because a message that was sent stays sent).
+- **Gatherings**: `Event` (a party, hui or working bee — status DRAFT/PUBLISHED/CANCELLED, `audience` decides who is invited *and* who may reply, `rsvpEnabled` + `rsvpDeadline` control replies) and `EventRsvp` (GOING / MAYBE / NOT_GOING + optional note, unique per user per event). Keyed by `User`, not `VolunteerProfile`: staff come to these too. Deliberately not a `Shift` (nobody is rostered) and not part of `Announcement` (an event outlives any one message about it and can be announced more than once). Publishing an event only makes it visible — telling people is what a pānui is for, which keeps push notifications in one place.
 
 ### Auth Roles
 - `PUBLIC` — unauthenticated or pre-application
@@ -289,6 +299,7 @@ Required env vars for `apps/web` (see `apps/web/.env.example`):
 - `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_IOS_CLIENT_ID` - the iOS OAuth client, needed by `POST /api/v1/auth/google` for the mobile app's Google sign-in. **Not optional in any environment the iOS app talks to**: without `serverClientID` the iOS SDK audiences its ID token to the iOS client, so the endpoint refuses every Google sign-in from the app ("We couldn't verify that Google sign-in") even though Google's own sheet completes. Must match `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in the app's EAS environment; the refusal reason and the token's actual audience are logged as `[google-id-token] refused a token: …`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` — address autocomplete on the application form (optional; falls back to manual entry)
 - `RESEND_API_KEY`, `EMAIL_FROM` — transactional email via Resend (optional; sending is skipped when unset)
 - `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` - Cloudflare R2 for document uploads. `S3_ENDPOINT` is the bucket-less account endpoint (`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`) and `S3_REGION` is `auto`

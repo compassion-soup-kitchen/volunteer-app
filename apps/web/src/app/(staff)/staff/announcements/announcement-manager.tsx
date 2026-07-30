@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ import {
 import {
   RiAddLine,
   RiAttachment2,
+  RiCalendarEventLine,
   RiCalendarLine,
   RiCloseLine,
   RiDeleteBinLine,
@@ -692,6 +694,15 @@ function AnnouncementRow({
               {announcement.attachments.length}{" "}
               {announcement.attachments.length === 1 ? "file" : "files"}
             </span>
+          )}
+          {announcement.event && (
+            <Link
+              href="/staff/events"
+              className="flex items-center gap-1.5 font-semibold text-primary transition-colors hover:text-primary/80"
+            >
+              <RiCalendarEventLine className="size-3.5" aria-hidden />
+              {announcement.event.title}
+            </Link>
           )}
         </div>
       </div>

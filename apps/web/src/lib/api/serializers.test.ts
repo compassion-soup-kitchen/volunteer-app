@@ -182,19 +182,63 @@ describe("serializeTrainingSession", () => {
 });
 
 describe("serializeAnnouncement", () => {
+  const announcement = {
+    id: "a-1",
+    title: "Winter roster",
+    body: "Kia ora koutou...",
+    audience: "VOLUNTEERS" as const,
+    sentAt: new Date("2026-07-01T02:30:00.000Z"),
+    authorName: null,
+    attachments: [],
+    event: null,
+  };
+
   it("maps sentAt to publishedAt and falls back on the author name", () => {
-    const result = serializeAnnouncement({
-      id: "a-1",
-      title: "Winter roster",
-      body: "Kia ora koutou...",
-      audience: "VOLUNTEERS",
-      sentAt: new Date("2026-07-01T02:30:00.000Z"),
-      authorName: null,
-      attachments: [],
-    });
+    const result = serializeAnnouncement(announcement);
 
     expect(result.publishedAt).toBe("2026-07-01T02:30:00.000Z");
     expect(result.authorName).toBe("Te Pūaroha");
     expect(result.pinned).toBe(false);
+    expect(result.event).toBeNull();
+  });
+
+  it("carries the linked event, with the reader's own reply", () => {
+    const result = serializeAnnouncement({
+      ...announcement,
+      event: {
+        id: "ev-1",
+        title: "Christmas party",
+        description: "Kai and waiata.",
+        // A `@db.Date` calendar day: it must survive as the 20th, not the 19th.
+        date: new Date("2026-12-20T00:00:00.000Z"),
+        startTime: "18:00",
+        endTime: "21:00",
+        location: "132 Tory Street",
+        audience: "ALL",
+        status: "PUBLISHED",
+        rsvpEnabled: true,
+        rsvpDeadline: new Date("2026-12-10T00:00:00.000Z"),
+        counts: { going: 12, maybe: 3, notGoing: 1, replied: 16 },
+        myRsvp: { response: "GOING", note: "Bringing a salad" },
+      },
+    });
+
+    expect(result.event).toEqual({
+      id: "ev-1",
+      title: "Christmas party",
+      description: "Kai and waiata.",
+      date: "2026-12-20",
+      startTime: "18:00",
+      endTime: "21:00",
+      location: "132 Tory Street",
+      audience: "ALL",
+      status: "PUBLISHED",
+      rsvpEnabled: true,
+      rsvpDeadline: "2026-12-10",
+      goingCount: 12,
+      maybeCount: 3,
+      myResponse: "GOING",
+      myNote: "Bringing a salad",
+    });
   });
 });

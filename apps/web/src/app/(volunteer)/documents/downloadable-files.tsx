@@ -8,15 +8,11 @@ import {
   RiFileTextLine,
 } from "@remixicon/react";
 import { IconChip } from "@/components/brand/icon-chip";
+import { documentTypeLabel } from "@/lib/document-labels";
 import {
   getDocumentDownloadUrl,
   type UploadedDocument,
 } from "@/lib/document-actions";
-
-const TYPE_LABELS: Record<string, string> = {
-  POLICY: "Policy",
-  TRAINING_MATERIAL: "Training material",
-};
 
 export function DownloadableFiles({
   documents,
@@ -81,7 +77,7 @@ export function DownloadableFiles({
                   {doc.fileName}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {TYPE_LABELS[doc.type] || doc.type}
+                  {documentTypeLabel(doc.type)}
                   {" · "}
                   {new Date(doc.uploadedAt).toLocaleDateString("en-NZ", {
                     day: "numeric",

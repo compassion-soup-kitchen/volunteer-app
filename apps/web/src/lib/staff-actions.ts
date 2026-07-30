@@ -18,6 +18,7 @@ import {
   parseDateOnly,
   startOfMonthInAppZone,
   startOfWeekInAppZone,
+  todayInAppZone,
 } from "@/lib/date-only";
 import { Prisma, type Role } from "@prisma/client";
 import {
@@ -36,6 +37,14 @@ import {
 import { deleteFile } from "@/lib/storage";
 import { resolveVolunteerListBuckets } from "./volunteer-list-filter";
 import type { GroupChip } from "./volunteer-groups";
+import {
+  getVolunteerHoursDataForUser,
+  type VolunteerHoursData,
+} from "@/lib/data/volunteer-dashboard";
+import {
+  getTrainingHistoryForUser,
+  type TrainingHistoryItem,
+} from "@/lib/data/volunteer-training";
 
 // Thrown inside the role-change transaction to roll back a demotion that would
 // leave zero active admins; caught and mapped to a user-facing message.
@@ -588,6 +597,337 @@ export async function getVolunteersList(
   }
 
   return volunteers;
+}
+
+// ─── One volunteer's record ──────────────────────────
+
+export type VolunteerDetailShift = {
+  id: string;
+  status: string;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  serviceArea: { id: string; name: string };
+};
+
+export type VolunteerDetailApplication = {
+  id: string;
+  status: string;
+  submittedAt: Date;
+  reviewedAt: Date | null;
+  notes: string | null;
+  reviewedByName: string | null;
+};
+
+export type VolunteerDetailDocument = {
+  id: string;
+  type: string;
+  fileName: string;
+  uploadedAt: Date;
+  uploadedByName: string | null;
+};
+
+export type VolunteerDetail = {
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+    role: Role;
+    status: string;
+    emailVerified: Date | null;
+    createdAt: Date;
+    archivedAt: Date | null;
+    archivedReason: string | null;
+    archivedByName: string | null;
+  };
+  /** Null for someone who signed in but never submitted an application. */
+  profile: {
+    id: string;
+    phone: string | null;
+    address: string | null;
+    dateOfBirth: Date | null;
+    emergencyContactName: string | null;
+    emergencyContactPhone: string | null;
+    emergencyContactRelationship: string | null;
+    bio: string | null;
+    availability: unknown;
+    skills: string[];
+    status: string;
+    mojStatus: string;
+    createdAt: Date;
+    updatedAt: Date;
+    interests: { id: string; name: string }[];
+    groups: GroupChip[];
+    signedAgreements: {
+      id: string;
+      agreementType: string;
+      signedAt: Date;
+      documentVersion: string | null;
+    }[];
+    documents: VolunteerDetailDocument[];
+    applications: VolunteerDetailApplication[];
+    /** What they're rostered on next, soonest first. */
+    upcomingShifts: VolunteerDetailShift[];
+    /** The last handful they were actually on, newest first. */
+    recentShifts: VolunteerDetailShift[];
+    /** Every past shift, so the card can say what it isn't showing. */
+    pastShiftCount: number;
+  } | null;
+  hours: VolunteerHoursData | null;
+  training: TrainingHistoryItem[];
+};
+
+/** How much of a person's shift history the record shows. */
+const RECENT_SHIFT_LIMIT = 8;
+/** How far ahead the record looks on the roster. */
+const UPCOMING_SHIFT_LIMIT = 5;
+
+/** Everything a shift row on the record needs. */
+const recordShiftSelect = {
+  id: true,
+  status: true,
+  shift: {
+    select: {
+      date: true,
+      startTime: true,
+      endTime: true,
+      serviceArea: { select: { id: true, name: true } },
+    },
+  },
+} as const;
+
+type RecordSignupRow = {
+  id: string;
+  status: string;
+  shift: {
+    date: Date;
+    startTime: string;
+    endTime: string;
+    serviceArea: { id: string; name: string };
+  };
+};
+
+function toDetailShift(signup: RecordSignupRow): VolunteerDetailShift {
+  return {
+    id: signup.id,
+    status: signup.status,
+    date: signup.shift.date,
+    startTime: signup.shift.startTime,
+    endTime: signup.shift.endTime,
+    serviceArea: signup.shift.serviceArea,
+  };
+}
+
+/**
+ * A person's shifts, split at today rather than taken as one `date desc` run.
+ *
+ * Sorting the lot by date descending puts the *furthest future* booking first,
+ * so a regular with a full fortnight ahead of them pushed their whole
+ * attendance history off the card - the opposite of what the record is for.
+ * Past and upcoming are asked for separately, each with its own bound and
+ * direction, so neither can crowd the other out.
+ *
+ * "Today" counts as upcoming: a shift that hasn't finished yet is something a
+ * coordinator is rostering around, not something they're reviewing.
+ */
+async function readShiftsForRecord(volunteerId: string) {
+  const db = getDb();
+  const today = parseDateOnly(todayInAppZone());
+
+  const [recent, upcoming, pastShiftCount] = await Promise.all([
+    db.shiftSignup.findMany({
+      where: { volunteerId, shift: { date: { lt: today } } },
+      orderBy: { shift: { date: "desc" } },
+      take: RECENT_SHIFT_LIMIT,
+      select: recordShiftSelect,
+    }),
+    // A cancelled booking isn't something they're rostered on, so it only
+    // belongs in the history half.
+    db.shiftSignup.findMany({
+      where: {
+        volunteerId,
+        status: { not: "CANCELLED" },
+        shift: { date: { gte: today } },
+      },
+      orderBy: { shift: { date: "asc" } },
+      take: UPCOMING_SHIFT_LIMIT,
+      select: recordShiftSelect,
+    }),
+    db.shiftSignup.count({
+      where: { volunteerId, shift: { date: { lt: today } } },
+    }),
+  ]);
+
+  return {
+    recentShifts: recent.map(toDetailShift),
+    upcomingShifts: upcoming.map(toDetailShift),
+    pastShiftCount,
+  };
+}
+
+/**
+ * Everything staff need to read about one person, keyed by their **user** id.
+ *
+ * The user is the anchor rather than the volunteer profile because someone can
+ * exist without ever applying - they still have an account, a role and a joined
+ * date worth showing, they just have no profile hanging off it. Hours and
+ * training are only fetched when there is a profile; without one there is
+ * nothing for them to count.
+ */
+export async function getVolunteerDetail(
+  userId: string
+): Promise<VolunteerDetail | null> {
+  const session = await requireStaff();
+  if (!session) return null;
+
+  const db = getDb();
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
+      status: true,
+      emailVerified: true,
+      createdAt: true,
+      archivedAt: true,
+      archivedReason: true,
+      archivedBy: { select: { name: true } },
+      volunteerProfile: {
+        select: {
+          id: true,
+          phone: true,
+          address: true,
+          dateOfBirth: true,
+          emergencyContactName: true,
+          emergencyContactPhone: true,
+          emergencyContactRelationship: true,
+          bio: true,
+          availability: true,
+          skills: true,
+          status: true,
+          mojStatus: true,
+          createdAt: true,
+          updatedAt: true,
+          interests: { select: { id: true, name: true }, orderBy: { name: "asc" } },
+          groups: {
+            where: { isArchived: false },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true, tone: true },
+          },
+          signedAgreements: {
+            orderBy: { signedAt: "desc" },
+            select: {
+              id: true,
+              agreementType: true,
+              signedAt: true,
+              documentVersion: true,
+            },
+          },
+          documents: {
+            orderBy: { uploadedAt: "desc" },
+            select: {
+              id: true,
+              type: true,
+              fileName: true,
+              uploadedAt: true,
+              uploadedBy: { select: { name: true } },
+            },
+          },
+          applications: {
+            orderBy: { submittedAt: "desc" },
+            select: {
+              id: true,
+              status: true,
+              submittedAt: true,
+              reviewedAt: true,
+              notes: true,
+              reviewedBy: { select: { name: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!user) return null;
+
+  const profile = user.volunteerProfile;
+
+  // Only meaningful once someone has applied - all three read through the
+  // profile, and none of them has anything to say without one.
+  const [hours, training, shifts] = profile
+    ? await Promise.all([
+        getVolunteerHoursDataForUser(userId),
+        getTrainingHistoryForUser(userId),
+        readShiftsForRecord(profile.id),
+      ])
+    : [
+        null,
+        [] as TrainingHistoryItem[],
+        { recentShifts: [], upcomingShifts: [], pastShiftCount: 0 },
+      ];
+
+  return {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      role: user.role,
+      status: user.status,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+      archivedAt: user.archivedAt,
+      archivedReason: user.archivedReason,
+      archivedByName: user.archivedBy?.name ?? null,
+    },
+    profile: profile
+      ? {
+          id: profile.id,
+          phone: profile.phone,
+          address: profile.address,
+          dateOfBirth: profile.dateOfBirth,
+          emergencyContactName: profile.emergencyContactName,
+          emergencyContactPhone: profile.emergencyContactPhone,
+          emergencyContactRelationship: profile.emergencyContactRelationship,
+          bio: profile.bio,
+          availability: profile.availability,
+          skills: profile.skills,
+          status: profile.status,
+          mojStatus: profile.mojStatus,
+          createdAt: profile.createdAt,
+          updatedAt: profile.updatedAt,
+          interests: profile.interests,
+          groups: profile.groups,
+          signedAgreements: profile.signedAgreements,
+          documents: profile.documents.map((doc) => ({
+            id: doc.id,
+            type: doc.type,
+            fileName: doc.fileName,
+            uploadedAt: doc.uploadedAt,
+            uploadedByName: doc.uploadedBy?.name ?? null,
+          })),
+          applications: profile.applications.map((app) => ({
+            id: app.id,
+            status: app.status,
+            submittedAt: app.submittedAt,
+            reviewedAt: app.reviewedAt,
+            notes: app.notes,
+            reviewedByName: app.reviewedBy?.name ?? null,
+          })),
+          upcomingShifts: shifts.upcomingShifts,
+          recentShifts: shifts.recentShifts,
+          pastShiftCount: shifts.pastShiftCount,
+        }
+      : null,
+    hours,
+    training,
+  };
 }
 
 export async function updateVolunteerStatus(

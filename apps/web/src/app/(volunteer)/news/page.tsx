@@ -3,10 +3,12 @@ import { connection } from "next/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getAnnouncements } from "@/lib/announcement-actions";
+import { auth } from "@/lib/auth";
 import { PageHeader } from "@/components/brand/page-header";
 import { Illustration } from "@/components/brand/illustration";
 import { AnnouncementAttachments } from "@/components/announcement-attachments";
-import { formatTimestampInAppZone } from "@/lib/date-only";
+import { EventInvitation } from "@/components/event/event-invitation";
+import { formatTimestampInAppZone, todayInAppZone } from "@/lib/date-only";
 
 export const metadata: Metadata = {
   title: "News & Updates | Te Pūaroha",
@@ -29,7 +31,9 @@ function initials(name: string) {
 
 export default async function NewsPage() {
   await connection();
-  const announcements = await getAnnouncements();
+  const [announcements, session] = await Promise.all([getAnnouncements(), auth()]);
+  const role = session?.user?.role ?? "VOLUNTEER";
+  const today = todayInAppZone();
 
   return (
     <div className="space-y-6">
@@ -46,7 +50,9 @@ export default async function NewsPage() {
             <Card key={a.id} id={a.id} className="scroll-mt-20">
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <Badge variant="neutral">Notice</Badge>
+                  <Badge variant={a.event ? "default" : "neutral"}>
+                    {a.event ? "Invitation" : "Notice"}
+                  </Badge>
                   <time
                     dateTime={a.sentAt.toISOString()}
                     className="shrink-0 text-xs text-muted-foreground"
@@ -62,6 +68,18 @@ export default async function NewsPage() {
                     {a.body}
                   </div>
                 </div>
+                {/* An event pānui carries its reply, so nobody has to go looking
+                    for where to say yes. The title is already above. */}
+                {a.event && (
+                  <div className="border-t border-border pt-3">
+                    <EventInvitation
+                      event={a.event}
+                      role={role}
+                      today={today}
+                      showTitle={false}
+                    />
+                  </div>
+                )}
                 {a.attachments.length > 0 && (
                   <div className="space-y-2 border-t border-border pt-3">
                     <p className="eyebrow text-[0.62rem] text-muted-foreground">
