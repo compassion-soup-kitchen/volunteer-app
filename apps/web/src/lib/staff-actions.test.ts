@@ -6,6 +6,7 @@ const volunteerProfileCountMock = vi.fn();
 const applicationCountMock = vi.fn();
 const shiftCountMock = vi.fn();
 const shiftSignupFindManyMock = vi.fn();
+const shiftSignupCountMock = vi.fn();
 const volunteerProfileFindManyMock = vi.fn();
 const userFindManyMock = vi.fn();
 const userFindUniqueMock = vi.fn();
@@ -37,7 +38,10 @@ vi.mock("@/lib/db", () => ({
     },
     application: { count: applicationCountMock },
     shift: { count: shiftCountMock },
-    shiftSignup: { findMany: shiftSignupFindManyMock },
+    shiftSignup: {
+      findMany: shiftSignupFindManyMock,
+      count: shiftSignupCountMock,
+    },
     user: { findMany: userFindManyMock, findUnique: userFindUniqueMock },
   }),
 }));
@@ -68,6 +72,7 @@ beforeEach(() => {
   applicationCountMock.mockReset().mockResolvedValue(0);
   shiftCountMock.mockReset().mockResolvedValue(0);
   shiftSignupFindManyMock.mockReset().mockResolvedValue([]);
+  shiftSignupCountMock.mockReset().mockResolvedValue(0);
   volunteerProfileFindManyMock.mockReset().mockResolvedValue([]);
   userFindManyMock.mockReset().mockResolvedValue([]);
   userFindUniqueMock.mockReset().mockResolvedValue(null);
@@ -236,8 +241,6 @@ describe("getVolunteerDetail", () => {
       signedAgreements: [],
       documents: [],
       applications: [],
-      shiftSignups: [],
-      _count: { shiftSignups: 0 },
       ...overrides,
     };
   }
@@ -280,6 +283,9 @@ describe("getVolunteerDetail", () => {
     expect(detail?.training).toEqual([]);
     expect(hoursForUserMock).not.toHaveBeenCalled();
     expect(trainingForUserMock).not.toHaveBeenCalled();
+    // Nothing to read shifts against either - they hang off the profile.
+    expect(shiftSignupFindManyMock).not.toHaveBeenCalled();
+    expect(shiftSignupCountMock).not.toHaveBeenCalled();
   });
 
   it("reads hours and training for someone who has a profile", async () => {
@@ -332,22 +338,22 @@ describe("getVolunteerDetail", () => {
               reviewedBy: { name: "Admin User" },
             },
           ],
-          shiftSignups: [
-            {
-              id: "su1",
-              status: "ATTENDED",
-              shift: {
-                date: signedUpAt,
-                startTime: "09:00",
-                endTime: "12:00",
-                serviceArea: { id: "sa1", name: "Kitchen & Meals" },
-              },
-            },
-          ],
-          _count: { shiftSignups: 7 },
         }),
       })
     );
+    shiftSignupFindManyMock.mockResolvedValue([
+      {
+        id: "su1",
+        status: "ATTENDED",
+        shift: {
+          date: signedUpAt,
+          startTime: "09:00",
+          endTime: "12:00",
+          serviceArea: { id: "sa1", name: "Kitchen & Meals" },
+        },
+      },
+    ]);
+    shiftSignupCountMock.mockResolvedValue(7);
 
     const detail = await getVolunteerDetail("user-1");
 
@@ -366,11 +372,15 @@ describe("getVolunteerDetail", () => {
       startTime: "09:00",
       serviceArea: { id: "sa1", name: "Kitchen & Meals" },
     });
-    // "Showing the N most recent of M" needs the untruncated total.
-    expect(detail?.profile?.totalSignups).toBe(7);
+    // "Showing the N most recent of M" counts past shifts, not every signup.
+    expect(detail?.profile?.pastShiftCount).toBe(7);
   });
 
-  it("reads a bounded, newest-first slice of someone's shifts", async () => {
+  /**
+   * The whole point of splitting at today: read as one `date desc` run, a
+   * fortnight of upcoming bookings pushed the attendance history off the card.
+   */
+  it("bounds history to the past and the roster to today onwards", async () => {
     authMock.mockResolvedValue(staffSession);
     userFindUniqueMock.mockResolvedValue(
       userRow({ volunteerProfile: profileRow() })
@@ -378,11 +388,39 @@ describe("getVolunteerDetail", () => {
 
     await getVolunteerDetail("user-1");
 
-    const signups =
-      userFindUniqueMock.mock.calls[0][0].select.volunteerProfile.select
-        .shiftSignups;
-    expect(signups.orderBy).toEqual({ shift: { date: "desc" } });
-    expect(signups.take).toBeGreaterThan(0);
+    const [history, upcoming] = shiftSignupFindManyMock.mock.calls.map((c) => c[0]);
+
+    expect(history.orderBy).toEqual({ shift: { date: "desc" } });
+    expect(history.where.shift.date).toHaveProperty("lt");
+    expect(history.take).toBeGreaterThan(0);
+
+    expect(upcoming.orderBy).toEqual({ shift: { date: "asc" } });
+    expect(upcoming.where.shift.date).toHaveProperty("gte");
+    // A cancelled booking isn't something they're rostered on.
+    expect(upcoming.where.status).toEqual({ not: "CANCELLED" });
+    expect(upcoming.take).toBeGreaterThan(0);
+
+    // Both halves are cut at the same instant, so no shift can fall through
+    // the gap or land in both.
+    expect(history.where.shift.date.lt).toEqual(upcoming.where.shift.date.gte);
+
+    // The "of M" count covers history only, matching the card it captions.
+    expect(shiftSignupCountMock.mock.calls[0][0].where.shift.date).toHaveProperty(
+      "lt"
+    );
+  });
+
+  it("reads shifts against the profile, not the user", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue(
+      userRow({ volunteerProfile: profileRow({ id: "profile-9" }) })
+    );
+
+    await getVolunteerDetail("user-1");
+
+    for (const [args] of shiftSignupFindManyMock.mock.calls) {
+      expect(args.where.volunteerId).toBe("profile-9");
+    }
   });
 
   it("asks only for groups that are still active", async () => {

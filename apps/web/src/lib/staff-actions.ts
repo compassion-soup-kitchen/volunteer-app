@@ -18,6 +18,7 @@ import {
   parseDateOnly,
   startOfMonthInAppZone,
   startOfWeekInAppZone,
+  todayInAppZone,
 } from "@/lib/date-only";
 import { Prisma, type Role } from "@prisma/client";
 import {
@@ -666,16 +667,104 @@ export type VolunteerDetail = {
     }[];
     documents: VolunteerDetailDocument[];
     applications: VolunteerDetailApplication[];
-    /** The most recent handful, newest first - not the whole history. */
+    /** What they're rostered on next, soonest first. */
+    upcomingShifts: VolunteerDetailShift[];
+    /** The last handful they were actually on, newest first. */
     recentShifts: VolunteerDetailShift[];
-    totalSignups: number;
+    /** Every past shift, so the card can say what it isn't showing. */
+    pastShiftCount: number;
   } | null;
   hours: VolunteerHoursData | null;
   training: TrainingHistoryItem[];
 };
 
-/** How many of a person's shifts the record shows before "see all". */
+/** How much of a person's shift history the record shows. */
 const RECENT_SHIFT_LIMIT = 8;
+/** How far ahead the record looks on the roster. */
+const UPCOMING_SHIFT_LIMIT = 5;
+
+/** Everything a shift row on the record needs. */
+const recordShiftSelect = {
+  id: true,
+  status: true,
+  shift: {
+    select: {
+      date: true,
+      startTime: true,
+      endTime: true,
+      serviceArea: { select: { id: true, name: true } },
+    },
+  },
+} as const;
+
+type RecordSignupRow = {
+  id: string;
+  status: string;
+  shift: {
+    date: Date;
+    startTime: string;
+    endTime: string;
+    serviceArea: { id: string; name: string };
+  };
+};
+
+function toDetailShift(signup: RecordSignupRow): VolunteerDetailShift {
+  return {
+    id: signup.id,
+    status: signup.status,
+    date: signup.shift.date,
+    startTime: signup.shift.startTime,
+    endTime: signup.shift.endTime,
+    serviceArea: signup.shift.serviceArea,
+  };
+}
+
+/**
+ * A person's shifts, split at today rather than taken as one `date desc` run.
+ *
+ * Sorting the lot by date descending puts the *furthest future* booking first,
+ * so a regular with a full fortnight ahead of them pushed their whole
+ * attendance history off the card - the opposite of what the record is for.
+ * Past and upcoming are asked for separately, each with its own bound and
+ * direction, so neither can crowd the other out.
+ *
+ * "Today" counts as upcoming: a shift that hasn't finished yet is something a
+ * coordinator is rostering around, not something they're reviewing.
+ */
+async function readShiftsForRecord(volunteerId: string) {
+  const db = getDb();
+  const today = parseDateOnly(todayInAppZone());
+
+  const [recent, upcoming, pastShiftCount] = await Promise.all([
+    db.shiftSignup.findMany({
+      where: { volunteerId, shift: { date: { lt: today } } },
+      orderBy: { shift: { date: "desc" } },
+      take: RECENT_SHIFT_LIMIT,
+      select: recordShiftSelect,
+    }),
+    // A cancelled booking isn't something they're rostered on, so it only
+    // belongs in the history half.
+    db.shiftSignup.findMany({
+      where: {
+        volunteerId,
+        status: { not: "CANCELLED" },
+        shift: { date: { gte: today } },
+      },
+      orderBy: { shift: { date: "asc" } },
+      take: UPCOMING_SHIFT_LIMIT,
+      select: recordShiftSelect,
+    }),
+    db.shiftSignup.count({
+      where: { volunteerId, shift: { date: { lt: today } } },
+    }),
+  ]);
+
+  return {
+    recentShifts: recent.map(toDetailShift),
+    upcomingShifts: upcoming.map(toDetailShift),
+    pastShiftCount,
+  };
+}
 
 /**
  * Everything staff need to read about one person, keyed by their **user** id.
@@ -760,23 +849,6 @@ export async function getVolunteerDetail(
               reviewedBy: { select: { name: true } },
             },
           },
-          shiftSignups: {
-            orderBy: { shift: { date: "desc" } },
-            take: RECENT_SHIFT_LIMIT,
-            select: {
-              id: true,
-              status: true,
-              shift: {
-                select: {
-                  date: true,
-                  startTime: true,
-                  endTime: true,
-                  serviceArea: { select: { id: true, name: true } },
-                },
-              },
-            },
-          },
-          _count: { select: { shiftSignups: true } },
         },
       },
     },
@@ -786,13 +858,19 @@ export async function getVolunteerDetail(
 
   const profile = user.volunteerProfile;
 
-  // Only meaningful once someone has applied - both read through the profile.
-  const [hours, training] = profile
+  // Only meaningful once someone has applied - all three read through the
+  // profile, and none of them has anything to say without one.
+  const [hours, training, shifts] = profile
     ? await Promise.all([
         getVolunteerHoursDataForUser(userId),
         getTrainingHistoryForUser(userId),
+        readShiftsForRecord(profile.id),
       ])
-    : [null, [] as TrainingHistoryItem[]];
+    : [
+        null,
+        [] as TrainingHistoryItem[],
+        { recentShifts: [], upcomingShifts: [], pastShiftCount: 0 },
+      ];
 
   return {
     user: {
@@ -842,15 +920,9 @@ export async function getVolunteerDetail(
             notes: app.notes,
             reviewedByName: app.reviewedBy?.name ?? null,
           })),
-          recentShifts: profile.shiftSignups.map((signup) => ({
-            id: signup.id,
-            status: signup.status,
-            date: signup.shift.date,
-            startTime: signup.shift.startTime,
-            endTime: signup.shift.endTime,
-            serviceArea: signup.shift.serviceArea,
-          })),
-          totalSignups: profile._count.shiftSignups,
+          upcomingShifts: shifts.upcomingShifts,
+          recentShifts: shifts.recentShifts,
+          pastShiftCount: shifts.pastShiftCount,
         }
       : null,
     hours,

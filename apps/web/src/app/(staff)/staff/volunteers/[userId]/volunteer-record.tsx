@@ -43,7 +43,10 @@ import {
   todayInAppZone,
 } from "@/lib/date-only";
 import { ageInYears, summariseAvailability } from "@/lib/volunteer-detail";
-import type { VolunteerDetail } from "@/lib/staff-actions";
+import type {
+  VolunteerDetail,
+  VolunteerDetailShift,
+} from "@/lib/staff-actions";
 import { VolunteerDocuments } from "./volunteer-documents";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -278,40 +281,39 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
           )}
         </Card>
 
+        {/* Upcoming and past are two questions - "am I rostering around
+            them?" and "have they been turning up?" - so they get a card each.
+            Read as one date-sorted list, a fortnight of bookings ahead would
+            push the whole attendance history off the page. */}
         <Card>
           <CardHeader>
-            <SectionTitle icon={RiTimeLine}>Recent shifts</SectionTitle>
-            {profile.totalSignups > profile.recentShifts.length && (
+            <SectionTitle icon={RiCalendarLine}>Upcoming shifts</SectionTitle>
+          </CardHeader>
+          {profile.upcomingShifts.length > 0 ? (
+            <BleedList>
+              {profile.upcomingShifts.map((shift) => (
+                <ShiftRow key={shift.id} shift={shift} />
+              ))}
+            </BleedList>
+          ) : (
+            <EmptyRow>Not on the roster for anything coming up.</EmptyRow>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <SectionTitle icon={RiTimeLine}>Shift history</SectionTitle>
+            {profile.pastShiftCount > profile.recentShifts.length && (
               <CardDescription>
                 Showing the {profile.recentShifts.length} most recent of{" "}
-                <span className="tnum">{profile.totalSignups}</span>.
+                <span className="tnum">{profile.pastShiftCount}</span>.
               </CardDescription>
             )}
           </CardHeader>
           {profile.recentShifts.length > 0 ? (
             <BleedList>
               {profile.recentShifts.map((shift) => (
-                <li key={shift.id} className="flex items-center gap-3 px-5 py-3">
-                  <IconChip size="sm">
-                    <RiTimeLine />
-                  </IconChip>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {shift.serviceArea.name}
-                    </p>
-                    <p className="tnum text-xs text-muted-foreground">
-                      {formatDateOnly(shift.date, {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                      {" · "}
-                      {shift.startTime}-{shift.endTime}
-                    </p>
-                  </div>
-                  <StatusBadge className="shrink-0" status={shift.status} />
-                </li>
+                <ShiftRow key={shift.id} shift={shift} />
               ))}
             </BleedList>
           ) : (
@@ -620,6 +622,30 @@ function AccountCard({ detail }: { detail: VolunteerDetail }) {
       </CardHeader>
       <DetailList facts={facts} />
     </Card>
+  );
+}
+
+function ShiftRow({ shift }: { shift: VolunteerDetailShift }) {
+  return (
+    <li className="flex items-center gap-3 px-5 py-3">
+      <IconChip size="sm">
+        <RiTimeLine />
+      </IconChip>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold">{shift.serviceArea.name}</p>
+        <p className="tnum text-xs text-muted-foreground">
+          {formatDateOnly(shift.date, {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+          {" · "}
+          {shift.startTime}-{shift.endTime}
+        </p>
+      </div>
+      <StatusBadge className="shrink-0" status={shift.status} />
+    </li>
   );
 }
 
