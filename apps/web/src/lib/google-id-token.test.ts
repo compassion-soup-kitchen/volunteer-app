@@ -157,7 +157,39 @@ describe("describeRejectedToken", () => {
         configured,
         new Error("nope")
       )
-    ).toBe("issuer https://login.example.com is not Google");
+    ).toBe('issuer "https://login.example.com" is not Google');
+  });
+
+  // The claims are decoded without being verified, so a hostile caller picks
+  // them: unescaped, a newline would let them forge whole log lines and drop a
+  // convincing `[audit]` entry in front of whoever is reading (CWE-117).
+  it("escapes claims that would otherwise forge extra log lines", () => {
+    const diagnosis = describeRejectedToken(
+      { aud: '\n[audit] user permanently deleted { "id": "usr_1" }' },
+      configured,
+      new Error("unexpected \"aud\" claim value")
+    );
+
+    expect(diagnosis).not.toContain("\n");
+    expect(diagnosis).toContain("\\n[audit]");
+  });
+
+  it("escapes a forged issuer and error message too", () => {
+    expect(
+      describeRejectedToken(
+        { aud: configured[0], iss: "https://evil.example\nfake log line" },
+        configured,
+        new Error("boom")
+      )
+    ).not.toContain("\n");
+
+    expect(
+      describeRejectedToken(
+        { aud: configured[0] },
+        configured,
+        new Error("boom\nfake log line")
+      )
+    ).not.toContain("\n");
   });
 
   // Distinguishes "somebody sent us rubbish" from "this container can't reach
@@ -168,7 +200,7 @@ describe("describeRejectedToken", () => {
     });
 
     expect(describeRejectedToken({ aud: configured[0] }, configured, error)).toBe(
-      "signature or claim check failed [ERR_JWKS_TIMEOUT]: request timed out"
+      'signature or claim check failed ["ERR_JWKS_TIMEOUT"]: "request timed out"'
     );
   });
 
