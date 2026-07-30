@@ -45,6 +45,8 @@ model User {
   recordedShiftMeals   Shift[]             @relation("MealsRecordedBy")
   createdTraining      TrainingSession[]
   createdAnnouncements Announcement[]
+  createdEvents        Event[]
+  eventRsvps           EventRsvp[]
   uploadedDocuments    Document[]          @relation("UploadedBy")
   updatedAgreements    AgreementTemplate[] @relation("AgreementTemplateUpdatedBy")
   reAckSetAgreements   AgreementTemplate[] @relation("AgreementTemplateReAckSetBy")
@@ -442,9 +444,16 @@ model Announcement {
   createdById String
   createdAt   DateTime  @default(now())
   sentAt      DateTime?
+  /// The gathering this pānui is about, when it is announcing one. Optional
+  /// both ways: most pānui announce nothing, and an event can be announced
+  /// more than once (the invitation, then "replies close Friday").
+  eventId String?
 
   createdBy   User                     @relation(fields: [createdById], references: [id])
+  event       Event?                   @relation(fields: [eventId], references: [id], onDelete: SetNull)
   attachments AnnouncementAttachment[]
+
+  @@index([eventId])
 }
 
 /// A file rider on a pānui — a roster PDF, a flyer, a menu.
@@ -465,4 +474,83 @@ model AnnouncementAttachment {
   announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
 
   @@index([announcementId])
+}
+
+// ─── Events & RSVPs ───────────────────────────────────
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  /// Called off. Kept rather than deleted so everyone who replied can be told,
+  /// and so last year's party is still in the record.
+  CANCELLED
+}
+
+/// A gathering the whānau is invited to — the Christmas party, a volunteer hui,
+/// a working bee.
+///
+/// Deliberately not a `Shift`: nobody is rostered, there is no service area and
+/// no meal count, and staff come as guests rather than as coordinators.
+/// Deliberately not an `Announcement` either — a pānui is one message sent once,
+/// while an event has a life of its own: it can be announced several times,
+/// edited long after the first pānui went out, cancelled without losing its
+/// guest list, and it must outlive any single message about it.
+model Event {
+  id          String @id @default(cuid())
+  title       String
+  description String? @db.Text
+  /// A wall-calendar day like `Shift.date` (see date-only.ts). Times are "HH:mm"
+  /// strings, so the same helpers format events, shifts and training alike.
+  date      DateTime @db.Date
+  startTime String?
+  endTime   String?
+  location  String?
+  /// Who is invited, and therefore who may reply. Shares the `Audience` enum
+  /// with announcements so "everyone" means the same thing on both.
+  audience    Audience    @default(ALL)
+  status      EventStatus @default(DRAFT)
+  /// Whether replies are being collected. Off for a save-the-date.
+  rsvpEnabled Boolean     @default(true)
+  /// Last calendar day to reply. Null means right up until the event itself.
+  rsvpDeadline DateTime? @db.Date
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  rsvps         EventRsvp[]
+  announcements Announcement[]
+
+  @@index([date])
+  @@index([status])
+}
+
+enum RsvpResponse {
+  GOING
+  MAYBE
+  NOT_GOING
+}
+
+/// One person's reply to an event.
+///
+/// Keyed by `User` rather than `VolunteerProfile` because staff attend these
+/// too, and coordinators have no volunteer profile. One row per person per
+/// event, so changing your mind updates the row: the tallies can never
+/// double-count and "who has replied" needs no de-duplication.
+model EventRsvp {
+  id       String       @id @default(cuid())
+  eventId  String
+  userId   String
+  response RsvpResponse
+  /// Anything the organisers need to know — dietary needs, arriving late.
+  note        String?  @db.Text
+  respondedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
 }

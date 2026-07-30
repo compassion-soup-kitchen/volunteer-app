@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { APP_TIME_ZONE, formatDateOnly } from "@/lib/date-only";
+import { APP_TIME_ZONE, formatDateOnly, todayInAppZone } from "@/lib/date-only";
 import { auth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Kowhaiwhai } from "@/components/brand/kowhaiwhai";
 import {
   RiArrowRightLine,
   RiArrowRightSLine,
+  RiCalendarEventLine,
   RiCalendarLine,
   RiCheckLine,
   RiFileTextLine,
@@ -34,6 +35,8 @@ import { getDashboardData } from "@/lib/dashboard-actions";
 import { getAvailableTraining } from "@/lib/training-actions";
 import { getPendingResignCount } from "@/lib/document-actions";
 import { getRecentAnnouncements } from "@/lib/announcement-actions";
+import { getUnansweredInvitations } from "@/lib/event-actions";
+import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimeRange } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -83,14 +86,21 @@ export default async function VolunteerDashboard() {
   const session = await auth();
   const firstName = session?.user?.name?.split(" ")[0] || "there";
 
-  const [appStatus, dashboardData, trainingSessions, pendingResigns, announcements] =
-    await Promise.all([
-      getUserApplicationStatus(),
-      getDashboardData(),
-      getAvailableTraining(),
-      getPendingResignCount(),
-      getRecentAnnouncements(2),
-    ]);
+  const [
+    appStatus,
+    dashboardData,
+    trainingSessions,
+    pendingResigns,
+    announcements,
+    invitations,
+  ] = await Promise.all([
+    getUserApplicationStatus(),
+    getDashboardData(),
+    getAvailableTraining(),
+    getPendingResignCount(),
+    getRecentAnnouncements(2),
+    getUnansweredInvitations(),
+  ]);
 
   const registeredTraining = trainingSessions.filter(
     (s) => s.userAttendanceStatus === "REGISTERED"
@@ -534,6 +544,33 @@ export default async function VolunteerDashboard() {
 
       {/* Side rail — kōrero and quiet utilities */}
       <div className="min-w-0 space-y-8">
+      {/* Invitations still waiting on an answer. Answered ones drop out — the
+          nudge is the whole point of putting them here. */}
+      {invitations.length > 0 && (
+        <section className="space-y-4">
+          <SectionHeader
+            divider
+            className="lg:border-t-0 lg:pt-0"
+            eyebrow="He pōwhiri"
+            title="You're invited"
+            action={{ label: "All events", href: "/events" }}
+          />
+          <div className="space-y-3">
+            {invitations.map((event) => (
+              <Card key={event.id} variant="tint">
+                <CardContent>
+                  <EventInvitation
+                    event={event}
+                    role={session?.user?.role ?? "VOLUNTEER"}
+                    today={todayInAppZone()}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Notices */}
       <section className="space-y-4">
         <SectionHeader
@@ -588,6 +625,28 @@ export default async function VolunteerDashboard() {
 
       {/* Quiet utility rows */}
       <section className="space-y-3 border-t border-border pt-6">
+        {/* Always here, not only when an invitation is outstanding — someone who
+            replied "maybe" needs a way back to change their mind. */}
+        <Card size="sm">
+          <Link
+            href="/events"
+            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+          >
+            <CardContent className="flex items-center gap-3">
+              <IconChip size="sm">
+                <RiCalendarEventLine />
+              </IconChip>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Ngā hui · Events</p>
+                <p className="text-xs text-muted-foreground">
+                  Parties and get-togethers, and your replies
+                </p>
+              </div>
+              <RiArrowRightSLine className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            </CardContent>
+          </Link>
+        </Card>
+
         <Card size="sm">
           <Link
             href="/documents"

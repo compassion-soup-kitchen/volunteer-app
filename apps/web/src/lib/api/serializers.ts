@@ -19,7 +19,11 @@ import type {
   TrainingHistoryItem,
   VolunteerTrainingSession,
 } from "@/lib/data/volunteer-training";
-import type { AnnouncementSummary } from "@/lib/data/announcements";
+import type {
+  AnnouncementEvent,
+  AnnouncementSummary,
+} from "@/lib/data/announcements";
+import type { EventSummary } from "@/lib/data/events";
 import type { getProfileForUser } from "@/lib/data/volunteer-profile";
 import { getMilestones } from "@/lib/milestones";
 import { timestampToDateOnly } from "@/lib/date-only";
@@ -183,6 +187,38 @@ export function serializeAnnouncement(announcement: AnnouncementSummary) {
     publishedAt: announcement.sentAt.toISOString(),
     // The web app has no pinning yet; the mobile feed sorts pinned first.
     pinned: false,
+    // The gathering this pānui announces, so the app can offer the reply right
+    // there in the feed. Older app versions ignore it.
+    event: announcement.event ? serializeEvent(announcement.event) : null,
+  };
+}
+
+// ─── Events ─────────────────────────────────────────────
+
+/**
+ * An event and this reader's own reply to it.
+ *
+ * `date` and `rsvpDeadline` are `@db.Date` calendar days, so they go out as
+ * `YYYY-MM-DD` like every other date on the wire. The tallies are flattened to
+ * plain numbers rather than a nested object — the app only ever shows the two.
+ */
+export function serializeEvent(event: AnnouncementEvent | EventSummary) {
+  return {
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    date: dateOnly(event.date),
+    startTime: event.startTime,
+    endTime: event.endTime,
+    location: event.location,
+    audience: event.audience,
+    status: event.status,
+    rsvpEnabled: event.rsvpEnabled,
+    rsvpDeadline: event.rsvpDeadline ? dateOnly(event.rsvpDeadline) : null,
+    goingCount: event.counts.going,
+    maybeCount: event.counts.maybe,
+    myResponse: event.myRsvp?.response ?? null,
+    myNote: event.myRsvp?.note ?? null,
   };
 }
 
