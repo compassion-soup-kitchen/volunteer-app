@@ -243,7 +243,8 @@ pnpm run db:studio    # prisma studio
 Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: group `(auth)` (`login.tsx`, `register.tsx`); group `(tabs)` (`index.tsx`, `shifts.tsx`, `hours.tsx`, `training.tsx`, `profile.tsx`); top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; dynamic dirs `shift/`, `training/`, `notice/` (each a `[id].tsx`); and static nested dir `profile/` (`edit.tsx`)). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
 
 - **Expo has changed** — `apps/mobile/AGENTS.md` (loaded via the `@AGENTS.md` include in `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
-- Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
+- Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`, `test` / `test:ci` (vitest).
+- **Mobile unit tests cover `src/lib` only.** `vitest.config.ts` includes `src/lib/**/*.test.ts` and nothing else: component tests would need the React Native preset plus a native-module mock for every `@expo/ui` / `expo-glass-effect` import, which buys little for a UI that is verified on a simulator anyway. So put branching logic in a pure helper under `src/lib` with a sibling test, and keep components thin. The config defines `__DEV__` (modules read it at import time) and mocks are needed for any `expo-*` import the helper pulls in - see `src/lib/updates.test.ts`. Root `pnpm run test:ci` fans out to both apps via Turbo, so these run in CI.
 
 ### Releasing to iOS
 

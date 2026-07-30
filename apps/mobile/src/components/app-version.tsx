@@ -9,7 +9,7 @@
 
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
-import { Pressable } from 'react-native';
+import { Alert, Pressable } from 'react-native';
 
 import { Text } from '@/components/ui';
 import { IS_OTA_MANAGED, versionLabel } from '@/lib/updates';
@@ -22,7 +22,7 @@ export function AppVersion() {
   const busy = isChecking || isDownloading;
   const label = busy
     ? 'Checking for updates…'
-    : versionLabel(Constants.expoConfig?.version, currentlyRunning);
+    : versionLabel(Constants.expoConfig?.version, currentlyRunning, IS_OTA_MANAGED);
 
   const line = (
     <Text variant="caption" color="textTertiary" center>
@@ -41,7 +41,18 @@ export function AppVersion() {
       }
       toast.show('Fetching the latest version…');
       await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
+      // Restarting is the volunteer's call, not ours: asking for an update from
+      // the profile screen says nothing about what is open elsewhere in the app.
+      // Declining costs nothing - `app-updates` applies it after a long absence.
+      Alert.alert('Update ready', 'Restart the app to finish updating?', [
+        { text: 'Later', style: 'cancel' },
+        {
+          text: 'Restart',
+          onPress: () => {
+            Updates.reloadAsync().catch(() => {});
+          },
+        },
+      ]);
     } catch {
       toast.error('Could not check for updates just now');
     }

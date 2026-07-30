@@ -42,12 +42,16 @@ export function isSafeToReloadAfter(awayMs: number): boolean {
  * that shipped in the build, plus the update's publish date once one is running.
  * Support conversations start with "which version are you on?", and with
  * `appVersionSource: remote` the build number alone would not answer it.
+ *
+ * `otaManaged` is `IS_OTA_MANAGED`, taken as an argument rather than read from
+ * module state so this stays pure.
  */
 export function versionLabel(
   version: string | undefined,
   update: { isEmbeddedLaunch: boolean; createdAt?: Date | null },
+  otaManaged: boolean,
 ): string {
   const base = `Version ${version ?? '—'}`;
-  if (!IS_OTA_MANAGED || update.isEmbeddedLaunch || !update.createdAt) return base;
+  if (!otaManaged || update.isEmbeddedLaunch || !update.createdAt) return base;
   return `${base} · updated ${format(update.createdAt, 'd MMM')}`;
 }
