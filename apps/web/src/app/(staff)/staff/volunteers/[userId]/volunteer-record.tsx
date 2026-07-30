@@ -9,7 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DetailList, type DetailFact } from "@/components/brand/detail-list";
+import {
+  BleedList,
+  DetailList,
+  type DetailFact,
+} from "@/components/brand/detail-list";
 import { GroupBadges } from "@/components/brand/group-badge";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
@@ -158,7 +162,7 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
     <div className="grid gap-6 lg:grid-cols-3">
       {/* Left column — who they are and their record with us */}
       <div className="space-y-4 lg:col-span-2">
-        <Card className="pb-2">
+        <Card>
           <CardHeader>
             <SectionTitle icon={RiUserLine}>Contact details</SectionTitle>
           </CardHeader>
@@ -168,7 +172,7 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
         {/* Emergency contact — the one thing a coordinator may need in a hurry,
             so a missing one is called out rather than left as three quiet
             "Not provided" rows. */}
-        <Card className={hasEmergencyContact ? "pb-2" : undefined}>
+        <Card>
           <CardHeader>
             <SectionTitle
               icon={RiAlarmWarningLine}
@@ -247,12 +251,12 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
           </CardContent>
         </Card>
 
-        <Card className={availability.length > 0 ? "pb-2" : undefined}>
+        <Card>
           <CardHeader>
             <SectionTitle icon={RiCalendarLine}>Availability</SectionTitle>
           </CardHeader>
           {availability.length > 0 ? (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {availability.map((day) => (
                 <li
                   key={day.key}
@@ -268,13 +272,13 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
                   </span>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           ) : (
             <EmptyRow>No availability set.</EmptyRow>
           )}
         </Card>
 
-        <Card className={profile.recentShifts.length > 0 ? "pb-2" : undefined}>
+        <Card>
           <CardHeader>
             <SectionTitle icon={RiTimeLine}>Recent shifts</SectionTitle>
             {profile.totalSignups > profile.recentShifts.length && (
@@ -285,7 +289,7 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
             )}
           </CardHeader>
           {profile.recentShifts.length > 0 ? (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {profile.recentShifts.map((shift) => (
                 <li key={shift.id} className="flex items-center gap-3 px-5 py-3">
                   <IconChip size="sm">
@@ -309,20 +313,20 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
                   <StatusBadge className="shrink-0" status={shift.status} />
                 </li>
               ))}
-            </ul>
+            </BleedList>
           ) : (
             <EmptyRow>No shifts yet.</EmptyRow>
           )}
         </Card>
 
-        <Card className={training.length > 0 ? "pb-2" : undefined}>
+        <Card>
           <CardHeader>
             <SectionTitle icon={RiGraduationCapLine}>
               Whakangungu · Training
             </SectionTitle>
           </CardHeader>
           {training.length > 0 ? (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {training.map((item) => (
                 <li key={item.id} className="flex items-center gap-3 px-5 py-3">
                   <IconChip size="sm">
@@ -343,24 +347,20 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
                   <StatusBadge className="shrink-0" status={item.status} />
                 </li>
               ))}
-            </ul>
+            </BleedList>
           ) : (
             <EmptyRow>No training sessions yet.</EmptyRow>
           )}
         </Card>
 
-        <Card
-          className={
-            profile.signedAgreements.length > 0 ? "pb-2" : undefined
-          }
-        >
+        <Card>
           <CardHeader>
             <SectionTitle icon={RiShieldCheckLine} tone="success">
               Signed agreements
             </SectionTitle>
           </CardHeader>
           {profile.signedAgreements.length > 0 ? (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {profile.signedAgreements.map((agreement) => (
                 <li
                   key={agreement.id}
@@ -389,7 +389,7 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
                   </Badge>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           ) : (
             <EmptyRow>No agreements signed yet.</EmptyRow>
           )}
@@ -400,7 +400,7 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
 
       {/* Right rail — status, standing and the account behind it */}
       <div className="space-y-4">
-        <Card className="pb-2">
+        <Card>
           <CardHeader>
             <CardTitle>Standing</CardTitle>
             <CardDescription>
@@ -614,7 +614,7 @@ function AccountCard({ detail }: { detail: VolunteerDetail }) {
   }
 
   return (
-    <Card className="pb-2">
+    <Card>
       <CardHeader>
         <CardTitle>Account</CardTitle>
       </CardHeader>

@@ -35,6 +35,7 @@ import {
   RiCloseLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
+import { documentTypeLabel } from "@/lib/document-labels";
 import {
   uploadDocument,
   deleteDocument,
@@ -46,14 +47,6 @@ import {
   MAX_UPLOAD_BYTES,
   UPLOAD_ACCEPT_ATTR,
 } from "@/lib/uploads";
-
-const TYPE_LABELS: Record<string, string> = {
-  POLICY: "Policy",
-  TRAINING_MATERIAL: "Training material",
-  ID: "ID document",
-  MOJ_FORM: "MoJ form",
-  SIGNED_AGREEMENT: "Signed agreement",
-};
 
 const TYPE_VARIANTS: Record<
   string,
@@ -247,7 +240,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                       variant={TYPE_VARIANTS[doc.type] ?? "neutral"}
                       className="mr-1 hidden sm:inline-flex"
                     >
-                      {TYPE_LABELS[doc.type] || doc.type}
+                      {documentTypeLabel(doc.type)}
                     </Badge>
                     <Button
                       variant="ghost"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BleedList } from "@/components/brand/detail-list";
 import { IconChip } from "@/components/brand/icon-chip";
 import {
   RiDownloadLine,
@@ -10,15 +11,8 @@ import {
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { getDocumentDownloadUrl } from "@/lib/document-actions";
+import { documentTypeLabel } from "@/lib/document-labels";
 import type { VolunteerDetailDocument } from "@/lib/staff-actions";
-
-const TYPE_LABELS: Record<string, string> = {
-  ID: "Identification",
-  MOJ_FORM: "MoJ form",
-  SIGNED_AGREEMENT: "Signed agreement",
-  POLICY: "Policy",
-  TRAINING_MATERIAL: "Training material",
-};
 
 /**
  * The files held against one volunteer - their ID, their MoJ form. Downloads go
@@ -63,7 +57,7 @@ export function VolunteerDocuments({
         </div>
       </CardHeader>
       {documents.length > 0 ? (
-        <ul className="divide-y divide-border border-t border-border">
+        <BleedList>
           {documents.map((doc) => (
             <li key={doc.id}>
               <button
@@ -81,7 +75,7 @@ export function VolunteerDocuments({
                     {doc.fileName}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {TYPE_LABELS[doc.type] || doc.type}
+                    {documentTypeLabel(doc.type)}
                     {" · "}
                     {new Date(doc.uploadedAt).toLocaleDateString("en-NZ", {
                       day: "numeric",
@@ -105,7 +99,7 @@ export function VolunteerDocuments({
               </button>
             </li>
           ))}
-        </ul>
+        </BleedList>
       ) : (
         <CardContent className="border-t border-border pt-4">
           <p className="text-sm text-muted-foreground">

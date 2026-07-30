@@ -32,7 +32,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { IconChip } from "@/components/brand/icon-chip";
-import { DetailList, type DetailFact } from "@/components/brand/detail-list";
+import {
+  BleedList,
+  DetailList,
+  type DetailFact,
+} from "@/components/brand/detail-list";
 import {
   RiCheckLine,
   RiCloseLine,
@@ -144,7 +148,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
       {/* Left column — the applicant's story */}
       <div className="space-y-4 lg:col-span-2">
         {/* Contact details */}
-        <Card className="pb-2">
+        <Card>
           <CardHeader>
             <div className="flex items-center gap-2.5">
               <IconChip size="sm">
@@ -157,7 +161,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         </Card>
 
         {/* Emergency contact */}
-        <Card className="pb-2">
+        <Card>
           <CardHeader>
             <div className="flex items-center gap-2.5">
               <IconChip size="sm">
@@ -256,9 +260,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         )}
 
         {/* Signed agreements */}
-        <Card
-          className={vol.signedAgreements.length > 0 ? "pb-2" : undefined}
-        >
+        <Card>
           <CardHeader>
             <div className="flex items-center gap-2.5">
               <IconChip size="sm" tone="success">
@@ -268,7 +270,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             </div>
           </CardHeader>
           {vol.signedAgreements.length > 0 ? (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {vol.signedAgreements.map((a) => (
                 <li key={a.id} className="flex items-center gap-3 px-5 py-3">
                   <IconChip size="sm" tone="success">
@@ -285,7 +287,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                   </span>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           ) : (
             <CardContent className="border-t border-border pt-4">
               <p className="text-sm text-muted-foreground">
