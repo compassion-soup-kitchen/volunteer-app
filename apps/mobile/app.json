@@ -3,6 +3,14 @@
     "name": "Compassion",
     "slug": "compassion-volunteer",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/31426826-e7b0-4427-b69c-e1df422780e9",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "compassionvolunteer",

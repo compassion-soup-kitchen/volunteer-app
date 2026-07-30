@@ -243,7 +243,8 @@ pnpm run db:studio    # prisma studio
 Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: group `(auth)` (`login.tsx`, `register.tsx`); group `(tabs)` (`index.tsx`, `shifts.tsx`, `hours.tsx`, `training.tsx`, `profile.tsx`); top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; dynamic dirs `shift/`, `training/`, `notice/` (each a `[id].tsx`); and static nested dir `profile/` (`edit.tsx`)). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
 
 - **Expo has changed** — `apps/mobile/AGENTS.md` (loaded via the `@AGENTS.md` include in `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
-- Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`.
+- Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`, `test` / `test:ci` (vitest).
+- **Mobile unit tests cover `src/lib` only.** `vitest.config.ts` includes `src/lib/**/*.test.ts` and nothing else: component tests would need the React Native preset plus a native-module mock for every `@expo/ui` / `expo-glass-effect` import, which buys little for a UI that is verified on a simulator anyway. So put branching logic in a pure helper under `src/lib` with a sibling test, and keep components thin. The config defines `__DEV__` (modules read it at import time) and mocks are needed for any `expo-*` import the helper pulls in - see `src/lib/updates.test.ts`. Root `pnpm run test:ci` fans out to both apps via Turbo, so these run in CI.
 
 ### Releasing to iOS
 
@@ -263,6 +264,25 @@ pnpm mobile prebuild:ios       # regenerate ios/ locally — needed after a conf
 - **A development build is not optional.** `@react-native-google-signin/google-signin` and the other native modules aren't in Expo Go, so anything touching Google sign-in must be tested on `build:ios:dev`.
 - **Env vars come from EAS, not `.env`.** `apps/mobile/.env` is gitignored, so it is never uploaded to a cloud build; each profile names an EAS environment (`development` / `preview` / `production`) and the variables are read from there. Manage them with `eas env:list --environment production` / `eas env:create`. Anything the app needs at build time — `EXPO_PUBLIC_API_URL`, the `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` pair — must exist in that environment or the build ships without it.
 - **`submit.production` is empty on purpose.** The first `eas submit` prompts for the Apple ID, team and App Store Connect app id, and offers to save them.
+
+### Over-the-air updates (EAS Update)
+
+`expo-updates` ships JS/asset-only fixes straight to installed builds - no rebuild, no App Store review. Every build profile in `eas.json` names a `channel` matching its own name, and `app.json` carries `updates.url` plus `runtimeVersion: { policy: "fingerprint" }`.
+
+```
+pnpm mobile update:preview     # publish to the preview channel (internal / TestFlight builds)
+pnpm mobile update:production  # publish to the production channel (App Store builds)
+pnpm mobile update:list        # recent updates per branch
+pnpm mobile update:rollback    # interactive: republish the previous update, or revert to embedded
+pnpm mobile fingerprint        # the runtime fingerprint of the working tree
+```
+
+- **The channel is baked into the binary at build time.** A build made before this was wired up can never receive an update - it has no channel and no `updates.url`. Adding a channel, or renaming one, means a new build.
+- **`--environment` is not optional on `eas update`.** Expo SDK 55+ requires it, and without it the OTA bundle is built with none of the EAS environment variables - it would ship with no `EXPO_PUBLIC_API_URL` and no Google client id. Both publish scripts pass the environment matching their channel; keep that pairing if you add another.
+- **The fingerprint policy means JS-only.** `@expo/fingerprint` hashes the native side (autolinked modules, config plugins, app config), and an update only reaches builds whose fingerprint matches. Anything native - a new native dependency, a config-plugin change, an icon or entitlement change - shifts the fingerprint, so `eas update` simply will not reach the old build and you need `build:ios`. Run `pnpm mobile fingerprint` before publishing if unsure, or `eas fingerprint:compare` against the build.
+- **Updates apply on a boundary, never mid-task.** `checkAutomatically: ON_LOAD` + `fallbackToCacheTimeout: 0` means launch never blocks on the network: the app starts on the cached bundle and downloads in the background. `src/components/app-updates.tsx` adds the resume half - it checks when the app returns to the foreground, and reloads into a downloaded update only when **both** hold: the app was backgrounded for `RESUME_RELOAD_AFTER_MS` (15 min) *and* the focused route is a read-only tab screen. Time alone is not enough - a phone call easily outlasts 15 minutes and can land mid-registration, and no form in the app persists a draft. `isReadOnlySurface` is an allowlist (`segments[0] === '(tabs)'`), so a new form route is excluded by default; the cost of being wrong that way is a delayed update rather than lost work. The manual check in `src/components/app-version.tsx` confirms via `Alert` instead, since it can't know what is open on another tab.
+- **OTA cannot be tested in Expo Go or a dev build.** Both serve the bundle from Metro, and both report `Updates.isEnabled === true` with a non-embedded launch - so `IS_OTA_MANAGED` in `src/lib/updates.ts` (channel present, not `__DEV__`) is the flag to gate on, not `isEnabled`. Real testing needs `build:ios:preview` or a TestFlight build.
+- **Publishing does not need the app to be on the App Store.** Preview and TestFlight builds take updates the same way, which makes this the fast path for fixing tester-reported bugs pre-launch.
 
 ## Environment
 Required env vars for `apps/web` (see `apps/web/.env.example`):

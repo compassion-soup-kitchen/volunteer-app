@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Alert, Linking, Pressable, View } from 'react-native';
 
+import { AppVersion } from '@/components/app-version';
 import { Wordmark } from '@/components/brand';
 import { serviceAreaMeta } from '@/components/meta';
 import { ProfileIdentity } from '@/components/profile-identity';
@@ -315,6 +316,9 @@ export default function ProfileScreen() {
               <Text variant="caption" color="textTertiary" center>
                 Te Pūaroha · Wellington{'\n'}Made with aroha
               </Text>
+              <View style={{ marginTop: Spacing.xs }}>
+                <AppVersion />
+              </View>
             </View>
           </View>
         </>
