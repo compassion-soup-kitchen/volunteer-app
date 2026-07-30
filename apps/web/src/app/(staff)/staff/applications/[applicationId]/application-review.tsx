@@ -33,6 +33,11 @@ import {
 import { StatusBadge } from "@/components/brand/status-badge";
 import { IconChip } from "@/components/brand/icon-chip";
 import {
+  BleedList,
+  DetailList,
+  type DetailFact,
+} from "@/components/brand/detail-list";
+import {
   RiCheckLine,
   RiCloseLine,
   RiQuestionLine,
@@ -116,7 +121,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     });
   }
 
-  const contactFacts = [
+  const contactFacts: DetailFact[] = [
     { label: "Email", value: vol.user.email, icon: RiMailLine },
     { label: "Phone", value: vol.phone || "Not provided", icon: RiPhoneLine },
     { label: "Address", value: vol.address || "Not provided", icon: RiMapPinLine },
@@ -129,7 +134,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     },
   ];
 
-  const emergencyFacts = [
+  const emergencyFacts: DetailFact[] = [
     { label: "Name", value: vol.emergencyContactName || "Not provided" },
     { label: "Phone", value: vol.emergencyContactPhone || "Not provided" },
     {
@@ -152,21 +157,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
               <CardTitle>Contact details</CardTitle>
             </div>
           </CardHeader>
-          <dl className="divide-y divide-border border-t border-border">
-            {contactFacts.map((fact) => (
-              <div key={fact.label} className="flex items-center gap-3 px-5 py-3">
-                <IconChip size="sm">
-                  <fact.icon />
-                </IconChip>
-                <div className="min-w-0">
-                  <dt className="eyebrow text-[0.62rem] text-muted-foreground">
-                    {fact.label}
-                  </dt>
-                  <dd className="truncate text-sm font-medium">{fact.value}</dd>
-                </div>
-              </div>
-            ))}
-          </dl>
+          <DetailList facts={contactFacts} />
         </Card>
 
         {/* Emergency contact */}
@@ -179,18 +170,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
               <CardTitle>Emergency contact</CardTitle>
             </div>
           </CardHeader>
-          <dl className="divide-y divide-border border-t border-border">
-            {emergencyFacts.map((fact) => (
-              <div key={fact.label} className="flex items-center gap-3 px-5 py-3">
-                <div className="min-w-0">
-                  <dt className="eyebrow text-[0.62rem] text-muted-foreground">
-                    {fact.label}
-                  </dt>
-                  <dd className="truncate text-sm font-medium">{fact.value}</dd>
-                </div>
-              </div>
-            ))}
-          </dl>
+          <DetailList facts={emergencyFacts} />
         </Card>
 
         {/* Interests & skills */}
@@ -290,7 +270,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             </div>
           </CardHeader>
           {vol.signedAgreements.length > 0 ? (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {vol.signedAgreements.map((a) => (
                 <li key={a.id} className="flex items-center gap-3 px-5 py-3">
                   <IconChip size="sm" tone="success">
@@ -307,7 +287,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                   </span>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           ) : (
             <CardContent className="border-t border-border pt-4">
               <p className="text-sm text-muted-foreground">

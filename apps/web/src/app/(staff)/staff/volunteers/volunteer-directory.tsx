@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ import {
   RiEyeLine,
   RiDeleteBin6Line,
   RiGroupLine,
+  RiFileUserLine,
 } from "@remixicon/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -536,9 +538,12 @@ export function VolunteerDirectory({
                           </span>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="truncate text-sm font-semibold">
+                              <Link
+                                href={`/staff/volunteers/${vol.user.id}`}
+                                className="truncate text-sm font-semibold hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                              >
                                 {vol.user.name || "Unnamed"}
-                              </span>
+                              </Link>
                               {ROLE_BADGE_VARIANT[vol.user.role] && (
                                 <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
                                   {ROLE_LABEL[vol.user.role as AssignableRole] ??
@@ -639,9 +644,12 @@ export function VolunteerDirectory({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="text-sm font-semibold">
+                      <Link
+                        href={`/staff/volunteers/${vol.user.id}`}
+                        className="text-sm font-semibold hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      >
                         {vol.user.name || "Unnamed"}
-                      </p>
+                      </Link>
                       {ROLE_BADGE_VARIANT[vol.user.role] && (
                         <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
                           {ROLE_LABEL[vol.user.role as AssignableRole] ??
@@ -968,6 +976,13 @@ function StatusMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/staff/volunteers/${volunteer.user.id}`}>
+              <RiFileUserLine className="mr-2 size-4" />
+              View full record
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onRestore(volunteer)}>
             <RiArrowGoBackLine className="mr-2 size-4" />
             Restore account
@@ -1019,7 +1034,23 @@ function StatusMenu({
           <RiMoreLine className="size-4" />
         </Button>
       </DropdownMenuTrigger>
+      {/*
+        Every section below owns the separator *above* it, unconditionally -
+        "View full record" is always the first item, so there is always
+        something to divide from. Don't gate these on what the sections above
+        happen to render: that was the old arrangement, and it broke the moment
+        a new first item appeared (an admin looking at someone who never
+        applied has no statuses and no groups, but can still change their role,
+        so both gates read false and the two ran together).
+      */}
       <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/staff/volunteers/${volunteer.user.id}`}>
+            <RiFileUserLine className="mr-2 size-4" />
+            View full record
+          </Link>
+        </DropdownMenuItem>
+        {availableStatuses.length > 0 && <DropdownMenuSeparator />}
         {availableStatuses.map((s) => (
           <DropdownMenuItem
             key={s.value}
@@ -1040,7 +1071,7 @@ function StatusMenu({
         ))}
         {canManageGroups && (
           <>
-            {availableStatuses.length > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <RiGroupLine className="mr-2 size-4" />
@@ -1072,9 +1103,7 @@ function StatusMenu({
         )}
         {canChangeRole && (
           <>
-            {(availableStatuses.length > 0 || canManageGroups) && (
-              <DropdownMenuSeparator />
-            )}
+            <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <RiUserSettingsLine className="mr-2 size-4" />
