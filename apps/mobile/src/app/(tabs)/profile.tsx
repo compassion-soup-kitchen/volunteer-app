@@ -311,6 +311,33 @@ export default function ProfileScreen() {
               </Text>
             </Pressable>
 
+            {/* Deleting the account is deliberately quieter than signing out —
+                the safe, everyday action stays the prominent one — but it is
+                plainly here, in the app, one tap from the profile. App Store
+                guideline 5.1.1(v) requires exactly that of any app you can
+                make an account in. */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Delete account"
+              accessibilityHint="Permanently erases your account and volunteering history"
+              onPress={() => router.push('/profile/delete-account')}
+              hitSlop={8}
+              style={({ pressed }) => [
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  minHeight: 44,
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}>
+              <Text variant="callout" color="textTertiary">
+                Delete account
+              </Text>
+              <Icon name="chevron-forward" size={15} color="textTertiary" />
+            </Pressable>
+
             <View style={{ alignItems: 'center', gap: Spacing.sm, paddingTop: Spacing.xs }}>
               <Wordmark height={17} color="textTertiary" />
               <Text variant="caption" color="textTertiary" center>

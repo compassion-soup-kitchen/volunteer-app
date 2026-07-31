@@ -108,6 +108,9 @@ function RootNavigator() {
       <Stack.Screen name="events" options={{ title: 'Events' }} />
       <Stack.Screen name="onboarding" options={{ title: 'Welcome' }} />
       <Stack.Screen name="profile/edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
+      {/* Pushed rather than presented as a modal: a modal invites a dismissive
+          swipe, and this is a screen to read before acting on. */}
+      <Stack.Screen name="profile/delete-account" options={{ title: 'Delete account' }} />
     </Stack>
   );
 }

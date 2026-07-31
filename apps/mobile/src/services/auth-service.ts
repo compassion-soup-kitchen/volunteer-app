@@ -18,6 +18,7 @@ import { db, nextId, SEED_USER } from '@/data/mock-db';
 import type { SessionUser } from '@/types/models';
 
 import { apiFetch, ApiError, delay, setAuthToken, toActionError, USE_MOCK } from './client';
+import { isAppleSignInAvailable, signInWithApple } from './apple-sign-in';
 import { GOOGLE_SIGN_IN_CONFIGURED, signInWithGoogle, signOutFromGoogle } from './google-sign-in';
 
 /**
@@ -27,6 +28,17 @@ import { GOOGLE_SIGN_IN_CONFIGURED, signInWithGoogle, signOutFromGoogle } from '
  * rather than a button that could only fail.
  */
 export const GOOGLE_SIGN_IN_AVAILABLE = USE_MOCK || GOOGLE_SIGN_IN_CONFIGURED;
+
+/**
+ * Whether to offer the Apple button. Unlike Google's this can't be settled at
+ * import time - it depends on the device (iOS 13+, an Apple ID signed in), so
+ * the sign-in screens await it. Mock mode always offers it, signing in as the
+ * seeded volunteer.
+ */
+export async function isAppleSignInOffered(): Promise<boolean> {
+  if (USE_MOCK) return true;
+  return isAppleSignInAvailable();
+}
 
 const SESSION_KEY = 'csk.session';
 const TOKEN_KEY = 'csk.token';
@@ -157,6 +169,42 @@ export async function loginWithGoogle(): Promise<AuthResult> {
   }
 }
 
+/**
+ * Signs in with Apple: the native sheet issues an identity token, and the API
+ * verifies it before handing back the same bearer token a password sign-in
+ * would. Doubles as sign-up - a first-time Apple account is created there as a
+ * PUBLIC applicant, exactly like registering by email.
+ */
+export async function loginWithApple(): Promise<AuthResult> {
+  if (USE_MOCK) {
+    await delay();
+    const user: SessionUser = { ...SEED_USER };
+    db.session = user;
+    await persist(user, null);
+    return { user };
+  }
+
+  const outcome = await signInWithApple();
+  if (outcome.type === 'cancelled') return { cancelled: true };
+  if (outcome.type === 'error') return { error: outcome.message };
+
+  try {
+    const { token, user } = await apiFetch<AuthResponse>('/api/v1/auth/apple', {
+      method: 'POST',
+      body: JSON.stringify({
+        identityToken: outcome.identityToken,
+        authorizationCode: outcome.authorizationCode,
+        fullName: outcome.fullName,
+      }),
+    });
+    setAuthToken(token);
+    await persist(user, token);
+    return { user };
+  } catch (err) {
+    return toActionError(err);
+  }
+}
+
 export async function register(name: string, email: string, password: string): Promise<AuthResult> {
   const n = name.trim();
   const e = email.trim().toLowerCase();
@@ -199,4 +247,75 @@ export async function logout(): Promise<void> {
   setAuthToken(null);
   await signOutFromGoogle();
   await persist(null, null);
+}
+
+// ─── Deleting your own account ───────────────────────
+
+/** What erasing this account would destroy, for the confirmation screen. */
+export interface AccountDeletionSummary {
+  email: string;
+  erases: {
+    shiftSignups: number;
+    attendedShifts: number;
+    trainingAttendances: number;
+    documents: number;
+    signedAgreements: number;
+  };
+  /** Kept as kitchen history, but no longer showing your name. */
+  authored: { shifts: number; trainingSessions: number; announcements: number };
+  /** Non-null when deletion can't proceed yet, and what to do about it. */
+  blocker: string | null;
+}
+
+const MOCK_DELETION_SUMMARY: AccountDeletionSummary = {
+  email: SEED_USER.email,
+  erases: {
+    shiftSignups: 6,
+    attendedShifts: 4,
+    trainingAttendances: 2,
+    documents: 1,
+    signedAgreements: 1,
+  },
+  authored: { shifts: 0, trainingSessions: 0, announcements: 0 },
+  blocker: null,
+};
+
+/** Reads what `deleteAccount` would erase. Changes nothing. */
+export async function getAccountDeletionSummary(): Promise<AccountDeletionSummary> {
+  if (USE_MOCK) {
+    await delay();
+    return { ...MOCK_DELETION_SUMMARY, email: db.session?.email ?? SEED_USER.email };
+  }
+  return apiFetch<AccountDeletionSummary>('/api/v1/me/account');
+}
+
+/**
+ * Permanently erases the signed-in person's account, confirmed by typing their
+ * own email address back.
+ *
+ * On success the local session goes too - the bearer token now names a row
+ * that doesn't exist, and leaving it in SecureStore would strand the app on a
+ * signed-in shell with nothing behind it.
+ */
+export async function deleteAccount(confirmation: string): Promise<{ error?: string }> {
+  if (USE_MOCK) {
+    await delay();
+    if (confirmation.trim().toLowerCase() !== (db.session?.email ?? SEED_USER.email).toLowerCase()) {
+      return { error: 'Type your email address exactly to confirm.' };
+    }
+    await logout();
+    return {};
+  }
+
+  try {
+    await apiFetch('/api/v1/me/account', {
+      method: 'DELETE',
+      body: JSON.stringify({ confirmation }),
+    });
+  } catch (err) {
+    return toActionError(err);
+  }
+
+  await logout();
+  return {};
 }

@@ -3,7 +3,7 @@
 import { after, connection } from "next/server";
 import { revalidatePath } from "next/cache";
 
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
 import { formatDateOnly, todayInAppZone } from "@/lib/date-only";
@@ -33,7 +33,7 @@ export type ActionResult = { error?: string; success?: boolean };
 // ─── Helpers ─────────────────────────────────────────────
 
 async function requireStaff() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)
@@ -56,7 +56,7 @@ function revalidateEventPaths() {
 
 export async function getUpcomingEvents(): Promise<EventSummary[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   return listUpcomingEventsForUser(session.user.id, session.user.role);
@@ -64,7 +64,7 @@ export async function getUpcomingEvents(): Promise<EventSummary[]> {
 
 export async function getPastEvents(limit = 6): Promise<EventSummary[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   return listPastEventsForUser(session.user.id, session.user.role, { limit });
@@ -78,7 +78,7 @@ export async function getUnansweredInvitations(
   limit = 2
 ): Promise<EventSummary[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   const today = todayInAppZone();
@@ -98,7 +98,7 @@ export async function getUnansweredInvitations(
 
 export async function getEvent(id: string): Promise<EventSummary | null> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return null;
 
   return getEventForUser(id, session.user.id, session.user.role);
@@ -331,7 +331,7 @@ export async function respondToEvent(
   response: string,
   note?: string | null
 ): Promise<ActionResult> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return { error: "Please sign in to reply." };
 
   const result = await respondToEventAsUser(

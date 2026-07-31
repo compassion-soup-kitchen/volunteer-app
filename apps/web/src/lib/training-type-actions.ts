@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import {
   isSeededTrainingType,
@@ -32,7 +32,7 @@ export type TrainingTypeWithStats = {
 type Result = { error?: string; success?: boolean };
 
 async function requireStaff() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)

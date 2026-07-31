@@ -35,9 +35,17 @@ const impersonationDeps = {
     });
     return event.id;
   },
+  // `updateMany`, not `update`, so a missing row is a no-op rather than a
+  // throw. `ImpersonationEvent.target` cascades, so deleting the impersonated
+  // account takes this audit row with it - and the admin then has to be able
+  // to climb back out. With `update` the P2025 propagates out of the `jwt`
+  // callback as a JWTSessionError, which destroys the very session the return
+  // button is trying to restore: the admin is locked out by the act of
+  // returning. Nothing is lost by tolerating it; the row is gone precisely
+  // because we were asked to erase everything about that person.
   recordStop: async (eventId: string) => {
-    await getDb().impersonationEvent.update({
-      where: { id: eventId },
+    await getDb().impersonationEvent.updateMany({
+      where: { id: eventId, endedAt: null },
       data: { endedAt: new Date() },
     });
   },

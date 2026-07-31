@@ -1,7 +1,7 @@
 "use server";
 
 import { connection } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { STAFF_ROLES } from "@/lib/role-change";
 import {
@@ -25,7 +25,7 @@ import {
 // ─── Auth ────────────────────────────────────────────
 
 async function requireStaff() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)

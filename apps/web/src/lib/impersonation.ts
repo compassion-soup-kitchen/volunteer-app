@@ -219,7 +219,19 @@ async function stopImpersonating(
   const impersonator = token.impersonator;
   if (!impersonator) return;
 
-  await recordStop(impersonator.eventId);
+  // Closing the audit row must never be able to block the way back. This runs
+  // inside the `jwt` callback, so anything thrown here surfaces as a
+  // JWTSessionError and destroys the session - locking the admin out by the
+  // very act of returning to their own account. The row can legitimately be
+  // gone already: `ImpersonationEvent.target` cascades, so erasing the
+  // impersonated account takes it with them, which is exactly the moment
+  // somebody most needs this to work.
+  try {
+    await recordStop(impersonator.eventId);
+  } catch (e) {
+    console.error("Impersonation: could not close the audit row", e);
+  }
+
   delete token.impersonator;
 
   // Re-read the admin so a role change or archival during the impersonation is

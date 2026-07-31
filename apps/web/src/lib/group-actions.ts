@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { Prisma, type GroupTone } from "@prisma/client";
@@ -19,7 +19,7 @@ import {
 // day, so they can maintain groups alongside admins - unlike role changes,
 // which stay admin-only because they hand out access.
 async function requireStaff() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)
@@ -401,7 +401,7 @@ export type TeamGroup = {
  * about this?" answered without handing out anyone's contact details.
  */
 export async function getVisibleTeam(): Promise<TeamGroup[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   const db = getDb();
@@ -437,7 +437,7 @@ export async function getVisibleTeam(): Promise<TeamGroup[]> {
 
 /** The visible groups the signed-in volunteer belongs to. */
 export async function getMyGroups(): Promise<GroupChip[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   const db = getDb();

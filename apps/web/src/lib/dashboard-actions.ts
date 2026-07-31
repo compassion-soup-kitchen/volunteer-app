@@ -1,7 +1,7 @@
 "use server";
 
 import { connection } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import {
   getDashboardDataForUser,
   getVolunteerHoursDataForUser,
@@ -18,7 +18,7 @@ export type {
 
 export async function getDashboardData(): Promise<DashboardData | null> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return null;
 
   return getDashboardDataForUser(session.user.id);
@@ -26,7 +26,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
 
 export async function getVolunteerHoursData(): Promise<VolunteerHoursData | null> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return null;
 
   return getVolunteerHoursDataForUser(session.user.id);

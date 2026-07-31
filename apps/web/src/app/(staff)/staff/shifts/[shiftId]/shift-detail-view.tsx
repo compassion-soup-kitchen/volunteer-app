@@ -149,7 +149,7 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
           <CardHeader>
             <CardTitle>{formatDateOnly(shift.date, LONG_DATE)}</CardTitle>
             <CardDescription>
-              Created by {shift.createdBy.name || "Unknown"}
+              Created by {shift.createdBy?.name || "Unknown"}
             </CardDescription>
             {(past || today) && (
               <CardAction>
