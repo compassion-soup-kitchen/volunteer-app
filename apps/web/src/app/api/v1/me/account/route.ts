@@ -6,6 +6,7 @@ import {
   loadAccountErasureFacts,
 } from "@/lib/data/account-erasure";
 import {
+  findSelfDeletionBlocker,
   summariseOwnAccountDeletion,
   validateSelfDeletion,
 } from "@/lib/user-deletion";
@@ -60,15 +61,22 @@ export const DELETE = withApiAuth(async (req, user) => {
     );
   }
 
+  // Two different refusals, and they deserve different codes. A blocker is
+  // 409: nothing about the request is malformed, the account is simply in a
+  // state that has to change first. A confirmation that doesn't match is an
+  // ordinary bad request.
+  const blocker = findSelfDeletionBlocker({ isLastAdmin: facts.isLastAdmin });
+  if (blocker) {
+    return NextResponse.json({ error: blocker }, { status: 409 });
+  }
+
   const validationError = validateSelfDeletion({
     isLastAdmin: facts.isLastAdmin,
     email: facts.email,
     confirmation: parsed.data.confirmation,
   });
   if (validationError) {
-    // 409, not 400: for the last-admin case nothing about the request is
-    // malformed - the account is simply in a state that has to change first.
-    return NextResponse.json({ error: validationError }, { status: 409 });
+    return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   const result = await eraseUserAccount(facts, facts.userId);

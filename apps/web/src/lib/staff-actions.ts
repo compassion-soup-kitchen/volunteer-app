@@ -1,7 +1,7 @@
 "use server";
 
 import { after, connection } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
 import {
@@ -56,7 +56,7 @@ class LastAdminError extends Error {}
 // ─── Auth helpers ────────────────────────────────────
 
 async function requireStaff() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)
@@ -69,7 +69,7 @@ async function requireStaff() {
 // Role escalation is ADMIN-only — coordinators must never be able to grant
 // COORDINATOR/ADMIN to themselves or others.
 async function requireAdmin() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id || session.user.role !== "ADMIN") {
     return null;
   }

@@ -2,7 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import {
   buildBrandedEmailHtml,
@@ -72,7 +72,7 @@ const NOT_SIGNED_IN = "You need to be signed in to do that.";
 
 /** The signed-in person's own account record, or null when signed out. */
 export async function getMyAccount(): Promise<MyAccount | null> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return null;
 
   const db = getDb();
@@ -101,7 +101,7 @@ export async function updateAccountDetails(
   _prevState: AccountDetailsState,
   formData: FormData
 ): Promise<AccountDetailsState> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: NOT_SIGNED_IN };
   }
@@ -139,7 +139,7 @@ export async function changeMyPassword(
   _prevState: PasswordChangeState,
   formData: FormData
 ): Promise<PasswordChangeState> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: NOT_SIGNED_IN };
   }
@@ -242,7 +242,7 @@ export async function changeMyPassword(
 export async function getOwnAccountDeletionSummary(): Promise<
   OwnAccountDeletionSummary | { error: string }
 > {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return { error: NOT_SIGNED_IN };
 
   const facts = await loadAccountErasureFacts(session.user.id);
@@ -259,7 +259,7 @@ export async function getOwnAccountDeletionSummary(): Promise<
 export async function deleteOwnAccount(
   confirmation: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return { error: NOT_SIGNED_IN };
 
   const facts = await loadAccountErasureFacts(session.user.id);

@@ -3,7 +3,7 @@
 import { DocumentType } from "@prisma/client";
 import type { AgreementType } from "@prisma/client";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import {
   uploadFile,
@@ -69,7 +69,7 @@ export type UploadedDocument = {
 // ─── Staff: Agreement Overview ──────────────────────────
 
 export async function getAgreementOverview(): Promise<AgreementOverview[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
@@ -159,7 +159,7 @@ export async function setAgreementReAckRequired(
   agreementType: string,
   required: boolean
 ) {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
@@ -188,7 +188,7 @@ export async function setAgreementReAckRequired(
 export async function getAgreementDetail(
   agreementType: string
 ): Promise<AgreementDetail | null> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
@@ -250,7 +250,7 @@ export async function updateAgreementTemplate(
   agreementType: string,
   data: { title: string; content: string; version: string }
 ) {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
@@ -277,7 +277,7 @@ export async function updateAgreementTemplate(
 export async function getVolunteerAgreementStatuses(): Promise<
   VolunteerAgreementStatus[]
 > {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user) throw new Error("Unauthorized");
 
   const db = getDb();
@@ -339,7 +339,7 @@ export async function resignAgreement(
   agreementType: string,
   signatureData: string
 ) {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user) throw new Error("Unauthorized");
 
   const db = getDb();
@@ -376,7 +376,7 @@ export async function resignAgreement(
 // ─── Dashboard: Check if re-signing needed ──────────────
 
 export async function getPendingResignCount(): Promise<number> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user) return 0;
 
   const db = getDb();
@@ -433,7 +433,7 @@ const uploadDocumentSchema = z.object({
 export async function uploadDocument(
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     return { error: "Not authorised." };
   }
@@ -494,7 +494,7 @@ export async function uploadDocument(
 // ─── Staff: Get Uploaded Documents ──────────────────────
 
 export async function getUploadedDocuments(): Promise<UploadedDocument[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
@@ -527,7 +527,7 @@ export async function getUploadedDocuments(): Promise<UploadedDocument[]> {
 export async function getDocumentDownloadUrl(
   documentId: string
 ): Promise<string | null> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user) throw new Error("Unauthorized");
 
   const db = getDb();
@@ -565,7 +565,7 @@ export async function getDocumentDownloadUrl(
 export async function deleteDocument(
   documentId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     return { error: "Not authorised." };
   }
@@ -600,7 +600,7 @@ export async function deleteDocument(
 // ─── Volunteer: Get Available Documents ─────────────────
 
 export async function getVolunteerDocuments(): Promise<UploadedDocument[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user) throw new Error("Unauthorized");
 
   const db = getDb();

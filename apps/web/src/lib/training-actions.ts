@@ -1,7 +1,7 @@
 "use server";
 
 import { connection } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { safeParseDateOnly } from "@/lib/date-only";
 import { revalidatePath } from "next/cache";
@@ -61,7 +61,7 @@ export type CreateTrainingData = {
 // ─── Staff Actions ──────────────────────────────────────
 
 export async function getStaffTrainingSessions(): Promise<StaffTrainingSession[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -95,7 +95,7 @@ export async function getStaffTrainingSessions(): Promise<StaffTrainingSession[]
 export async function getTrainingDetail(
   sessionId: string
 ): Promise<StaffTrainingSession | null> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -129,7 +129,7 @@ export async function getTrainingDetail(
 export async function createTrainingSession(
   data: CreateTrainingData
 ): Promise<{ error?: string; success?: boolean; sessionId?: string }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -191,7 +191,7 @@ export async function createTrainingSession(
 export async function deleteTrainingSession(
   sessionId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -229,7 +229,7 @@ export async function markTrainingAttendance(
   attendanceId: string,
   status: "ATTENDED" | "NO_SHOW"
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -264,7 +264,7 @@ export async function markBulkTrainingAttendance(
   sessionId: string,
   attendanceMap: Record<string, "ATTENDED" | "NO_SHOW">
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -297,7 +297,7 @@ export async function markBulkTrainingAttendance(
 
 export async function getAvailableTraining(): Promise<VolunteerTrainingSession[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   return getAvailableTrainingForUser(session.user.id);
@@ -306,7 +306,7 @@ export async function getAvailableTraining(): Promise<VolunteerTrainingSession[]
 export async function registerForTraining(
   sessionId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: "You must be signed in." };
   }
@@ -317,7 +317,7 @@ export async function registerForTraining(
 export async function cancelTrainingRegistration(
   sessionId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: "You must be signed in." };
   }
@@ -328,7 +328,7 @@ export async function cancelTrainingRegistration(
 // ─── Training History (for profile) ─────────────────────
 
 export async function getVolunteerTrainingHistory(): Promise<TrainingHistoryItem[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   return getTrainingHistoryForUser(session.user.id);

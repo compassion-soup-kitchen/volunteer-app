@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import {
   getApplicationStatusForUser,
   getProfileForUser,
@@ -55,7 +55,7 @@ export async function getServiceAreas() {
 }
 
 export async function getUserApplicationStatus() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return null;
 
   const status = await getApplicationStatusForUser(session.user.id);
@@ -71,7 +71,7 @@ export async function getUserApplicationStatus() {
 export async function submitApplication(
   data: ApplicationFormData
 ): Promise<ApplicationResult> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: "You must be signed in to apply." };
   }
@@ -102,7 +102,7 @@ export async function submitApplication(
 }
 
 export async function getVolunteerProfile() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return null;
 
   return getProfileForUser(session.user.id);
@@ -111,7 +111,7 @@ export async function getVolunteerProfile() {
 export async function updateVolunteerProfile(
   data: ProfileUpdateData
 ): Promise<ApplicationResult> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: "You must be signed in." };
   }

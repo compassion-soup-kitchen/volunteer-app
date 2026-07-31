@@ -2,7 +2,7 @@
 
 import { after, connection } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
 import { canRecordMeals, mealsServedSchema } from "@/lib/shift-meals";
@@ -103,7 +103,7 @@ export async function getAvailableShifts(
   filters?: ShiftFilters
 ): Promise<ShiftWithDetails[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   return getAvailableShiftsForUser(session.user.id, filters);
@@ -112,7 +112,7 @@ export async function getAvailableShifts(
 export async function signUpForShift(
   shiftId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: "You must be signed in." };
   }
@@ -123,7 +123,7 @@ export async function signUpForShift(
 export async function cancelShiftSignup(
   shiftId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: "You must be signed in." };
   }
@@ -136,7 +136,7 @@ export async function respondToShiftOffer(
   shiftId: string,
   response: "ACCEPT" | "DECLINE"
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) {
     return { error: "You must be signed in." };
   }
@@ -150,7 +150,7 @@ export async function getStaffShifts(
   filters?: ShiftFilters
 ): Promise<StaffShift[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -225,7 +225,7 @@ export async function getStaffShifts(
  * actually take a shift are offerable.
  */
 export async function getVolunteerOptions(): Promise<VolunteerOption[]> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -253,7 +253,7 @@ export async function getVolunteerOptions(): Promise<VolunteerOption[]> {
 }
 
 export async function getShiftDetail(shiftId: string): Promise<StaffShift | null> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -340,7 +340,7 @@ function notifyOffered(
 export async function createShift(
   data: ShiftFormData
 ): Promise<{ error?: string; success?: boolean; shiftId?: string }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -397,7 +397,7 @@ export async function createShiftSeries(
     recurrence: RecurrenceInput;
   }
 ): Promise<CreateShiftSeriesResult> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -475,7 +475,7 @@ export async function updateShift(
   shiftId: string,
   data: ShiftFormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -578,7 +578,7 @@ export async function markAttendance(
   signupId: string,
   status: "ATTENDED" | "NO_SHOW"
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -617,7 +617,7 @@ export async function markBulkAttendance(
   shiftId: string,
   attendanceMap: Record<string, "ATTENDED" | "NO_SHOW">
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -661,7 +661,7 @@ export async function recordShiftMeals(
   shiftId: string,
   mealsServed: number
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
@@ -712,7 +712,7 @@ export async function recordShiftMeals(
 export async function deleteShift(
   shiftId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role!)
