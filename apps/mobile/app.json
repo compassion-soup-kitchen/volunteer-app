@@ -20,6 +20,7 @@
       "icon": "./assets/app.icon",
       "supportsTablet": false,
       "bundleIdentifier": "nz.org.compassion.volunteer",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -54,6 +55,7 @@
         }
       ],
       "expo-secure-store",
+      "expo-apple-authentication",
       "expo-video",
       [
         "expo-notifications",

@@ -53,9 +53,9 @@ type LoadedSummary = {
  * Confirms permanent deletion of an account. Unlike archiving there's no way
  * back, so the dialog spells out exactly what disappears - counted live from
  * the database, not guessed - and asks the admin to type the person's email
- * before the button unlocks. Accounts that can't be deleted at all (yourself,
- * the last admin, anyone who created shifts or pānui) show the reason instead
- * of a confirmation field.
+ * before the button unlocks. Accounts this admin can't delete from here
+ * (their own, or the last admin) show the reason instead of a confirmation
+ * field.
  */
 export function DeleteUserDialog({
   target,

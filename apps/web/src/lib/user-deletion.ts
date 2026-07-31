@@ -16,9 +16,16 @@ import type { Role } from "@prisma/client";
 /**
  * Records the person authored *on behalf of the organisation*. A shift someone
  * rostered still happened, and a pānui they published was still read - that
- * history outlives any one account. Their relations are required, so deleting
- * the author would fail at the database anyway; we block early with copy that
- * says what to do instead.
+ * history outlives any one account, so these rows survive the delete with
+ * their author set to null (`onDelete: SetNull`) and simply stop naming
+ * anybody.
+ *
+ * They used to block deletion outright, because the relations were required.
+ * That made the account un-erasable for exactly the people who ran the
+ * kitchen, which neither the Privacy Act nor App Store guideline 5.1.1(v)
+ * allows - so the columns became nullable instead. The counts are still
+ * gathered, because "12 shifts will no longer show your name" is worth
+ * telling someone before they commit.
  */
 export type AuthoredRecordCounts = {
   shifts: number;
@@ -139,16 +146,91 @@ export function findDeletionBlocker(
   >
 ): string | null {
   if (input.actorUserId === input.targetUserId) {
-    return "You can't delete your own account.";
+    // Not a refusal to erase them - just the wrong door. Deleting your own
+    // account is self-service (`validateSelfDeletion`), so that the person
+    // doing it is always the person it belongs to.
+    return "You can't delete your own account from here. Use Delete account in your own profile.";
   }
   // Deleting the final admin would leave nobody who can manage roles, restore
   // accounts, or delete anyone else - an unrecoverable state.
   if (input.isLastAdmin) {
-    return "You can't delete the last admin. Promote someone else first.";
+    return LAST_ADMIN_BLOCKER;
   }
-  const authoredSummary = describeAuthoredRecords(input.authored);
-  if (authoredSummary) {
-    return `They created ${authoredSummary}, which the kitchen's records depend on. Archive their account instead.`;
+  return null;
+}
+
+export const LAST_ADMIN_BLOCKER =
+  "You can't delete the last admin. Promote someone else first.";
+
+/**
+ * The self-service counterpart, for someone erasing their own account from the
+ * app or the web profile page.
+ *
+ * Deliberately far more permissive than the admin path: this is a person
+ * exercising a right, not staff acting on somebody else, so authored records
+ * and volunteering history don't stand in the way - they're erased or
+ * de-attributed, and the person is told which before they confirm.
+ *
+ * The single exception is the last active admin, and it isn't a data-retention
+ * excuse: erasing them leaves an organisation nobody can administer, with no
+ * way back in to fix it. They can hand the role over and then delete, which is
+ * a step they can take themselves without asking anyone.
+ */
+export function findSelfDeletionBlocker(input: {
+  /** Already computed with `wouldRemoveLastAdmin`, so role is baked in. */
+  isLastAdmin: boolean;
+}): string | null {
+  if (input.isLastAdmin) {
+    return "You're the only admin left, so deleting your account would lock everyone out of managing the kitchen. Make someone else an admin first, then delete this account.";
+  }
+  return null;
+}
+
+/** What erasing your own account would cost, for the confirmation screen. */
+export type OwnAccountDeletionSummary = {
+  email: string;
+  erases: ErasedRecordCounts;
+  /** Kept as kitchen history, but no longer showing your name. */
+  authored: AuthoredRecordCounts;
+  /** Non-null when you can't delete yet, and what to do about it. */
+  blocker: string | null;
+};
+
+/**
+ * The self-deletion confirmation screen's view of an account. Pure over the
+ * facts, so the web page and the mobile app are told the same thing.
+ */
+export function summariseOwnAccountDeletion(facts: {
+  email: string;
+  erases: ErasedRecordCounts;
+  authored: AuthoredRecordCounts;
+  isLastAdmin: boolean;
+}): OwnAccountDeletionSummary {
+  return {
+    email: facts.email,
+    erases: facts.erases,
+    authored: facts.authored,
+    blocker: findSelfDeletionBlocker({ isLastAdmin: facts.isLastAdmin }),
+  };
+}
+
+export type SelfDeletionInput = {
+  isLastAdmin: boolean;
+  email: string;
+  /** What the person typed into the confirmation field. */
+  confirmation: string;
+};
+
+/**
+ * Pure guardrail check for erasing your own account. Returns a user-facing
+ * error message, or null when the deletion may proceed.
+ */
+export function validateSelfDeletion(input: SelfDeletionInput): string | null {
+  const blocker = findSelfDeletionBlocker(input);
+  if (blocker) return blocker;
+
+  if (!matchesDeletionConfirmation(input.confirmation, input.email)) {
+    return "Type your email address exactly to confirm.";
   }
   return null;
 }

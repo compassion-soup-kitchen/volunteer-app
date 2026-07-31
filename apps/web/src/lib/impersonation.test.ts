@@ -203,6 +203,37 @@ describe("applyImpersonationUpdate - stop", () => {
     });
   });
 
+  // The audit close runs inside the `jwt` callback, so a throw there surfaces
+  // as a JWTSessionError and destroys the session - locking the admin out by
+  // the very act of returning. The row can legitimately be gone:
+  // `ImpersonationEvent.target` cascades, so erasing the impersonated account
+  // takes it with them.
+  it("returns the admin even when the audit row can't be closed", async () => {
+    const token = impersonatingToken();
+    const d = deps({
+      id: ADMIN_ID,
+      name: "Ari Admin",
+      email: "ari@soupkitchen.org.nz",
+      role: "ADMIN",
+      status: "ACTIVE",
+    });
+    d.recordStop = vi.fn(async () => {
+      throw new Error("No record was found for an update.");
+    });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { token: out } = await applyImpersonationUpdate(
+      token,
+      { stopImpersonating: true },
+      d
+    );
+
+    expect(out.impersonator).toBeUndefined();
+    expect(out).toMatchObject({ id: ADMIN_ID, role: "ADMIN" });
+    // Swallowed, but never silently.
+    expect(logged).toHaveBeenCalled();
+  });
+
   it("reflects a role dropped during impersonation on return", async () => {
     const token = impersonatingToken();
     const d = deps({

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import {
   checkImpersonationTarget,
@@ -23,7 +24,9 @@ export type StartImpersonationResult = { ok: true } | { error: string };
 export async function startImpersonation(
   targetUserId: string
 ): Promise<StartImpersonationResult> {
-  const session = await auth();
+  // Escalation, so the actor's account must still be real and active - not
+  // merely named by a token minted before they were archived.
+  const session = await requireActiveSession();
 
   const authority = checkImpersonatorAuthority({
     actorRole: session?.user?.role,
@@ -53,6 +56,11 @@ export async function startImpersonation(
  * codebase ("always check in server actions").
  */
 export async function stopImpersonation(): Promise<void> {
+  // Plain `auth()` on purpose, unlike everything else here: this only ever
+  // de-escalates. While impersonating, the session names the *target*, so a
+  // liveness check would fail exactly when an admin is impersonating someone
+  // who has since been deleted - trapping them in the borrowed identity
+  // instead of letting them climb out of it.
   const session = await auth();
   if (!session?.user) return;
   revalidatePath("/", "layout");

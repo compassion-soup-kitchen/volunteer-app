@@ -1,3 +1,4 @@
+export { AppleButton } from './apple-button';
 export { Avatar } from './avatar';
 export { Badge, type BadgeTone } from './badge';
 export { Button } from './button';

@@ -142,7 +142,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
         <CardHeader>
           <CardTitle>{formatDate(session.date)}</CardTitle>
           <CardDescription>
-            Created by {session.createdBy.name || "Unknown"}
+            Created by {session.createdBy?.name || "Unknown"}
           </CardDescription>
           {(past || today) && (
             <CardAction>

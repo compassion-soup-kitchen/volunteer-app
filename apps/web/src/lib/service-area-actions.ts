@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
@@ -16,7 +16,7 @@ export type ServiceAreaWithStats = {
 export async function getServiceAreasWithStats(): Promise<
   ServiceAreaWithStats[]
 > {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id || session.user.role !== "ADMIN") return [];
 
   const db = getDb();
@@ -34,7 +34,7 @@ export async function createServiceArea(data: {
   name: string;
   description?: string;
 }): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id || session.user.role !== "ADMIN") {
     return { error: "Not authorised." };
   }
@@ -71,7 +71,7 @@ export async function updateServiceArea(
   id: string,
   data: { name?: string; description?: string }
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id || session.user.role !== "ADMIN") {
     return { error: "Not authorised." };
   }
@@ -112,7 +112,7 @@ export async function updateServiceArea(
 export async function toggleServiceAreaArchive(
   id: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id || session.user.role !== "ADMIN") {
     return { error: "Not authorised." };
   }

@@ -11,12 +11,19 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   /** Google sign-in, which doubles as sign-up for a first-time account. */
   signInWithGoogle: () => Promise<{ error?: string; cancelled?: boolean }>;
+  /** Sign in with Apple, likewise doubling as sign-up. */
+  signInWithApple: () => Promise<{ error?: string; cancelled?: boolean }>;
   signUp: (
     name: string,
     email: string,
     password: string,
   ) => Promise<{ error?: string; pendingVerification?: boolean }>;
   signOut: () => Promise<void>;
+  /**
+   * Permanently erase this account. Signs out on success, so the app falls
+   * back to the sign-in screen through the same guard as `signOut`.
+   */
+  deleteAccount: (confirmation: string) => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -50,6 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: result.error, cancelled: result.cancelled };
   }, []);
 
+  const signInWithApple = useCallback(async () => {
+    const result = await authService.loginWithApple();
+    if (result.user) setUser(result.user);
+    return { error: result.error, cancelled: result.cancelled };
+  }, []);
+
   const signUp = useCallback(async (name: string, email: string, password: string) => {
     const result = await authService.register(name, email, password);
     if (result.user) setUser(result.user);
@@ -63,9 +76,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const deleteAccount = useCallback(async (confirmation: string) => {
+    // No `unregisterPushToken` here, unlike sign-out: `PushToken` cascades
+    // away with the user, and clearing the device's token up front would leave
+    // it unregistered until the next launch if the confirmation is refused.
+    const result = await authService.deleteAccount(confirmation);
+    // Only clear the session once the account has actually gone; a refused
+    // confirmation leaves the person signed in to try again.
+    if (!result.error) setUser(null);
+    return result;
+  }, []);
+
   const value = useMemo<AuthState>(
-    () => ({ user, initializing, signIn, signInWithGoogle, signUp, signOut }),
-    [user, initializing, signIn, signInWithGoogle, signUp, signOut],
+    () => ({
+      user,
+      initializing,
+      signIn,
+      signInWithGoogle,
+      signInWithApple,
+      signUp,
+      signOut,
+      deleteAccount,
+    }),
+    [
+      user,
+      initializing,
+      signIn,
+      signInWithGoogle,
+      signInWithApple,
+      signUp,
+      signOut,
+      deleteAccount,
+    ],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

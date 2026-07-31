@@ -1,5 +1,9 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import {
+  isSessionAccountActive,
+  sessionOwnerId,
+} from "@/lib/data/session-account";
 import { StaffNav } from "./staff-nav";
 
 export default async function StaffLayout({
@@ -15,6 +19,18 @@ export default async function StaffLayout({
 
   if (session.user.role !== "COORDINATOR" && session.user.role !== "ADMIN") {
     redirect("/dashboard");
+  }
+
+  // The session is a JWT, so it outlives the account it names - someone
+  // deleted or archived mid-session would otherwise keep working here. Sent
+  // via the sign-out route, not straight to /login: the token still reads as
+  // signed in, so the proxy would bounce it back here for ever.
+  //
+  // Asked of whoever the session *belongs to* - the admin, when this is an
+  // impersonation - so that deleting the impersonated account doesn't take
+  // the admin's own session down with it. See `sessionOwnerId`.
+  if (!(await isSessionAccountActive(sessionOwnerId(session.user)))) {
+    redirect("/api/auth/session-ended");
   }
 
   return (

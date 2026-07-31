@@ -180,6 +180,15 @@ prisma/
 - **Communication**: `Announcement` (audience: ALL / VOLUNTEERS / COORDINATORS; optional `eventId` links a pānui to the gathering it announces — `onDelete: SetNull`, because a message that was sent stays sent).
 - **Gatherings**: `Event` (a party, hui or working bee — status DRAFT/PUBLISHED/CANCELLED, `audience` decides who is invited *and* who may reply, `rsvpEnabled` + `rsvpDeadline` control replies) and `EventRsvp` (GOING / MAYBE / NOT_GOING + optional note, unique per user per event). Keyed by `User`, not `VolunteerProfile`: staff come to these too. Deliberately not a `Shift` (nobody is rostered) and not part of `Announcement` (an event outlives any one message about it and can be announced more than once). Publishing an event only makes it visible — telling people is what a pānui is for, which keeps push notifications in one place.
 
+### Account deletion (App Store guideline 5.1.1(v))
+
+Anyone may permanently erase their own account, in the app (`/profile/delete-account` → `GET`/`DELETE /api/v1/me/account`) or on the web (`/staff/account` → `deleteOwnAccount`). Both paths share one implementation:
+
+- **What "erased" means** lives in `src/lib/data/account-erasure.ts` (`loadAccountErasureFacts` + `eraseUserAccount`) — used by the self-service path *and* by the admin's `staff-actions.deleteUser`, so the two can't drift. It also revokes the Apple authorisation, which the same guideline requires.
+- **The rules** live in the pure `src/lib/user-deletion.ts`. Self-deletion is far more permissive than the admin path: the only blocker is being the last active admin, since erasing them leaves an organisation nobody can administer.
+- **Records authored for the org survive** — `Shift`, `TrainingSession`, `Announcement` and `Event` all have a nullable `createdById` with `onDelete: SetNull`, so a shift that happened still happened and simply stops naming anybody. This is why *everyone* is deletable; it used to be a hard blocker for exactly the people who ran the kitchen.
+- **A JWT outlives the account it names.** The layout gates therefore re-read the account on every authenticated page (`isSessionAccountActive`) and send a dead session to `/api/auth/session-ended`, which is a route handler because only a handler can clear the cookie — redirecting straight to `/login` loops, since the token still reads as signed in. The mobile API never had this problem: `authenticateApiRequest` already re-reads the user per request.
+
 ### Auth Roles
 - `PUBLIC` — unauthenticated or pre-application
 - `VOLUNTEER` — approved, can sign up for shifts
@@ -272,6 +281,7 @@ pnpm mobile prebuild:ios       # regenerate ios/ locally — needed after a conf
 ```
 
 - **A development build is not optional.** `@react-native-google-signin/google-signin` and the other native modules aren't in Expo Go, so anything touching Google sign-in must be tested on `build:ios:dev`.
+- **Sign in with Apple needs a native rebuild, and the App ID capability.** `ios.usesAppleSignIn: true` plus the `expo-apple-authentication` plugin change the entitlements, so the runtime fingerprint moves and **no OTA update can deliver it** — it takes `build:ios`. EAS adds the "Sign In with Apple" capability to the App ID when it syncs credentials. Nothing goes in the app's EAS environment: the audience is the bundle id, so all the configuration is server-side (`APPLE_*`).
 - **Env vars come from EAS, not `.env`.** `apps/mobile/.env` is gitignored, so it is never uploaded to a cloud build; each profile names an EAS environment (`development` / `preview` / `production`) and the variables are read from there. Manage them with `eas env:list --environment production` / `eas env:create`. Anything the app needs at build time — `EXPO_PUBLIC_API_URL`, the `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` pair — must exist in that environment or the build ships without it.
 - **`submit.production` is empty on purpose.** The first `eas submit` prompts for the Apple ID, team and App Store Connect app id, and offers to save them.
 
@@ -299,6 +309,8 @@ Required env vars for `apps/web` (see `apps/web/.env.example`):
 - `DATABASE_URL` — PostgreSQL connection string (self-hosted, e.g. Coolify-managed). The Prisma client connects via this only (`prisma.config.ts` reads `DATABASE_URL`; the `schema.prisma` datasource has no `directUrl`).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `APPLE_CLIENT_ID` - the bundle identifier tokens are audienced to, needed by `POST /api/v1/auth/apple`. Unset means Apple sign-in is off (503, and the app hides the button)
+- `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` - the `.p8` server credentials. **Required for release, not for sign-in**: they exist to revoke the Apple authorisation when someone deletes their account, which App Store guideline 5.1.1(v) mandates. Without them a person who deletes their account can never sign up with Apple again - Apple returns the email on the first authorisation only, so the next attempt arrives with no address and is refused
 - `GOOGLE_IOS_CLIENT_ID` - the iOS OAuth client, needed by `POST /api/v1/auth/google` for the mobile app's Google sign-in. **Not optional in any environment the iOS app talks to**: without `serverClientID` the iOS SDK audiences its ID token to the iOS client, so the endpoint refuses every Google sign-in from the app ("We couldn't verify that Google sign-in") even though Google's own sheet completes. Must match `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in the app's EAS environment; the refusal reason and the token's actual audience are logged as `[google-id-token] refused a token: …`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` — address autocomplete on the application form (optional; falls back to manual entry)
 - `RESEND_API_KEY`, `EMAIL_FROM` — transactional email via Resend (optional; sending is skipped when unset)

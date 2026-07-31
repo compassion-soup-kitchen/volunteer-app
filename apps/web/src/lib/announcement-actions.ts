@@ -2,7 +2,7 @@
 
 import { after, connection } from "next/server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
 import {
@@ -36,7 +36,7 @@ export async function getRecentAnnouncements(
   limit = 3
 ): Promise<AnnouncementSummary[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   return listVolunteerAnnouncements({
@@ -47,7 +47,7 @@ export async function getRecentAnnouncements(
 
 export async function getAnnouncements(): Promise<AnnouncementSummary[]> {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return [];
 
   return listVolunteerAnnouncements({
@@ -58,7 +58,7 @@ export async function getAnnouncements(): Promise<AnnouncementSummary[]> {
 // ─── Staff helpers ───────────────────────────────────
 
 async function requireStaff() {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (
     !session?.user?.id ||
     !["COORDINATOR", "ADMIN"].includes(session.user.role)
@@ -478,7 +478,7 @@ export async function deleteAnnouncementAttachment(
 export async function getAnnouncementAttachmentUrl(
   attachmentId: string
 ): Promise<string | null> {
-  const session = await auth();
+  const session = await requireActiveSession();
   if (!session?.user?.id) return null;
 
   const db = getDb();
