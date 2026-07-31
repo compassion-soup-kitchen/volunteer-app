@@ -44,8 +44,25 @@ type AppleModule = typeof import('expo-apple-authentication');
 
 let modulePromise: Promise<AppleModule | null> | null = null;
 
+/**
+ * `import()` must be awaited, never `.catch()`ed directly.
+ *
+ * Metro compiles it to Expo's `asyncRequire`, which hands back a bare thenable
+ * - `{ _result, then }` - and not a real Promise. `.catch` is therefore
+ * `undefined` on it, and calling it throws `TypeError: undefined is not a
+ * function` *synchronously*, before there is any rejection handler to catch it.
+ * The failure surfaced as an unhandled rejection out of
+ * `isAppleSignInAvailable`, which left `appleOffered` false and hid the button
+ * on every device, in release builds too.
+ */
 function loadApple(): Promise<AppleModule | null> {
-  modulePromise ??= import('expo-apple-authentication').catch(() => null);
+  modulePromise ??= (async () => {
+    try {
+      return await import('expo-apple-authentication');
+    } catch {
+      return null;
+    }
+  })();
   return modulePromise;
 }
 

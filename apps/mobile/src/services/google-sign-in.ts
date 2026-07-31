@@ -37,7 +37,16 @@ type GoogleModule = typeof import('@react-native-google-signin/google-signin');
 
 let modulePromise: Promise<GoogleModule | null> | null = null;
 
-/** Loads and configures the native module once, or resolves null if it isn't there. */
+/**
+ * Loads and configures the native module once, or resolves null if it isn't there.
+ *
+ * The `.then()` below has to come first. Metro compiles `import()` to Expo's
+ * `asyncRequire`, which returns a bare thenable rather than a Promise, so a
+ * `.catch()` applied straight to it would be `undefined` and throw - see the
+ * note on `loadApple` in `apple-sign-in.ts`. `.then()` exists on the thenable
+ * and hands back a real Promise, which is what makes the trailing `.catch`
+ * safe; don't reorder or drop the `.then`.
+ */
 function loadGoogle(): Promise<GoogleModule | null> {
   modulePromise ??= import('@react-native-google-signin/google-signin')
     .then((mod) => {
