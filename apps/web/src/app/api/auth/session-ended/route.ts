@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
-import { isSessionAccountActive } from "@/lib/data/session-account";
+import {
+  isSessionAccountActive,
+  sessionOwnerId,
+} from "@/lib/data/session-account";
 
 /**
  * Where a session whose account no longer exists is sent to die.
@@ -38,8 +41,11 @@ export async function GET() {
   }
 
   // Still a real, active account: this was not the layout gate redirecting a
-  // dead session, so refuse to act on it.
-  if (await isSessionAccountActive(session.user.id)) {
+  // dead session, so refuse to act on it. Asked of the session's owner - the
+  // admin, when impersonating - for the same reason the gates do it: signing
+  // out because the *borrowed* identity was deleted would take the admin's own
+  // session with it. See `sessionOwnerId`.
+  if (await isSessionAccountActive(sessionOwnerId(session.user))) {
     const role = session.user.role;
     redirect(
       role === "COORDINATOR" || role === "ADMIN"

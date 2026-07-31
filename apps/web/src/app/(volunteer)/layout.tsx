@@ -1,6 +1,9 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { isSessionAccountActive } from "@/lib/data/session-account";
+import {
+  isSessionAccountActive,
+  sessionOwnerId,
+} from "@/lib/data/session-account";
 import { VolunteerNav } from "./volunteer-nav";
 import { VolunteerFooter } from "./volunteer-footer";
 
@@ -24,7 +27,12 @@ export default async function VolunteerLayout({
   // deleted or archived mid-session would otherwise keep browsing here. Sent
   // via the sign-out route, not straight to /login: the token still reads as
   // signed in, so the proxy would bounce it back here for ever.
-  if (!(await isSessionAccountActive(session.user.id))) {
+  //
+  // Asked of whoever the session *belongs to* - the admin, when this is an
+  // impersonation - so that deleting the impersonated account doesn't take
+  // the admin's own session down with it. This is the likelier of the two
+  // routes for it: an impersonated volunteer sits here. See `sessionOwnerId`.
+  if (!(await isSessionAccountActive(sessionOwnerId(session.user)))) {
     redirect("/api/auth/session-ended");
   }
 

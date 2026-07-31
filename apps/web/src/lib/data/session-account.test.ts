@@ -6,7 +6,7 @@ vi.mock("@/lib/db", () => ({
   getDb: () => ({ user: { findUnique: userFindUnique } }),
 }));
 
-import { isSessionAccountActive } from "./session-account";
+import { isSessionAccountActive, sessionOwnerId } from "./session-account";
 
 /**
  * Small, but it is now the only thing keeping a deleted or archived account
@@ -45,5 +45,25 @@ describe("isSessionAccountActive", () => {
       where: { id: "u1" },
       select: { status: true },
     });
+  });
+});
+
+describe("sessionOwnerId", () => {
+  it("is the person themselves when nobody is impersonating", () => {
+    expect(sessionOwnerId({ id: "u1" })).toBe("u1");
+  });
+
+  it("treats a null impersonator as nobody impersonating", () => {
+    expect(sessionOwnerId({ id: "u1", impersonator: null })).toBe("u1");
+  });
+
+  // The bug this exists to prevent: asking about the borrowed identity would
+  // sign the *admin* out of their own session the moment the person they were
+  // impersonating got deleted - taking `token.impersonator`, and so the way
+  // back, with it.
+  it("is the admin, not the borrowed identity, while impersonating", () => {
+    expect(
+      sessionOwnerId({ id: "target-1", impersonator: { id: "admin-9" } })
+    ).toBe("admin-9");
   });
 });
