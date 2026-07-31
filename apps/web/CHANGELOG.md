@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.12.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.11.0...v1.12.0) (2026-07-31)
+
+
+### Features
+
+* events with RSVPs, announced by pānui ([49c4b6a](https://github.com/compassion-soup-kitchen/volunteer-app/commit/49c4b6a198f0564b0fc33029f8041e2c3ab6e67b))
+* events with RSVPs, announced by pānui ([1a3f8cb](https://github.com/compassion-soup-kitchen/volunteer-app/commit/1a3f8cbf21652413e4a9c1c3124897b0368b19a9))
+* **mobile:** sign in with Google ([325bd02](https://github.com/compassion-soup-kitchen/volunteer-app/commit/325bd0201f873ba5b6bf106b7ce82269a2577250))
+* **mobile:** sign in with Google ([b8e09fe](https://github.com/compassion-soup-kitchen/volunteer-app/commit/b8e09fe88ab584b523edb9fcd892622e2b1f9547))
+* Sign in with Apple, and let people delete their own account ([4badef5](https://github.com/compassion-soup-kitchen/volunteer-app/commit/4badef5e9723aa9b001baf85ff6280c3469b323e))
+* **web:** add a staff-side volunteer record page ([bee216c](https://github.com/compassion-soup-kitchen/volunteer-app/commit/bee216c7dbac86bdacd4cbc436ff136299e7fd47))
+* **web:** add a staff-side volunteer record page ([8b8b613](https://github.com/compassion-soup-kitchen/volunteer-app/commit/8b8b61391538789691d51490870cd6a48ffa8296))
+
+
+### Bug Fixes
+
+* close the session-staleness hole in Server Actions, not just page loads ([48b870d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/48b870d55c91beeef4fe2d52d4d9f2a88e2ff05f))
+* don't leak a linked event to people it isn't for ([103ba0e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/103ba0e596e000b4168e99a44931885bd6a292db))
+* don't strand an admin when the account they're impersonating is deleted ([587783d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/587783dae9426b721b5dbce7a5483d5abddec4f1))
+* give volunteers a web deletion path, and cover the erasure module ([a60e4b0](https://github.com/compassion-soup-kitchen/volunteer-app/commit/a60e4b0ba5ddf3e851b9cbb8b1fb8d9828020665))
+* **web:** drop the unreachable Android audience from Google verification ([ef8f324](https://github.com/compassion-soup-kitchen/volunteer-app/commit/ef8f3242e56af4a0fc2bb9c4001e5073877fa40c))
+* **web:** escape untrusted claims in the token-refusal log ([825f824](https://github.com/compassion-soup-kitchen/volunteer-app/commit/825f824eee7020f35124c7fd9bd02b347079ee07))
+* **web:** keep a separator above every volunteer row-menu section ([14667c4](https://github.com/compassion-soup-kitchen/volunteer-app/commit/14667c4e528430d995024aa9ee7b99886d92523b))
+* **web:** only blame GOOGLE_IOS_CLIENT_ID while it is unset ([10c450d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/10c450d1890af2f8dc86bfe6c3e8efe48e52d1b1))
+* **web:** say why a mobile Google sign-in was refused ([3b49a3d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/3b49a3d714519b47349fc03445b41f4b6f63913c))
+* **web:** say why a mobile Google sign-in was refused ([8cf4197](https://github.com/compassion-soup-kitchen/volunteer-app/commit/8cf41970b7d045620407e79e6bfa469e34a87090))
+* **web:** split the record's shifts into upcoming and history ([af2a552](https://github.com/compassion-soup-kitchen/volunteer-app/commit/af2a552d99d82cf40775c27a235f06cf334439a7))
+
 ## [1.11.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.10.0...v1.11.0) (2026-07-28)
 
 
