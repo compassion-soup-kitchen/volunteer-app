@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.12.0...v1.13.0) (2026-08-30)
+
+
+### Features
+
+* **agreements:** let staff add and manage agreements, confirmed by tick box ([#133](https://github.com/compassion-soup-kitchen/volunteer-app/issues/133)) ([c5549c9](https://github.com/compassion-soup-kitchen/volunteer-app/commit/c5549c95dea0695333693afaab7ab4113097fdda))
+
 ## [1.12.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.11.0...v1.12.0) (2026-07-31)
 
 
