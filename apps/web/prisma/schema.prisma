@@ -39,19 +39,19 @@ model User {
   sessions Session[]
 
   volunteerProfile     VolunteerProfile?
-  reviewedApplications Application[]       @relation("ReviewedBy")
+  reviewedApplications Application[]        @relation("ReviewedBy")
   createdShifts        Shift[]
-  markedAttendance     ShiftSignup[]       @relation("AttendanceMarkedBy")
-  recordedShiftMeals   Shift[]             @relation("MealsRecordedBy")
+  markedAttendance     ShiftSignup[]        @relation("AttendanceMarkedBy")
+  recordedShiftMeals   Shift[]              @relation("MealsRecordedBy")
   createdTraining      TrainingSession[]
   createdAnnouncements Announcement[]
   createdEvents        Event[]
   eventRsvps           EventRsvp[]
-  uploadedDocuments    Document[]          @relation("UploadedBy")
-  updatedAgreements    AgreementTemplate[] @relation("AgreementTemplateUpdatedBy")
-  reAckSetAgreements   AgreementTemplate[] @relation("AgreementTemplateReAckSetBy")
-  archivedBy           User?               @relation("UserArchivedBy", fields: [archivedById], references: [id])
-  archivedUsers        User[]              @relation("UserArchivedBy")
+  uploadedDocuments    Document[]           @relation("UploadedBy")
+  updatedAgreements    AgreementTemplate[]  @relation("AgreementTemplateUpdatedBy")
+  reAckSetAgreements   AgreementTemplate[]  @relation("AgreementTemplateReAckSetBy")
+  archivedBy           User?                @relation("UserArchivedBy", fields: [archivedById], references: [id])
+  archivedUsers        User[]               @relation("UserArchivedBy")
   pushTokens           PushToken[]
   impersonationsMade   ImpersonationEvent[] @relation("ImpersonationImpersonator")
   impersonationsOf     ImpersonationEvent[] @relation("ImpersonationTarget")
@@ -195,9 +195,9 @@ enum GroupTone {
 /// side. Groups volunteers should be able to turn to - team leaders, guardian
 /// angels - are visible; a private coordination list can be kept staff-only.
 model VolunteerGroup {
-  id String @id @default(cuid())
+  id                  String    @id @default(cuid())
   /// What staff typed, shown everywhere.
-  name String @unique
+  name                String    @unique
   /// `name` lowercased. Postgres unique indexes are case-sensitive, so without
   /// this two coordinators saving "Team Leaders" and "team leaders" at the same
   /// moment would both clear the application-level check and land side by side.
@@ -254,35 +254,42 @@ model Document {
   uploadedBy User?             @relation("UploadedBy", fields: [uploadedById], references: [id])
 }
 
-enum AgreementType {
-  CODE_OF_CONDUCT
-  SAFEGUARDING
-  VOLUNTEER_APPLICATION
-  POLICIES
-}
-
 model SignedAgreement {
-  id              String        @id @default(cuid())
+  id              String   @id @default(cuid())
   volunteerId     String
-  agreementType   AgreementType
-  signatureData   String        @db.Text
-  signedAt        DateTime      @default(now())
+  /// Matches AgreementTemplate.agreementType. Deliberately not a foreign key:
+  /// an acknowledgement is a record of what someone agreed to on the day, and
+  /// it has to outlive the template being retired or renamed.
+  agreementType   String
+  /// Null when the template only asks for a tick, not a drawn signature.
+  signatureData   String?  @db.Text
+  signedAt        DateTime @default(now())
   documentVersion String?
 
   volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
 }
 
 model AgreementTemplate {
-  id            String        @id @default(cuid())
-  agreementType AgreementType @unique
-  title         String
-  content       String        @db.Text
-  version       String        @default("1.0")
-  updatedAt     DateTime      @updatedAt
-  updatedById   String?
-  requiresReAck Boolean       @default(false)
-  reAckSetAt    DateTime?
-  reAckSetById  String?
+  id                String    @id @default(cuid())
+  /// Stable key, generated from the title when staff add an agreement. It is
+  /// what SignedAgreement points at and what appears in the staff URL, so it
+  /// never changes once created - renaming the title leaves it alone.
+  agreementType     String    @unique
+  title             String
+  content           String    @db.Text
+  version           String    @default("1.0")
+  /// Every agreement is acknowledged with a tick. This adds a drawn signature
+  /// on top, for the ones that want stronger evidence than a checkbox.
+  requiresSignature Boolean   @default(true)
+  /// Retired agreements drop off the volunteer list and stop counting towards
+  /// outstanding acknowledgements, but the signatures against them survive.
+  archivedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  updatedById       String?
+  requiresReAck     Boolean   @default(false)
+  reAckSetAt        DateTime?
+  reAckSetById      String?
 
   updatedBy  User? @relation("AgreementTemplateUpdatedBy", fields: [updatedById], references: [id])
   reAckSetBy User? @relation("AgreementTemplateReAckSetBy", fields: [reAckSetById], references: [id])
@@ -455,7 +462,7 @@ model Announcement {
   /// The gathering this pānui is about, when it is announcing one. Optional
   /// both ways: most pānui announce nothing, and an event can be announced
   /// more than once (the invitation, then "replies close Friday").
-  eventId String?
+  eventId     String?
 
   createdBy   User?                    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   event       Event?                   @relation(fields: [eventId], references: [id], onDelete: SetNull)
@@ -504,27 +511,27 @@ enum EventStatus {
 /// edited long after the first pānui went out, cancelled without losing its
 /// guest list, and it must outlive any single message about it.
 model Event {
-  id          String @id @default(cuid())
-  title       String
-  description String? @db.Text
+  id           String      @id @default(cuid())
+  title        String
+  description  String?     @db.Text
   /// A wall-calendar day like `Shift.date` (see date-only.ts). Times are "HH:mm"
   /// strings, so the same helpers format events, shifts and training alike.
-  date      DateTime @db.Date
-  startTime String?
-  endTime   String?
-  location  String?
+  date         DateTime    @db.Date
+  startTime    String?
+  endTime      String?
+  location     String?
   /// Who is invited, and therefore who may reply. Shares the `Audience` enum
   /// with announcements so "everyone" means the same thing on both.
-  audience    Audience    @default(ALL)
-  status      EventStatus @default(DRAFT)
+  audience     Audience    @default(ALL)
+  status       EventStatus @default(DRAFT)
   /// Whether replies are being collected. Off for a save-the-date.
-  rsvpEnabled Boolean     @default(true)
+  rsvpEnabled  Boolean     @default(true)
   /// Last calendar day to reply. Null means right up until the event itself.
-  rsvpDeadline DateTime? @db.Date
+  rsvpDeadline DateTime?   @db.Date
   /// Nullable for the same reason as `Announcement.createdById`.
   createdById  String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   createdBy     User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
   rsvps         EventRsvp[]
@@ -547,14 +554,14 @@ enum RsvpResponse {
 /// event, so changing your mind updates the row: the tallies can never
 /// double-count and "who has replied" needs no de-duplication.
 model EventRsvp {
-  id       String       @id @default(cuid())
-  eventId  String
-  userId   String
-  response RsvpResponse
+  id          String       @id @default(cuid())
+  eventId     String
+  userId      String
+  response    RsvpResponse
   /// Anything the organisers need to know — dietary needs, arriving late.
-  note        String?  @db.Text
-  respondedAt DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  note        String?      @db.Text
+  respondedAt DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)

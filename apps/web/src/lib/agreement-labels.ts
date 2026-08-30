@@ -15,9 +15,9 @@ const AGREEMENT_LABELS: Record<string, string> = {
 /**
  * The human name for an agreement type.
  *
- * Pass the template's own `title` as `fallback` where one is to hand - a type
- * added to the enum before this copy catches up should read as whatever staff
- * named it. Failing that, the constant is sentence-cased, so the worst case is
+ * Pass the template's own `title` as `fallback` wherever one is to hand -
+ * agreements staff add are named by them, and only the four founding ones have
+ * an entry here. Failing that, the key is sentence-cased, so the worst case is
  * "Media consent" rather than a raw SCREAMING_SNAKE value.
  */
 export function agreementLabel(

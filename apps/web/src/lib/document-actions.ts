@@ -1,7 +1,6 @@
 "use server";
 
-import { DocumentType } from "@prisma/client";
-import type { AgreementType } from "@prisma/client";
+import { DocumentType, Prisma } from "@prisma/client";
 import { z } from "zod";
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
@@ -13,6 +12,14 @@ import {
 } from "@/lib/storage";
 import { buildStorageKey, checkUploadFile } from "@/lib/uploads";
 import { STAFF_ROLES } from "@/lib/role-change";
+import {
+  isCurrentVersion,
+  needsAcknowledgement,
+  tallyAgreement,
+  uniqueAgreementKey,
+  validateAgreementTemplate,
+  type AgreementTemplateInput,
+} from "@/lib/agreement-templates";
 import { revalidatePath } from "next/cache";
 
 // ─── Types ──────────────────────────────────────────────
@@ -22,7 +29,10 @@ export type AgreementOverview = {
   title: string;
   version: string;
   updatedAt: Date;
+  requiresSignature: boolean;
+  archivedAt: Date | null;
   totalVolunteers: number;
+  confirmedCount: number;
   signedCurrentCount: number;
   signedOutdatedCount: number;
   unsignedCount: number;
@@ -37,6 +47,10 @@ export type AgreementDetail = {
   content: string;
   version: string;
   updatedAt: Date;
+  requiresSignature: boolean;
+  archivedAt: Date | null;
+  requiresReAck: boolean;
+  reAckSetAt: Date | null;
   volunteers: {
     id: string;
     userName: string;
@@ -44,6 +58,7 @@ export type AgreementDetail = {
     signedVersion: string | null;
     signedAt: Date | null;
     isCurrent: boolean;
+    needsAcknowledgement: boolean;
   }[];
 };
 
@@ -52,6 +67,7 @@ export type VolunteerAgreementStatus = {
   title: string;
   content: string;
   currentVersion: string;
+  requiresSignature: boolean;
   signedVersion: string | null;
   signedAt: Date | null;
   signatureData: string | null;
@@ -66,89 +82,83 @@ export type UploadedDocument = {
   uploadedByName: string | null;
 };
 
-// ─── Staff: Agreement Overview ──────────────────────────
+// ─── Shared ─────────────────────────────────────────────
 
-export async function getAgreementOverview(): Promise<AgreementOverview[]> {
+/**
+ * The people an agreement applies to.
+ *
+ * Staff are excluded deliberately - a directly-promoted COORDINATOR/ADMIN has
+ * no volunteer obligations to track. This is exported as one constant because
+ * the counts and the volunteer list have to be drawn from the *same*
+ * population; when they weren't, the overview read "8 / 6 signed current".
+ */
+const AGREEMENT_AUDIENCE = {
+  status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] },
+  user: { role: { notIn: STAFF_ROLES } },
+} satisfies Prisma.VolunteerProfileWhereInput;
+
+async function requireStaff() {
   const session = await requireActiveSession();
   if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
+  return session;
+}
+
+/** Every path an agreement change is visible on. */
+function revalidateAgreement(agreementType: string) {
+  revalidatePath("/staff/documents");
+  revalidatePath("/staff/documents/" + agreementType);
+  revalidatePath("/documents");
+  revalidatePath("/profile");
+  revalidatePath("/dashboard");
+}
+
+// ─── Staff: Agreement Overview ──────────────────────────
+
+export async function getAgreementOverview(): Promise<AgreementOverview[]> {
+  await requireStaff();
 
   const db = getDb();
 
-  // Get all templates
-  const templates = await db.agreementTemplate.findMany({
-    orderBy: { agreementType: "asc" },
-  });
-
-  // Get total active volunteers (excluding staff — a directly-promoted
-  // COORDINATOR/ADMIN shouldn't inflate the re-acknowledgement denominator).
-  const totalVolunteers = await db.volunteerProfile.count({
-    where: {
-      status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] },
-      user: { role: { notIn: STAFF_ROLES } },
-    },
-  });
-
-  // Get all signed agreements grouped (ordered so first per volunteer is latest)
-  const signedAgreements = await db.signedAgreement.findMany({
-    orderBy: { signedAt: "desc" },
-    select: {
-      agreementType: true,
-      documentVersion: true,
-      signedAt: true,
-      volunteerId: true,
-    },
-  });
+  const [templates, audience] = await Promise.all([
+    db.agreementTemplate.findMany({ orderBy: { createdAt: "asc" } }),
+    db.volunteerProfile.findMany({
+      where: AGREEMENT_AUDIENCE,
+      select: {
+        id: true,
+        signedAgreements: {
+          orderBy: { signedAt: "desc" },
+          select: {
+            agreementType: true,
+            documentVersion: true,
+            signedAt: true,
+          },
+        },
+      },
+    }),
+  ]);
 
   return templates.map((template) => {
-    const signed = signedAgreements.filter(
-      (sa) => sa.agreementType === template.agreementType
+    // One entry per volunteer in the audience - their latest acknowledgement of
+    // this agreement, or null. Same list the tally's denominator comes from.
+    const latestPerVolunteer = audience.map(
+      (volunteer) =>
+        volunteer.signedAgreements.find(
+          (sa) => sa.agreementType === template.agreementType
+        ) ?? null
     );
-    // Deduplicate by volunteer — keep latest signature only
-    const byVolunteer = new Map<
-      string,
-      { documentVersion: string | null; signedAt: Date }
-    >();
-    for (const sa of signed) {
-      if (!byVolunteer.has(sa.volunteerId)) {
-        byVolunteer.set(sa.volunteerId, {
-          documentVersion: sa.documentVersion,
-          signedAt: sa.signedAt,
-        });
-      }
-    }
-
-    const latestPerVolunteer = Array.from(byVolunteer.values());
-    const signedCurrentCount = latestPerVolunteer.filter(
-      (v) => v.documentVersion === template.version
-    ).length;
-    const signedOutdatedCount = latestPerVolunteer.filter(
-      (v) => v.documentVersion && v.documentVersion !== template.version
-    ).length;
-
-    // Pending re-ack: admin marked requiresReAck and a volunteer's latest
-    // signature predates the re-ack flag (or they've never signed)
-    const pendingReAckCount =
-      template.requiresReAck && template.reAckSetAt
-        ? totalVolunteers -
-          latestPerVolunteer.filter(
-            (v) => v.signedAt >= template.reAckSetAt!
-          ).length
-        : 0;
 
     return {
       agreementType: template.agreementType,
       title: template.title,
       version: template.version,
       updatedAt: template.updatedAt,
-      totalVolunteers,
-      signedCurrentCount,
-      signedOutdatedCount,
-      unsignedCount: totalVolunteers - signedCurrentCount - signedOutdatedCount,
+      requiresSignature: template.requiresSignature,
+      archivedAt: template.archivedAt,
       requiresReAck: template.requiresReAck,
       reAckSetAt: template.reAckSetAt,
-      pendingReAckCount,
+      ...tallyAgreement(template, latestPerVolunteer),
     };
   });
 }
@@ -159,15 +169,12 @@ export async function setAgreementReAckRequired(
   agreementType: string,
   required: boolean
 ) {
-  const session = await requireActiveSession();
-  if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireStaff();
 
   const db = getDb();
 
   await db.agreementTemplate.update({
-    where: { agreementType: agreementType as AgreementType },
+    where: { agreementType },
     data: {
       requiresReAck: required,
       // Stamp the moment re-ack was required so signatures predating it
@@ -177,10 +184,7 @@ export async function setAgreementReAckRequired(
     },
   });
 
-  revalidatePath("/staff/documents");
-  revalidatePath("/staff/documents/" + agreementType);
-  revalidatePath("/documents");
-  revalidatePath("/dashboard");
+  revalidateAgreement(agreementType);
 }
 
 // ─── Staff: Agreement Detail ────────────────────────────
@@ -188,31 +192,23 @@ export async function setAgreementReAckRequired(
 export async function getAgreementDetail(
   agreementType: string
 ): Promise<AgreementDetail | null> {
-  const session = await requireActiveSession();
-  if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
-    throw new Error("Unauthorized");
-  }
+  await requireStaff();
 
   const db = getDb();
 
   const template = await db.agreementTemplate.findUnique({
-    where: { agreementType: agreementType as AgreementType },
+    where: { agreementType },
   });
 
   if (!template) return null;
 
-  // Get all active volunteers with their signing status for this type
-  // (excluding staff, to match the totalVolunteers denominator above).
   const volunteers = await db.volunteerProfile.findMany({
-    where: {
-      status: { in: ["ACTIVE", "APPROVED_FOR_INDUCTION"] },
-      user: { role: { notIn: STAFF_ROLES } },
-    },
+    where: AGREEMENT_AUDIENCE,
     select: {
       id: true,
       user: { select: { name: true, email: true } },
       signedAgreements: {
-        where: { agreementType: agreementType as AgreementType },
+        where: { agreementType },
         orderBy: { signedAt: "desc" },
         take: 1,
         select: {
@@ -230,46 +226,113 @@ export async function getAgreementDetail(
     content: template.content,
     version: template.version,
     updatedAt: template.updatedAt,
+    requiresSignature: template.requiresSignature,
+    archivedAt: template.archivedAt,
+    requiresReAck: template.requiresReAck,
+    reAckSetAt: template.reAckSetAt,
     volunteers: volunteers.map((v) => {
-      const latest = v.signedAgreements[0];
+      const latest = v.signedAgreements[0] ?? null;
       return {
         id: v.id,
         userName: v.user.name || "—",
         userEmail: v.user.email,
-        signedVersion: latest?.documentVersion || null,
-        signedAt: latest?.signedAt || null,
-        isCurrent: latest?.documentVersion === template.version,
+        signedVersion: latest?.documentVersion ?? null,
+        signedAt: latest?.signedAt ?? null,
+        isCurrent: isCurrentVersion(template, latest),
+        needsAcknowledgement: needsAcknowledgement(template, latest),
       };
     }),
   };
+}
+
+// ─── Staff: Create Agreement ────────────────────────────
+
+/**
+ * Add an agreement. Its key is derived from the title once, here, and then
+ * left alone - renaming the agreement later must not orphan the signatures
+ * already recorded against it.
+ */
+export async function createAgreementTemplate(input: AgreementTemplateInput) {
+  const session = await requireStaff();
+
+  const problem = validateAgreementTemplate(input);
+  if (problem) return { error: problem };
+
+  const db = getDb();
+
+  const existing = await db.agreementTemplate.findMany({
+    select: { agreementType: true },
+  });
+  const agreementType = uniqueAgreementKey(
+    input.title,
+    existing.map((t) => t.agreementType)
+  );
+
+  await db.agreementTemplate.create({
+    data: {
+      agreementType,
+      title: input.title.trim(),
+      content: input.content.trim(),
+      version: input.version.trim(),
+      requiresSignature: input.requiresSignature,
+      updatedById: session.user.id,
+    },
+  });
+
+  revalidateAgreement(agreementType);
+  return { success: true as const, agreementType };
 }
 
 // ─── Staff: Update Agreement Template ───────────────────
 
 export async function updateAgreementTemplate(
   agreementType: string,
-  data: { title: string; content: string; version: string }
+  input: AgreementTemplateInput
 ) {
-  const session = await requireActiveSession();
-  if (!session?.user || !["COORDINATOR", "ADMIN"].includes(session.user.role)) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireStaff();
+
+  const problem = validateAgreementTemplate(input);
+  if (problem) return { error: problem };
 
   const db = getDb();
 
   await db.agreementTemplate.update({
-    where: { agreementType: agreementType as AgreementType },
+    where: { agreementType },
     data: {
-      title: data.title,
-      content: data.content,
-      version: data.version,
+      title: input.title.trim(),
+      content: input.content.trim(),
+      version: input.version.trim(),
+      requiresSignature: input.requiresSignature,
       updatedById: session.user.id,
     },
   });
 
-  revalidatePath("/staff/documents");
-  revalidatePath("/staff/documents/" + agreementType);
-  revalidatePath("/documents");
+  revalidateAgreement(agreementType);
+  return { success: true as const };
+}
+
+// ─── Staff: Retire / Restore an Agreement ───────────────
+
+/**
+ * Retiring hides an agreement from volunteers and stops it counting towards
+ * what they owe. It is not a delete: the acknowledgements against it are a
+ * record of what people agreed to at the time, and those stay.
+ */
+export async function setAgreementArchived(
+  agreementType: string,
+  archived: boolean
+) {
+  await requireStaff();
+
+  const db = getDb();
+
+  await db.agreementTemplate.update({
+    where: { agreementType },
+    data: { archivedAt: archived ? new Date() : null },
+  });
+
+  revalidateAgreement(agreementType);
+  return { success: true as const };
 }
 
 // ─── Volunteer: Get Agreement Statuses ──────────────────
@@ -301,43 +364,43 @@ export async function getVolunteerAgreementStatuses(): Promise<
   if (!profile) return [];
 
   const templates = await db.agreementTemplate.findMany({
-    orderBy: { agreementType: "asc" },
+    where: { archivedAt: null },
+    orderBy: { createdAt: "asc" },
   });
 
   return templates.map((template) => {
-    // Find the latest signed agreement of this type
-    const latest = profile.signedAgreements.find(
-      (sa) => sa.agreementType === template.agreementType
-    );
-
-    // Re-ack is needed if:
-    //   - never signed before, OR
-    //   - admin has flagged this template as requiring re-ack AND the latest
-    //     signature predates the admin's re-ack flag
-    const needsResign =
-      !latest ||
-      (template.requiresReAck &&
-        !!template.reAckSetAt &&
-        latest.signedAt < template.reAckSetAt);
+    // Ordered newest-first above, so the first match is the latest.
+    const latest =
+      profile.signedAgreements.find(
+        (sa) => sa.agreementType === template.agreementType
+      ) ?? null;
 
     return {
       agreementType: template.agreementType,
       title: template.title,
       content: template.content,
       currentVersion: template.version,
-      signedVersion: latest?.documentVersion || null,
-      signedAt: latest?.signedAt || null,
-      signatureData: latest?.signatureData || null,
-      needsResign,
+      requiresSignature: template.requiresSignature,
+      signedVersion: latest?.documentVersion ?? null,
+      signedAt: latest?.signedAt ?? null,
+      signatureData: latest?.signatureData ?? null,
+      needsResign: needsAcknowledgement(template, latest),
     };
   });
 }
 
-// ─── Volunteer: Re-sign Agreement ───────────────────────
+// ─── Volunteer: Acknowledge an Agreement ────────────────
 
-export async function resignAgreement(
+/**
+ * Record that someone has read and understood an agreement.
+ *
+ * Every agreement takes a tick; `requiresSignature` decides whether a drawn
+ * signature has to come with it. The template is the authority on that, not the
+ * client - a caller cannot skip the signature by omitting it.
+ */
+export async function acknowledgeAgreement(
   agreementType: string,
-  signatureData: string
+  signatureData: string | null
 ) {
   const session = await requireActiveSession();
   if (!session?.user) throw new Error("Unauthorized");
@@ -349,28 +412,34 @@ export async function resignAgreement(
     select: { id: true },
   });
 
-  if (!profile) throw new Error("No volunteer profile found");
+  if (!profile) return { error: "No volunteer profile found." };
 
   const template = await db.agreementTemplate.findUnique({
-    where: { agreementType: agreementType as AgreementType },
+    where: { agreementType },
   });
 
-  if (!template) throw new Error("Agreement template not found");
+  if (!template || template.archivedAt) {
+    return { error: "That agreement is no longer available." };
+  }
 
-  // Create a new signed agreement record (keeps history)
+  const signature = signatureData?.trim() || null;
+  if (template.requiresSignature && !signature) {
+    return { error: "Please add your signature to confirm." };
+  }
+
+  // A new row every time, so the history of what was agreed to and when is kept.
   await db.signedAgreement.create({
     data: {
       volunteerId: profile.id,
-      agreementType: agreementType as AgreementType,
-      signatureData,
+      agreementType,
+      // A tick-only agreement stores no signature rather than a placeholder.
+      signatureData: template.requiresSignature ? signature : null,
       documentVersion: template.version,
     },
   });
 
-  revalidatePath("/documents");
-  revalidatePath("/profile");
-  revalidatePath("/dashboard");
-  revalidatePath("/staff/documents");
+  revalidateAgreement(agreementType);
+  return { success: true as const };
 }
 
 // ─── Dashboard: Check if re-signing needed ──────────────
@@ -388,6 +457,7 @@ export async function getPendingResignCount(): Promise<number> {
         orderBy: { signedAt: "desc" },
         select: {
           agreementType: true,
+          documentVersion: true,
           signedAt: true,
         },
       },
@@ -396,24 +466,18 @@ export async function getPendingResignCount(): Promise<number> {
 
   if (!profile) return 0;
 
-  const templates = await db.agreementTemplate.findMany();
+  const templates = await db.agreementTemplate.findMany({
+    where: { archivedAt: null },
+  });
 
-  let count = 0;
-  for (const template of templates) {
-    const latest = profile.signedAgreements.find(
-      (sa) => sa.agreementType === template.agreementType
-    );
-    if (
-      !latest ||
-      (template.requiresReAck &&
-        !!template.reAckSetAt &&
-        latest.signedAt < template.reAckSetAt)
-    ) {
-      count++;
-    }
-  }
-
-  return count;
+  return templates.filter((template) =>
+    needsAcknowledgement(
+      template,
+      profile.signedAgreements.find(
+        (sa) => sa.agreementType === template.agreementType
+      ) ?? null
+    )
+  ).length;
 }
 
 // ─── Staff: Upload Document ─────────────────────────────

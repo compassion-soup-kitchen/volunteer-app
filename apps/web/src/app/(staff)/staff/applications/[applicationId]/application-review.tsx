@@ -51,6 +51,7 @@ import {
   RiHeartLine,
 } from "@remixicon/react";
 import { format } from "date-fns";
+import { agreementLabel } from "@/lib/agreement-labels";
 import { toast } from "sonner";
 import {
   reviewApplication,
@@ -277,10 +278,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                     <RiCheckLine />
                   </IconChip>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                    {a.agreementType
-                      .replace(/_/g, " ")
-                      .toLowerCase()
-                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    {agreementLabel(a.agreementType)}
                   </span>
                   <span className="tnum shrink-0 text-xs text-muted-foreground">
                     {format(a.signedAt, "d MMM yyyy")}
