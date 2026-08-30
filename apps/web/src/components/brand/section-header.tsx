@@ -10,6 +10,8 @@ interface SectionHeaderProps {
   title: React.ReactNode;
   /** Optional red trailing action, e.g. { label: "All shifts", href: "/shifts" }. */
   action?: { label: string; href: string };
+  /** Trailing control for sections that own an action rather than a link. */
+  trailing?: React.ReactNode;
   /** Draw a hairline rule above the header to separate stacked sections. */
   divider?: boolean;
   className?: string;
@@ -23,6 +25,7 @@ export function SectionHeader({
   eyebrow,
   title,
   action,
+  trailing,
   divider = false,
   className,
 }: SectionHeaderProps) {
@@ -42,6 +45,7 @@ export function SectionHeader({
             <RiArrowRightSLine className="size-4" aria-hidden />
           </Link>
         ) : null}
+        {trailing ? <div className="shrink-0">{trailing}</div> : null}
       </div>
     </div>
   );

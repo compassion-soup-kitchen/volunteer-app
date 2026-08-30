@@ -9,6 +9,7 @@ import { DocumentsOverview } from "./documents-overview";
 import { FileManager } from "./file-manager";
 import { PageHeader } from "@/components/brand/page-header";
 import { SectionHeader } from "@/components/brand/section-header";
+import { NewAgreementDialog } from "./new-agreement-dialog";
 
 export const metadata: Metadata = {
   title: "Documents | Te Pūaroha Staff",
@@ -45,7 +46,11 @@ export default function StaffDocumentsPage() {
 
       {/* Agreements Section */}
       <section className="space-y-4">
-        <SectionHeader eyebrow="Ngā whakaaetanga" title="Agreements" />
+        <SectionHeader
+          eyebrow="Ngā whakaaetanga"
+          title="Agreements"
+          trailing={<NewAgreementDialog />}
+        />
         <Suspense fallback={<DocumentsSkeleton />}>
           <AgreementsContent />
         </Suspense>
