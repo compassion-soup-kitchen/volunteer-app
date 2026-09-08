@@ -20,5 +20,8 @@ allowBuilds:
   esbuild: true
   msw: false
   prisma: true
+  # eas-cli → centrifuge → protobufjs. Its postinstall only warns when a
+  # dependent pins the wrong version range; it builds nothing, so leave it off.
+  protobufjs: false
   sharp: true
   unrs-resolver: true
