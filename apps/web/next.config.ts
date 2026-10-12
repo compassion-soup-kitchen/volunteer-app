@@ -5,7 +5,14 @@ const securityHeaders = [
   // HSTS is safe to set unconditionally: browsers ignore it over plain HTTP,
   // and production terminates TLS at the Coolify reverse proxy.
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-  { key: "X-Frame-Options", value: "DENY" },
+  // awhinatech.nz embeds the live site in its showcase, so framing is allowed
+  // for that origin as well as 'self'. X-Frame-Options can't express "self +
+  // another origin", and CSP frame-ancestors supersedes it anyway, so it's
+  // deliberately not set.
+  {
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'self' https://awhinatech.nz https://*.awhinatech.nz",
+  },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
