@@ -11,6 +11,33 @@ export type AuthenticatedUser = {
 };
 
 /**
+ * The signed-in view of a user row.
+ *
+ * Everyone who can sign in has an email address. The only rows without one are
+ * offline volunteers staff keep a record for, and those have no password and
+ * no linked provider - so a row reaching a sign-in path without an address is
+ * a broken invariant, and refusing loudly beats minting a session for it.
+ */
+export function toAuthenticatedUser(user: {
+  id: string;
+  email: string | null;
+  name: string | null;
+  image: string | null;
+  role: Role;
+}): AuthenticatedUser {
+  if (!user.email) {
+    throw new Error(`User ${user.id} has no email address, so cannot sign in.`);
+  }
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    image: user.image,
+    role: user.role,
+  };
+}
+
+/**
  * User.email is a case-sensitive unique column, so every lookup and create
  * must go through the same normalization or the same person can end up with
  * two accounts (John@x.com vs john@x.com) and case-dependent logins.
@@ -38,6 +65,7 @@ export async function checkCredentials(
     where: { email: normalizeEmail(email) },
   });
 
+  // An offline volunteer's record has neither, so it lands here too.
   if (!user?.password) return { ok: false, reason: "invalid-credentials" };
   if (user.status === "ARCHIVED") return { ok: false, reason: "archived" };
 
@@ -46,16 +74,7 @@ export async function checkCredentials(
 
   if (!user.emailVerified) return { ok: false, reason: "email-unverified" };
 
-  return {
-    ok: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      image: user.image,
-      role: user.role,
-    },
-  };
+  return { ok: true, user: toAuthenticatedUser(user) };
 }
 
 /**
@@ -130,13 +149,5 @@ export async function createUserAccount(
     },
   });
 
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      image: user.image,
-      role: user.role,
-    },
-  };
+  return { user: toAuthenticatedUser({ ...user, email: normalizedEmail }) };
 }

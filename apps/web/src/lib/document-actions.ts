@@ -40,7 +40,7 @@ export type AgreementDetail = {
   volunteers: {
     id: string;
     userName: string;
-    userEmail: string;
+    userEmail: string | null;
     signedVersion: string | null;
     signedAt: Date | null;
     isCurrent: boolean;

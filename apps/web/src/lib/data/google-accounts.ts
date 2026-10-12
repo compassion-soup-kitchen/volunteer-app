@@ -10,7 +10,11 @@
 import type { Prisma } from "@prisma/client";
 import { getDb } from "@/lib/db";
 import type { GoogleIdentity } from "@/lib/google-id-token";
-import { normalizeEmail, type AuthenticatedUser } from "./users";
+import {
+  normalizeEmail,
+  toAuthenticatedUser,
+  type AuthenticatedUser,
+} from "./users";
 
 const PROVIDER = "google";
 
@@ -26,18 +30,6 @@ const userFields = {
   role: true,
   status: true,
 } satisfies Prisma.UserSelect;
-
-type UserRow = Prisma.UserGetPayload<{ select: typeof userFields }>;
-
-function toAuthenticatedUser(user: UserRow): AuthenticatedUser {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    image: user.image,
-    role: user.role,
-  };
-}
 
 /** Prisma's unique-constraint violation - two sign-ins racing to create. */
 function isUniqueViolation(error: unknown): boolean {

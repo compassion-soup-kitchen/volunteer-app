@@ -94,15 +94,24 @@ export function wouldRemoveLastAdmin(
 }
 
 /**
- * Deletion is confirmed by typing the person's email address - a name is too
- * easy to type by muscle memory, and the email is on screen right next to it.
- * Compared case- and whitespace-insensitively.
+ * What has to be typed to confirm a deletion: the person's email address - a
+ * name is too easy to type by muscle memory, and the email is on screen right
+ * next to it. An offline volunteer staff added without an address is the one
+ * exception, and is confirmed by their name instead.
  */
+export function deletionConfirmationPhrase(target: {
+  email: string | null;
+  name: string | null;
+}): string {
+  return (target.email ?? target.name ?? "").trim();
+}
+
+/** Compared case- and whitespace-insensitively. */
 export function matchesDeletionConfirmation(
   typed: string,
-  targetEmail: string
+  phrase: string
 ): boolean {
-  const expected = targetEmail.trim().toLowerCase();
+  const expected = phrase.trim().toLowerCase();
   if (!expected) return false;
   return typed.trim().toLowerCase() === expected;
 }
@@ -111,7 +120,8 @@ export type UserDeletionInput = {
   actorUserId: string;
   targetUserId: string;
   targetRole: Role;
-  targetEmail: string;
+  /** From `deletionConfirmationPhrase`. */
+  confirmationPhrase: string;
   /** True when deleting the target would leave zero active admins. */
   isLastAdmin: boolean;
   authored: AuthoredRecordCounts;
@@ -127,8 +137,8 @@ export function validateUserDeletion(input: UserDeletionInput): string | null {
   const blocker = findDeletionBlocker(input);
   if (blocker) return blocker;
 
-  if (!matchesDeletionConfirmation(input.confirmation, input.targetEmail)) {
-    return "Type their email address exactly to confirm.";
+  if (!matchesDeletionConfirmation(input.confirmation, input.confirmationPhrase)) {
+    return "Type it exactly as shown to confirm.";
   }
   return null;
 }
@@ -201,13 +211,15 @@ export type OwnAccountDeletionSummary = {
  * facts, so the web page and the mobile app are told the same thing.
  */
 export function summariseOwnAccountDeletion(facts: {
-  email: string;
+  /** Always present for someone signed in; null only on an offline record. */
+  email: string | null;
   erases: ErasedRecordCounts;
   authored: AuthoredRecordCounts;
   isLastAdmin: boolean;
 }): OwnAccountDeletionSummary {
   return {
-    email: facts.email,
+    // Empty can never be matched, so a record with no address fails closed.
+    email: facts.email ?? "",
     erases: facts.erases,
     authored: facts.authored,
     blocker: findSelfDeletionBlocker({ isLastAdmin: facts.isLastAdmin }),
@@ -216,7 +228,7 @@ export function summariseOwnAccountDeletion(facts: {
 
 export type SelfDeletionInput = {
   isLastAdmin: boolean;
-  email: string;
+  email: string | null;
   /** What the person typed into the confirmation field. */
   confirmation: string;
 };
@@ -229,7 +241,7 @@ export function validateSelfDeletion(input: SelfDeletionInput): string | null {
   const blocker = findSelfDeletionBlocker(input);
   if (blocker) return blocker;
 
-  if (!matchesDeletionConfirmation(input.confirmation, input.email)) {
+  if (!matchesDeletionConfirmation(input.confirmation, input.email ?? "")) {
     return "Type your email address exactly to confirm.";
   }
   return null;

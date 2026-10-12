@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { scheduleRosterTopUp } from "@/lib/data/shift-patterns";
 import { safeParseDateOnly, startOfTodayInAppZone } from "@/lib/date-only";
 import {
   heldForOffersMessage,
@@ -106,6 +107,9 @@ export async function getAvailableShiftsForUser(
   userId: string,
   filters?: ShiftFilters
 ): Promise<ShiftWithDetails[]> {
+  // Keep repeating shifts generated ahead - volunteers browsing is as good a
+  // trigger as staff.
+  scheduleRosterTopUp();
   const db = getDb();
 
   // Get volunteer profile for signup status

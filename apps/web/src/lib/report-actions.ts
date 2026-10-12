@@ -480,7 +480,7 @@ export async function getShiftExportData(
 
 export type VolunteerExportRow = {
   name: string;
-  email: string;
+  email: string | null;
   status: string;
   mojStatus: string;
   totalShifts: number;

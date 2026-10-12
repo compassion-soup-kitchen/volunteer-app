@@ -195,7 +195,7 @@ export function ReportDashboard({
         ],
         data.map((r) => [
           r.name,
-          r.email,
+          r.email ?? "",
           r.status,
           r.mojStatus,
           String(r.totalShifts),

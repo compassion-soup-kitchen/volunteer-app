@@ -19,3 +19,27 @@ export function formatTime(time: string): string {
 export function formatTimeRange(start: string, end: string): string {
   return `${formatTime(start)} – ${formatTime(end)}`;
 }
+
+/**
+ * What to call someone in a list: their name, or their email address when they
+ * never gave one. Offline volunteers may have no address at all, but staff
+ * can't add one without a name, so the last fallback only covers a malformed
+ * record.
+ */
+export function personName(person: {
+  name: string | null;
+  email: string | null;
+}): string {
+  return person.name?.trim() || person.email || "Unnamed volunteer";
+}
+
+/**
+ * The one line under someone's name that says how to reach them. An offline
+ * volunteer often has no email, and a phone number is what staff ring.
+ */
+export function contactLine(person: {
+  email: string | null;
+  phone?: string | null;
+}): string {
+  return person.email || person.phone?.trim() || "No email or phone";
+}

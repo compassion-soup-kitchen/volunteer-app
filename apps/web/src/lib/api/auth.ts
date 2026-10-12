@@ -38,7 +38,8 @@ export async function authenticateApiRequest(
     },
   });
 
-  if (!user || user.status === "ARCHIVED") return null;
+  // No address means an offline volunteer's record, which never signs in.
+  if (!user || user.status === "ARCHIVED" || !user.email) return null;
 
   return {
     id: user.id,

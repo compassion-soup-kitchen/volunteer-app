@@ -39,6 +39,8 @@ import {
   RiCheckLine,
   RiCloseLine,
   RiCheckDoubleLine,
+  RiRepeatLine,
+  RiUserUnfollowLine,
 } from "@remixicon/react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -46,10 +48,15 @@ import {
   deleteShift,
   markAttendance,
   markBulkAttendance,
+  removeVolunteerFromShift,
+  type RosterVolunteer,
   type StaffShift,
+  type VolunteerOption,
 } from "@/lib/shift-actions";
 import { RecordMealsCard } from "./record-meals-card";
-import { formatTimeRange } from "@/lib/format";
+import { AddToRoster } from "./add-to-roster";
+import { contactLine, formatTimeRange, personName } from "@/lib/format";
+import { describeRecurrence } from "@/lib/shift-patterns";
 import {
   formatDateOnly,
   isPastInAppZone,
@@ -59,6 +66,20 @@ import { formatHoldUntil, isHeldForOffers } from "@/lib/shift-offers";
 
 interface ShiftDetailViewProps {
   shift: StaffShift;
+  /** Active volunteers staff can put on the roster. */
+  volunteers: VolunteerOption[];
+}
+
+/** The line under a volunteer's name, with offline volunteers flagged. */
+function VolunteerContact({ volunteer }: { volunteer: RosterVolunteer }) {
+  return (
+    <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+      {volunteer.user.isOffline && <Badge variant="neutral">Offline</Badge>}
+      <span className="truncate">
+        {contactLine({ email: volunteer.user.email, phone: volunteer.phone })}
+      </span>
+    </p>
+  );
 }
 
 const LONG_DATE: Intl.DateTimeFormatOptions = {
@@ -83,7 +104,7 @@ function initials(name: string | null): string {
   return (first + last).toUpperCase() || "?";
 }
 
-export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
+export function ShiftDetailView({ shift, volunteers }: ShiftDetailViewProps) {
   const router = useRouter();
   const [showDelete, setShowDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -99,6 +120,24 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
   const unmarkedSignups = shift.signups.filter(
     (s) => s.status === "SIGNED_UP"
   );
+  const [removeTarget, setRemoveTarget] = useState<
+    StaffShift["signups"][number] | null
+  >(null);
+
+  function handleRemove() {
+    if (!removeTarget) return;
+    const target = removeTarget;
+    startTransition(async () => {
+      const result = await removeVolunteerFromShift(target.id);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(`${personName(target.volunteer.user)} is off this shift.`);
+        router.refresh();
+      }
+      setRemoveTarget(null);
+    });
+  }
 
   async function handleDelete() {
     setIsDeleting(true);
@@ -169,6 +208,17 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                   {formatTimeRange(shift.startTime, shift.endTime)}
                 </span>
               </div>
+              {shift.pattern && (
+                <div className="flex items-center gap-2.5 text-sm">
+                  <RiRepeatLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+                  <Link
+                    href={`/staff/shifts/repeating/${shift.pattern.id}`}
+                    className="font-semibold text-primary underline-offset-4 hover:underline"
+                  >
+                    {describeRecurrence(shift.pattern.weekdays, shift.pattern.interval)}
+                  </Link>
+                </div>
+              )}
               <div className="flex items-center gap-2.5 text-sm">
                 <RiTeamLine aria-hidden className="size-4 shrink-0 text-muted-foreground" />
                 <span className="tnum">
@@ -278,11 +328,9 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">
-                      {offer.volunteer.user.name || offer.volunteer.user.email}
+                      {personName(offer.volunteer.user)}
                     </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {offer.volunteer.user.email}
-                    </p>
+                    <VolunteerContact volunteer={offer.volunteer} />
                     <GroupBadges
                       groups={offer.volunteer.groups}
                       max={2}
@@ -321,8 +369,8 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
               ? "Mark attendance for this shift"
               : "Who’s signed up for this shift"}
           </CardDescription>
-          {canMarkAttendance && unmarkedSignups.length > 1 && (
-            <CardAction>
+          <CardAction className="flex flex-wrap justify-end gap-2">
+            {canMarkAttendance && unmarkedSignups.length > 1 && (
               <Button
                 size="sm"
                 variant="outline"
@@ -336,8 +384,15 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                 )}
                 Mark all attended
               </Button>
-            </CardAction>
-          )}
+            )}
+            <AddToRoster
+              shiftId={shift.id}
+              volunteers={volunteers}
+              rosteredIds={activeSignups.map((s) => s.volunteer.id)}
+              isPast={past}
+              isFull={activeSignups.length >= shift.capacity}
+            />
+          </CardAction>
         </CardHeader>
         {shift.signups.length === 0 ? (
           <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
@@ -349,7 +404,9 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                 No one signed up yet
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Volunteers will appear here as they join this shift.
+                {past
+                  ? "Record anyone who came, so their hours count."
+                  : "Volunteers appear here as they sign up, or add someone yourself."}
               </p>
             </div>
           </CardContent>
@@ -368,15 +425,26 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <p className="truncate text-sm font-semibold">
-                      {signup.volunteer.user.name || "—"}
+                      {personName(signup.volunteer.user)}
                     </p>
                     <GroupBadges groups={signup.volunteer.groups} max={2} />
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {signup.volunteer.user.email}
-                  </p>
+                  <VolunteerContact volunteer={signup.volunteer} />
                 </div>
                 <StatusBadge status={signup.status} className="shrink-0" />
+                {!canMarkAttendance && signup.status === "SIGNED_UP" && (
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={`Take ${personName(signup.volunteer.user)} off this shift`}
+                    title="Take off this shift"
+                    onClick={() => setRemoveTarget(signup)}
+                    disabled={isPending}
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <RiUserUnfollowLine className="size-4" />
+                  </Button>
+                )}
                 {canMarkAttendance && signup.status !== "CANCELLED" && (
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Button
@@ -424,6 +492,38 @@ export function ShiftDetailView({ shift }: ShiftDetailViewProps) {
           </ul>
         )}
       </Card>
+
+      {/* Take someone off the roster */}
+      <AlertDialog
+        open={removeTarget !== null}
+        onOpenChange={(open) => !open && !isPending && setRemoveTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Take {removeTarget ? personName(removeTarget.volunteer.user) : ""} off this shift?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Their place opens up for someone else, and they get a
+              notification if they use the app.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Keep them on</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemove();
+              }}
+              disabled={isPending}
+            >
+              {isPending && <RiLoader4Line className="size-4 animate-spin" />}
+              Take them off
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete dialog */}
       <AlertDialog open={showDelete} onOpenChange={setShowDelete}>

@@ -28,6 +28,7 @@ import {
   type AssignableRole,
 } from "./role-change";
 import {
+  deletionConfirmationPhrase,
   findDeletionBlocker,
   validateUserDeletion,
   type AuthoredRecordCounts,
@@ -221,7 +222,7 @@ export type ApplicationListItem = {
     mojStatus: string;
     user: {
       name: string | null;
-      email: string;
+      email: string | null;
     };
     interests: { id: string; name: string }[];
   };
@@ -266,7 +267,7 @@ export async function getApplicationsList(
     return applications.filter(
       (app) =>
         app.volunteer.user.name?.toLowerCase().includes(q) ||
-        app.volunteer.user.email.toLowerCase().includes(q)
+        app.volunteer.user.email?.toLowerCase().includes(q)
     );
   }
 
@@ -295,7 +296,7 @@ export type ApplicationDetail = {
     createdAt: Date;
     user: {
       name: string | null;
-      email: string;
+      email: string | null;
     };
     interests: { id: string; name: string }[];
     signedAgreements: {
@@ -440,7 +441,7 @@ export type VolunteerListItem = {
   user: {
     id: string;
     name: string | null;
-    email: string;
+    email: string | null;
     role: Role;
     status: string;
     archivedAt: Date | null;
@@ -595,7 +596,8 @@ export async function getVolunteersList(
     return volunteers.filter(
       (v) =>
         v.user.name?.toLowerCase().includes(q) ||
-        v.user.email.toLowerCase().includes(q)
+        v.user.email?.toLowerCase().includes(q) ||
+        v.phone?.replace(/\s/g, "").includes(q.replace(/\s/g, ""))
     );
   }
 
@@ -634,7 +636,7 @@ export type VolunteerDetail = {
   user: {
     id: string;
     name: string | null;
-    email: string;
+    email: string | null;
     image: string | null;
     role: Role;
     status: string;
@@ -1038,7 +1040,9 @@ export async function restoreVolunteer(
 export type UserDeletionSummary = {
   userId: string;
   name: string | null;
-  email: string;
+  email: string | null;
+  /** What the admin must type to confirm - see `deletionConfirmationPhrase`. */
+  confirmationPhrase: string;
   role: Role;
   isArchived: boolean;
   // What deleting them destroys.
@@ -1062,6 +1066,7 @@ function toDeletionSummary(
     userId: facts.userId,
     name: facts.name,
     email: facts.email,
+    confirmationPhrase: deletionConfirmationPhrase(facts),
     role: facts.role,
     isArchived: facts.isArchived,
     authored: facts.authored,
@@ -1115,7 +1120,7 @@ export async function deleteUser(
     actorUserId: session.user!.id,
     targetUserId: facts.userId,
     targetRole: facts.role,
-    targetEmail: facts.email,
+    confirmationPhrase: deletionConfirmationPhrase(facts),
     isLastAdmin: facts.isLastAdmin,
     authored: facts.authored,
     confirmation,

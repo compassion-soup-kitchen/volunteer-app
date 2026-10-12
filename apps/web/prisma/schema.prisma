@@ -23,7 +23,9 @@ enum UserStatus {
 model User {
   id             String     @id @default(cuid())
   name           String?
-  email          String     @unique
+  /// Null only for an offline volunteer staff added without one (see
+  /// `isOffline`). Everyone who signs in has an address.
+  email          String?    @unique
   emailVerified  DateTime?
   image          String?
   password       String?
@@ -32,6 +34,10 @@ model User {
   archivedAt     DateTime?
   archivedReason String?
   archivedById   String?
+  /// Someone who volunteers without using the app. Staff keep their record,
+  /// roster them and mark their attendance; they have no password and cannot
+  /// sign in. Cleared if they later claim the account.
+  isOffline      Boolean    @default(false)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -39,19 +45,21 @@ model User {
   sessions Session[]
 
   volunteerProfile     VolunteerProfile?
-  reviewedApplications Application[]       @relation("ReviewedBy")
+  reviewedApplications Application[]        @relation("ReviewedBy")
   createdShifts        Shift[]
-  markedAttendance     ShiftSignup[]       @relation("AttendanceMarkedBy")
-  recordedShiftMeals   Shift[]             @relation("MealsRecordedBy")
+  createdShiftPatterns ShiftPattern[]
+  createdClosedDays    ClosedDay[]
+  markedAttendance     ShiftSignup[]        @relation("AttendanceMarkedBy")
+  recordedShiftMeals   Shift[]              @relation("MealsRecordedBy")
   createdTraining      TrainingSession[]
   createdAnnouncements Announcement[]
   createdEvents        Event[]
   eventRsvps           EventRsvp[]
-  uploadedDocuments    Document[]          @relation("UploadedBy")
-  updatedAgreements    AgreementTemplate[] @relation("AgreementTemplateUpdatedBy")
-  reAckSetAgreements   AgreementTemplate[] @relation("AgreementTemplateReAckSetBy")
-  archivedBy           User?               @relation("UserArchivedBy", fields: [archivedById], references: [id])
-  archivedUsers        User[]              @relation("UserArchivedBy")
+  uploadedDocuments    Document[]           @relation("UploadedBy")
+  updatedAgreements    AgreementTemplate[]  @relation("AgreementTemplateUpdatedBy")
+  reAckSetAgreements   AgreementTemplate[]  @relation("AgreementTemplateReAckSetBy")
+  archivedBy           User?                @relation("UserArchivedBy", fields: [archivedById], references: [id])
+  archivedUsers        User[]               @relation("UserArchivedBy")
   pushTokens           PushToken[]
   impersonationsMade   ImpersonationEvent[] @relation("ImpersonationImpersonator")
   impersonationsOf     ImpersonationEvent[] @relation("ImpersonationTarget")
@@ -174,6 +182,7 @@ model VolunteerProfile {
   shiftSignups        ShiftSignup[]
   shiftOffers         ShiftOffer[]
   trainingAttendances TrainingAttendance[]
+  regularPatterns     ShiftPattern[]       @relation("ShiftPatternRegulars")
 }
 
 /// The colour a group's badge carries. Stored as intent, not hex - each maps to
@@ -195,9 +204,9 @@ enum GroupTone {
 /// side. Groups volunteers should be able to turn to - team leaders, guardian
 /// angels - are visible; a private coordination list can be kept staff-only.
 model VolunteerGroup {
-  id String @id @default(cuid())
+  id                  String    @id @default(cuid())
   /// What staff typed, shown everywhere.
-  name String @unique
+  name                String    @unique
   /// `name` lowercased. Postgres unique indexes are case-sensitive, so without
   /// this two coordinators saving "Team Leaders" and "team leaders" at the same
   /// moment would both clear the application-level check and land side by side.
@@ -297,8 +306,9 @@ model ServiceArea {
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  shifts     Shift[]
-  volunteers VolunteerProfile[] @relation("VolunteerInterests")
+  shifts        Shift[]
+  shiftPatterns ShiftPattern[]
+  volunteers    VolunteerProfile[] @relation("VolunteerInterests")
 }
 
 model Shift {
@@ -320,12 +330,68 @@ model Shift {
   // Right of first refusal: while this day has not passed and someone still
   // has a pending offer, only the volunteers offered the shift can take it.
   offersCloseOn     DateTime? @db.Date
+  /// The repeating shift this one was generated from, if any. Once generated it
+  /// is an ordinary shift: editing or deleting it touches this day only.
+  patternId         String?
 
   serviceArea     ServiceArea   @relation(fields: [serviceAreaId], references: [id])
   createdBy       User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
   mealsRecordedBy User?         @relation("MealsRecordedBy", fields: [mealsRecordedById], references: [id])
+  pattern         ShiftPattern? @relation(fields: [patternId], references: [id], onDelete: SetNull)
   signups         ShiftSignup[]
   offers          ShiftOffer[]
+
+  @@unique([patternId, date])
+  @@index([date])
+}
+
+/// A shift that keeps happening - "breakfast every Monday, 7 till 10" - with
+/// the regulars who always work it.
+///
+/// The roster is generated from it a few weeks ahead at a time
+/// (`shift-patterns.ts`), so a pattern with no end date never runs out. Every
+/// generated day is an ordinary `Shift`, and `generatedThrough` only ever moves
+/// forward: a shift deleted from the roster, or a day closed, is not
+/// regenerated behind the coordinator's back.
+model ShiftPattern {
+  id               String    @id @default(cuid())
+  serviceAreaId    String
+  /// Days of the week it runs, Sunday-indexed like `Date.getUTCDay`.
+  weekdays         Int[]
+  /// 1 = every week, 2 = every other week, counted from `startsOn`'s week.
+  interval         Int       @default(1)
+  startTime        String
+  endTime          String
+  capacity         Int
+  notes            String?
+  startsOn         DateTime  @db.Date
+  /// Null means it carries on until someone stops it.
+  endsOn           DateTime? @db.Date
+  /// Last calendar day shifts have been generated through.
+  generatedThrough DateTime? @db.Date
+  /// Nullable for the same reason as `Shift.createdById`.
+  createdById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  serviceArea ServiceArea        @relation(fields: [serviceAreaId], references: [id])
+  createdBy   User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  shifts      Shift[]
+  regulars    VolunteerProfile[] @relation("ShiftPatternRegulars")
+}
+
+/// A day the kitchen is shut - a public holiday, a staff day, a building
+/// closure. Nothing is rostered on it: closing a day cancels the shifts
+/// already on it, and repeating shifts skip it.
+model ClosedDay {
+  id          String   @id @default(cuid())
+  date        DateTime @unique @db.Date
+  reason      String
+  /// Nullable for the same reason as `Shift.createdById`.
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
 }
 
 enum ShiftOfferStatus {
@@ -455,7 +521,7 @@ model Announcement {
   /// The gathering this pānui is about, when it is announcing one. Optional
   /// both ways: most pānui announce nothing, and an event can be announced
   /// more than once (the invitation, then "replies close Friday").
-  eventId String?
+  eventId     String?
 
   createdBy   User?                    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   event       Event?                   @relation(fields: [eventId], references: [id], onDelete: SetNull)
@@ -504,27 +570,27 @@ enum EventStatus {
 /// edited long after the first pānui went out, cancelled without losing its
 /// guest list, and it must outlive any single message about it.
 model Event {
-  id          String @id @default(cuid())
-  title       String
-  description String? @db.Text
+  id           String      @id @default(cuid())
+  title        String
+  description  String?     @db.Text
   /// A wall-calendar day like `Shift.date` (see date-only.ts). Times are "HH:mm"
   /// strings, so the same helpers format events, shifts and training alike.
-  date      DateTime @db.Date
-  startTime String?
-  endTime   String?
-  location  String?
+  date         DateTime    @db.Date
+  startTime    String?
+  endTime      String?
+  location     String?
   /// Who is invited, and therefore who may reply. Shares the `Audience` enum
   /// with announcements so "everyone" means the same thing on both.
-  audience    Audience    @default(ALL)
-  status      EventStatus @default(DRAFT)
+  audience     Audience    @default(ALL)
+  status       EventStatus @default(DRAFT)
   /// Whether replies are being collected. Off for a save-the-date.
-  rsvpEnabled Boolean     @default(true)
+  rsvpEnabled  Boolean     @default(true)
   /// Last calendar day to reply. Null means right up until the event itself.
-  rsvpDeadline DateTime? @db.Date
+  rsvpDeadline DateTime?   @db.Date
   /// Nullable for the same reason as `Announcement.createdById`.
   createdById  String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   createdBy     User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
   rsvps         EventRsvp[]
@@ -547,14 +613,14 @@ enum RsvpResponse {
 /// event, so changing your mind updates the row: the tallies can never
 /// double-count and "who has replied" needs no de-duplication.
 model EventRsvp {
-  id       String       @id @default(cuid())
-  eventId  String
-  userId   String
-  response RsvpResponse
+  id          String       @id @default(cuid())
+  eventId     String
+  userId      String
+  response    RsvpResponse
   /// Anything the organisers need to know — dietary needs, arriving late.
-  note        String?  @db.Text
-  respondedAt DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  note        String?      @db.Text
+  respondedAt DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)

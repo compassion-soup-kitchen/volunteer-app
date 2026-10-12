@@ -21,25 +21,27 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import {
   createShift,
-  createShiftSeries,
   updateShift,
   type ShiftFormData,
   type VolunteerOption,
 } from "@/lib/shift-actions";
+import { createShiftPattern } from "@/lib/shift-pattern-actions";
 import {
-  expandRecurrence,
-  summariseSeriesResult,
-  WEEKDAYS,
-} from "@/lib/shift-series";
+  patternDatesBetween,
+  PATTERN_HORIZON_DAYS,
+  WEEKDAYS_FROM_MONDAY,
+} from "@/lib/shift-patterns";
 import {
+  addDaysToDateOnly,
   formatDateOnly,
+  isDateOnly,
   parseDateOnly,
   toDateOnly,
   todayInAppZone,
   toPickerDate,
 } from "@/lib/date-only";
 import type { OfferStatus } from "@/lib/shift-offers";
-import { VolunteerOfferPicker } from "./volunteer-offer-picker";
+import { VolunteerPicker } from "./volunteer-picker";
 
 /** The shift being edited, already flattened for the form. */
 export type ShiftFormValues = {
@@ -60,6 +62,8 @@ interface ShiftFormProps {
   volunteers: VolunteerOption[];
   /** Present when editing an existing shift. */
   shift?: ShiftFormValues;
+  /** A day to start a new shift on, e.g. from the calendar. */
+  initialDate?: string;
 }
 
 /**
@@ -101,15 +105,25 @@ function formatPreviewDates(dates: string[]): string {
   return rest > 0 ? `${shown} and ${rest} more` : shown;
 }
 
-export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
+export function ShiftForm({
+  serviceAreas,
+  volunteers,
+  shift,
+  initialDate,
+}: ShiftFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isEdit = Boolean(shift);
 
   const [serviceAreaId, setServiceAreaId] = useState(shift?.serviceAreaId ?? "");
-  const [date, setDate] = useState<Date | undefined>(
-    shift ? toPickerDate(shift.date) : undefined
-  );
+  const [date, setDate] = useState<Date | undefined>(() => {
+    if (shift) return toPickerDate(shift.date);
+    // A day handed over from the calendar, as long as it's still to come.
+    if (initialDate && isDateOnly(initialDate) && initialDate >= todayInAppZone()) {
+      return toPickerDate(parseDateOnly(initialDate));
+    }
+    return undefined;
+  });
   const [startTime, setStartTime] = useState(shift?.startTime ?? "");
   const [endTime, setEndTime] = useState(shift?.endTime ?? "");
   const [capacity, setCapacity] = useState(String(shift?.capacity ?? 6));
@@ -122,26 +136,32 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Repeat is a create-only affordance: editing one shift of a series edits
-  // that shift, and re-expanding a pattern over existing rows is a different
-  // (and much more surprising) operation.
+  // Repeat is a create-only affordance: editing one shift of a repeating
+  // shift edits that day, and the repeating shift itself is managed from its
+  // own page (Shifts → Repeating).
   const [repeats, setRepeats] = useState(false);
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [interval, setInterval] = useState("1");
+  const [repeatEnd, setRepeatEnd] = useState<"never" | "on">("never");
   const [repeatUntil, setRepeatUntil] = useState<Date | undefined>(undefined);
+  const [regularIds, setRegularIds] = useState<string[]>([]);
 
   /**
-   * The days the current pattern would create, recomputed as the form changes
-   * so the count under the picker is always what the action will do.
+   * The days the first top-up will put on the roster, recomputed as the form
+   * changes so the preview is always what the action will do. Closed days are
+   * skipped by the server, which the copy under the preview says.
    */
+  const horizonEnd = addDaysToDateOnly(todayInAppZone(), PATTERN_HORIZON_DAYS);
+  const startsOn = date ? toDateOnly(date) : null;
+  const endsOn = repeatEnd === "on" && repeatUntil ? toDateOnly(repeatUntil) : null;
+  const rollsOn = repeatEnd === "never" || (endsOn !== null && endsOn > horizonEnd);
   const preview =
-    repeats && date && repeatUntil
-      ? expandRecurrence({
-          startDate: toDateOnly(date),
-          endDate: toDateOnly(repeatUntil),
-          weekdays,
-          interval: parseInt(interval, 10) || 1,
-        })
+    repeats && startsOn && weekdays.length > 0 && (repeatEnd === "never" || endsOn)
+      ? patternDatesBetween(
+          { weekdays, interval: parseInt(interval, 10) || 1, startsOn, endsOn },
+          startsOn,
+          endsOn && endsOn < horizonEnd ? endsOn : horizonEnd
+        )
       : null;
 
   /** Ticking the first weekday defaults the pattern to the shift's own day. */
@@ -161,8 +181,8 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
     if (weekdays.length === 0 && date) {
       setWeekdays([parseDateOnly(toDateOnly(date)).getUTCDay()]);
     }
-    // A series carries no offers, so clear any that were picked rather than
-    // silently dropping them at submit.
+    // A repeating shift has regulars rather than first refusal, so clear any
+    // offers that were picked rather than silently dropping them at submit.
     setOfferedIds([]);
     setOffersCloseOn(undefined);
   }
@@ -212,15 +232,18 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
       newErrors.offersCloseOn = "The offer must close on or before the shift.";
     }
     if (repeats) {
-      if (!repeatUntil) {
-        newErrors.repeatUntil = "Choose the day the repeat stops.";
-      } else if (date && repeatUntil < date) {
-        newErrors.repeatUntil = "The last date must be on or after the first.";
-      } else if (preview && !preview.ok) {
-        newErrors.repeatUntil = preview.error;
-      }
       if (weekdays.length === 0) {
         newErrors.weekdays = "Pick at least one day of the week.";
+      }
+      if (repeatEnd === "on") {
+        if (!repeatUntil) {
+          newErrors.repeatUntil = "Choose the last day.";
+        } else if (date && repeatUntil < date) {
+          newErrors.repeatUntil = "The last day must be on or after the first.";
+        }
+      }
+      if (!isNaN(cap) && regularIds.length > cap) {
+        newErrors.regulars = "There are more regulars than places - raise the capacity.";
       }
     }
 
@@ -233,18 +256,17 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
 
     if (repeats && !isEdit) {
       startTransition(async () => {
-        const result = await createShiftSeries({
+        const result = await createShiftPattern({
           serviceAreaId,
+          weekdays,
+          interval: parseInt(interval, 10) || 1,
           startTime,
           endTime,
           capacity: parseInt(capacity, 10),
           notes: notes.trim() || undefined,
-          recurrence: {
-            startDate: toDateOnly(date!),
-            endDate: toDateOnly(repeatUntil!),
-            weekdays,
-            interval: parseInt(interval, 10) || 1,
-          },
+          startsOn: toDateOnly(date!),
+          endsOn: repeatEnd === "on" ? toDateOnly(repeatUntil!) : null,
+          regularIds,
         });
 
         if (result.error) {
@@ -252,10 +274,11 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
           return;
         }
 
+        const placed = result.placed ?? 0;
         toast.success(
-          summariseSeriesResult(result.created ?? 0, result.skipped?.length ?? 0)
+          `Repeating shift set up. ${placed} ${placed === 1 ? "shift is" : "shifts are"} on the roster so far.`
         );
-        router.push("/staff/shifts");
+        router.push(`/staff/shifts/repeating/${result.id}`);
         router.refresh();
       });
       return;
@@ -321,7 +344,7 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
 
           {/* Date */}
           <div className="space-y-2">
-            <Label htmlFor="shiftDate">Date</Label>
+            <Label htmlFor="shiftDate">{repeats ? "First day" : "Date"}</Label>
             <DatePicker
               id="shiftDate"
               value={date}
@@ -379,8 +402,8 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
                   Repeat this shift
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Roster a run of the same shift in one go — a month of
-                  breakfasts, say.
+                  Breakfast every Monday, say - for a season, or for as long
+                  as it runs.
                 </p>
               </div>
             </div>
@@ -390,7 +413,7 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
                 <div className="space-y-2">
                   <Label>On these days</Label>
                   <div className="flex flex-wrap gap-2">
-                    {WEEKDAYS.map((day) => {
+                    {WEEKDAYS_FROM_MONDAY.map((day) => {
                       const selected = weekdays.includes(day.value);
                       return (
                         <button
@@ -399,6 +422,7 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
                           onClick={() => toggleWeekday(day.value)}
                           disabled={isPending}
                           aria-pressed={selected}
+                          aria-label={day.label}
                           className={cn(
                             "min-w-12 rounded-md px-3 py-1.5 text-sm font-semibold ring-1 transition-colors",
                             selected
@@ -436,36 +460,88 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="repeatUntil">Until</Label>
+                    <Label htmlFor="repeatEnd">Ends</Label>
+                    <Select
+                      value={repeatEnd}
+                      onValueChange={(value) => setRepeatEnd(value as "never" | "on")}
+                      disabled={isPending}
+                    >
+                      <SelectTrigger id="repeatEnd">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="never">Keeps going</SelectItem>
+                        <SelectItem value="on">On a set day</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {repeatEnd === "on" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="repeatUntil">Last day</Label>
                     <DatePicker
                       id="repeatUntil"
                       value={repeatUntil}
                       onChange={setRepeatUntil}
-                      placeholder="Last date"
+                      placeholder="Select the last day"
                       fromDate={date ?? earliestDate}
                     />
+                    {errors.repeatUntil && (
+                      <p className="text-sm text-destructive">
+                        {errors.repeatUntil}
+                      </p>
+                    )}
                   </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Regulars (optional)</Label>
+                  <p className="text-sm text-muted-foreground">
+                    The whānau who always work this shift. They&apos;re put on
+                    every one automatically, and can still cancel a week they
+                    can&apos;t make.
+                  </p>
+                  <VolunteerPicker
+                    volunteers={volunteers}
+                    selectedIds={regularIds}
+                    onChange={setRegularIds}
+                    disabled={isPending}
+                  />
+                  {errors.regulars && (
+                    <p className="text-sm text-destructive">{errors.regulars}</p>
+                  )}
                 </div>
 
-                {errors.repeatUntil ? (
-                  <p className="text-sm text-destructive">
-                    {errors.repeatUntil}
-                  </p>
-                ) : preview?.ok ? (
+                {preview && (
                   <div className="rounded-lg bg-muted p-3">
-                    <p className="text-sm font-semibold">
-                      {preview.dates.length}{" "}
-                      {preview.dates.length === 1 ? "shift" : "shifts"} will be
-                      created
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {formatPreviewDates(preview.dates)}
-                    </p>
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      Days that already have this shift are skipped.
-                    </p>
+                    {preview.length === 0 ? (
+                      <p className="text-sm font-semibold">
+                        No days match yet. Check the days of the week and the
+                        dates.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold">
+                          {rollsOn
+                            ? `The first ${preview.length} ${preview.length === 1 ? "shift goes" : "shifts go"} on the roster now`
+                            : `${preview.length} ${preview.length === 1 ? "shift" : "shifts"} will go on the roster`}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatPreviewDates(preview)}
+                        </p>
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          {rollsOn
+                            ? "More are added by themselves as the weeks go by, always twelve weeks ahead. "
+                            : ""}
+                          Days the kitchen is closed are skipped, and a
+                          matching shift already rostered is kept rather than
+                          doubled.
+                        </p>
+                      </>
+                    )}
                   </div>
-                ) : null}
+                )}
               </div>
             )}
           </section>
@@ -532,7 +608,7 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
 
           <div className="space-y-2">
             <Label>Offer first to</Label>
-            <VolunteerOfferPicker
+            <VolunteerPicker
               volunteers={volunteers}
               selectedIds={offeredIds}
               onChange={handleOfferedChange}
@@ -572,8 +648,8 @@ export function ShiftForm({ serviceAreas, volunteers, shift }: ShiftFormProps) {
             {isPending && <RiLoader4Line className="size-4 animate-spin" />}
             {isEdit
               ? "Save changes"
-              : repeats && preview?.ok
-                ? `Create ${preview.dates.length} ${preview.dates.length === 1 ? "shift" : "shifts"}`
+              : repeats
+                ? "Set up repeating shift"
                 : "Create shift"}
           </Button>
           <Button

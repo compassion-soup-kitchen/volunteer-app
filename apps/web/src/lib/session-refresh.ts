@@ -16,7 +16,7 @@ import type { Role } from "@prisma/client";
 /** The account fields the JWT mirrors. */
 export type SessionUserFields = {
   name: string | null;
-  email: string;
+  email: string | null;
   role: Role;
 };
 

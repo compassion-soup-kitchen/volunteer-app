@@ -27,7 +27,7 @@ import {
 } from "@/lib/staff-actions";
 import { matchesDeletionConfirmation } from "@/lib/user-deletion";
 
-type Target = { userId: string; name: string | null; email: string };
+type Target = { userId: string; name: string | null; email: string | null };
 
 interface DeleteUserDialogProps {
   /** The person to delete, or null when the dialog is closed. */
@@ -106,7 +106,7 @@ export function DeleteUserDialog({
   const canDelete =
     summary !== null &&
     blocker === null &&
-    matchesDeletionConfirmation(confirmation, summary.email);
+    matchesDeletionConfirmation(confirmation, summary.confirmationPhrase);
 
   async function handleConfirm() {
     if (!target || !canDelete) return;
@@ -166,7 +166,7 @@ export function DeleteUserDialog({
               <Label htmlFor="delete-confirmation">
                 Type{" "}
                 <span className="font-mono font-semibold break-all">
-                  {summary.email}
+                  {summary.confirmationPhrase}
                 </span>{" "}
                 to confirm
               </Label>
