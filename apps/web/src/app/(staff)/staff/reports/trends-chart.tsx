@@ -14,7 +14,7 @@ import type { MonthlyTrend } from "@/lib/report-actions";
 
 export function TrendsChart({ data }: { data: MonthlyTrend[] }) {
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height="100%" minHeight={260}>
       <LineChart
         data={data}
         margin={{ top: 8, right: 8, left: -12, bottom: 0 }}

@@ -366,7 +366,8 @@ export function ReportDashboard({
             <Eyebrow>Ia marama</Eyebrow>
             <CardTitle>Monthly trends</CardTitle>
           </CardHeader>
-          <CardContent>
+          {/* Fills the row, so the chart grows to match the area ledger beside it. */}
+          <CardContent className="flex-1">
             {trends.length > 0 ? (
               <TrendsChart data={trends} />
             ) : (
