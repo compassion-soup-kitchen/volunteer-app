@@ -263,35 +263,42 @@ model Document {
   uploadedBy User?             @relation("UploadedBy", fields: [uploadedById], references: [id])
 }
 
-enum AgreementType {
-  CODE_OF_CONDUCT
-  SAFEGUARDING
-  VOLUNTEER_APPLICATION
-  POLICIES
-}
-
 model SignedAgreement {
-  id              String        @id @default(cuid())
+  id              String   @id @default(cuid())
   volunteerId     String
-  agreementType   AgreementType
-  signatureData   String        @db.Text
-  signedAt        DateTime      @default(now())
+  /// Matches AgreementTemplate.agreementType. Deliberately not a foreign key:
+  /// an acknowledgement is a record of what someone agreed to on the day, and
+  /// it has to outlive the template being retired or renamed.
+  agreementType   String
+  /// Null when the template only asks for a tick, not a drawn signature.
+  signatureData   String?  @db.Text
+  signedAt        DateTime @default(now())
   documentVersion String?
 
   volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
 }
 
 model AgreementTemplate {
-  id            String        @id @default(cuid())
-  agreementType AgreementType @unique
-  title         String
-  content       String        @db.Text
-  version       String        @default("1.0")
-  updatedAt     DateTime      @updatedAt
-  updatedById   String?
-  requiresReAck Boolean       @default(false)
-  reAckSetAt    DateTime?
-  reAckSetById  String?
+  id                String    @id @default(cuid())
+  /// Stable key, generated from the title when staff add an agreement. It is
+  /// what SignedAgreement points at and what appears in the staff URL, so it
+  /// never changes once created - renaming the title leaves it alone.
+  agreementType     String    @unique
+  title             String
+  content           String    @db.Text
+  version           String    @default("1.0")
+  /// Every agreement is acknowledged with a tick. This adds a drawn signature
+  /// on top, for the ones that want stronger evidence than a checkbox.
+  requiresSignature Boolean   @default(true)
+  /// Retired agreements drop off the volunteer list and stop counting towards
+  /// outstanding acknowledgements, but the signatures against them survive.
+  archivedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  updatedById       String?
+  requiresReAck     Boolean   @default(false)
+  reAckSetAt        DateTime?
+  reAckSetById      String?
 
   updatedBy  User? @relation("AgreementTemplateUpdatedBy", fields: [updatedById], references: [id])
   reAckSetBy User? @relation("AgreementTemplateReAckSetBy", fields: [reAckSetById], references: [id])

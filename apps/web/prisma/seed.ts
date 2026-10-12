@@ -166,6 +166,7 @@ async function main() {
 • Represent Compassion Soup Kitchen positively in the community
 • Report any concerns about safety or welfare to a coordinator`,
       version: "1.0",
+      requiresSignature: true,
       updatedById: admin.id,
     },
   });
@@ -186,6 +187,7 @@ async function main() {
 • Not using personal devices to photograph or record people we serve
 • Understanding that breaches of this policy may result in immediate removal`,
       version: "1.0",
+      requiresSignature: true,
       updatedById: admin.id,
     },
   });

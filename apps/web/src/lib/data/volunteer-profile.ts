@@ -119,14 +119,23 @@ export async function submitApplicationAsUser(
         },
       });
 
-      // Create signed agreements
+      // Create signed agreements. The version is read from the template rather
+      // than hardcoded - otherwise an applicant signing today against a v2.0
+      // Code of Conduct is filed as v1.0 and shows up as outdated on arrival.
+      const templates = await tx.agreementTemplate.findMany({
+        where: { agreementType: { in: data.agreements.map((a) => a.type) } },
+        select: { agreementType: true, version: true },
+      });
+
       for (const agreement of data.agreements) {
         await tx.signedAgreement.create({
           data: {
             volunteerId: profile.id,
             agreementType: agreement.type,
             signatureData: agreement.signatureData,
-            documentVersion: "1.0",
+            documentVersion:
+              templates.find((t) => t.agreementType === agreement.type)
+                ?.version ?? "1.0",
           },
         });
       }
