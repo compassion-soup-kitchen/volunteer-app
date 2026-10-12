@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.2](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.13.1...v1.13.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* **web:** allow awhinatech.nz to frame the site ([89b50fc](https://github.com/compassion-soup-kitchen/volunteer-app/commit/89b50fcf8d0c6062caaeef3c862f80d39cec951a))
+* **web:** allow awhinatech.nz to frame the site ([886aefa](https://github.com/compassion-soup-kitchen/volunteer-app/commit/886aefac9a724a22bcd4f03dddbda0d7f62c6bcb))
+
 ## [1.13.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.13.0...v1.13.1) (2026-10-12)
 
 
