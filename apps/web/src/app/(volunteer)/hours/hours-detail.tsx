@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { IconChip } from "@/components/brand/icon-chip";
+import { ShareBar } from "@/components/brand/share-bar";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { SectionHeader } from "@/components/brand/section-header";
 import { cn } from "@/lib/utils";
@@ -147,15 +148,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                           </p>
                         </div>
                       </div>
-                      <div
-                        aria-hidden
-                        className="h-1.5 overflow-hidden rounded-full bg-muted"
-                      >
-                        <div
-                          className={cn("h-full rounded-full", accent.bar)}
-                          style={{ width: `${share}%` }}
-                        />
-                      </div>
+                      <ShareBar percent={share} fillClassName={accent.bar} />
                     </li>
                   );
                 })}
