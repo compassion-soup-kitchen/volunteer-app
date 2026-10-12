@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.13.0...v1.13.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* **reports:** label every service area on the hours chart ([81a8068](https://github.com/compassion-soup-kitchen/volunteer-app/commit/81a80683122408cd60d4465012f5e2f03a922a56))
+* **reports:** label every service area on the hours chart ([f0d7ef0](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f0d7ef090fa41028186abf22f5d776054e286d1f))
+
 ## [1.13.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.12.0...v1.13.0) (2026-09-08)
 
 
