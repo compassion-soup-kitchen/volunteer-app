@@ -63,7 +63,8 @@
           "color": "#E4002B",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "./plugins/with-ios-pod-deployment-target"
     ],
     "experiments": {
       "typedRoutes": true,
