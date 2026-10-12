@@ -2,6 +2,7 @@
 
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
+import { personName } from "@/lib/format";
 import { revalidatePath } from "next/cache";
 import { Prisma, type GroupTone } from "@prisma/client";
 import {
@@ -72,7 +73,7 @@ export async function getVolunteerGroups(): Promise<VolunteerGroupWithCount[]> {
     isArchived: group.isArchived,
     members: group.members.map((member) => ({
       id: member.id,
-      name: member.user.name || member.user.email,
+      name: personName(member.user),
     })),
     _count: group._count,
   }));
@@ -95,7 +96,7 @@ export type GroupCandidate = {
   /** VolunteerProfile id - what membership is stored against. */
   id: string;
   name: string;
-  email: string;
+  email: string | null;
 };
 
 // Who may hold a group, as a Prisma filter. Shared by the picker that offers
@@ -123,7 +124,7 @@ export async function getGroupCandidates(): Promise<GroupCandidate[]> {
 
   return profiles.map((profile) => ({
     id: profile.id,
-    name: profile.user.name || profile.user.email,
+    name: personName(profile.user),
     email: profile.user.email,
   }));
 }
@@ -430,7 +431,10 @@ export async function getVisibleTeam(): Promise<TeamGroup[]> {
       id: member.id,
       // Fall back to the email handle rather than the address itself - a team
       // page shouldn't be a way to harvest everyone's email.
-      name: member.user.name || member.user.email.split("@")[0],
+      name:
+        member.user.name?.trim() ||
+        member.user.email?.split("@")[0] ||
+        personName(member.user),
     })),
   }));
 }

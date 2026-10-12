@@ -45,7 +45,7 @@ describe("startImpersonation", () => {
     expect(result).toEqual({ ok: true });
     expect(userFindUniqueMock).toHaveBeenCalledWith({
       where: { id: "vol-1" },
-      select: { role: true, status: true },
+      select: { role: true, status: true, isOffline: true },
     });
   });
 

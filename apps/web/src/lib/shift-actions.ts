@@ -4,6 +4,7 @@ import { after, connection } from "next/server";
 import { z } from "zod";
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
+import { formatTimeRange, personName } from "@/lib/format";
 import { sendPushToUsers } from "@/lib/push";
 import { canRecordMeals, mealsServedSchema } from "@/lib/shift-meals";
 import {
@@ -21,15 +22,13 @@ import {
   type ShiftWithDetails,
 } from "@/lib/data/volunteer-shifts";
 import {
-  parseDateOnly,
+  dateOnlyOf,
   safeParseDateOnly,
   todayInAppZone,
 } from "@/lib/date-only";
-import {
-  expandRecurrence,
-  partitionExistingDates,
-  type RecurrenceInput,
-} from "@/lib/shift-series";
+import { decideStaffRoster, staffRemovalError } from "@/lib/shift-roster";
+import { closedDayMessage, findClosedDay } from "@/lib/data/closed-days";
+import { scheduleRosterTopUp } from "@/lib/data/shift-patterns";
 import { formatHoldUntil, type OfferStatus } from "@/lib/shift-offers";
 import type { GroupChip } from "@/lib/volunteer-groups";
 import {
@@ -57,35 +56,39 @@ export type StaffShift = {
   serviceArea: { id: string; name: string };
   /** Null once the coordinator who rostered it has deleted their account. */
   createdBy: { name: string | null } | null;
+  /** The repeating shift this day came from, if any. */
+  pattern: { id: string; weekdays: number[]; interval: number } | null;
   mealsServed: number | null;
   mealsRecordedAt: Date | null;
   mealsRecordedBy: { name: string | null } | null;
   signups: {
     id: string;
     status: string;
-    volunteer: {
-      id: string;
-      user: { name: string | null; email: string };
-      groups: GroupChip[];
-    };
+    volunteer: RosterVolunteer;
   }[];
   offers: {
     id: string;
     status: OfferStatus;
     respondedAt: Date | null;
-    volunteer: {
-      id: string;
-      user: { name: string | null; email: string };
-      groups: GroupChip[];
-    };
+    volunteer: RosterVolunteer;
   }[];
 };
 
-/** A volunteer who can be offered a shift, for the first-refusal picker. */
+/** A volunteer as they appear on a shift's roster. */
+export type RosterVolunteer = {
+  id: string;
+  phone: string | null;
+  user: { name: string | null; email: string | null; isOffline: boolean };
+  groups: GroupChip[];
+};
+
+/** A volunteer who can be offered or rostered on a shift, for the pickers. */
 export type VolunteerOption = {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
+  isOffline: boolean;
   groups: GroupChip[];
 };
 
@@ -95,6 +98,19 @@ const VOLUNTEER_GROUPS_SELECT = {
   where: { isArchived: false },
   orderBy: { name: "asc" },
   select: { id: true, name: true, tone: true },
+} as const;
+
+const ROSTER_VOLUNTEER_SELECT = {
+  select: {
+    id: true,
+    phone: true,
+    user: { select: { name: true, email: true, isOffline: true } },
+    groups: VOLUNTEER_GROUPS_SELECT,
+  },
+} as const;
+
+const PATTERN_SELECT = {
+  select: { id: true, weekdays: true, interval: true },
 } as const;
 
 // ─── Volunteer Actions ──────────────────────────────────
@@ -158,6 +174,7 @@ export async function getStaffShifts(
     return [];
   }
 
+  scheduleRosterTopUp();
   const db = getDb();
 
   const fromDate = filters?.fromDate
@@ -183,18 +200,13 @@ export async function getStaffShifts(
       serviceArea: { select: { id: true, name: true } },
       createdBy: { select: { name: true } },
       mealsRecordedBy: { select: { name: true } },
+      pattern: PATTERN_SELECT,
       signups: {
         where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
         select: {
           id: true,
           status: true,
-          volunteer: {
-            select: {
-              id: true,
-              user: { select: { name: true, email: true } },
-              groups: VOLUNTEER_GROUPS_SELECT,
-            },
-          },
+          volunteer: ROSTER_VOLUNTEER_SELECT,
         },
       },
       offers: {
@@ -202,13 +214,7 @@ export async function getStaffShifts(
           id: true,
           status: true,
           respondedAt: true,
-          volunteer: {
-            select: {
-              id: true,
-              user: { select: { name: true, email: true } },
-              groups: VOLUNTEER_GROUPS_SELECT,
-            },
-          },
+          volunteer: ROSTER_VOLUNTEER_SELECT,
         },
         orderBy: { offeredAt: "asc" },
       },
@@ -238,7 +244,8 @@ export async function getVolunteerOptions(): Promise<VolunteerOption[]> {
     where: { status: "ACTIVE", user: { status: "ACTIVE" } },
     select: {
       id: true,
-      user: { select: { name: true, email: true } },
+      phone: true,
+      user: { select: { name: true, email: true, isOffline: true } },
       groups: VOLUNTEER_GROUPS_SELECT,
     },
     orderBy: { user: { name: "asc" } },
@@ -246,8 +253,10 @@ export async function getVolunteerOptions(): Promise<VolunteerOption[]> {
 
   return profiles.map((profile) => ({
     id: profile.id,
-    name: profile.user.name?.trim() || profile.user.email,
+    name: personName(profile.user),
     email: profile.user.email,
+    phone: profile.phone,
+    isOffline: profile.user.isOffline,
     groups: profile.groups,
   }));
 }
@@ -268,17 +277,12 @@ export async function getShiftDetail(shiftId: string): Promise<StaffShift | null
       serviceArea: { select: { id: true, name: true } },
       createdBy: { select: { name: true } },
       mealsRecordedBy: { select: { name: true } },
+      pattern: PATTERN_SELECT,
       signups: {
         select: {
           id: true,
           status: true,
-          volunteer: {
-            select: {
-              id: true,
-              user: { select: { name: true, email: true } },
-              groups: VOLUNTEER_GROUPS_SELECT,
-            },
-          },
+          volunteer: ROSTER_VOLUNTEER_SELECT,
         },
         orderBy: { signedUpAt: "asc" },
       },
@@ -287,13 +291,7 @@ export async function getShiftDetail(shiftId: string): Promise<StaffShift | null
           id: true,
           status: true,
           respondedAt: true,
-          volunteer: {
-            select: {
-              id: true,
-              user: { select: { name: true, email: true } },
-              groups: VOLUNTEER_GROUPS_SELECT,
-            },
-          },
+          volunteer: ROSTER_VOLUNTEER_SELECT,
         },
         orderBy: { offeredAt: "asc" },
       },
@@ -354,6 +352,9 @@ export async function createShift(
 
   const db = getDb();
 
+  const closure = await findClosedDay(db, fields.date);
+  if (closure) return { error: closedDayMessage(closure) };
+
   try {
     const shift = await db.shift.create({
       data: {
@@ -372,101 +373,6 @@ export async function createShift(
     revalidatePath("/shifts");
     return { success: true, shiftId: shift.id };
   } catch {
-    return { error: "Something went wrong. Please try again." };
-  }
-}
-
-export type CreateShiftSeriesResult = {
-  error?: string;
-  success?: boolean;
-  created?: number;
-  /** Days that already had a shift in this service area, so were left alone. */
-  skipped?: string[];
-};
-
-/**
- * Creates the same shift across a repeating pattern — a month of breakfasts in
- * one go rather than one form submission per day.
- *
- * First refusal is deliberately not offered here: holding a whole series for
- * named volunteers is a per-shift judgement, and the shift editor is the place
- * to make it.
- */
-export async function createShiftSeries(
-  data: Omit<ShiftFormData, "date" | "offeredVolunteerIds" | "offersCloseOn"> & {
-    recurrence: RecurrenceInput;
-  }
-): Promise<CreateShiftSeriesResult> {
-  const session = await requireActiveSession();
-  if (
-    !session?.user?.id ||
-    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
-  ) {
-    return { error: "Not authorised." };
-  }
-
-  const expanded = expandRecurrence(data.recurrence);
-  if (!expanded.ok) return { error: expanded.error };
-
-  // Validate the whole shift against the first day, so a bad time or capacity
-  // is reported before anything is written.
-  const today = todayInAppZone();
-  const sample = parseShiftForm(
-    { ...data, date: expanded.dates[0], offeredVolunteerIds: [], offersCloseOn: null },
-    { today }
-  );
-  if (!sample.ok) return { error: sample.error };
-
-  const dates = expanded.dates.filter((date) => date >= today);
-  if (dates.length === 0) {
-    return { error: "Every date in that range has already passed." };
-  }
-
-  const db = getDb();
-
-  // Skip days this service area already has a shift on rather than doubling it
-  // up — extending an existing pattern by a month is a normal thing to do.
-  const existing = await db.shift.findMany({
-    where: {
-      serviceAreaId: sample.value.serviceAreaId,
-      date: {
-        gte: parseDateOnly(dates[0]),
-        lte: parseDateOnly(dates[dates.length - 1]),
-      },
-      startTime: sample.value.startTime,
-    },
-    select: { date: true },
-  });
-
-  const { toCreate, skipped } = partitionExistingDates(
-    dates,
-    existing.map((shift) => shift.date)
-  );
-
-  if (toCreate.length === 0) {
-    return {
-      error: "Every one of those dates already has this shift on the roster.",
-    };
-  }
-
-  try {
-    const result = await db.shift.createMany({
-      data: toCreate.map((date) => ({
-        serviceAreaId: sample.value.serviceAreaId,
-        date: parseDateOnly(date),
-        startTime: sample.value.startTime,
-        endTime: sample.value.endTime,
-        capacity: sample.value.capacity,
-        notes: sample.value.notes,
-        createdById: session.user!.id,
-      })),
-    });
-
-    revalidatePath("/staff/shifts");
-    revalidatePath("/shifts");
-    return { success: true, created: result.count, skipped };
-  } catch (err) {
-    console.error("createShiftSeries failed:", err);
     return { error: "Something went wrong. Please try again." };
   }
 }
@@ -513,6 +419,12 @@ export async function updateShift(
     });
     if (!parsed.ok) return { error: parsed.error };
     const { offeredVolunteerIds, ...fields } = parsed.value;
+
+    // Moving a shift onto a closed day would roster people for a locked door.
+    if (dateOnlyOf(fields.date) !== dateOnlyOf(existing.date)) {
+      const closure = await findClosedDay(db, fields.date);
+      if (closure) return { error: closedDayMessage(closure) };
+    }
 
     // Everyone holding a spot, including those already marked attended —
     // capacity must never fall below the people the shift is committed to.
@@ -570,6 +482,218 @@ export async function updateShift(
   } catch {
     return { error: "Something went wrong. Please try again." };
   }
+}
+
+// ─── Staff Rostering ───────────────────────────────────
+
+/** Prisma's serialization failure, which a racing capacity check produces. */
+function isSerializationFailure(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === "P2034" || code === "40001";
+}
+
+class RosterRefused extends Error {}
+
+/**
+ * Puts a named volunteer on a shift - a regular, someone who rang in, or an
+ * offline volunteer who never uses the app. On a shift that has already
+ * happened they go straight on as attended, which is how their hours are
+ * logged. Overrides a first-refusal hold, but never overfills.
+ */
+export async function addVolunteerToShift(
+  shiftId: string,
+  volunteerId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireActiveSession();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
+  ) {
+    return { error: "Not authorised." };
+  }
+  const staffId = session.user.id;
+
+  const db = getDb();
+  const today = todayInAppZone();
+
+  const attempt = () =>
+    db.$transaction(
+      async (tx) => {
+        const [shift, volunteer, existing] = await Promise.all([
+          tx.shift.findUnique({
+            where: { id: shiftId },
+            select: {
+              date: true,
+              startTime: true,
+              endTime: true,
+              capacity: true,
+              serviceArea: { select: { name: true } },
+              _count: {
+                select: {
+                  signups: { where: { status: { in: ["SIGNED_UP", "ATTENDED"] } } },
+                },
+              },
+            },
+          }),
+          tx.volunteerProfile.findUnique({
+            where: { id: volunteerId },
+            select: { status: true, userId: true, user: { select: { status: true } } },
+          }),
+          tx.shiftSignup.findUnique({
+            where: { shiftId_volunteerId: { shiftId, volunteerId } },
+            select: { id: true, status: true },
+          }),
+        ]);
+
+        if (!shift) throw new RosterRefused("Shift not found.");
+        if (!volunteer) throw new RosterRefused("Volunteer not found.");
+
+        const decision = decideStaffRoster({
+          shiftDate: dateOnlyOf(shift.date),
+          today,
+          capacity: shift.capacity,
+          seatedCount: shift._count.signups,
+          existingStatus: existing?.status ?? null,
+          volunteerIsActive:
+            volunteer.status === "ACTIVE" && volunteer.user.status === "ACTIVE",
+        });
+        if (decision.action === "reject") throw new RosterRefused(decision.error);
+
+        const attendance =
+          decision.status === "ATTENDED"
+            ? { attendanceMarkedById: staffId, attendanceMarkedAt: new Date() }
+            : { attendanceMarkedById: null, attendanceMarkedAt: null };
+
+        if (existing) {
+          await tx.shiftSignup.update({
+            where: { id: existing.id },
+            data: { status: decision.status, signedUpAt: new Date(), ...attendance },
+          });
+        } else {
+          await tx.shiftSignup.create({
+            data: { shiftId, volunteerId, status: decision.status, ...attendance },
+          });
+        }
+
+        // Being rostered answers any offer that was waiting on them.
+        await tx.shiftOffer.updateMany({
+          where: { shiftId, volunteerId, status: "PENDING" },
+          data: { status: "ACCEPTED", respondedAt: new Date() },
+        });
+
+        return { shift, userId: volunteer.userId, status: decision.status };
+      },
+      { isolationLevel: "Serializable" }
+    );
+
+  let placed: Awaited<ReturnType<typeof attempt>>;
+  try {
+    try {
+      placed = await attempt();
+    } catch (error) {
+      if (!isSerializationFailure(error)) throw error;
+      placed = await attempt();
+    }
+  } catch (error) {
+    if (error instanceof RosterRefused) return { error: error.message };
+    console.error("addVolunteerToShift failed:", error);
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  if (placed.status === "SIGNED_UP") {
+    const { shift, userId } = placed;
+    after(() =>
+      sendPushToUsers([userId], {
+        title: "You're on the roster",
+        body: `${shift.serviceArea.name} on ${formatShiftDay(shift.date)}, ${formatTimeRange(shift.startTime, shift.endTime)}.`,
+        data: { url: `/shift/${shiftId}` },
+      })
+    );
+  }
+
+  revalidateShift(shiftId);
+  return { success: true };
+}
+
+/** Takes a volunteer off a shift they're still expected on. */
+export async function removeVolunteerFromShift(
+  signupId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await requireActiveSession();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role!)
+  ) {
+    return { error: "Not authorised." };
+  }
+
+  const db = getDb();
+  const signup = await db.shiftSignup.findUnique({
+    where: { id: signupId },
+    select: {
+      status: true,
+      shiftId: true,
+      volunteerId: true,
+      volunteer: { select: { userId: true } },
+      shift: {
+        select: {
+          date: true,
+          startTime: true,
+          endTime: true,
+          serviceArea: { select: { name: true } },
+        },
+      },
+    },
+  });
+  if (!signup) return { error: "They're not on this shift any more." };
+
+  const refusal = staffRemovalError(signup.status);
+  if (refusal) return { error: refusal };
+
+  try {
+    await db.$transaction([
+      db.shiftSignup.update({
+        where: { id: signupId },
+        data: { status: "CANCELLED" },
+      }),
+      // As when a volunteer cancels: a hold handed back must not stay closed.
+      db.shiftOffer.updateMany({
+        where: {
+          shiftId: signup.shiftId,
+          volunteerId: signup.volunteerId,
+          status: "ACCEPTED",
+        },
+        data: { status: "DECLINED", respondedAt: new Date() },
+      }),
+    ]);
+  } catch (error) {
+    console.error("removeVolunteerFromShift failed:", error);
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  if (dateOnlyOf(signup.shift.date) >= todayInAppZone()) {
+    const { shift } = signup;
+    after(() =>
+      sendPushToUsers([signup.volunteer.userId], {
+        title: "You've been taken off a shift",
+        body: `${shift.serviceArea.name} on ${formatShiftDay(shift.date)}, ${formatTimeRange(shift.startTime, shift.endTime)}. Talk to the kitchen if that's a surprise.`,
+        data: { url: "/schedule" },
+      })
+    );
+  }
+
+  revalidateShift(signup.shiftId);
+  return { success: true };
+}
+
+function revalidateShift(shiftId: string) {
+  revalidatePath(`/staff/shifts/${shiftId}`);
+  revalidatePath("/staff/shifts");
+  revalidatePath("/staff/calendar");
+  revalidatePath("/staff/volunteers");
+  revalidatePath("/shifts");
+  revalidatePath("/dashboard");
+  revalidatePath("/hours");
 }
 
 // ─── Attendance Actions ────────────────────────────────

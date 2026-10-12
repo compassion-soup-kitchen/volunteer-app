@@ -25,6 +25,7 @@ const volunteerRow: ImpersonationUserRow = {
   email: "vic@soupkitchen.org.nz",
   role: "VOLUNTEER",
   status: "ACTIVE",
+  isOffline: false,
 };
 
 /** Deps whose readUser returns `row` for any id, with spy-able recorders. */
@@ -184,6 +185,7 @@ describe("applyImpersonationUpdate - stop", () => {
       email: "ari@soupkitchen.org.nz",
       role: "ADMIN",
       status: "ACTIVE",
+      isOffline: false,
     });
 
     const { handled, token: out } = await applyImpersonationUpdate(
@@ -216,6 +218,7 @@ describe("applyImpersonationUpdate - stop", () => {
       email: "ari@soupkitchen.org.nz",
       role: "ADMIN",
       status: "ACTIVE",
+      isOffline: false,
     });
     d.recordStop = vi.fn(async () => {
       throw new Error("No record was found for an update.");
@@ -242,6 +245,7 @@ describe("applyImpersonationUpdate - stop", () => {
       email: "ari@soupkitchen.org.nz",
       role: "COORDINATOR",
       status: "ACTIVE",
+      isOffline: false,
     });
 
     const { token: out } = await applyImpersonationUpdate(
@@ -261,6 +265,7 @@ describe("applyImpersonationUpdate - stop", () => {
       email: "ari@soupkitchen.org.nz",
       role: "ADMIN",
       status: "ARCHIVED",
+      isOffline: false,
     });
 
     const { token: out } = await applyImpersonationUpdate(
@@ -392,7 +397,7 @@ describe("checkImpersonatorAuthority", () => {
 
 describe("checkImpersonationTarget", () => {
   it("allows an active non-admin", () => {
-    expect(checkImpersonationTarget({ role: "VOLUNTEER", status: "ACTIVE" })).toEqual({
+    expect(checkImpersonationTarget({ role: "VOLUNTEER", status: "ACTIVE", isOffline: false })).toEqual({
       ok: true,
     });
   });
@@ -406,14 +411,23 @@ describe("checkImpersonationTarget", () => {
 
   it("refuses an archived target", () => {
     expect(
-      checkImpersonationTarget({ role: "VOLUNTEER", status: "ARCHIVED" })
+      checkImpersonationTarget({ role: "VOLUNTEER", status: "ARCHIVED", isOffline: false })
     ).toEqual({ ok: false, message: "You can't impersonate an archived account." });
   });
 
   it("refuses an admin target", () => {
-    expect(checkImpersonationTarget({ role: "ADMIN", status: "ACTIVE" })).toEqual({
+    expect(checkImpersonationTarget({ role: "ADMIN", status: "ACTIVE", isOffline: false })).toEqual({
       ok: false,
       message: "You can't impersonate another admin.",
+    });
+  });
+
+  it("refuses an offline volunteer, who has no app to view", () => {
+    expect(
+      checkImpersonationTarget({ role: "VOLUNTEER", status: "ACTIVE", isOffline: true })
+    ).toEqual({
+      ok: false,
+      message: "They volunteer offline, so there's no app view to see.",
     });
   });
 });

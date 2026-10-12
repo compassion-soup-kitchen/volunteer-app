@@ -276,3 +276,14 @@
 @utility tnum {
   font-variant-numeric: tabular-nums;
 }
+
+/* A day the kitchen is shut: drawn shutters over the recessed well, so a
+   closure reads at a glance on the roster calendar without a colour cue. */
+@utility closed-hatch {
+  background-color: var(--muted);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 7px,
+    color-mix(in oklab, var(--muted-foreground) 14%, transparent) 7px 8px
+  );
+}

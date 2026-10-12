@@ -11,6 +11,7 @@ import {
   RiTeamLine,
   RiGroupLine,
   RiFileListLine,
+  RiCalendar2Line,
   RiCalendarLine,
   RiCalendarEventLine,
   RiLogoutBoxLine,
@@ -55,6 +56,7 @@ export function StaffNav({
     {
       label: "Ngā mahi · Operations",
       items: [
+        { href: "/staff/calendar", label: "Calendar", icon: RiCalendar2Line },
         { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },
         { href: "/staff/training", label: "Training", icon: RiGraduationCapLine },
         { href: "/staff/events", label: "Events", icon: RiCalendarEventLine },

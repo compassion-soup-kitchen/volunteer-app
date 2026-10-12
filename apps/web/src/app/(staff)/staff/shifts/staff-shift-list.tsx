@@ -39,6 +39,7 @@ import {
   RiFilterLine,
   RiLoader4Line,
   RiLockLine,
+  RiRepeatLine,
   RiTimeLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
@@ -194,6 +195,12 @@ export function StaffShiftList({
                         <p className="truncate font-serif text-base/snug font-medium tracking-tight">
                           {shift.serviceArea.name}
                         </p>
+                        {shift.pattern && (
+                          <RiRepeatLine
+                            className="size-3.5 shrink-0 text-muted-foreground"
+                            aria-label="Repeating shift"
+                          />
+                        )}
                         {today && <Badge>Today</Badge>}
                         {past && <Badge variant="neutral">Past</Badge>}
                         {held && (

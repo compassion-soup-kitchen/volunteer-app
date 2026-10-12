@@ -4,6 +4,16 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
+import {
+  addDaysToDateOnly,
+  parseDateOnly,
+  todayInAppZone,
+} from "../src/lib/date-only";
+import { nzPublicHolidaysBetween } from "../src/lib/nz-public-holidays";
+import {
+  materialisePattern,
+  patternForGeneration,
+} from "../src/lib/data/shift-patterns";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL!,
@@ -800,6 +810,70 @@ async function main() {
     });
 
     console.log("📢 Created announcements");
+  }
+
+  // ─── Offline volunteer, a repeating shift, a closed day ───
+  // David doesn't use the app: staff keep his record and he's the regular on
+  // the Monday breakfast, which carries on with no end date.
+  const existingDavid = await prisma.user.findFirst({
+    where: { name: "David Smith", isOffline: true },
+  });
+  if (!existingDavid) {
+    const kitchen = await prisma.serviceArea.findUnique({ where: { name: "Kitchen & Meals" } });
+    const david = await prisma.user.create({
+      data: {
+        name: "David Smith",
+        role: "VOLUNTEER",
+        isOffline: true,
+        volunteerProfile: {
+          create: {
+            status: "ACTIVE",
+            mojStatus: "CLEARED",
+            phone: "04 385 1234",
+            emergencyContactName: "Margaret Smith",
+            emergencyContactPhone: "021 555 0192",
+            emergencyContactRelationship: "Wife",
+            bio: "Prefers a phone call. Has done Monday breakfast for years.",
+            interests: kitchen ? { connect: { id: kitchen.id } } : undefined,
+          },
+        },
+      },
+      select: { volunteerProfile: { select: { id: true } } },
+    });
+
+    if (kitchen && david.volunteerProfile) {
+      const today = todayInAppZone();
+      const nextMonday = addDaysToDateOnly(today, ((8 - parseDateOnly(today).getUTCDay()) % 7) || 7);
+      const pattern = await prisma.shiftPattern.create({
+        data: {
+          serviceAreaId: kitchen.id,
+          weekdays: [1],
+          interval: 1,
+          startTime: "07:00",
+          endTime: "10:00",
+          capacity: 4,
+          notes: "Breakfast service - doors open at 7:30.",
+          startsOn: parseDateOnly(nextMonday),
+          createdById: coordinator.id,
+          regulars: { connect: { id: david.volunteerProfile.id } },
+        },
+        select: patternForGeneration,
+      });
+
+      // Close the next public holiday before generating, as a coordinator
+      // would - the pattern skips it.
+      const holiday = nzPublicHolidaysBetween(addDaysToDateOnly(today, 1), addDaysToDateOnly(today, 365))[0];
+      if (holiday) {
+        await prisma.closedDay.upsert({
+          where: { date: parseDateOnly(holiday.date) },
+          update: {},
+          create: { date: parseDateOnly(holiday.date), reason: holiday.name, createdById: coordinator.id },
+        });
+      }
+
+      const placed = await materialisePattern(prisma, pattern, today);
+      console.log(`📵 Created offline volunteer David, Monday breakfast (${placed} shifts) and a closed ${holiday?.name ?? "day"}`);
+    }
   }
 
   console.log("✅ Seed complete — ka pai!");

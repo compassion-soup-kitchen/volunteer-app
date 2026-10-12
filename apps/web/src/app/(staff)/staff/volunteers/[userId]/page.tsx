@@ -6,6 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/brand/page-header";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { Button } from "@/components/ui/button";
+import { contactLine } from "@/lib/format";
+import Link from "next/link";
+import { RiPencilLine } from "@remixicon/react";
 import { VolunteerRecord } from "./volunteer-record";
 
 export const metadata: Metadata = {
@@ -66,7 +70,7 @@ export default async function VolunteerDetailPage({
             {user.name || "Unnamed volunteer"}
           </span>
         }
-        description={user.email}
+        description={contactLine({ email: user.email, phone: profile?.phone })}
         actions={
           <>
             {ROLE_BADGE_VARIANT[user.role] && (
@@ -74,11 +78,20 @@ export default async function VolunteerDetailPage({
                 {ROLE_LABEL[user.role] ?? user.role}
               </Badge>
             )}
+            {user.isOffline && <Badge variant="neutral">Offline</Badge>}
             {user.status === "ARCHIVED" && <StatusBadge status="ARCHIVED" />}
             {profile ? (
               <StatusBadge status={profile.status} className="text-sm" />
             ) : (
               <Badge variant="outline">No application yet</Badge>
+            )}
+            {user.isOffline && profile && (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/staff/volunteers/${user.id}/edit`}>
+                  <RiPencilLine />
+                  Edit details
+                </Link>
+              </Button>
             )}
           </>
         }

@@ -23,7 +23,9 @@ enum UserStatus {
 model User {
   id             String     @id @default(cuid())
   name           String?
-  email          String     @unique
+  /// Null only for an offline volunteer staff added without one (see
+  /// `isOffline`). Everyone who signs in has an address.
+  email          String?    @unique
   emailVerified  DateTime?
   image          String?
   password       String?
@@ -32,6 +34,10 @@ model User {
   archivedAt     DateTime?
   archivedReason String?
   archivedById   String?
+  /// Someone who volunteers without using the app. Staff keep their record,
+  /// roster them and mark their attendance; they have no password and cannot
+  /// sign in. Cleared if they later claim the account.
+  isOffline      Boolean    @default(false)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -41,6 +47,8 @@ model User {
   volunteerProfile     VolunteerProfile?
   reviewedApplications Application[]        @relation("ReviewedBy")
   createdShifts        Shift[]
+  createdShiftPatterns ShiftPattern[]
+  createdClosedDays    ClosedDay[]
   markedAttendance     ShiftSignup[]        @relation("AttendanceMarkedBy")
   recordedShiftMeals   Shift[]              @relation("MealsRecordedBy")
   createdTraining      TrainingSession[]
@@ -174,6 +182,7 @@ model VolunteerProfile {
   shiftSignups        ShiftSignup[]
   shiftOffers         ShiftOffer[]
   trainingAttendances TrainingAttendance[]
+  regularPatterns     ShiftPattern[]       @relation("ShiftPatternRegulars")
 }
 
 /// The colour a group's badge carries. Stored as intent, not hex - each maps to
@@ -304,8 +313,9 @@ model ServiceArea {
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  shifts     Shift[]
-  volunteers VolunteerProfile[] @relation("VolunteerInterests")
+  shifts        Shift[]
+  shiftPatterns ShiftPattern[]
+  volunteers    VolunteerProfile[] @relation("VolunteerInterests")
 }
 
 model Shift {
@@ -327,12 +337,69 @@ model Shift {
   // Right of first refusal: while this day has not passed and someone still
   // has a pending offer, only the volunteers offered the shift can take it.
   offersCloseOn     DateTime? @db.Date
+  /// The repeating shift this one was generated from, if any. Once generated it
+  /// is an ordinary shift: editing or deleting it touches this day only.
+  patternId         String?
 
   serviceArea     ServiceArea   @relation(fields: [serviceAreaId], references: [id])
   createdBy       User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
   mealsRecordedBy User?         @relation("MealsRecordedBy", fields: [mealsRecordedById], references: [id])
+  pattern         ShiftPattern? @relation(fields: [patternId], references: [id], onDelete: SetNull)
   signups         ShiftSignup[]
   offers          ShiftOffer[]
+
+  @@unique([patternId, date])
+  @@index([date])
+}
+
+/// A shift that keeps happening - "breakfast every Monday, 7 till 10" - with
+/// the regulars who always work it.
+///
+/// The roster is generated from it a few weeks ahead at a time
+/// (`shift-patterns.ts`), so a pattern with no end date never runs out. Every
+/// generated day is an ordinary `Shift`, and `generatedThrough` only moves
+/// forward as time passes: a shift deleted from the roster, or a day closed,
+/// is not regenerated behind the coordinator's back. It is rewound only when
+/// the pattern itself is cut short, so a later extension fills the gap.
+model ShiftPattern {
+  id               String    @id @default(cuid())
+  serviceAreaId    String
+  /// Days of the week it runs, Sunday-indexed like `Date.getUTCDay`.
+  weekdays         Int[]
+  /// 1 = every week, 2 = every other week, counted from `startsOn`'s week.
+  interval         Int       @default(1)
+  startTime        String
+  endTime          String
+  capacity         Int
+  notes            String?
+  startsOn         DateTime  @db.Date
+  /// Null means it carries on until someone stops it.
+  endsOn           DateTime? @db.Date
+  /// Last calendar day shifts have been generated through.
+  generatedThrough DateTime? @db.Date
+  /// Nullable for the same reason as `Shift.createdById`.
+  createdById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  serviceArea ServiceArea        @relation(fields: [serviceAreaId], references: [id])
+  createdBy   User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  shifts      Shift[]
+  regulars    VolunteerProfile[] @relation("ShiftPatternRegulars")
+}
+
+/// A day the kitchen is shut - a public holiday, a staff day, a building
+/// closure. Nothing is rostered on it: closing a day cancels the shifts
+/// already on it, and repeating shifts skip it.
+model ClosedDay {
+  id          String   @id @default(cuid())
+  date        DateTime @unique @db.Date
+  reason      String
+  /// Nullable for the same reason as `Shift.createdById`.
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
 }
 
 enum ShiftOfferStatus {

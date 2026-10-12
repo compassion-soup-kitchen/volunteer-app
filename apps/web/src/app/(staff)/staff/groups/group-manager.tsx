@@ -247,7 +247,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
     return memberOptions.filter(
       (person) =>
         person.name.toLowerCase().includes(needle) ||
-        person.email.toLowerCase().includes(needle)
+        person.email?.toLowerCase().includes(needle)
     );
   }, [memberOptions, memberSearch]);
 

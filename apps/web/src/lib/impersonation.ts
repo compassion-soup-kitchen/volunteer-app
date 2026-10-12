@@ -61,9 +61,11 @@ export type ImpersonationPayload = {
 export type ImpersonationUserRow = {
   id: string;
   name: string | null;
-  email: string;
+  /** Null only for an offline volunteer, who can't be impersonated anyway. */
+  email: string | null;
   role: Role;
   status: "ACTIVE" | "ARCHIVED";
+  isOffline: boolean;
 };
 
 export type ImpersonationDeps = {
@@ -129,7 +131,7 @@ export function checkImpersonatorAuthority(input: {
  * so the two together are the single source of truth for "can A impersonate B".
  */
 export function checkImpersonationTarget(
-  target: Pick<ImpersonationUserRow, "role" | "status"> | null
+  target: Pick<ImpersonationUserRow, "role" | "status" | "isOffline"> | null
 ): ImpersonationCheck {
   if (!target) {
     return { ok: false, message: "That person's account no longer exists." };
@@ -139,6 +141,14 @@ export function checkImpersonationTarget(
   }
   if (target.role === "ADMIN") {
     return { ok: false, message: "You can't impersonate another admin." };
+  }
+  // Staff keep an offline volunteer's record for them - there is no app of
+  // theirs to look at.
+  if (target.isOffline) {
+    return {
+      ok: false,
+      message: "They volunteer offline, so there's no app view to see.",
+    };
   }
   return { ok: true };
 }

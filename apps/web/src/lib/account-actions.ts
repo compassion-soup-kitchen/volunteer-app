@@ -90,10 +90,11 @@ export async function getMyAccount(): Promise<MyAccount | null> {
     },
   });
 
-  if (!user) return null;
+  // Only an offline volunteer's record has no address, and that never signs in.
+  if (!user?.email) return null;
 
   const { password, ...rest } = user;
-  return { ...rest, hasPassword: Boolean(password) };
+  return { ...rest, email: user.email, hasPassword: Boolean(password) };
 }
 
 /** Update the signed-in person's display name. */
@@ -172,7 +173,7 @@ export async function changeMyPassword(
     select: { id: true, name: true, email: true, password: true },
   });
 
-  if (!user) {
+  if (!user?.email) {
     return { error: NOT_SIGNED_IN };
   }
 

@@ -9,6 +9,7 @@
 import type { Audience, EventStatus, Role } from "@prisma/client";
 
 import { getDb } from "@/lib/db";
+import { personName } from "@/lib/format";
 import { startOfTodayInAppZone, todayInAppZone } from "@/lib/date-only";
 import {
   canRespondToEvent,
@@ -49,7 +50,7 @@ export type EventSummary = {
 export type EventGuest = {
   userId: string;
   name: string;
-  email: string;
+  email: string | null;
   role: Role;
   response: RsvpResponse | null;
   note: string | null;
@@ -224,7 +225,7 @@ export async function getEventForUser(
  * counting them would leave "awaiting reply" stuck above zero forever.
  */
 export async function listInvitees(audience: Audience): Promise<
-  { id: string; name: string | null; email: string; role: Role }[]
+  { id: string; name: string | null; email: string | null; role: Role }[]
 > {
   const db = getDb();
 
@@ -318,7 +319,7 @@ export async function listEventGuests(eventId: string): Promise<EventGuest[]> {
     const reply = replies.get(invitee.id);
     return {
       userId: invitee.id,
-      name: invitee.name ?? invitee.email,
+      name: personName(invitee),
       email: invitee.email,
       role: invitee.role,
       response: reply?.response ?? null,

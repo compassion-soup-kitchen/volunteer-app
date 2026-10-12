@@ -9,8 +9,11 @@ export const metadata: Metadata = {
   title: "Create Shift | Te Pūaroha",
 };
 
-export default async function NewShiftPage() {
+export default async function NewShiftPage(props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}) {
   await connection();
+  const { date } = await props.searchParams;
   const [serviceAreas, volunteers] = await Promise.all([
     getServiceAreas(),
     getVolunteerOptions(),
@@ -25,7 +28,11 @@ export default async function NewShiftPage() {
         description="Add a new shift to the roster"
       />
 
-      <ShiftForm serviceAreas={serviceAreas} volunteers={volunteers} />
+      <ShiftForm
+        serviceAreas={serviceAreas}
+        volunteers={volunteers}
+        initialDate={date}
+      />
     </div>
   );
 }

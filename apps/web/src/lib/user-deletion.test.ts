@@ -4,6 +4,7 @@ import {
   describeAuthoredRecords,
   findDeletionBlocker,
   findSelfDeletionBlocker,
+  deletionConfirmationPhrase,
   matchesDeletionConfirmation,
   summariseOwnAccountDeletion,
   validateSelfDeletion,
@@ -19,7 +20,7 @@ function input(overrides: Partial<UserDeletionInput> = {}): UserDeletionInput {
     actorUserId: "admin-1",
     targetUserId: "user-2",
     targetRole: "VOLUNTEER",
-    targetEmail: "aroha@example.org.nz",
+    confirmationPhrase: "aroha@example.org.nz",
     isLastAdmin: false,
     authored: NO_AUTHORED,
     confirmation: "aroha@example.org.nz",
@@ -127,9 +128,27 @@ describe("matchesDeletionConfirmation", () => {
     expect(matchesDeletionConfirmation("   ", "a@b.nz")).toBe(false);
   });
 
-  it("never matches when the target has no email on record", () => {
+  it("never matches an empty phrase", () => {
     expect(matchesDeletionConfirmation("", "")).toBe(false);
     expect(matchesDeletionConfirmation("  ", "   ")).toBe(false);
+  });
+});
+
+describe("deletionConfirmationPhrase", () => {
+  it("is the email address when there is one", () => {
+    expect(
+      deletionConfirmationPhrase({ email: "a@b.nz", name: "Aroha Ngata" })
+    ).toBe("a@b.nz");
+  });
+
+  it("falls back to the name for an offline volunteer with no address", () => {
+    expect(
+      deletionConfirmationPhrase({ email: null, name: " David Smith " })
+    ).toBe("David Smith");
+  });
+
+  it("is empty when there is nothing to type, so nothing can match", () => {
+    expect(deletionConfirmationPhrase({ email: null, name: null })).toBe("");
   });
 });
 
@@ -178,13 +197,13 @@ describe("validateUserDeletion", () => {
 
   it("rejects a mistyped confirmation", () => {
     expect(validateUserDeletion(input({ confirmation: "aroha@example" }))).toBe(
-      "Type their email address exactly to confirm."
+      "Type it exactly as shown to confirm."
     );
   });
 
   it("rejects a missing confirmation", () => {
     expect(validateUserDeletion(input({ confirmation: "" }))).toBe(
-      "Type their email address exactly to confirm."
+      "Type it exactly as shown to confirm."
     );
   });
 

@@ -5,7 +5,7 @@ import { todayInAppZone } from "@/lib/date-only";
 import { getServiceAreas } from "@/lib/application-actions";
 import { StaffShiftList } from "./staff-shift-list";
 import { Button } from "@/components/ui/button";
-import { RiAddLine } from "@remixicon/react";
+import { RiAddLine, RiRepeatLine } from "@remixicon/react";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
 
@@ -28,12 +28,20 @@ export default async function StaffShiftsPage() {
         title="Shifts"
         description="Manage rostered mahi for volunteers"
         actions={
-          <Button asChild>
-            <Link href="/staff/shifts/new">
-              <RiAddLine className="size-4" />
-              Create shift
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href="/staff/shifts/repeating">
+                <RiRepeatLine className="size-4" />
+                Repeating shifts
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/staff/shifts/new">
+                <RiAddLine className="size-4" />
+                Create shift
+              </Link>
+            </Button>
+          </>
         }
       />
 

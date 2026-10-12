@@ -41,7 +41,7 @@ export type StaffTrainingSession = {
     status: string;
     volunteer: {
       id: string;
-      user: { name: string | null; email: string };
+      user: { name: string | null; email: string | null };
     };
   }[];
 };

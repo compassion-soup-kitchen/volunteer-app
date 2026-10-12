@@ -39,7 +39,7 @@ export async function startImpersonation(
   // Only reachable once the actor is a genuine, non-impersonating admin.
   const target = await getDb().user.findUnique({
     where: { id: targetUserId },
-    select: { role: true, status: true },
+    select: { role: true, status: true, isOffline: true },
   });
 
   const targetCheck = checkImpersonationTarget(target);

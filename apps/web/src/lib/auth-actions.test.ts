@@ -940,6 +940,7 @@ describe("resetPassword", () => {
       id: "u1",
       email: "aroha@b.co",
       status: "ACTIVE",
+      emailVerified: new Date("2026-01-01"),
     });
 
     const result = await resetPassword(null, form(validFields));
@@ -949,11 +950,39 @@ describe("resetPassword", () => {
     });
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: "u1" },
-      data: { password: "hashed:newpassword1" },
+      data: { password: "hashed:newpassword1", isOffline: false },
     });
     expect(tokenDeleteManyMock).toHaveBeenCalledWith({
       where: { identifier: "password-reset:aroha@b.co" },
     });
     expect(result?.success).toMatch(/password has been reset/i);
+  });
+
+  // Staff added them with an email; setting a password is how they take the
+  // record over, so they arrive verified and no longer offline.
+  it("lets an offline volunteer claim their record", async () => {
+    tokenFindFirstMock.mockResolvedValueOnce({
+      identifier: "password-reset:david@b.co",
+      token: sha256("raw-token"),
+      expires: new Date(Date.now() + 30 * 60 * 1000),
+    });
+    findUniqueMock.mockResolvedValueOnce({
+      id: "u2",
+      email: "david@b.co",
+      status: "ACTIVE",
+      emailVerified: null,
+      isOffline: true,
+    });
+
+    await resetPassword(null, form(validFields));
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "u2" },
+      data: {
+        password: "hashed:newpassword1",
+        emailVerified: expect.any(Date),
+        isOffline: false,
+      },
+    });
   });
 });

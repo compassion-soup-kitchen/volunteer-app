@@ -58,6 +58,7 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { contactLine } from "@/lib/format";
 import {
   getVolunteersList,
   updateVolunteerStatus,
@@ -418,7 +419,7 @@ export function VolunteerDirectory({
             aria-hidden
           />
           <Input
-            placeholder="Search by name or email..."
+            placeholder="Search by name, email or phone..."
             aria-label="Search volunteers by name or email"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
@@ -550,12 +551,15 @@ export function VolunteerDirectory({
                                     vol.user.role}
                                 </Badge>
                               )}
+                              {vol.user.isOffline && (
+                                <Badge variant="neutral">Offline</Badge>
+                              )}
                               {vol.user.status === "ARCHIVED" && (
                                 <StatusBadge status="ARCHIVED" />
                               )}
                             </div>
                             <div className="truncate text-xs text-muted-foreground">
-                              {vol.user.email}
+                              {contactLine({ email: vol.user.email, phone: vol.phone })}
                             </div>
                           </div>
                         </div>
@@ -656,12 +660,15 @@ export function VolunteerDirectory({
                             vol.user.role}
                         </Badge>
                       )}
+                      {vol.user.isOffline && (
+                        <Badge variant="neutral">Offline</Badge>
+                      )}
                       {vol.user.status === "ARCHIVED" && (
                         <StatusBadge status="ARCHIVED" />
                       )}
                     </div>
                     <p className="truncate text-xs text-muted-foreground">
-                      {vol.user.email}
+                      {contactLine({ email: vol.user.email, phone: vol.phone })}
                     </p>
 
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -941,6 +948,7 @@ function StatusMenu({
   const canChangeRole =
     isAdmin &&
     !isArchived &&
+    !volunteer.user.isOffline &&
     volunteer.user.id !== currentUserId &&
     (isAssignableRole(volunteer.user.role) || !volunteer.hasProfile);
   // Groups hang off the volunteer profile, so only people who have one can be
@@ -957,9 +965,11 @@ function StatusMenu({
 
   // Admins can view the app as any active non-admin - but never themselves or
   // another admin. The server (and the jwt callback) enforce this too.
+  // Nor anyone offline: there's no app of theirs to look at.
   const canImpersonate =
     isAdmin &&
     !isArchived &&
+    !volunteer.user.isOffline &&
     volunteer.user.id !== currentUserId &&
     volunteer.user.role !== "ADMIN";
 

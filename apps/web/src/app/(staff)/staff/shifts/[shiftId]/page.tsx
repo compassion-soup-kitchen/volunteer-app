@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
-import { getShiftDetail } from "@/lib/shift-actions";
+import { getShiftDetail, getVolunteerOptions } from "@/lib/shift-actions";
 import { ShiftDetailView } from "./shift-detail-view";
 import { PageHeader } from "@/components/brand/page-header";
 
@@ -16,7 +16,10 @@ export default async function ShiftDetailPage({
 }) {
   await connection();
   const { shiftId } = await params;
-  const shift = await getShiftDetail(shiftId);
+  const [shift, volunteers] = await Promise.all([
+    getShiftDetail(shiftId),
+    getVolunteerOptions(),
+  ]);
 
   if (!shift) notFound();
 
@@ -29,7 +32,7 @@ export default async function ShiftDetailPage({
         description="View and manage this shift"
       />
 
-      <ShiftDetailView shift={shift} />
+      <ShiftDetailView shift={shift} volunteers={volunteers} />
     </div>
   );
 }

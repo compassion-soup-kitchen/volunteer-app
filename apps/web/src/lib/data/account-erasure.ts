@@ -32,7 +32,8 @@ import {
 export type AccountErasureFacts = {
   userId: string;
   name: string | null;
-  email: string;
+  /** Null for an offline volunteer added without an address. */
+  email: string | null;
   role: Role;
   isArchived: boolean;
   /** What erasing them destroys. */

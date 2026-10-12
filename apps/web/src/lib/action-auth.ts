@@ -33,3 +33,15 @@ export async function requireActiveSession() {
   if (!(await isSessionAccountActive(session.user.id))) return null;
   return session;
 }
+
+/** `requireActiveSession`, narrowed to coordinators and admins. */
+export async function requireStaffSession() {
+  const session = await requireActiveSession();
+  if (
+    !session?.user?.id ||
+    !["COORDINATOR", "ADMIN"].includes(session.user.role)
+  ) {
+    return null;
+  }
+  return session as typeof session & { user: { id: string } };
+}

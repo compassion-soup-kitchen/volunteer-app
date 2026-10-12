@@ -28,6 +28,7 @@ import {
   type AssignableRole,
 } from "./role-change";
 import {
+  deletionConfirmationPhrase,
   findDeletionBlocker,
   validateUserDeletion,
   type AuthoredRecordCounts,
@@ -221,7 +222,7 @@ export type ApplicationListItem = {
     mojStatus: string;
     user: {
       name: string | null;
-      email: string;
+      email: string | null;
     };
     interests: { id: string; name: string }[];
   };
@@ -266,7 +267,7 @@ export async function getApplicationsList(
     return applications.filter(
       (app) =>
         app.volunteer.user.name?.toLowerCase().includes(q) ||
-        app.volunteer.user.email.toLowerCase().includes(q)
+        app.volunteer.user.email?.toLowerCase().includes(q)
     );
   }
 
@@ -295,7 +296,7 @@ export type ApplicationDetail = {
     createdAt: Date;
     user: {
       name: string | null;
-      email: string;
+      email: string | null;
     };
     interests: { id: string; name: string }[];
     signedAgreements: {
@@ -440,11 +441,12 @@ export type VolunteerListItem = {
   user: {
     id: string;
     name: string | null;
-    email: string;
+    email: string | null;
     role: Role;
     status: string;
     archivedAt: Date | null;
     archivedReason: string | null;
+    isOffline: boolean;
   };
   interests: { id: string; name: string }[];
   // Active groups this person belongs to - the crews staff label them with.
@@ -512,6 +514,7 @@ export async function getVolunteersList(
                 status: true,
                 archivedAt: true,
                 archivedReason: true,
+                isOffline: true,
               },
             },
             interests: { select: { id: true, name: true } },
@@ -544,6 +547,7 @@ export async function getVolunteersList(
             status: true,
             archivedAt: true,
             archivedReason: true,
+            isOffline: true,
             createdAt: true,
           },
         })
@@ -579,6 +583,7 @@ export async function getVolunteersList(
         status: u.status,
         archivedAt: u.archivedAt,
         archivedReason: u.archivedReason,
+        isOffline: u.isOffline,
       },
       interests: [],
       groups: [],
@@ -595,7 +600,8 @@ export async function getVolunteersList(
     return volunteers.filter(
       (v) =>
         v.user.name?.toLowerCase().includes(q) ||
-        v.user.email.toLowerCase().includes(q)
+        v.user.email?.toLowerCase().includes(q) ||
+        v.phone?.replace(/\s/g, "").includes(q.replace(/\s/g, ""))
     );
   }
 
@@ -634,7 +640,7 @@ export type VolunteerDetail = {
   user: {
     id: string;
     name: string | null;
-    email: string;
+    email: string | null;
     image: string | null;
     role: Role;
     status: string;
@@ -643,6 +649,8 @@ export type VolunteerDetail = {
     archivedAt: Date | null;
     archivedReason: string | null;
     archivedByName: string | null;
+    /** Volunteers without the app; staff keep this record for them. */
+    isOffline: boolean;
   };
   /** Null for someone who signed in but never submitted an application. */
   profile: {
@@ -800,6 +808,7 @@ export async function getVolunteerDetail(
       archivedAt: true,
       archivedReason: true,
       archivedBy: { select: { name: true } },
+      isOffline: true,
       volunteerProfile: {
         select: {
           id: true,
@@ -888,6 +897,7 @@ export async function getVolunteerDetail(
       archivedAt: user.archivedAt,
       archivedReason: user.archivedReason,
       archivedByName: user.archivedBy?.name ?? null,
+      isOffline: user.isOffline,
     },
     profile: profile
       ? {
@@ -1038,7 +1048,9 @@ export async function restoreVolunteer(
 export type UserDeletionSummary = {
   userId: string;
   name: string | null;
-  email: string;
+  email: string | null;
+  /** What the admin must type to confirm - see `deletionConfirmationPhrase`. */
+  confirmationPhrase: string;
   role: Role;
   isArchived: boolean;
   // What deleting them destroys.
@@ -1062,6 +1074,7 @@ function toDeletionSummary(
     userId: facts.userId,
     name: facts.name,
     email: facts.email,
+    confirmationPhrase: deletionConfirmationPhrase(facts),
     role: facts.role,
     isArchived: facts.isArchived,
     authored: facts.authored,
@@ -1115,7 +1128,7 @@ export async function deleteUser(
     actorUserId: session.user!.id,
     targetUserId: facts.userId,
     targetRole: facts.role,
-    targetEmail: facts.email,
+    confirmationPhrase: deletionConfirmationPhrase(facts),
     isLastAdmin: facts.isLastAdmin,
     authored: facts.authored,
     confirmation,
@@ -1141,6 +1154,7 @@ export async function updateUserRole(
       id: true,
       role: true,
       status: true,
+      isOffline: true,
       volunteerProfile: { select: { id: true } },
     },
   });
@@ -1162,6 +1176,7 @@ export async function updateUserRole(
     targetIsArchived: user.status === "ARCHIVED",
     isTargetLastAdmin,
     targetHasProfile: hasProfile,
+    targetIsOffline: user.isOffline,
   });
   if (validationError) return { error: validationError };
 

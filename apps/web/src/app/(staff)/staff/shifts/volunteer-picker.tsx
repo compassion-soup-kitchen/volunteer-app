@@ -15,29 +15,48 @@ import { GroupBadge, GroupBadges } from "@/components/brand/group-badge";
 import { RiCloseLine, RiSearchLine, RiUserAddLine } from "@remixicon/react";
 import type { OfferStatus } from "@/lib/shift-offers";
 import type { VolunteerOption } from "@/lib/shift-actions";
+import { contactLine } from "@/lib/format";
 import { sortGroups, type GroupChip } from "@/lib/volunteer-groups";
 
-interface VolunteerOfferPickerProps {
+/** Volunteers matching a search by name, email, phone or group. */
+export function searchVolunteers(
+  volunteers: VolunteerOption[],
+  search: string
+): VolunteerOption[] {
+  const needle = search.trim().toLowerCase();
+  if (!needle) return volunteers;
+  const digits = needle.replace(/\s/g, "");
+  return volunteers.filter(
+    (volunteer) =>
+      volunteer.name.toLowerCase().includes(needle) ||
+      volunteer.email?.toLowerCase().includes(needle) ||
+      (digits.length > 0 && volunteer.phone?.replace(/\s/g, "").includes(digits)) ||
+      volunteer.groups.some((group) => group.name.toLowerCase().includes(needle))
+  );
+}
+
+interface VolunteerPickerProps {
   volunteers: VolunteerOption[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   disabled?: boolean;
-  /** Where each volunteer got to with the offer, once they've answered. */
+  /** Where each volunteer got to with an offer, once they've answered. */
   statuses?: Record<string, OfferStatus>;
 }
 
 /**
- * Picks the volunteers a shift is offered to first. Selected people stay
- * visible as chips so the list reads as a crew rather than a form value, and
- * anyone who has already answered carries their answer with them.
+ * Picks a crew of volunteers - who a shift is offered to first, or the
+ * regulars on a repeating shift. Selected people stay visible as chips so the
+ * list reads as a crew rather than a form value, and anyone who has already
+ * answered an offer carries their answer with them.
  */
-export function VolunteerOfferPicker({
+export function VolunteerPicker({
   volunteers,
   selectedIds,
   onChange,
   disabled,
   statuses,
-}: VolunteerOfferPickerProps) {
+}: VolunteerPickerProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -46,18 +65,10 @@ export function VolunteerOfferPicker({
     [volunteers]
   );
 
-  const matches = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) return volunteers;
-    return volunteers.filter(
-      (volunteer) =>
-        volunteer.name.toLowerCase().includes(needle) ||
-        volunteer.email.toLowerCase().includes(needle) ||
-        volunteer.groups.some((group) =>
-          group.name.toLowerCase().includes(needle)
-        )
-    );
-  }, [volunteers, search]);
+  const matches = useMemo(
+    () => searchVolunteers(volunteers, search),
+    [volunteers, search]
+  );
 
   // The crews on offer here, each with who's in it - offering a shift to "the
   // team leaders" is one tap rather than six.
@@ -115,7 +126,7 @@ export function VolunteerOfferPicker({
                     type="button"
                     onClick={() => toggle(volunteer.id)}
                     disabled={disabled}
-                    aria-label={`Remove ${volunteer.name} from the offer`}
+                    aria-label={`Remove ${volunteer.name}`}
                     className="rounded-sm p-0.5 text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-50"
                   >
                     <RiCloseLine aria-hidden className="size-3.5" />
@@ -144,7 +155,7 @@ export function VolunteerOfferPicker({
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, email or group"
+                placeholder="Search by name, phone or group"
                 aria-label="Search volunteers"
                 className="h-9 pl-8"
               />
@@ -222,7 +233,7 @@ export function VolunteerOfferPicker({
                           />
                         ) : (
                           <span className="block truncate text-xs text-muted-foreground">
-                            {volunteer.email}
+                            {contactLine(volunteer)}
                           </span>
                         )}
                       </span>
