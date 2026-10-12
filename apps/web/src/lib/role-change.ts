@@ -45,6 +45,9 @@ export type RoleChangeInput = {
   // profile is a pending applicant (must go through approval); a PUBLIC user
   // *without* one never applied and can be promoted directly.
   targetHasProfile: boolean;
+  // An offline volunteer can't sign in, so a staff role would be a role
+  // nobody can use.
+  targetIsOffline: boolean;
 };
 
 /**
@@ -60,6 +63,7 @@ export function validateRoleChange(input: RoleChangeInput): string | null {
     targetIsArchived,
     isTargetLastAdmin,
     targetHasProfile,
+    targetIsOffline,
   } = input;
 
   if (!isAssignableRole(newRole)) {
@@ -79,6 +83,9 @@ export function validateRoleChange(input: RoleChangeInput): string | null {
   // elevated role. Require restoring first.
   if (targetIsArchived) {
     return "Restore this account before changing its role.";
+  }
+  if (targetIsOffline) {
+    return "They volunteer offline and can't sign in, so they can't hold a staff role.";
   }
   if (actorUserId === targetUserId) {
     return "You can't change your own role.";

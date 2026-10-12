@@ -444,7 +444,15 @@ export async function resetPassword(
   const hashedPassword = await bcrypt.hash(parsed.data.password, 12);
   await db.user.update({
     where: { id: user.id },
-    data: { password: hashedPassword },
+    data: {
+      password: hashedPassword,
+      // Redeeming a link sent to the address proves it's theirs. That matters
+      // for an offline volunteer staff added with an email: setting a password
+      // is how they take the record over, and it must not then sit behind the
+      // verification gate.
+      ...(user.emailVerified ? {} : { emailVerified: new Date() }),
+      isOffline: false,
+    },
   });
 
   // Single use — burn this token and any other outstanding ones.

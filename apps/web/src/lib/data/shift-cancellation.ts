@@ -16,7 +16,11 @@ export type RemovedShift = {
   id: string;
   date: Date;
   serviceAreaName: string;
-  /** Users who were still expected on it. */
+  /**
+   * App users who were still expected on it - the ones a push can reach.
+   * Offline volunteers are left out: staff ring them, so they're never
+   * counted as "told".
+   */
   userIds: string[];
 };
 
@@ -38,7 +42,7 @@ export async function removeShifts(
       date: true,
       serviceArea: { select: { name: true } },
       signups: {
-        where: { status: "SIGNED_UP" },
+        where: { status: "SIGNED_UP", volunteer: { user: { isOffline: false } } },
         select: { volunteer: { select: { userId: true } } },
       },
     },

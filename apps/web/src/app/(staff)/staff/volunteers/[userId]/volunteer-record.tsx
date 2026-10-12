@@ -86,10 +86,12 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
     {
       label: "Email",
       icon: RiMailLine,
-      value: (
+      value: user.email ? (
         <a href={`mailto:${user.email}`} className="hover:text-primary hover:underline">
           {user.email}
         </a>
+      ) : (
+        NOT_PROVIDED
       ),
     },
     {
@@ -165,6 +167,8 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
     <div className="grid gap-6 lg:grid-cols-3">
       {/* Left column — who they are and their record with us */}
       <div className="space-y-4 lg:col-span-2">
+        {user.isOffline && <OfflineNote name={user.name} />}
+
         <Card>
           <CardHeader>
             <SectionTitle icon={RiUserLine}>Contact details</SectionTitle>
@@ -241,7 +245,7 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
             </div>
             <div>
               <p className="eyebrow mb-1 text-[0.62rem] text-muted-foreground">
-                About themselves
+                {user.isOffline ? "Notes" : "About themselves"}
               </p>
               {profile.bio ? (
                 <p className="text-sm">{profile.bio}</p>
@@ -584,14 +588,23 @@ function AccountCard({ detail }: { detail: VolunteerDetail }) {
         year: "numeric",
       }),
     },
-    {
-      label: "Email verified",
-      value: user.emailVerified ? (
-        formatTimestampInAppZone(user.emailVerified)
-      ) : (
-        <span className="font-normal text-muted-foreground">Not verified</span>
-      ),
-    },
+    user.isOffline
+      ? {
+          label: "Uses the app",
+          value: (
+            <span className="font-normal text-muted-foreground">
+              No - staff keep this record
+            </span>
+          ),
+        }
+      : {
+          label: "Email verified",
+          value: user.emailVerified ? (
+            formatTimestampInAppZone(user.emailVerified)
+          ) : (
+            <span className="font-normal text-muted-foreground">Not verified</span>
+          ),
+        },
     {
       label: "Account",
       value: <StatusBadge status={user.status} />,
@@ -621,6 +634,33 @@ function AccountCard({ detail }: { detail: VolunteerDetail }) {
         <CardTitle>Account</CardTitle>
       </CardHeader>
       <DetailList facts={facts} />
+    </Card>
+  );
+}
+
+/**
+ * What staff do for someone without the app, said once at the top of their
+ * record so nobody wonders why there's no application or signed agreement.
+ */
+function OfflineNote({ name }: { name: string | null }) {
+  return (
+    <Card variant="muted">
+      <CardContent className="flex items-start gap-3">
+        <IconChip size="sm">
+          <RiUserLine />
+        </IconChip>
+        <div className="space-y-1">
+          <p className="font-serif text-lg font-medium tracking-tight">
+            {name ?? "This volunteer"} volunteers offline
+          </p>
+          <p className="text-sm text-muted-foreground">
+            They don&apos;t use the app, so staff keep this record. Put them on
+            a shift from the shift&apos;s page, or set them as a regular on a
+            repeating shift. Marking them attended is what logs their hours.
+            Upload their paper forms under Documents.
+          </p>
+        </div>
+      </CardContent>
     </Card>
   );
 }

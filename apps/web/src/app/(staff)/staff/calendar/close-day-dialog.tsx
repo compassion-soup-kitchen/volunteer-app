@@ -91,7 +91,11 @@ export function CloseDayDialog({
 
   const current = impact?.date === date ? impact.value : undefined;
   const loading = current === undefined;
-  const people = new Set(current?.shifts.flatMap((shift) => shift.signedUp) ?? []).size;
+  const everyone = current?.shifts.flatMap((shift) => shift.signedUp) ?? [];
+  const people = new Set(
+    everyone.filter((person) => !person.isOffline).map((person) => person.name)
+  ).size;
+  const toRing = everyone.filter((person) => person.isOffline);
   const trimmed = reason.trim();
 
   function handleConfirm() {
@@ -170,7 +174,7 @@ export function CloseDayDialog({
                 ? "This shift will be cancelled"
                 : `These ${current.shifts.length} shifts will be cancelled`}
               {people > 0
-                ? `, and ${people} ${people === 1 ? "volunteer" : "volunteers"} told`
+                ? `, and ${people} ${people === 1 ? "volunteer" : "volunteers"} told in the app`
                 : ""}
               :
             </p>
@@ -185,12 +189,37 @@ export function CloseDayDialog({
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {shift.signedUp.length > 0
-                      ? shift.signedUp.join(", ")
+                      ? shift.signedUp.map((person) => person.name).join(", ")
                       : "No one signed up"}
                   </p>
                 </li>
               ))}
             </ul>
+            {toRing.length > 0 && (
+              <div className="rounded-lg bg-warning-tint px-3 py-2 text-sm text-warning-tint-foreground">
+                <p className="font-semibold">
+                  Give {toRing.length === 1 ? "them" : "these people"} a ring -
+                  they don&apos;t use the app:
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {toRing.map((person) => (
+                    <li key={person.name}>
+                      {person.name}
+                      {person.phone ? (
+                        <>
+                          {", "}
+                          <a href={`tel:${person.phone}`} className="font-semibold underline-offset-2 hover:underline tnum">
+                            {person.phone}
+                          </a>
+                        </>
+                      ) : (
+                        ", no phone on file"
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 

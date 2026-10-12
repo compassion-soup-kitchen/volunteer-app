@@ -183,28 +183,27 @@ export function PatternEditor({ pattern, volunteers }: PatternEditorProps) {
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardContent className="space-y-5">
-          <DetailList
-            facts={[
-              {
-                label: "Repeats",
-                value: describeRecurrence(pattern.weekdays, pattern.interval),
-              },
-              {
-                label: "Time",
-                value: formatTimeRange(pattern.startTime, pattern.endTime),
-              },
-              { label: "First day", value: day(pattern.startsOn) },
-              {
-                label: "On the roster",
-                value:
-                  pattern.upcomingShiftCount === 0
-                    ? "Nothing upcoming"
-                    : `${pattern.upcomingShiftCount} upcoming ${pattern.upcomingShiftCount === 1 ? "shift" : "shifts"}`,
-              },
-            ]}
-          />
-
+        <DetailList
+          facts={[
+            {
+              label: "Repeats",
+              value: describeRecurrence(pattern.weekdays, pattern.interval),
+            },
+            {
+              label: "Time",
+              value: formatTimeRange(pattern.startTime, pattern.endTime),
+            },
+            { label: "First day", value: day(pattern.startsOn) },
+            {
+              label: "On the roster",
+              value:
+                pattern.upcomingShiftCount === 0
+                  ? "Nothing upcoming"
+                  : `${pattern.upcomingShiftCount} upcoming ${pattern.upcomingShiftCount === 1 ? "shift" : "shifts"}`,
+            },
+          ]}
+        />
+        <CardContent className="space-y-4 border-t border-border pt-4">
           <p className="text-xs text-muted-foreground">
             Shifts are added by themselves twelve weeks ahead. To change the
             day, time or service area, stop this one and set up a new one.
@@ -336,9 +335,9 @@ export function PatternEditor({ pattern, volunteers }: PatternEditorProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Stop {pattern.serviceArea.name} repeating?</AlertDialogTitle>
             <AlertDialogDescription>
-              {pattern.upcomingShiftCount > 0
-                ? "Today's shift still goes ahead. Every one after it comes off the roster, and anyone signed up is told."
-                : "No more shifts will be added to the roster."}
+              {pattern.upcomingShiftCount === 0
+                ? "No more shifts will be added to the roster."
+                : `${pattern.nextShift?.date === today ? "Today's shift still goes ahead. Every one after it" : "Every upcoming shift"} comes off the roster. Volunteers who use the app are told; ring any offline regulars.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

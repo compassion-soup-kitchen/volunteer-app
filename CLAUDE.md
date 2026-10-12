@@ -89,9 +89,11 @@ src/
 │   │   ├── staff-nav.tsx             # Sidebar nav
 │   │   ├── dashboard/                # Staff overview
 │   │   ├── applications/             # Review pending applications
-│   │   ├── volunteers/               # Volunteer directory + per-volunteer detail
+│   │   ├── calendar/                 # Month roster view; close days (NZ public holidays suggested)
+│   │   ├── volunteers/               # Volunteer directory + per-volunteer detail; /new + /[id]/edit for offline volunteers
 │   │   ├── groups/                   # CRUD volunteer groups + membership (group-manager.tsx)
-│   │   ├── shifts/                   # Create/manage shifts, mark attendance, record meals
+│   │   ├── shifts/                   # Create/manage shifts, roster named volunteers, mark attendance,
+│   │   │                             #   record meals; /repeating for repeating shifts + regulars
 │   │   ├── service-areas/            # CRUD service areas
 │   │   ├── training/                 # Create/manage training sessions
 │   │   ├── documents/                # Upload templates, manage agreement templates
@@ -129,7 +131,15 @@ src/
 │   ├── auth-actions.ts               # Server Actions: login, register, email verification, password reset
 │   ├── application-actions.ts        # Submit/review applications
 │   ├── dashboard-actions.ts          # Volunteer dashboard data fetchers
-│   ├── shift-actions.ts              # CRUD shifts, signups, attendance, meals
+│   ├── shift-actions.ts              # CRUD shifts, signups, staff rostering, attendance, meals
+│   ├── shift-pattern-actions.ts      # Repeating shifts (ShiftPattern) + regulars: create, edit, stop
+│   ├── shift-patterns.ts             # Pure pattern rules (which days, the generation window, regulars)
+│   ├── shift-roster.ts               # Pure rules for staff putting a named volunteer on a shift
+│   ├── closed-day-actions.ts         # Calendar month read, close/reopen days
+│   ├── closed-days.ts                # Pure closure rules + month grid
+│   ├── nz-public-holidays.ts         # NZ public holidays (Mondayisation, Wellington Anniversary, Matariki table)
+│   ├── offline-volunteer-actions.ts  # Staff create/edit records for volunteers who don't use the app
+│   ├── offline-volunteer.ts          # Pure offline-volunteer form contract
 │   ├── training-actions.ts           # CRUD training sessions + attendance
 │   ├── service-area-actions.ts       # CRUD service areas
 │   ├── group-actions.ts              # CRUD volunteer groups, membership, volunteer-facing team reads
@@ -175,7 +185,7 @@ prisma/
 ### Database Models (overview)
 - **Auth**: `User`, `Account`, `Session`, `VerificationToken` — NextAuth standard tables. `User.role` ∈ `{PUBLIC, VOLUNTEER, COORDINATOR, ADMIN}`. `User.status` ∈ `{ACTIVE, ARCHIVED}` (archived users blocked at sign-in).
 - **Onboarding**: `VolunteerProfile` (status: APPLICATION_SUBMITTED → AWAITING_VETTING → APPROVED_FOR_INDUCTION → ACTIVE / INACTIVE; `mojStatus` ∈ NOT_STARTED/SUBMITTED/CLEARED/FLAGGED), `Application`, `Document`, `SignedAgreement`, `AgreementTemplate` (versioned, supports re-acknowledgement).
-- **Operations**: `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `ShiftOffer` (right of first refusal: PENDING/ACCEPTED/DECLINED, paired with `Shift.offersCloseOn`), `TrainingSession`, `TrainingAttendance`.
+- **Operations**: `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `ShiftOffer` (right of first refusal: PENDING/ACCEPTED/DECLINED, paired with `Shift.offersCloseOn`), `ShiftPattern` (a repeating shift with optional `endsOn` and named `regulars`; see below), `ClosedDay` (a day the kitchen is shut), `TrainingSession`, `TrainingAttendance`.
 - **People**: `VolunteerGroup` (staff-named crews - Team Leaders, Guardian Angels - many-to-many with `VolunteerProfile`; `tone` picks the badge colour, `visibleToVolunteers` decides whether volunteers see it on /team and their profile). Purely descriptive: membership grants no access, that stays with `User.role`.
 - **Communication**: `Announcement` (audience: ALL / VOLUNTEERS / COORDINATORS; optional `eventId` links a pānui to the gathering it announces — `onDelete: SetNull`, because a message that was sent stays sent).
 - **Gatherings**: `Event` (a party, hui or working bee — status DRAFT/PUBLISHED/CANCELLED, `audience` decides who is invited *and* who may reply, `rsvpEnabled` + `rsvpDeadline` control replies) and `EventRsvp` (GOING / MAYBE / NOT_GOING + optional note, unique per user per event). Keyed by `User`, not `VolunteerProfile`: staff come to these too. Deliberately not a `Shift` (nobody is rostered) and not part of `Announcement` (an event outlives any one message about it and can be announced more than once). Publishing an event only makes it visible — telling people is what a pānui is for, which keeps push notifications in one place.
@@ -188,6 +198,13 @@ Anyone may permanently erase their own account, in the app (`/profile/delete-acc
 - **The rules** live in the pure `src/lib/user-deletion.ts`. Self-deletion is far more permissive than the admin path: the only blocker is being the last active admin, since erasing them leaves an organisation nobody can administer.
 - **Records authored for the org survive** — `Shift`, `TrainingSession`, `Announcement` and `Event` all have a nullable `createdById` with `onDelete: SetNull`, so a shift that happened still happened and simply stops naming anybody. This is why *everyone* is deletable; it used to be a hard blocker for exactly the people who ran the kitchen.
 - **A JWT outlives the account it names.** The layout gates therefore re-read the account on every authenticated page (`isSessionAccountActive`) and send a dead session to `/api/auth/session-ended`, which is a route handler because only a handler can clear the cookie — redirecting straight to `/login` loops, since the token still reads as signed in. The mobile API never had this problem: `authenticateApiRequest` already re-reads the user per request.
+
+### Rostering: repeating shifts, closed days, offline volunteers
+
+- **Hours only ever come from `ATTENDED` shift signups.** There is no separate hours ledger, so logging an offline volunteer's hours means putting them on the shift (`addVolunteerToShift`) - added to a past shift they go straight on as `ATTENDED`.
+- **Every repeat is a `ShiftPattern`**, bounded or not. Shifts are generated `PATTERN_HORIZON_DAYS` (12 weeks) ahead by `src/lib/data/shift-patterns.ts`: on create/edit, and by `scheduleRosterTopUp()`, a throttled `after()` hook called from every roster read (staff shifts, calendar, volunteer shifts). There is no cron. Generation only moves `generatedThrough` forward, so a deleted generated shift or a closed day is never regenerated; a one-off shift already at the same area/day/start time is adopted rather than doubled. Generated shifts are ordinary `Shift` rows (`patternId` set) and are edited individually.
+- **`ClosedDay` is enforced everywhere a shift is placed**: `createShift`/`updateShift` refuse it, generation skips it, and closing a day deletes its shifts (refused once attendance is marked) and pushes the volunteers who use the app. Reopening restores pattern shifts for that day (`refillReopenedDay`), not one-offs.
+- **Offline volunteers** (`User.isOffline`): no password, email optional (`User.email` is nullable *only* for them). Sign-in paths assert an address via `toAuthenticatedUser`; staff UI falls back with `personName` / `contactLine` from `src/lib/format.ts`. They can't be impersonated or given a staff role. Redeeming a password reset clears `isOffline` and verifies the email - that's how one claims their record.
 
 ### Auth Roles
 - `PUBLIC` — unauthenticated or pre-application

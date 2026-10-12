@@ -14,6 +14,7 @@ const base: RoleChangeInput = {
   targetIsArchived: false,
   isTargetLastAdmin: false,
   targetHasProfile: true,
+  targetIsOffline: false,
 };
 
 describe("isAssignableRole", () => {
@@ -33,6 +34,12 @@ describe("isAssignableRole", () => {
 describe("validateRoleChange", () => {
   it("allows a normal promotion", () => {
     expect(validateRoleChange(base)).toBeNull();
+  });
+
+  it("refuses any role change for an offline volunteer", () => {
+    expect(validateRoleChange({ ...base, targetIsOffline: true })).toMatch(
+      /volunteer offline/
+    );
   });
 
   it("allows demoting an admin when others remain", () => {

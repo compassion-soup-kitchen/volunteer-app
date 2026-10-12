@@ -92,13 +92,12 @@ const PREVIEW_DATE_LIMIT = 4;
 function formatPreviewDates(dates: string[]): string {
   const shown = dates
     .slice(0, PREVIEW_DATE_LIMIT)
-    .map((date) =>
-      formatDateOnly(parseDateOnly(date), {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-      })
-    )
+    // "Thu 15 Oct" - en-NZ would put a comma after the weekday, which reads
+    // as a list separator in a list of dates.
+    .map((date) => {
+      const day = parseDateOnly(date);
+      return `${formatDateOnly(day, { weekday: "short" })} ${formatDateOnly(day, { day: "numeric", month: "short" })}`;
+    })
     .join(", ");
 
   const rest = dates.length - PREVIEW_DATE_LIMIT;

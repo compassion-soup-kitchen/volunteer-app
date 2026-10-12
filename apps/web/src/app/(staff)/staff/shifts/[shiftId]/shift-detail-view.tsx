@@ -364,12 +364,14 @@ export function ShiftDetailView({ shift, volunteers }: ShiftDetailViewProps) {
       <Card className="lg:col-span-2">
         <CardHeader className={shift.signups.length > 0 ? "border-b" : undefined}>
           <CardTitle>Volunteers ({shift.signups.length})</CardTitle>
-          <CardDescription>
+          <CardDescription className="col-start-1">
             {canMarkAttendance
               ? "Mark attendance for this shift"
               : "Who’s signed up for this shift"}
           </CardDescription>
-          <CardAction className="flex flex-wrap justify-end gap-2">
+          {/* On a narrow card the buttons drop below the title rather than
+              squeezing it into a sliver. */}
+          <CardAction className="flex flex-wrap justify-end gap-2 @max-md/card-header:col-span-2 @max-md/card-header:col-start-1 @max-md/card-header:row-start-3 @max-md/card-header:mt-2 @max-md/card-header:justify-self-start @max-md/card-header:justify-start">
             {canMarkAttendance && unmarkedSignups.length > 1 && (
               <Button
                 size="sm"

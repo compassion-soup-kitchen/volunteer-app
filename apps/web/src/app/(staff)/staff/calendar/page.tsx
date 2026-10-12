@@ -28,7 +28,7 @@ async function CalendarContent({ searchParams }: { searchParams: SearchParams })
 
 function CalendarSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
       <Card className="p-5">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="mt-4 h-[28rem] w-full" />

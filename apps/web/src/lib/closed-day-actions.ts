@@ -76,8 +76,8 @@ export type ClosureImpact = {
     serviceAreaName: string;
     startTime: string;
     endTime: string;
-    /** Who is expected, by name - the people who'll get the push. */
-    signedUp: string[];
+    /** Who is expected - the app users get a push, offline ones need a call. */
+    signedUp: { name: string; isOffline: boolean; phone: string | null }[];
   }[];
   /** Why this day can't be closed, or null. */
   blocker: string | null;
@@ -194,7 +194,12 @@ export async function getClosureImpact(date: DateOnly): Promise<ClosureImpact | 
           where: { status: { in: ["SIGNED_UP", ...ATTENDANCE_RECORDED] } },
           select: {
             status: true,
-            volunteer: { select: { user: { select: { name: true, email: true } } } },
+            volunteer: {
+              select: {
+                phone: true,
+                user: { select: { name: true, email: true, isOffline: true } },
+              },
+            },
           },
         },
       },
@@ -215,7 +220,11 @@ export async function getClosureImpact(date: DateOnly): Promise<ClosureImpact | 
       endTime: shift.endTime,
       signedUp: shift.signups
         .filter((signup) => signup.status === "SIGNED_UP")
-        .map((signup) => personName(signup.volunteer.user)),
+        .map((signup) => ({
+          name: personName(signup.volunteer.user),
+          isOffline: signup.volunteer.user.isOffline,
+          phone: signup.volunteer.phone,
+        })),
     })),
     blocker: closureBlocker({
       date,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -69,6 +69,9 @@ const WEEKDAY_HEADINGS = [
 /** How many shifts a desktop cell lists before trailing off into a count. */
 const CELL_SHIFT_LIMIT = 3;
 
+/** Public holidays listed before the rest fold away behind "Show all". */
+const HOLIDAYS_SHOWN = 5;
+
 const LONG_DAY: Intl.DateTimeFormatOptions = {
   weekday: "long",
   day: "numeric",
@@ -120,12 +123,30 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
   );
 
   const [closing, setClosing] = useState<{ date: DateOnly; reason: string } | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Below the two-column layout the day panel sits under the whole month, so
+   * picking a day would change nothing in view - bring the panel up to meet
+   * the tap.
+   */
+  function selectDay(date: DateOnly) {
+    setSelected(date);
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() =>
+      panelRef.current?.scrollIntoView({
+        behavior: reduce ? "auto" : "smooth",
+        block: "start",
+      })
+    );
+  }
 
   const refresh = () => router.refresh();
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <Card className="gap-0 py-0">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
+      <Card className="gap-0 self-start py-0">
         <MonthHeader month={data.month} today={data.today} />
 
         <div role="grid" aria-label={formatDateOnly(parseDateOnly(data.month), { month: "long", year: "numeric" })}>
@@ -155,7 +176,7 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
                   shifts={shiftsByDate.get(day.date) ?? []}
                   closure={closedByDate.get(day.date) ?? null}
                   holiday={holidayByDate.get(day.date) ?? null}
-                  onSelect={() => setSelected(day.date)}
+                  onSelect={() => selectDay(day.date)}
                 />
               ))}
             </div>
@@ -165,7 +186,7 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
         <Legend />
       </Card>
 
-      <div className="space-y-6">
+      <div ref={panelRef} className="scroll-mt-20 space-y-6">
         <DayPanel
           date={selected}
           today={data.today}
@@ -299,7 +320,7 @@ function DayCell({
       </span>
 
       {closure ? (
-        <span className="line-clamp-2 font-serif text-xs/tight text-muted-foreground italic max-sm:sr-only">
+        <span className="line-clamp-3 font-serif text-[0.68rem]/tight break-words text-muted-foreground italic max-sm:sr-only">
           {closure.reason}
         </span>
       ) : (
@@ -563,7 +584,10 @@ interface HolidaySuggestionsProps {
 
 function HolidaySuggestions({ suggestions, onCloseOne, onClosedAll }: HolidaySuggestionsProps) {
   const [confirmAll, setConfirmAll] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const hidden = suggestions.length - HOLIDAYS_SHOWN;
+  const shown = showAll ? suggestions : suggestions.slice(0, HOLIDAYS_SHOWN);
 
   function handleCloseAll() {
     startTransition(async () => {
@@ -598,12 +622,12 @@ function HolidaySuggestions({ suggestions, onCloseOne, onClosedAll }: HolidaySug
       {suggestions.length > 0 && (
         <>
           <BleedList className="border-b">
-            {suggestions.map((holiday) => (
+            {shown.map((holiday) => (
               <li key={holiday.date} className="flex items-center gap-3 px-5 py-2.5">
                 <DateBlock date={parseDateOnly(holiday.date)} className="scale-90" />
                 <span aria-hidden className="self-stretch border-l border-border" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{holiday.name}</p>
+                  <p className="text-sm/snug font-semibold text-pretty">{holiday.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatDateOnly(parseDateOnly(holiday.date), { weekday: "long" })}
                   </p>
@@ -618,6 +642,18 @@ function HolidaySuggestions({ suggestions, onCloseOne, onClosedAll }: HolidaySug
                 </Button>
               </li>
             ))}
+            {hidden > 0 && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setShowAll((value) => !value)}
+                  aria-expanded={showAll}
+                  className="w-full px-5 py-2.5 text-left text-sm font-semibold text-primary transition-colors outline-none hover:bg-secondary/40 focus-visible:bg-secondary/40"
+                >
+                  {showAll ? "Show fewer" : `Show ${hidden} more`}
+                </button>
+              </li>
+            )}
           </BleedList>
           <CardContent>
             <Button className="w-full" onClick={() => setConfirmAll(true)}>
