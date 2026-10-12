@@ -5,7 +5,10 @@
  * on creation, whenever it is edited, and by a top-up that rides along with
  * the pages that read the roster (`scheduleRosterTopUp`). Each top-up only
  * reaches *forward* of `generatedThrough`, so deleting a generated shift or
- * closing a day is never undone behind the coordinator's back.
+ * closing a day is never undone behind the coordinator's back. The one time
+ * the watermark goes back is when the pattern itself is cut short
+ * (`removePatternShiftsAfter`): those days are no longer generated at all, so
+ * a later extension has to be free to fill them again.
  *
  * No cron is needed: the roster is generated twelve weeks ahead, and the
  * top-up runs whenever anyone - staff or volunteer - looks at shifts, which
@@ -331,6 +334,10 @@ export async function refillReopenedDay(
  * or ended sooner. A shift whose attendance was already marked is history, so
  * it is unlinked and kept rather than deleted. Returns what was removed, for
  * the caller to notify once the transaction commits.
+ *
+ * Also rewinds `generatedThrough` to `lastDay`. Left where it was, a pattern
+ * stopped today and reopened next month would resume only past the old
+ * watermark, leaving weeks with no shifts and its regulars on nothing.
  */
 export async function removePatternShiftsAfter(
   tx: Prisma.TransactionClient,
@@ -347,6 +354,12 @@ export async function removePatternShiftsAfter(
     },
   });
 
+  const cut = parseDateOnly(lastDay);
+  await tx.shiftPattern.updateMany({
+    where: { id: patternId, generatedThrough: { gt: cut } },
+    data: { generatedThrough: cut },
+  });
+
   const recorded = later.filter((shift) => shift._count.signups > 0);
   if (recorded.length > 0) {
     await tx.shift.updateMany({
@@ -359,4 +372,30 @@ export async function removePatternShiftsAfter(
     tx,
     later.filter((shift) => shift._count.signups === 0).map((shift) => shift.id)
   );
+}
+
+/**
+ * Regulars taken off a pattern give up the places it gave them from `from` on.
+ *
+ * The rows are deleted rather than cancelled: a `CANCELLED` row means the
+ * volunteer chose not to come, and `rosterRegulars` rightly never overrides
+ * that - so cancelling here would leave someone re-added later off every
+ * shift already on the roster. Weeks they cancelled themselves keep their
+ * `CANCELLED` row, untouched.
+ */
+export async function releaseRegulars(
+  tx: Prisma.TransactionClient,
+  patternId: string,
+  volunteerIds: string[],
+  from: DateOnly
+): Promise<number> {
+  if (volunteerIds.length === 0) return 0;
+  const result = await tx.shiftSignup.deleteMany({
+    where: {
+      volunteerId: { in: volunteerIds },
+      status: "SIGNED_UP",
+      shift: { patternId, date: { gte: parseDateOnly(from) } },
+    },
+  });
+  return result.count;
 }

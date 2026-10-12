@@ -29,6 +29,7 @@ import {
 import {
   materialisePattern,
   patternForGeneration,
+  releaseRegulars,
   removePatternShiftsAfter,
   rosterRegulars,
 } from "@/lib/data/shift-patterns";
@@ -374,16 +375,7 @@ export async function updateShiftPattern(
         : [];
 
       // Regulars who left give up the places they were holding from today.
-      if (removed.length > 0) {
-        await tx.shiftSignup.updateMany({
-          where: {
-            volunteerId: { in: removed },
-            status: "SIGNED_UP",
-            shift: { patternId: id, date: { gte: fromToday } },
-          },
-          data: { status: "CANCELLED" },
-        });
-      }
+      await releaseRegulars(tx, id, removed, today);
 
       // Capacity and notes follow onto rostered days, unless a day already
       // has more people than the new capacity - it keeps its own.

@@ -357,9 +357,10 @@ model Shift {
 ///
 /// The roster is generated from it a few weeks ahead at a time
 /// (`shift-patterns.ts`), so a pattern with no end date never runs out. Every
-/// generated day is an ordinary `Shift`, and `generatedThrough` only ever moves
-/// forward: a shift deleted from the roster, or a day closed, is not
-/// regenerated behind the coordinator's back.
+/// generated day is an ordinary `Shift`, and `generatedThrough` only moves
+/// forward as time passes: a shift deleted from the roster, or a day closed,
+/// is not regenerated behind the coordinator's back. It is rewound only when
+/// the pattern itself is cut short, so a later extension fills the gap.
 model ShiftPattern {
   id               String    @id @default(cuid())
   serviceAreaId    String
