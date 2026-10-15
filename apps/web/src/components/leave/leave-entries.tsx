@@ -40,6 +40,7 @@ import {
   leaveStage,
   type LeaveStage,
 } from "@/lib/volunteer-leave";
+import { cn } from "@/lib/utils";
 import { LeaveForm } from "./leave-form";
 
 const STAGE_STATUS: Record<LeaveStage, string> = {
@@ -180,8 +181,16 @@ export function LeaveEntries({
                   </p>
                 </div>
                 {/* Pulled out by the ghost buttons' padding so their labels line
-                    up with the text edge, whichever side they land on. */}
-                <div className="-mx-2.5 flex shrink-0 items-center gap-1">
+                    up with the text edge, whichever side they land on. On the
+                    board, where each row names someone, they always sit under
+                    the text - a short row would otherwise put them beside it
+                    and break the column's rhythm. */}
+                <div
+                  className={cn(
+                    "-mx-2.5 flex shrink-0 items-center gap-1",
+                    showVolunteer && "basis-full"
+                  )}
+                >
                   {(stageBadge === "all" || (stageBadge === "current" && stage === "current")) && (
                     <StatusBadge status={STAGE_STATUS[stage]} className="mx-2.5" />
                   )}
