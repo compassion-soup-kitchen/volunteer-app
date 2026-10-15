@@ -13,6 +13,7 @@
 
 import type {
   Announcement,
+  LeaveEntry,
   ApplicationSubmission,
   AttendanceStatus,
   MyApplication,
@@ -33,7 +34,10 @@ const TODAY = new Date();
 function isoDate(offsetDays: number): string {
   const d = new Date(TODAY);
   d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
+  // The local calendar day - `toISOString` would give the UTC one, which in
+  // Aotearoa is yesterday for the whole morning.
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 /** A full ISO datetime `hoursAgo` before now — for announcement timestamps. */
@@ -125,6 +129,8 @@ interface MockDb {
    * way a single row does on the server.
    */
   events: VolunteerEvent[];
+  /** The volunteer's leave, newest last. */
+  leave: LeaveEntry[];
   profile: ProfileRecord;
 }
 
@@ -359,6 +365,17 @@ export const db: MockDb = {
   pastTraining,
   announcements,
   events,
+  // A long weekend away, a few weeks out, so the leave screen has something to show.
+  leave: [
+    {
+      id: 'lv-1',
+      startsOn: isoDate(24),
+      endsOn: isoDate(27),
+      reason: 'Whānau in Rotorua',
+      loggedByStaff: false,
+      loggedByName: null,
+    },
+  ],
   profile: {
     id: 'vol-aroha',
     phone: '021 555 0142',

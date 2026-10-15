@@ -49,6 +49,7 @@ model User {
   createdShifts        Shift[]
   createdShiftPatterns ShiftPattern[]
   createdClosedDays    ClosedDay[]
+  loggedLeave          VolunteerLeave[]     @relation("LeaveLoggedBy")
   markedAttendance     ShiftSignup[]        @relation("AttendanceMarkedBy")
   recordedShiftMeals   Shift[]              @relation("MealsRecordedBy")
   createdTraining      TrainingSession[]
@@ -183,6 +184,7 @@ model VolunteerProfile {
   shiftOffers         ShiftOffer[]
   trainingAttendances TrainingAttendance[]
   regularPatterns     ShiftPattern[]       @relation("ShiftPatternRegulars")
+  leave               VolunteerLeave[]
 }
 
 /// The colour a group's badge carries. Stored as intent, not hex - each maps to
@@ -400,6 +402,38 @@ model ClosedDay {
   createdAt   DateTime @default(now())
 
   createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+/// Time a volunteer is away - a holiday, surgery, exams, a new baby.
+///
+/// Leave is a fact about the roster, not just a note: while it runs the
+/// volunteer can't be signed up or rostered, regulars aren't seated on their
+/// repeating shifts, and logging it takes them off the shifts they were
+/// already on (see `volunteer-leave.ts`). Shortening or cancelling it puts
+/// regulars back on whatever repeating shifts still have room.
+///
+/// No approval step: the volunteer logs their own, and staff log it for them
+/// when they ring in or don't use the app. Past leave is kept as the record.
+model VolunteerLeave {
+  id          String   @id @default(cuid())
+  volunteerId String
+  /// First day away, inclusive. Wall-calendar days, like `Shift.date`.
+  startsOn    DateTime @db.Date
+  /// Last day away, inclusive - they're back the day after.
+  endsOn      DateTime @db.Date
+  /// Optional, and only ever shown to the volunteer and staff.
+  reason      String?
+  /// Who logged it - the volunteer, or a coordinator on their behalf.
+  /// Nullable for the same reason as `Shift.createdById`.
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  createdBy User?            @relation("LeaveLoggedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([volunteerId, endsOn])
+  @@index([endsOn, startsOn])
 }
 
 enum ShiftOfferStatus {

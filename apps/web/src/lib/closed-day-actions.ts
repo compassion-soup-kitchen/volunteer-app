@@ -34,6 +34,7 @@ import {
   refillReopenedDay,
   scheduleRosterTopUp,
 } from "@/lib/data/shift-patterns";
+import { getLeaveBetween } from "@/lib/data/volunteer-leave";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -57,6 +58,15 @@ export type CalendarClosedDay = {
   createdByName: string | null;
 };
 
+/** Someone on leave at some point in the month shown. */
+export type CalendarAway = {
+  id: string;
+  userId: string;
+  name: string;
+  startsOn: DateOnly;
+  endsOn: DateOnly;
+};
+
 export type RosterMonth = {
   /** First day of the month shown. */
   month: DateOnly;
@@ -67,6 +77,8 @@ export type RosterMonth = {
   holidays: PublicHoliday[];
   /** Public holidays coming up that nobody has closed yet. */
   suggestions: PublicHoliday[];
+  /** Volunteers on leave during the grid, so a day shows who's away. */
+  away: CalendarAway[];
 };
 
 export type ClosureImpact = {
@@ -106,7 +118,7 @@ export async function getRosterMonth(month: DateOnly): Promise<RosterMonth | nul
   const today = todayInAppZone();
   const db = getDb();
 
-  const [shifts, closedDays, allClosedAhead] = await Promise.all([
+  const [shifts, closedDays, allClosedAhead, away] = await Promise.all([
     db.shift.findMany({
       where: { date: { gte: parseDateOnly(from), lte: parseDateOnly(to) } },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
@@ -139,6 +151,7 @@ export async function getRosterMonth(month: DateOnly): Promise<RosterMonth | nul
       where: { date: { gte: parseDateOnly(today) } },
       select: { date: true },
     }),
+    getLeaveBetween({ startsOn: from, endsOn: to }),
   ]);
 
   return {
@@ -165,6 +178,13 @@ export async function getRosterMonth(month: DateOnly): Promise<RosterMonth | nul
       today,
       closedDates: new Set(allClosedAhead.map((day) => dateOnlyOf(day.date))),
     }),
+    away: away.map((leave) => ({
+      id: leave.id,
+      userId: leave.volunteer.userId,
+      name: leave.volunteer.name,
+      startsOn: leave.startsOn,
+      endsOn: leave.endsOn,
+    })),
   };
 }
 

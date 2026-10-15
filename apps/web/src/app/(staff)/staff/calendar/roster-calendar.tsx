@@ -11,6 +11,7 @@ import {
   RiDoorOpenLine,
   RiLoader4Line,
   RiRepeatLine,
+  RiSuitcaseLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
 
@@ -39,11 +40,13 @@ import { BleedList } from "@/components/brand/detail-list";
 import {
   closeDays,
   reopenClosedDay,
+  type CalendarAway,
   type CalendarClosedDay,
   type CalendarShift,
   type RosterMonth,
 } from "@/lib/closed-day-actions";
 import { monthGrid } from "@/lib/closed-days";
+import { coversDay, formatLeaveRange } from "@/lib/volunteer-leave";
 import {
   addMonthsToDateOnly,
   formatDateOnly,
@@ -111,6 +114,14 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
     () => new Map(data.holidays.map((holiday) => [holiday.date, holiday])),
     [data.holidays]
   );
+  const awayByDate = useMemo(() => {
+    const map = new Map<DateOnly, CalendarAway[]>();
+    for (const day of weeks.flat()) {
+      const away = data.away.filter((leave) => coversDay(leave, day.date));
+      if (away.length > 0) map.set(day.date, away);
+    }
+    return map;
+  }, [weeks, data.away]);
 
   const inGrid = (date: string | undefined): date is DateOnly =>
     !!date && isDateOnly(date) && weeks.some((week) => week.some((d) => d.date === date));
@@ -176,6 +187,7 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
                   shifts={shiftsByDate.get(day.date) ?? []}
                   closure={closedByDate.get(day.date) ?? null}
                   holiday={holidayByDate.get(day.date) ?? null}
+                  awayCount={awayByDate.get(day.date)?.length ?? 0}
                   onSelect={() => selectDay(day.date)}
                 />
               ))}
@@ -193,6 +205,7 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
           shifts={shiftsByDate.get(selected) ?? []}
           closure={closedByDate.get(selected) ?? null}
           holiday={holidayByDate.get(selected) ?? null}
+          away={awayByDate.get(selected) ?? []}
           onClose={(reason) => setClosing({ date: selected, reason })}
           onReopened={refresh}
         />
@@ -264,6 +277,8 @@ interface DayCellProps {
   shifts: CalendarShift[];
   closure: CalendarClosedDay | null;
   holiday: PublicHoliday | null;
+  /** Volunteers on leave that day. */
+  awayCount: number;
   onSelect: () => void;
 }
 
@@ -281,6 +296,7 @@ function DayCell({
   shifts,
   closure,
   holiday,
+  awayCount,
   onSelect,
 }: DayCellProps) {
   const summary = closure
@@ -290,6 +306,7 @@ function DayCell({
         shifts.length === 0
           ? "nothing rostered"
           : `${shifts.length} ${shifts.length === 1 ? "shift" : "shifts"}`,
+        awayCount > 0 ? `${awayCount} on leave` : null,
       ]
         .filter(Boolean)
         .join(", ");
@@ -369,6 +386,16 @@ function DayCell({
               </span>
             )}
           </span>
+
+          {awayCount > 0 && (
+            <span
+              aria-hidden
+              className="mt-auto hidden items-center gap-1 text-[0.68rem] text-muted-foreground sm:flex"
+            >
+              <RiSuitcaseLine className="size-3 shrink-0" />
+              <span className="tnum">{awayCount}</span> away
+            </span>
+          )}
         </>
       )}
     </button>
@@ -402,6 +429,7 @@ interface DayPanelProps {
   shifts: CalendarShift[];
   closure: CalendarClosedDay | null;
   holiday: PublicHoliday | null;
+  away: CalendarAway[];
   onClose: (defaultReason: string) => void;
   onReopened: () => void;
 }
@@ -412,6 +440,7 @@ function DayPanel({
   shifts,
   closure,
   holiday,
+  away,
   onClose,
   onReopened,
 }: DayPanelProps) {
@@ -519,6 +548,30 @@ function DayPanel({
                 </li>
               ))}
             </BleedList>
+          )}
+
+          {away.length > 0 && (
+            <div className="border-t border-border px-5 py-3">
+              <p className="eyebrow mb-1.5 flex items-center gap-1.5 text-[0.62rem] text-muted-foreground">
+                <RiSuitcaseLine aria-hidden className="size-3" />
+                On leave · {away.length}
+              </p>
+              <ul className="space-y-1">
+                {away.map((leave) => (
+                  <li key={leave.id} className="flex items-baseline justify-between gap-3 text-sm">
+                    <Link
+                      href={`/staff/volunteers/${leave.userId}`}
+                      className="min-w-0 truncate font-medium hover:text-primary hover:underline"
+                    >
+                      {leave.name}
+                    </Link>
+                    <span className="shrink-0 text-xs text-muted-foreground tnum">
+                      {formatLeaveRange(leave, today)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {!isPast && (

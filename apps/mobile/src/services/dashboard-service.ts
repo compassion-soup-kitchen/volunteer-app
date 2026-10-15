@@ -8,6 +8,7 @@ import { getMilestones } from '@/lib/milestones';
 import type { DashboardData, OpenShift, RosterShift, ShiftServiceArea } from '@/types/models';
 
 import { apiFetch, delay, USE_MOCK } from './client';
+import { mockLeaveOn } from './leave-service';
 
 function thisMonthKey(): string {
   const now = new Date();
@@ -36,6 +37,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   await delay();
 
   const month = thisMonthKey();
+  const today = isoDate(0);
   const attended = db.shifts.filter((s) => db.mySignups[s.id]?.status === 'ATTENDED');
 
   let totalHours = 0;
@@ -65,7 +67,8 @@ export async function getDashboardData(): Promise<DashboardData> {
         !isPast(s.date) &&
         !active &&
         interests.has(s.serviceAreaId) &&
-        signupCount(s) < s.capacity
+        signupCount(s) < s.capacity &&
+        !mockLeaveOn(s.date)
       );
     })
     .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
@@ -89,6 +92,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     totalMeals,
     totalShifts: attended.length,
     milestones: getMilestones(totalHours),
+    leave: {
+      current: db.leave.find((l) => l.startsOn <= today && l.endsOn >= today) ?? null,
+      next:
+        db.leave
+          .filter((l) => l.startsOn > today)
+          .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0] ?? null,
+    },
   };
 }
 

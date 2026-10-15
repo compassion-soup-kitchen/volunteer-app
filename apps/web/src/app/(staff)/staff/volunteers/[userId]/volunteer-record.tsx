@@ -31,6 +31,7 @@ import {
   RiPhoneLine,
   RiRestaurantLine,
   RiShieldCheckLine,
+  RiSuitcaseLine,
   RiTimeLine,
   RiUserHeartLine,
   RiUserLine,
@@ -47,6 +48,9 @@ import type {
   VolunteerDetail,
   VolunteerDetailShift,
 } from "@/lib/staff-actions";
+import type { VolunteerLeaveOverview } from "@/lib/leave-actions";
+import { LeaveEntries } from "@/components/leave/leave-entries";
+import { LogLeaveDialog } from "@/components/leave/log-leave-dialog";
 import { VolunteerDocuments } from "./volunteer-documents";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -65,11 +69,19 @@ const NOT_PROVIDED = (
  * own profile, plus the things only staff need - emergency contact, vetting,
  * their record of shifts and training, and the account behind it all.
  *
- * Read-only by design. Everything that *changes* a volunteer (status, role,
- * groups, archiving) stays in one place - the directory's row menu - so there
- * is never a question of which control is authoritative.
+ * Read-only by design, leave aside. Everything that *changes* a volunteer
+ * (status, role, groups, archiving) stays in one place - the directory's row
+ * menu - so there is never a question of which control is authoritative.
+ * Leave is logged here because it is about this one person's dates, and the
+ * leave board offers the same controls.
  */
-export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
+export function VolunteerRecord({
+  detail,
+  leave,
+}: {
+  detail: VolunteerDetail;
+  leave: VolunteerLeaveOverview | null;
+}) {
   const { user, profile, hours, training } = detail;
 
   if (!profile) {
@@ -284,6 +296,13 @@ export function VolunteerRecord({ detail }: { detail: VolunteerDetail }) {
             <EmptyRow>No availability set.</EmptyRow>
           )}
         </Card>
+
+        {leave && (
+          <LeaveCard
+            leave={leave}
+            volunteer={{ id: profile.id, name: user.name ?? "this volunteer" }}
+          />
+        )}
 
         {/* Upcoming and past are two questions - "am I rostering around
             them?" and "have they been turning up?" - so they get a card each.
@@ -657,10 +676,60 @@ function OfflineNote({ name }: { name: string | null }) {
             They don&apos;t use the app, so staff keep this record. Put them on
             a shift from the shift&apos;s page, or set them as a regular on a
             repeating shift. Marking them attended is what logs their hours.
-            Upload their paper forms under Documents.
+            Log their leave below when they ring to say they&apos;re away, and
+            upload their paper forms under Documents.
           </p>
         </div>
       </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Their leave - what used to live in a spreadsheet. Everything ahead plus the
+ * last few stretches, with staff able to log, change or remove it.
+ */
+function LeaveCard({
+  leave,
+  volunteer,
+}: {
+  leave: VolunteerLeaveOverview;
+  volunteer: { id: string; name: string };
+}) {
+  const entries = [
+    ...(leave.current ? [leave.current] : []),
+    ...leave.upcoming,
+    ...leave.past,
+  ];
+  const firstName = volunteer.name.split(" ")[0];
+
+  return (
+    <Card>
+      <CardHeader>
+        <SectionTitle icon={RiSuitcaseLine} tone={leave.current ? "warning" : undefined}>
+          Wā okioki · Leave
+        </SectionTitle>
+        <CardAction>
+          <LogLeaveDialog
+            today={leave.today}
+            volunteer={volunteer}
+            size="sm"
+            variant="outline"
+          />
+        </CardAction>
+      </CardHeader>
+      {entries.length > 0 ? (
+        <div className="border-t border-border">
+          <LeaveEntries
+            entries={entries}
+            audience="staff"
+            today={leave.today}
+            volunteerName={firstName}
+          />
+        </div>
+      ) : (
+        <EmptyRow>No leave logged.</EmptyRow>
+      )}
     </Card>
   );
 }

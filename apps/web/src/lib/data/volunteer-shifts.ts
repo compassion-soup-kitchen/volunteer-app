@@ -2,7 +2,17 @@ import { Prisma } from "@prisma/client";
 import { getDb } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { scheduleRosterTopUp } from "@/lib/data/shift-patterns";
-import { safeParseDateOnly, startOfTodayInAppZone } from "@/lib/date-only";
+import {
+  dateOnlyOf,
+  safeParseDateOnly,
+  startOfTodayInAppZone,
+} from "@/lib/date-only";
+import { leaveCovering, leaveForVolunteers } from "@/lib/data/leave-days";
+import {
+  leaveOn,
+  onLeaveSignupMessage,
+  type LeaveRange,
+} from "@/lib/volunteer-leave";
 import {
   heldForOffersMessage,
   isHeldForOffers,
@@ -28,6 +38,8 @@ export type ShiftWithDetails = {
   heldForOffers: boolean;
   /** This volunteer's own standing on the offer, if they were given one. */
   userOfferStatus: OfferStatus | null;
+  /** The day falls in this volunteer's leave, so it isn't theirs to take. */
+  userOnLeave: boolean;
 };
 
 export type ShiftFilters = {
@@ -77,6 +89,7 @@ const shiftDetailInclude = {
 function toShiftWithDetails(
   shift: ShiftWithSignups,
   volunteerId: string | null,
+  leave: readonly LeaveRange[],
   now: Date = new Date()
 ): ShiftWithDetails {
   const userSignup = volunteerId
@@ -100,6 +113,7 @@ function toShiftWithDetails(
     offersCloseOn: shift.offersCloseOn,
     heldForOffers: isHeldForOffers(shift, now),
     userOfferStatus: userOffer?.status ?? null,
+    userOnLeave: leaveOn(leave, dateOnlyOf(shift.date)) !== null,
   };
 }
 
@@ -139,8 +153,18 @@ export async function getAvailableShiftsForUser(
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
 
+  const leave =
+    profile && shifts.length > 0
+      ? ((
+          await leaveForVolunteers(db, [profile.id], {
+            startsOn: dateOnlyOf(shifts[0].date),
+            endsOn: dateOnlyOf(shifts[shifts.length - 1].date),
+          })
+        ).get(profile.id) ?? [])
+      : [];
+
   return shifts.map((shift) =>
-    toShiftWithDetails(shift, profile?.id ?? null, now)
+    toShiftWithDetails(shift, profile?.id ?? null, leave, now)
   );
 }
 
@@ -158,8 +182,10 @@ export async function getShiftForUser(
     where: { id: shiftId },
     include: shiftDetailInclude,
   });
+  if (!shift) return null;
 
-  return shift ? toShiftWithDetails(shift, profile?.id ?? null) : null;
+  const leave = profile ? await leaveCovering(db, profile.id, shift.date) : null;
+  return toShiftWithDetails(shift, profile?.id ?? null, leave ? [leave] : []);
 }
 
 /** The volunteer's own roster: upcoming bookings plus past attended / missed shifts. */
@@ -247,6 +273,8 @@ export function decideSignup(input: {
   existingSignupStatus: string | null;
   /** This volunteer's own offer on the shift, if they were given one. */
   userOfferStatus?: OfferStatus | null;
+  /** Their leave covering the shift's day, if they're away then. */
+  leave?: LeaveRange | null;
   now: Date;
 }): SignupDecision {
   const {
@@ -254,6 +282,7 @@ export function decideSignup(input: {
     activeSignupCount,
     existingSignupStatus,
     userOfferStatus = null,
+    leave = null,
     now,
   } = input;
 
@@ -261,6 +290,11 @@ export function decideSignup(input: {
   // Shift.date is date-only, so "passed" means the day is behind us.
   if (shift.date < startOfTodayInAppZone(now)) {
     return { action: "reject", error: "This shift has already passed." };
+  }
+  // Leave is the volunteer's own word that they're away - it outranks
+  // everything about the shift itself, so they hear about it first.
+  if (leave && existingSignupStatus !== "SIGNED_UP") {
+    return { action: "reject", error: onLeaveSignupMessage(leave) };
   }
   // The hold is about who may take a spot, so it has nothing to say to
   // someone already holding one — they hear "already signed up" below, even
@@ -346,12 +380,16 @@ export async function signUpForShiftAsUser(
 
         const userOffer =
           shift?.offers.find((o) => o.volunteerId === profile.id) ?? null;
+        const leave = shift
+          ? await leaveCovering(tx, profile.id, shift.date)
+          : null;
 
         const decision = decideSignup({
           shift,
           activeSignupCount: shift?.signups.length ?? 0,
           existingSignupStatus: existing?.status ?? null,
           userOfferStatus: userOffer?.status ?? null,
+          leave,
           now: new Date(),
         });
 

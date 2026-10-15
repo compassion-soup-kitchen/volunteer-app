@@ -34,6 +34,12 @@ function dateToIso(date: Date): string {
   return `${y}-${mo}-${d}`;
 }
 
+function clampDate(date: Date, min?: Date, max?: Date): Date {
+  if (min && date < min) return min;
+  if (max && date > max) return max;
+  return date;
+}
+
 export function formatDateNZ(iso: string): string | null {
   const date = isoToDate(iso);
   if (!date) return null;
@@ -62,8 +68,10 @@ export function DateField({
   const isIOS = process.env.EXPO_OS === 'ios';
   const selected = isoToDate(value);
   const display = value ? formatDateNZ(value) : null;
-  // What the wheels/dialog start on when nothing is set yet.
-  const initial = selected ?? maximumDate ?? new Date();
+  // What the wheels/dialog start on when nothing is set yet: today, kept
+  // inside the allowed range - so a birth date opens on its latest allowed
+  // day, and a date ahead opens on the earliest one.
+  const initial = selected ?? clampDate(new Date(), minimumDate, maximumDate);
 
   const borderColor = error ? colors.destructive : open ? colors.ring : colors.border;
 

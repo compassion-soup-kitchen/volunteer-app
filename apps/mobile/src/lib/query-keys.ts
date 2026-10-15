@@ -16,6 +16,8 @@ export const qk = {
   shifts: (areaId?: string) => ['shifts', areaId ?? 'all'] as const,
   shiftsAll: ['shifts'] as const,
   shift: (id: string) => ['shift', id] as const,
+  /** Every open shift detail, whichever one is showing. */
+  shiftDetailsAll: ['shift'] as const,
   schedule: ['schedule'] as const,
   training: ['training'] as const,
   trainingOverview: ['training', 'overview'] as const,
@@ -25,4 +27,11 @@ export const qk = {
   application: ['application'] as const,
   /** What deleting your own account would erase. */
   accountDeletion: ['account', 'deletion'] as const,
+  leave: ['leave'] as const,
 };
+
+/**
+ * Logging or changing leave moves the roster - shifts come off, regular spots
+ * come back - so every read of it is stale afterwards, not just the leave list.
+ */
+export const LEAVE_AFFECTS = [qk.leave, qk.dashboard, qk.shiftsAll, qk.schedule, qk.shiftDetailsAll] as const;

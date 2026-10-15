@@ -31,6 +31,7 @@ describe("serializeShift", () => {
       offersCloseOn: null,
       heldForOffers: false,
       userOfferStatus: null,
+      userOnLeave: false,
     });
 
     expect(result).toEqual({
@@ -47,7 +48,29 @@ describe("serializeShift", () => {
       offersCloseOn: null,
       heldForOffers: false,
       userOfferStatus: null,
+      onLeave: false,
     });
+  });
+
+  it("says when the day falls in the volunteer's leave", () => {
+    const result = serializeShift({
+      id: "shift-1",
+      date: new Date("2026-07-18T00:00:00.000Z"),
+      startTime: "09:00",
+      endTime: "13:00",
+      capacity: 6,
+      notes: null,
+      serviceArea: { id: "area-1", name: "Kitchen" },
+      signupCount: 0,
+      userSignupId: null,
+      userSignupStatus: null,
+      offersCloseOn: null,
+      heldForOffers: false,
+      userOfferStatus: null,
+      userOnLeave: true,
+    });
+
+    expect(result.onLeave).toBe(true);
   });
 
   it("passes the right of first refusal through as calendar days", () => {
@@ -65,6 +88,7 @@ describe("serializeShift", () => {
       offersCloseOn: new Date("2026-07-15T00:00:00.000Z"),
       heldForOffers: true,
       userOfferStatus: "PENDING",
+      userOnLeave: false,
     });
 
     expect(result).toMatchObject({
@@ -114,9 +138,17 @@ describe("serializeDashboard", () => {
       milestones: [
         { hours: 10, label: "10 Hours", term: "Whetū", reached: true },
       ],
+      leave: {
+        current: null,
+        next: { startsOn: "2026-08-03", endsOn: "2026-08-14" },
+      },
     });
 
     expect(result.nextShift?.date).toBe("2026-07-18");
+    expect(result.leave).toEqual({
+      current: null,
+      next: { startsOn: "2026-08-03", endsOn: "2026-08-14" },
+    });
     expect(result.upcomingShifts[0].serviceArea).toEqual({
       id: "area-1",
       name: "Kitchen",

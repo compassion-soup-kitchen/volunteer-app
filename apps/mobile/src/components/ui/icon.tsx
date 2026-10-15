@@ -22,6 +22,8 @@ export type IconProps = {
  */
 const SF_SYMBOLS: Partial<Record<IconName, string>> = {
   add: 'plus',
+  'airplane-outline': 'airplane',
+  'sunny-outline': 'sun.max',
   'alert-circle': 'exclamationmark.circle.fill',
   'arrow-forward': 'arrow.right',
   'arrow-forward-outline': 'arrow.right',

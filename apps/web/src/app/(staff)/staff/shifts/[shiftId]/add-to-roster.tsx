@@ -20,6 +20,11 @@ import {
 } from "@/lib/shift-actions";
 import { contactLine } from "@/lib/format";
 import { searchVolunteers } from "../volunteer-picker";
+import type { DateOnly } from "@/lib/date-only";
+import { formatLeaveRange } from "@/lib/volunteer-leave";
+
+/** Someone on leave on the shift's day. */
+export type AwayVolunteer = { volunteerId: string; startsOn: DateOnly; endsOn: DateOnly };
 
 interface AddToRosterProps {
   shiftId: string;
@@ -29,6 +34,8 @@ interface AddToRosterProps {
   /** A day already gone: adding someone records that they came. */
   isPast: boolean;
   isFull: boolean;
+  /** On leave that day: shown, but not addable unless the day is gone. */
+  away: AwayVolunteer[];
 }
 
 /**
@@ -41,6 +48,7 @@ export function AddToRoster({
   rosteredIds,
   isPast,
   isFull,
+  away,
 }: AddToRosterProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -48,10 +56,19 @@ export function AddToRoster({
   const [addingId, setAddingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // A day already gone is a record of who came, so leave doesn't hold it up.
+  const awayById = useMemo(
+    () => new Map(isPast ? [] : away.map((leave) => [leave.volunteerId, leave])),
+    [away, isPast]
+  );
   const available = useMemo(() => {
     const taken = new Set(rosteredIds);
-    return volunteers.filter((volunteer) => !taken.has(volunteer.id));
-  }, [volunteers, rosteredIds]);
+    return volunteers
+      .filter((volunteer) => !taken.has(volunteer.id))
+      // People on leave sink to the bottom rather than vanish, so a
+      // coordinator looking for them learns why they can't be added.
+      .sort((a, b) => Number(awayById.has(a.id)) - Number(awayById.has(b.id)));
+  }, [volunteers, rosteredIds, awayById]);
   const matches = useMemo(() => searchVolunteers(available, search), [available, search]);
 
   function handleAdd(volunteer: VolunteerOption) {
@@ -124,33 +141,41 @@ export function AddToRoster({
           </p>
         ) : (
           <ul className="max-h-72 overflow-y-auto p-1">
-            {matches.map((volunteer) => (
-              <li key={volunteer.id}>
-                <button
-                  type="button"
-                  onClick={() => handleAdd(volunteer)}
-                  disabled={isPending}
-                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors outline-none hover:bg-secondary/60 focus-visible:bg-secondary/60 disabled:opacity-60"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-medium">{volunteer.name}</span>
-                      {volunteer.isOffline && <Badge variant="neutral">Offline</Badge>}
-                    </span>
-                    {volunteer.groups.length > 0 ? (
-                      <GroupBadges groups={volunteer.groups} max={2} className="mt-0.5" />
-                    ) : (
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {contactLine(volunteer)}
+            {matches.map((volunteer) => {
+              const leave = awayById.get(volunteer.id);
+              return (
+                <li key={volunteer.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleAdd(volunteer)}
+                    disabled={isPending || Boolean(leave)}
+                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors outline-none hover:bg-secondary/60 focus-visible:bg-secondary/60 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-medium">{volunteer.name}</span>
+                        {volunteer.isOffline && <Badge variant="neutral">Offline</Badge>}
+                        {leave && <Badge variant="warning">On leave</Badge>}
                       </span>
+                      {leave ? (
+                        <span className="block truncate text-xs text-muted-foreground">
+                          Away {formatLeaveRange(leave)}
+                        </span>
+                      ) : volunteer.groups.length > 0 ? (
+                        <GroupBadges groups={volunteer.groups} max={2} className="mt-0.5" />
+                      ) : (
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {contactLine(volunteer)}
+                        </span>
+                      )}
+                    </span>
+                    {addingId === volunteer.id && (
+                      <RiLoader4Line className="size-4 shrink-0 animate-spin text-muted-foreground" />
                     )}
-                  </span>
-                  {addingId === volunteer.id && (
-                    <RiLoader4Line className="size-4 shrink-0 animate-spin text-muted-foreground" />
-                  )}
-                </button>
-              </li>
-            ))}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </PopoverContent>

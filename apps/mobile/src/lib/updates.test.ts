@@ -56,7 +56,9 @@ describe('isReadOnlySurface', () => {
 
 describe('versionLabel', () => {
   const embedded = { isEmbeddedLaunch: true, createdAt: new Date('2026-07-30T00:00:00Z') };
-  const updated = { isEmbeddedLaunch: false, createdAt: new Date('2026-07-30T00:00:00Z') };
+  // Midday on the device's own clock: the label is the day the phone saw the
+  // update land, so a UTC-midnight fixture reads as 29 July west of Greenwich.
+  const updated = { isEmbeddedLaunch: false, createdAt: new Date(2026, 6, 30, 12) };
 
   it('names the version alone for the bundle that shipped in the build', () => {
     expect(versionLabel('1.0.0', embedded, true)).toBe('Version 1.0.0');

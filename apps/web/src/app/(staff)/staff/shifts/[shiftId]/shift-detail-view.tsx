@@ -54,7 +54,7 @@ import {
   type VolunteerOption,
 } from "@/lib/shift-actions";
 import { RecordMealsCard } from "./record-meals-card";
-import { AddToRoster } from "./add-to-roster";
+import { AddToRoster, type AwayVolunteer } from "./add-to-roster";
 import { contactLine, formatTimeRange, personName } from "@/lib/format";
 import { describeRecurrence } from "@/lib/shift-patterns";
 import {
@@ -68,6 +68,8 @@ interface ShiftDetailViewProps {
   shift: StaffShift;
   /** Active volunteers staff can put on the roster. */
   volunteers: VolunteerOption[];
+  /** Volunteers on leave on this shift's day. */
+  away: AwayVolunteer[];
 }
 
 /** The line under a volunteer's name, with offline volunteers flagged. */
@@ -104,7 +106,7 @@ function initials(name: string | null): string {
   return (first + last).toUpperCase() || "?";
 }
 
-export function ShiftDetailView({ shift, volunteers }: ShiftDetailViewProps) {
+export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProps) {
   const router = useRouter();
   const [showDelete, setShowDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -393,6 +395,7 @@ export function ShiftDetailView({ shift, volunteers }: ShiftDetailViewProps) {
               rosteredIds={activeSignups.map((s) => s.volunteer.id)}
               isPast={past}
               isFull={activeSignups.length >= shift.capacity}
+              away={away}
             />
           </CardAction>
         </CardHeader>

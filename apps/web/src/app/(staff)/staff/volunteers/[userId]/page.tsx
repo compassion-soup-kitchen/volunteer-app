@@ -9,7 +9,9 @@ import { StatusBadge } from "@/components/brand/status-badge";
 import { Button } from "@/components/ui/button";
 import { contactLine } from "@/lib/format";
 import Link from "next/link";
-import { RiPencilLine } from "@remixicon/react";
+import { RiPencilLine, RiSuitcaseLine } from "@remixicon/react";
+import { getVolunteerLeave } from "@/lib/leave-actions";
+import { describeLeaveStatus } from "@/lib/volunteer-leave";
 import { VolunteerRecord } from "./volunteer-record";
 
 export const metadata: Metadata = {
@@ -51,6 +53,7 @@ export default async function VolunteerDetailPage({
   }
 
   const { user, profile } = detail;
+  const leave = profile ? await getVolunteerLeave(profile.id) : null;
 
   return (
     <div className="space-y-6">
@@ -79,6 +82,12 @@ export default async function VolunteerDetailPage({
               </Badge>
             )}
             {user.isOffline && <Badge variant="neutral">Offline</Badge>}
+            {leave?.current && (
+              <Badge variant="warning" className="gap-1">
+                <RiSuitcaseLine aria-hidden />
+                {describeLeaveStatus(leave.current, leave.today)}
+              </Badge>
+            )}
             {user.status === "ARCHIVED" && <StatusBadge status="ARCHIVED" />}
             {profile ? (
               <StatusBadge status={profile.status} className="text-sm" />
@@ -97,7 +106,7 @@ export default async function VolunteerDetailPage({
         }
       />
 
-      <VolunteerRecord detail={detail} />
+      <VolunteerRecord detail={detail} leave={leave} />
     </div>
   );
 }

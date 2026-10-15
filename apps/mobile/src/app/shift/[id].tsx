@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -103,6 +103,7 @@ function FactRow({ icon, value }: { icon: IconName; value: string }) {
 
 export default function ShiftDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const toast = useToast();
@@ -165,6 +166,7 @@ export default function ShiftDetailScreen() {
   const { left: spotsLeft, full, scarce } = availability(shift.signupCount, shift.capacity);
   const isSignedUp = shift.userSignupStatus === 'SIGNED_UP';
   const isFull = full && !isSignedUp;
+  const onLeave = Boolean(shift.onLeave) && !isSignedUp;
 
   async function share() {
     if (!shift) return;
@@ -202,6 +204,8 @@ export default function ShiftDetailScreen() {
         <View style={{ marginTop: Spacing.md }}>
           {isSignedUp ? (
             <Badge label="Booked" tone="success" icon="checkmark" />
+          ) : onLeave ? (
+            <Badge label="You're on leave" tone="warning" icon="airplane-outline" />
           ) : isFull ? (
             <Badge label="Full" tone="neutral" />
           ) : (
@@ -280,6 +284,8 @@ export default function ShiftDetailScreen() {
               disabled={pending}
               onPress={confirmCancel}
             />
+          ) : onLeave ? (
+            <Button title="Change my leave" variant="secondary" icon="airplane-outline" onPress={() => router.push('/leave')} />
           ) : isFull ? (
             <Button title="This shift is full" variant="secondary" disabled onPress={() => {}} />
           ) : (

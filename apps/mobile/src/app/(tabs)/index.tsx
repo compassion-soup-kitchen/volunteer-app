@@ -7,6 +7,7 @@ import { AnnouncementCard } from '@/components/announcement-card';
 import { EventCard } from '@/components/event-card';
 import { Wordmark } from '@/components/brand';
 import { HomeVideoHeader } from '@/components/home-video-header';
+import { LeaveNotice } from '@/components/leave-notice';
 import { MilestoneProgress } from '@/components/milestone-progress';
 import { MissionQuote } from '@/components/mission-quote';
 import { NextShiftHero } from '@/components/next-shift-hero';
@@ -31,7 +32,7 @@ import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
 import { getAnnouncements } from '@/services/announcements-service';
 import { getUpcomingEvents } from '@/services/events-service';
-import { canReply } from '@/lib/events';
+import { canReply, todayISO } from '@/lib/events';
 import { getDashboardData } from '@/services/dashboard-service';
 import { getAvailableTraining } from '@/services/training-service';
 
@@ -167,6 +168,11 @@ export default function DashboardScreen() {
         </View>
       ) : (
         <>
+          {/* Away now: said before anything else, so missing shifts make sense. */}
+          {data.leave?.current ? (
+            <LeaveNotice range={data.leave.current} away today={todayISO()} onPress={() => router.push('/leave')} />
+          ) : null}
+
           {/* HERO — the one thing they came to see */}
           {data.nextShift ? (
             <NextShiftHero
@@ -190,6 +196,15 @@ export default function DashboardScreen() {
               />
             </Card>
           )}
+
+          {!data.leave?.current && data.leave?.next ? (
+            <LeaveNotice
+              range={data.leave.next}
+              away={false}
+              today={todayISO()}
+              onPress={() => router.push('/leave')}
+            />
+          ) : null}
 
           {/* Reminders — booked training surfaced as an action */}
           {nextTraining ? (

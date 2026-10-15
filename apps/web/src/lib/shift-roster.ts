@@ -4,11 +4,12 @@
  *
  * Deliberately looser than a volunteer signing themselves up: staff can
  * override a first-refusal hold and add people to a shift that has already
- * happened. They still can't overfill it, and only someone active can be put
- * on the roster.
+ * happened. They still can't overfill it, only someone active can be put on
+ * the roster, and nobody goes on a day they're on leave.
  */
 
 import type { DateOnly } from "@/lib/date-only";
+import { onLeaveRosterMessage, type LeaveRange } from "@/lib/volunteer-leave";
 
 export type SignupState = "SIGNED_UP" | "ATTENDED" | "NO_SHOW" | "CANCELLED";
 
@@ -24,6 +25,8 @@ export function decideStaffRoster(input: {
   seatedCount: number;
   existingStatus: SignupState | null;
   volunteerIsActive: boolean;
+  /** Their leave covering the shift's day, if they're away then. */
+  leave?: LeaveRange | null;
 }): StaffRosterDecision {
   if (!input.volunteerIsActive) {
     return {
@@ -33,6 +36,11 @@ export function decideStaffRoster(input: {
   }
   if (input.existingStatus === "SIGNED_UP" || input.existingStatus === "ATTENDED") {
     return { action: "reject", error: "They're already on this shift." };
+  }
+  // Leave says they won't be there. A day already gone is a record of who
+  // actually came, though, so someone back early can still be logged.
+  if (input.leave && input.shiftDate >= input.today) {
+    return { action: "reject", error: onLeaveRosterMessage(input.leave) };
   }
   if (input.seatedCount >= input.capacity) {
     return {

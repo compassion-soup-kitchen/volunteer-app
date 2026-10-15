@@ -114,6 +114,8 @@ export interface ShiftWithDetails {
   signupCount: number;
   userSignupId: string | null;
   userSignupStatus: SignupStatus | null;
+  /** The day falls in this volunteer's leave. Absent from older servers. */
+  onLeave?: boolean;
 }
 
 export interface ShiftFilters {
@@ -266,6 +268,8 @@ export interface DashboardData {
   totalMeals: number;
   totalShifts: number;
   milestones: Milestone[];
+  /** Leave under way, else the next stretch. Absent from older servers. */
+  leave?: { current: LeaveRange | null; next: LeaveRange | null };
 }
 
 export interface HoursByArea {
@@ -397,4 +401,54 @@ export interface MyApplication {
 export interface ActionResult {
   success?: boolean;
   error?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Leave                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** A stretch of days, `YYYY-MM-DD`, inclusive at both ends. */
+export interface LeaveRange {
+  startsOn: string;
+  endsOn: string;
+}
+
+/** Time a volunteer is away. While it runs they're off the roster. */
+export interface LeaveEntry extends LeaveRange {
+  id: string;
+  reason: string | null;
+  /** A coordinator logged it on their behalf. */
+  loggedByStaff: boolean;
+  loggedByName: string | null;
+}
+
+export interface LeaveOverview {
+  /** Today on the kitchen's calendar. */
+  today: string;
+  /** False until there's a volunteer record to log leave against. */
+  canLog: boolean;
+  current: LeaveEntry | null;
+  upcoming: LeaveEntry[];
+  past: LeaveEntry[];
+}
+
+/** A shift the volunteer would come off by saving some leave. */
+export interface LeavePreviewShift {
+  shiftId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  serviceAreaName: string;
+  /** Their seat came from a repeating shift - it comes back if the leave goes. */
+  isRegular: boolean;
+}
+
+export interface LeavePreview {
+  blocker: string | null;
+  shifts: LeavePreviewShift[];
+}
+
+export interface LeaveResult extends ActionResult {
+  removedShifts?: number;
+  restoredShifts?: number;
 }

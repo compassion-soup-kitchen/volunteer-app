@@ -65,6 +65,30 @@ describe("decideStaffRoster", () => {
   });
 });
 
+describe("decideStaffRoster with leave", () => {
+  const leave = { startsOn: "2026-10-18", endsOn: "2026-10-25" };
+
+  it("refuses someone on leave that day", () => {
+    expect(decideStaffRoster({ ...base, leave })).toEqual({
+      action: "reject",
+      error: "They're on leave that day (18 – 25 Oct). Change their leave first if they can come after all.",
+    });
+  });
+
+  it("still records someone who came on a day already gone", () => {
+    expect(
+      decideStaffRoster({ ...base, shiftDate: "2026-10-12", leave: { startsOn: "2026-10-10", endsOn: "2026-10-14" } })
+    ).toEqual({ action: "create", status: "ATTENDED" });
+  });
+
+  it("reports being on the shift already before the leave", () => {
+    expect(decideStaffRoster({ ...base, existingStatus: "SIGNED_UP", leave })).toEqual({
+      action: "reject",
+      error: "They're already on this shift.",
+    });
+  });
+});
+
 describe("staffRemovalError", () => {
   it("allows taking off someone still expected", () => {
     expect(staffRemovalError("SIGNED_UP")).toBeNull();
