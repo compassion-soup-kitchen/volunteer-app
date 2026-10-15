@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import {
   RiCloseLine,
   RiLoader4Line,
   RiLockLine,
+  RiSuitcaseLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -211,6 +213,8 @@ export function ShiftBrowser({
                 const offeredToMe =
                   shift.heldForOffers && shift.userOfferStatus === "PENDING";
                 const heldForOthers = shift.heldForOffers && !offeredToMe;
+                // Their own leave covers the day - it's theirs to change, not ours to sign them up.
+                const onLeave = shift.userOnLeave && !isSignedUp;
 
                 return (
                   <Card key={shift.id}>
@@ -239,6 +243,11 @@ export function ShiftBrowser({
                         </div>
                         {isSignedUp ? (
                           <Badge className="shrink-0">Signed up</Badge>
+                        ) : onLeave ? (
+                          <Badge variant="warning" className="shrink-0 gap-1">
+                            <RiSuitcaseLine aria-hidden className="size-3" />
+                            On leave
+                          </Badge>
                         ) : offeredToMe ? (
                           <Badge variant="warning" className="shrink-0">
                             Yours first
@@ -305,7 +314,11 @@ export function ShiftBrowser({
 
                         {canSignUp && (
                           <div className="flex shrink-0 items-center gap-2">
-                            {isSignedUp ? (
+                            {onLeave ? (
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href="/profile/leave">Your leave</Link>
+                              </Button>
+                            ) : isSignedUp ? (
                               <Button
                                 variant="outline"
                                 size="sm"

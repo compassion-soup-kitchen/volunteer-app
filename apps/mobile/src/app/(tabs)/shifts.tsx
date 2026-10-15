@@ -237,6 +237,7 @@ export default function ShiftsScreen() {
                         signupCount={shift.signupCount}
                         capacity={shift.capacity}
                         signedUp={shift.userSignupStatus === 'SIGNED_UP'}
+                        onLeave={shift.onLeave}
                         booking={book.isPending && book.variables === shift.id}
                         onPress={() => router.push({ pathname: '/shift/[id]', params: { id: shift.id } })}
                         onBook={() => book.mutate(shift.id)}

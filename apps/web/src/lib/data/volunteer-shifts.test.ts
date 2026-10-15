@@ -22,6 +22,34 @@ const heldShift = (capacity = 6) => ({
 });
 
 describe("decideSignup", () => {
+  it("refuses a day the volunteer is on leave, before anything else", () => {
+    expect(
+      decideSignup({
+        shift: heldShift(1),
+        activeSignupCount: 1,
+        existingSignupStatus: null,
+        leave: { startsOn: "2026-07-08", endsOn: "2026-07-12" },
+        now,
+      })
+    ).toEqual({
+      action: "reject",
+      error:
+        "You're on leave then (8 – 12 Jul). Change your leave first if you can make it after all.",
+    });
+  });
+
+  it("still lets leave through to an unaffected day", () => {
+    expect(
+      decideSignup({
+        shift: futureShift(),
+        activeSignupCount: 0,
+        existingSignupStatus: null,
+        leave: null,
+        now,
+      })
+    ).toEqual({ action: "create" });
+  });
+
   it("rejects when the shift does not exist", () => {
     expect(
       decideSignup({

@@ -111,6 +111,8 @@ function RootNavigator() {
       {/* Pushed rather than presented as a modal: a modal invites a dismissive
           swipe, and this is a screen to read before acting on. */}
       <Stack.Screen name="profile/delete-account" options={{ title: 'Delete account' }} />
+      <Stack.Screen name="leave/index" options={{ title: 'My leave' }} />
+      <Stack.Screen name="leave/edit" options={{ title: 'Log leave', presentation: 'modal' }} />
     </Stack>
   );
 }

@@ -24,6 +24,11 @@ import type {
   AnnouncementSummary,
 } from "@/lib/data/announcements";
 import type { EventSummary } from "@/lib/data/events";
+import type {
+  LeavePreview,
+  LeaveRecord,
+  VolunteerLeaveOverview,
+} from "@/lib/data/volunteer-leave";
 import type { getProfileForUser } from "@/lib/data/volunteer-profile";
 import { getMilestones } from "@/lib/milestones";
 import { timestampToDateOnly } from "@/lib/date-only";
@@ -61,6 +66,9 @@ export function serializeShift(shift: ShiftWithDetails) {
     offersCloseOn: shift.offersCloseOn ? dateOnly(shift.offersCloseOn) : null,
     heldForOffers: shift.heldForOffers,
     userOfferStatus: shift.userOfferStatus,
+    // The day falls in this volunteer's leave. Older app versions ignore it;
+    // the signup endpoint refuses the day either way.
+    onLeave: shift.userOnLeave,
   };
 }
 
@@ -104,6 +112,7 @@ export function serializeDashboard(data: DashboardData) {
     totalMeals: data.totalMeals,
     totalShifts: data.totalShifts,
     milestones: data.milestones,
+    leave: data.leave,
   };
 }
 
@@ -124,6 +133,7 @@ export function emptyDashboard() {
     totalMeals: 0,
     totalShifts: 0,
     milestones: getMilestones(0),
+    leave: { current: null, next: null },
   };
 }
 
@@ -268,5 +278,44 @@ export function serializeSessionUser(user: ApiUser) {
     email: user.email,
     image: user.image,
     role: user.role,
+  };
+}
+
+// ─── Leave ──────────────────────────────────────────────
+
+export function serializeLeave(leave: LeaveRecord) {
+  return {
+    id: leave.id,
+    startsOn: leave.startsOn,
+    endsOn: leave.endsOn,
+    reason: leave.reason,
+    // Leave staff logged for them reads differently ("Amanda logged this").
+    loggedByStaff: leave.loggedBy ? !leave.loggedBy.isSelf : false,
+    loggedByName: leave.loggedBy && !leave.loggedBy.isSelf ? leave.loggedBy.name : null,
+  };
+}
+
+export function serializeLeaveOverview(overview: VolunteerLeaveOverview | null, today: string) {
+  return {
+    today: overview?.today ?? today,
+    // No volunteer record yet, so there's nothing to take them off.
+    canLog: overview !== null,
+    current: overview?.current ? serializeLeave(overview.current) : null,
+    upcoming: overview?.upcoming.map(serializeLeave) ?? [],
+    past: overview?.past.map(serializeLeave) ?? [],
+  };
+}
+
+export function serializeLeavePreview(preview: LeavePreview) {
+  return {
+    blocker: preview.blocker,
+    shifts: preview.shifts.map((shift) => ({
+      shiftId: shift.shiftId,
+      date: shift.date,
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      serviceAreaName: shift.serviceAreaName,
+      isRegular: shift.isRegular,
+    })),
   };
 }

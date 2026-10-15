@@ -1,9 +1,14 @@
 import { getDb } from "@/lib/db";
 import {
+  addDaysToDateOnly,
   dateOnlyOf,
   formatDateOnly,
-  startOfTodayInAppZone,
+  parseDateOnly,
+  startOfMonthInAppZone,
+  todayInAppZone,
 } from "@/lib/date-only";
+import { leaveForVolunteers } from "@/lib/data/leave-days";
+import { leaveOn, type LeaveRange } from "@/lib/volunteer-leave";
 import { getMilestones, type Milestone } from "@/lib/milestones";
 import { isHeldForOffers } from "@/lib/shift-offers";
 import { diffHours } from "./time";
@@ -38,6 +43,12 @@ export type DashboardData = {
   totalMeals: number;
   totalShifts: number;
   milestones: Milestone[];
+  /**
+   * Leave under way, or else the next stretch coming up - so home can say
+   * "you're away until Friday" rather than leave a volunteer wondering why
+   * their shifts have gone.
+   */
+  leave: { current: LeaveRange | null; next: LeaveRange | null };
 };
 
 export type ServiceAreaHours = {
@@ -82,11 +93,14 @@ export async function getDashboardDataForUser(
   if (!profile) return null;
 
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  // Shift days are wall-calendar days in Wellington, so every bound here is
+  // one too - the server's own clock would put the month and "today" on UTC.
+  const todayDay = todayInAppZone(now);
+  const startOfMonth = parseDateOnly(startOfMonthInAppZone(now));
   // Shift days carry no time, so "from now on" starts at the top of today.
-  const today = startOfTodayInAppZone(now);
-  const thirtyDaysOut = new Date(today);
-  thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
+  const today = parseDateOnly(todayDay);
+  const thirtyDaysOutDay = addDaysToDateOnly(todayDay, 30);
+  const thirtyDaysOut = parseDateOnly(thirtyDaysOutDay);
 
   // Upcoming shifts (signed up, date >= today)
   const upcomingSignups = await db.shiftSignup.findMany({
@@ -168,8 +182,28 @@ export async function getDashboardDataForUser(
       })
     : [];
 
+  // Leave from today on: what home mentions, and days not worth suggesting.
+  const leaveAhead = await db.volunteerLeave.findMany({
+    where: { volunteerId: profile.id, endsOn: { gte: today } },
+    orderBy: { startsOn: "asc" },
+    take: 2,
+    select: { startsOn: true, endsOn: true },
+  });
+  const leave = leaveAhead.map((row) => ({
+    startsOn: dateOnlyOf(row.startsOn),
+    endsOn: dateOnlyOf(row.endsOn),
+  }));
+  const awayInWindow =
+    (
+      await leaveForVolunteers(db, [profile.id], {
+        startsOn: todayDay,
+        endsOn: thirtyDaysOutDay,
+      })
+    ).get(profile.id) ?? [];
+
   const openShiftsForYou = openShifts
     .filter((s) => s.signups.length < s.capacity)
+    .filter((s) => !leaveOn(awayInWindow, dateOnlyOf(s.date)))
     // Don't dangle a shift that's being held for someone else's crew.
     .filter(
       (s) =>
@@ -208,6 +242,10 @@ export async function getDashboardDataForUser(
     totalMeals,
     totalShifts,
     milestones: getMilestones(Math.round(totalHours * 10) / 10),
+    leave: {
+      current: leave.find((range) => range.startsOn <= todayDay) ?? null,
+      next: leave.find((range) => range.startsOn > todayDay) ?? null,
+    },
   };
 }
 
@@ -224,7 +262,7 @@ export async function getVolunteerHoursDataForUser(
   if (!profile) return null;
 
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfMonth = parseDateOnly(startOfMonthInAppZone(now));
 
   const allAttended = await db.shiftSignup.findMany({
     where: {

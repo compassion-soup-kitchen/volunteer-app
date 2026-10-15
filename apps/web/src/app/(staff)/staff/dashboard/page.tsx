@@ -19,7 +19,11 @@ import {
   RiMegaphoneLine,
   RiArrowRightSLine,
   RiGraduationCapLine,
+  RiSuitcaseLine,
 } from "@remixicon/react";
+import { getAwayToday } from "@/lib/leave-actions";
+import { todayInAppZone } from "@/lib/date-only";
+import { describeLeaveStatus } from "@/lib/volunteer-leave";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
@@ -53,7 +57,12 @@ export default async function StaffDashboard() {
           <RecentActivitySection />
         </Suspense>
 
-        <QuickActions />
+        <div className="min-w-0 space-y-8">
+          <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+            <AwayTodaySection />
+          </Suspense>
+          <QuickActions />
+        </div>
       </div>
     </div>
   );
@@ -144,6 +153,7 @@ async function RecentActivitySection() {
     application: RiFileListLine,
     signup: RiCheckLine,
     shift: RiCalendarLine,
+    leave: RiSuitcaseLine,
   };
 
   return (
@@ -174,6 +184,63 @@ async function RecentActivitySection() {
             );
           })}
         </ul>
+      </Card>
+    </section>
+  );
+}
+
+/** Who's on leave today - the first thing to know before ringing round for cover. */
+async function AwayTodaySection() {
+  const away = await getAwayToday();
+  const today = todayInAppZone();
+  const shown = away.slice(0, 5);
+
+  return (
+    <section className="min-w-0 space-y-4">
+      <SectionHeader
+        eyebrow="Wā okioki"
+        title="Away today"
+        action={{ label: "All leave", href: "/staff/leave" }}
+      />
+      <Card size="sm">
+        {away.length === 0 ? (
+          <CardContent className="flex items-center gap-3">
+            <IconChip size="sm" tone="success">
+              <RiSuitcaseLine />
+            </IconChip>
+            <p className="text-sm text-muted-foreground">
+              Nobody is on leave today.
+            </p>
+          </CardContent>
+        ) : (
+          <ul className="divide-y divide-border">
+            {shown.map((leave) => (
+              <li key={leave.id}>
+                <Link
+                  href={`/staff/volunteers/${leave.volunteer.userId}`}
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                >
+                  <IconChip size="sm" tone="warning">
+                    <RiSuitcaseLine />
+                  </IconChip>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">
+                      {leave.volunteer.name}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {describeLeaveStatus(leave, today)}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+            {away.length > shown.length && (
+              <li className="px-4 py-2.5 text-xs text-muted-foreground">
+                and {away.length - shown.length} more
+              </li>
+            )}
+          </ul>
+        )}
       </Card>
     </section>
   );

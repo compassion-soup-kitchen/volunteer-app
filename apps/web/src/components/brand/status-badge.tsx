@@ -35,6 +35,10 @@ const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   COMPLETED: "success",
   NO_SHOW: "destructive",
   CANCELLED: "neutral",
+  // Leave
+  LEAVE_CURRENT: "warning",
+  LEAVE_UPCOMING: "info",
+  LEAVE_PAST: "neutral",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -46,6 +50,9 @@ const STATUS_LABELS: Record<string, string> = {
   SIGNED_UP: "Signed up",
   NO_SHOW: "No-show",
   MOJ_SUBMITTED: "MoJ submitted",
+  LEAVE_CURRENT: "Away now",
+  LEAVE_UPCOMING: "Coming up",
+  LEAVE_PAST: "Back",
 };
 
 function prettify(status: string) {

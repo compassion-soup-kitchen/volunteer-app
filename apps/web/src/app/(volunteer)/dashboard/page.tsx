@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { SectionHeader } from "@/components/brand/section-header";
+import { LeaveNotice } from "@/components/leave/leave-notice";
 import { DateBlock } from "@/components/brand/date-block";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
@@ -271,6 +272,8 @@ export default async function VolunteerDashboard() {
             title="Your next shift"
             action={{ label: "All shifts", href: "/shifts" }}
           />
+
+          <LeaveNotice leave={dashboardData.leave} today={todayInAppZone()} />
 
           {nextShift && nextShiftDate ? (
             <Card className="rounded-2xl">

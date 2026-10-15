@@ -23,6 +23,7 @@ import {
   RiMegaphoneLine,
   RiBarChartBoxLine,
   RiSettings3Line,
+  RiSuitcaseLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -51,6 +52,7 @@ export function StaffNav({
         { href: "/staff/applications", label: "Applications", icon: RiFileListLine },
         { href: "/staff/volunteers", label: "Volunteers", icon: RiTeamLine },
         { href: "/staff/groups", label: "Groups", icon: RiGroupLine },
+        { href: "/staff/leave", label: "Leave", icon: RiSuitcaseLine },
       ],
     },
     {

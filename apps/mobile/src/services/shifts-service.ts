@@ -13,7 +13,10 @@ import type {
   ShiftWithDetails,
 } from '@/types/models';
 
+import { formatLeaveRange } from '@/lib/leave';
+
 import { apiFetch, ApiError, delay, toActionError, USE_MOCK } from './client';
+import { mockLeaveOn } from './leave-service';
 
 export async function getServiceAreas(): Promise<ServiceArea[]> {
   if (!USE_MOCK) return apiFetch<ServiceArea[]>('/api/v1/service-areas');
@@ -40,6 +43,7 @@ function toDetails(s: ShiftRecord): ShiftWithDetails {
     signupCount: signupCount(s),
     userSignupId: mine && mine.status !== 'CANCELLED' ? mine.id : null,
     userSignupStatus: mine && mine.status !== 'CANCELLED' ? mine.status : null,
+    onLeave: mockLeaveOn(s.date) !== null,
   };
 }
 
@@ -140,6 +144,12 @@ export async function signUpForShift(shiftId: string): Promise<ActionResult> {
   const mine = db.mySignups[shiftId];
   if (mine && (mine.status === 'SIGNED_UP' || mine.status === 'ATTENDED')) {
     return { error: "You're already signed up for this shift." };
+  }
+  const leave = mockLeaveOn(shift.date);
+  if (leave) {
+    return {
+      error: `You're on leave then (${formatLeaveRange(leave)}). Change your leave first if you can make it after all.`,
+    };
   }
   if (signupCount(shift) >= shift.capacity) return { error: 'This shift is now full.' };
 

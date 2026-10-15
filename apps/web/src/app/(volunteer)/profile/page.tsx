@@ -27,6 +27,7 @@ import {
   RiEditLine,
   RiArrowRightLine,
   RiGraduationCapLine,
+  RiSuitcaseLine,
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
 import { getMyGroups } from "@/lib/group-actions";
@@ -34,6 +35,11 @@ import { GroupBadge } from "@/components/brand/group-badge";
 import { getVolunteerTrainingHistory } from "@/lib/training-actions";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { formatDateOnly, formatTimestampInAppZone } from "@/lib/date-only";
+import { getMyLeave, type VolunteerLeaveOverview } from "@/lib/leave-actions";
+import {
+  describeLeaveStatus,
+  formatLeaveRange,
+} from "@/lib/volunteer-leave";
 
 export const metadata: Metadata = {
   title: "My Profile | Te Pūaroha",
@@ -52,10 +58,11 @@ const DAYS_LONG: Record<string, string> = {
 export default async function ProfilePage() {
   await connection();
   const session = await auth();
-  const [profile, trainingHistory, myGroups] = await Promise.all([
+  const [profile, trainingHistory, myGroups, leave] = await Promise.all([
     getVolunteerProfile(),
     getVolunteerTrainingHistory(),
     getMyGroups(),
+    getMyLeave(),
   ]);
 
   const firstName = session?.user?.name?.split(" ")[0] || "there";
@@ -308,6 +315,10 @@ export default async function ProfilePage() {
 
         {/* Quiet rail — when you can help and what you bring */}
         <div className="min-w-0 space-y-6">
+          {/* Leave - first in the rail, because it's the one thing here
+              that changes what the roster does with you. */}
+          {leave && <LeaveSummaryCard leave={leave} />}
+
           {/* Groups - where you sit in the wider crew */}
           <Card className="gap-0 pb-2">
             <CardHeader className="pb-3">
@@ -430,6 +441,52 @@ export default async function ProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LeaveSummaryCard({ leave }: { leave: VolunteerLeaveOverview }) {
+  const ahead = [...(leave.current ? [leave.current] : []), ...leave.upcoming];
+
+  return (
+    <Card className="gap-0 pb-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Wā okioki · Leave</CardTitle>
+        <CardAction>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/profile/leave">
+              {ahead.length > 0 ? "Manage" : "Log leave"}
+              <RiArrowRightLine className="size-3.5" />
+            </Link>
+          </Button>
+        </CardAction>
+      </CardHeader>
+      {ahead.length > 0 ? (
+        <ul className="divide-y divide-border border-t border-border">
+          {ahead.slice(0, 3).map((item) => (
+            <li key={item.id} className="flex items-center gap-3 px-5 py-3">
+              <IconChip size="sm" tone={item === leave.current ? "warning" : "info"}>
+                <RiSuitcaseLine />
+              </IconChip>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold tnum">
+                  {formatLeaveRange(item, leave.today)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {describeLeaveStatus(item, leave.today)}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <CardContent className="border-t border-border pt-3 pb-2">
+          <p className="text-sm text-muted-foreground">
+            Going away? Log it here and we&apos;ll take you off the roster
+            while you&apos;re gone.
+          </p>
+        </CardContent>
+      )}
+    </Card>
   );
 }
 

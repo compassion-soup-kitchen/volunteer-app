@@ -13,6 +13,7 @@ import {
 import { applicationDecisionEmail } from "@/lib/email-templates";
 import { revalidatePath } from "next/cache";
 import {
+  dateOnlyOf,
   endOfMonthInAppZone,
   endOfWeekInAppZone,
   parseDateOnly,
@@ -49,6 +50,7 @@ import {
   getTrainingHistoryForUser,
   type TrainingHistoryItem,
 } from "@/lib/data/volunteer-training";
+import { formatLeaveRange } from "@/lib/volunteer-leave";
 
 // Thrown inside the role-change transaction to roll back a demotion that would
 // leave zero active admins; caught and mapped to a user-facing message.
@@ -149,7 +151,7 @@ export async function getStaffDashboardStats(): Promise<DashboardStats | null> {
 }
 
 export type RecentActivity = {
-  type: "application" | "signup" | "shift";
+  type: "application" | "signup" | "shift" | "leave";
   label: string;
   detail: string;
   time: Date;
@@ -161,7 +163,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
 
   const db = getDb();
 
-  const [recentApps, recentSignups] = await Promise.all([
+  const [recentApps, recentSignups, recentLeave] = await Promise.all([
     db.application.findMany({
       orderBy: { submittedAt: "desc" },
       take: 5,
@@ -184,6 +186,18 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
         },
       },
     }),
+    db.volunteerLeave.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        startsOn: true,
+        endsOn: true,
+        createdAt: true,
+        createdById: true,
+        volunteer: { select: { userId: true, user: { select: { name: true } } } },
+        createdBy: { select: { name: true } },
+      },
+    }),
   ]);
 
   const activities: RecentActivity[] = [
@@ -202,6 +216,22 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
       detail: `Signed up for ${s.shift.serviceArea.name}`,
       time: s.signedUpAt,
     })),
+    ...recentLeave.map((leave) => {
+      const dates = formatLeaveRange({
+        startsOn: dateOnlyOf(leave.startsOn),
+        endsOn: dateOnlyOf(leave.endsOn),
+      });
+      const byStaff =
+        leave.createdById !== leave.volunteer.userId && leave.createdBy?.name;
+      return {
+        type: "leave" as const,
+        label: leave.volunteer.user.name || "Unknown",
+        detail: byStaff
+          ? `is away ${dates} (logged by ${leave.createdBy!.name})`
+          : `logged leave for ${dates}`,
+        time: leave.createdAt,
+      };
+    }),
   ];
 
   return activities.sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 8);

@@ -12,6 +12,7 @@ const signupCreateMock = vi.fn();
 const signupUpdateMock = vi.fn();
 const offerUpdateManyMock = vi.fn();
 const profileFindUniqueMock = vi.fn();
+const leaveFindFirstMock = vi.fn();
 
 vi.mock("@/lib/auth", () => ({ auth: () => authMock() }));
 
@@ -51,6 +52,7 @@ vi.mock("@/lib/db", () => ({
           update: signupUpdateMock,
         },
         shiftOffer: { updateMany: offerUpdateManyMock },
+        volunteerLeave: { findFirst: leaveFindFirstMock },
       }),
   }),
 }));
@@ -425,6 +427,20 @@ describe("addVolunteerToShift", () => {
       user: { status: "ACTIVE" },
     });
     signupFindUniqueMock.mockResolvedValue(null);
+    leaveFindFirstMock.mockResolvedValue(null);
+  });
+
+  it("refuses someone on leave that day, and adds nothing", async () => {
+    shiftFindUniqueMock.mockResolvedValue(rosterShift(daysFromToday(7)));
+    leaveFindFirstMock.mockResolvedValue({
+      startsOn: day(daysFromToday(5)),
+      endsOn: day(daysFromToday(9)),
+    });
+
+    const result = await addVolunteerToShift("shift-1", "vol-david");
+
+    expect(result.error).toMatch(/on leave that day/);
+    expect(signupCreateMock).not.toHaveBeenCalled();
   });
 
   it("refuses anyone who isn't staff", async () => {

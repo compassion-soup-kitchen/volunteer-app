@@ -28,6 +28,7 @@ import {
 } from "@/lib/date-only";
 import { decideStaffRoster, staffRemovalError } from "@/lib/shift-roster";
 import { closedDayMessage, findClosedDay } from "@/lib/data/closed-days";
+import { leaveCovering } from "@/lib/data/leave-days";
 import { scheduleRosterTopUp } from "@/lib/data/shift-patterns";
 import { formatHoldUntil, type OfferStatus } from "@/lib/shift-offers";
 import type { GroupChip } from "@/lib/volunteer-groups";
@@ -548,6 +549,7 @@ export async function addVolunteerToShift(
         if (!shift) throw new RosterRefused("Shift not found.");
         if (!volunteer) throw new RosterRefused("Volunteer not found.");
 
+        const leave = await leaveCovering(tx, volunteerId, shift.date);
         const decision = decideStaffRoster({
           shiftDate: dateOnlyOf(shift.date),
           today,
@@ -556,6 +558,7 @@ export async function addVolunteerToShift(
           existingStatus: existing?.status ?? null,
           volunteerIsActive:
             volunteer.status === "ACTIVE" && volunteer.user.status === "ACTIVE",
+          leave,
         });
         if (decision.action === "reject") throw new RosterRefused(decision.error);
 

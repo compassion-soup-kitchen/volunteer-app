@@ -34,6 +34,8 @@ import {
   type PatternSchedule,
 } from "@/lib/shift-patterns";
 import { closedDatesBetween } from "@/lib/data/closed-days";
+import { leaveForVolunteers } from "@/lib/data/leave-days";
+import { leaveOn } from "@/lib/volunteer-leave";
 import { removeShifts, type RemovedShift } from "@/lib/data/shift-cancellation";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -85,7 +87,8 @@ const ATTENDANCE_RECORDED = ["ATTENDED", "NO_SHOW"] as const;
 /**
  * Seats regulars on the given shifts wherever there is room and they have no
  * signup yet. Never overwrites an existing row - a regular who cancelled one
- * week stays cancelled that week. Returns how many signups were made.
+ * week stays cancelled that week - and never seats a regular on a day they're
+ * on leave. Returns how many signups were made.
  */
 export async function rosterRegulars(
   db: Db,
@@ -98,21 +101,30 @@ export async function rosterRegulars(
     where: { id: { in: shiftIds } },
     select: {
       id: true,
+      date: true,
       capacity: true,
       signups: { select: { volunteerId: true, status: true } },
     },
   });
+  if (shifts.length === 0) return 0;
 
-  const rows = shifts.flatMap((shift) =>
-    regularsToSeat({
+  const days = shifts.map((shift) => dateOnlyOf(shift.date)).sort();
+  const leave = await leaveForVolunteers(db, regularIds, {
+    startsOn: days[0],
+    endsOn: days[days.length - 1],
+  });
+
+  const rows = shifts.flatMap((shift) => {
+    const day = dateOnlyOf(shift.date);
+    return regularsToSeat({
       capacity: shift.capacity,
       seatedVolunteerIds: shift.signups
         .filter((signup) => HOLDS_A_PLACE.includes(signup.status))
         .map((signup) => signup.volunteerId),
       signupVolunteerIds: shift.signups.map((signup) => signup.volunteerId),
-      regularIds,
-    }).map((volunteerId) => ({ shiftId: shift.id, volunteerId }))
-  );
+      regularIds: regularIds.filter((id) => !leaveOn(leave.get(id) ?? [], day)),
+    }).map((volunteerId) => ({ shiftId: shift.id, volunteerId }));
+  });
 
   if (rows.length === 0) return 0;
   const result = await db.shiftSignup.createMany({

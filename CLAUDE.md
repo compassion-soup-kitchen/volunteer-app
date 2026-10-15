@@ -75,7 +75,7 @@ src/
 │   │   ├── volunteer-nav.tsx         # Top nav
 │   │   ├── volunteer-footer.tsx      # Bottom nav (mobile)
 │   │   ├── dashboard/                # Personal dashboard (next shifts, milestones, announcements)
-│   │   ├── profile/                  # View profile + /edit subpage with profile-edit-form
+│   │   ├── profile/                  # View profile + /edit subpage with profile-edit-form; /leave to log leave
 │   │   ├── application/              # Application form (multi-step) — application-form.tsx
 │   │   ├── shifts/                   # Browse & sign up — shift-browser.tsx
 │   │   ├── training/                 # Browse & register — training-browser.tsx
@@ -92,6 +92,7 @@ src/
 │   │   ├── calendar/                 # Month roster view; close days (NZ public holidays suggested)
 │   │   ├── volunteers/               # Volunteer directory + per-volunteer detail; /new + /[id]/edit for offline volunteers
 │   │   ├── groups/                   # CRUD volunteer groups + membership (group-manager.tsx)
+│   │   ├── leave/                    # Leave board: away now / coming up / recently back; log leave for anyone
 │   │   ├── shifts/                   # Create/manage shifts, roster named volunteers, mark attendance,
 │   │   │                             #   record meals; /repeating for repeating shifts + regulars
 │   │   ├── service-areas/            # CRUD service areas
@@ -140,6 +141,8 @@ src/
 │   ├── nz-public-holidays.ts         # NZ public holidays (Mondayisation, Wellington Anniversary, Matariki table)
 │   ├── offline-volunteer-actions.ts  # Staff create/edit records for volunteers who don't use the app
 │   ├── offline-volunteer.ts          # Pure offline-volunteer form contract
+│   ├── volunteer-leave.ts            # Pure leave rules (stages, which days a save touches, wording)
+│   ├── leave-actions.ts              # Server Actions: log/change/end/remove leave (volunteer + staff)
 │   ├── training-actions.ts           # CRUD training sessions + attendance
 │   ├── service-area-actions.ts       # CRUD service areas
 │   ├── group-actions.ts              # CRUD volunteer groups, membership, volunteer-facing team reads
@@ -185,7 +188,7 @@ prisma/
 ### Database Models (overview)
 - **Auth**: `User`, `Account`, `Session`, `VerificationToken` — NextAuth standard tables. `User.role` ∈ `{PUBLIC, VOLUNTEER, COORDINATOR, ADMIN}`. `User.status` ∈ `{ACTIVE, ARCHIVED}` (archived users blocked at sign-in).
 - **Onboarding**: `VolunteerProfile` (status: APPLICATION_SUBMITTED → AWAITING_VETTING → APPROVED_FOR_INDUCTION → ACTIVE / INACTIVE; `mojStatus` ∈ NOT_STARTED/SUBMITTED/CLEARED/FLAGGED), `Application`, `Document`, `SignedAgreement`, `AgreementTemplate` (versioned, supports re-acknowledgement).
-- **Operations**: `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `ShiftOffer` (right of first refusal: PENDING/ACCEPTED/DECLINED, paired with `Shift.offersCloseOn`), `ShiftPattern` (a repeating shift with optional `endsOn` and named `regulars`; see below), `ClosedDay` (a day the kitchen is shut), `TrainingSession`, `TrainingAttendance`.
+- **Operations**: `VolunteerLeave` (a stretch of days someone is away - see Rostering below), `ServiceArea`, `Shift`, `ShiftSignup` (status: SIGNED_UP/ATTENDED/NO_SHOW/CANCELLED, with attendance audit fields), `ShiftOffer` (right of first refusal: PENDING/ACCEPTED/DECLINED, paired with `Shift.offersCloseOn`), `ShiftPattern` (a repeating shift with optional `endsOn` and named `regulars`; see below), `ClosedDay` (a day the kitchen is shut), `TrainingSession`, `TrainingAttendance`.
 - **People**: `VolunteerGroup` (staff-named crews - Team Leaders, Guardian Angels - many-to-many with `VolunteerProfile`; `tone` picks the badge colour, `visibleToVolunteers` decides whether volunteers see it on /team and their profile). Purely descriptive: membership grants no access, that stays with `User.role`.
 - **Communication**: `Announcement` (audience: ALL / VOLUNTEERS / COORDINATORS; optional `eventId` links a pānui to the gathering it announces — `onDelete: SetNull`, because a message that was sent stays sent).
 - **Gatherings**: `Event` (a party, hui or working bee — status DRAFT/PUBLISHED/CANCELLED, `audience` decides who is invited *and* who may reply, `rsvpEnabled` + `rsvpDeadline` control replies) and `EventRsvp` (GOING / MAYBE / NOT_GOING + optional note, unique per user per event). Keyed by `User`, not `VolunteerProfile`: staff come to these too. Deliberately not a `Shift` (nobody is rostered) and not part of `Announcement` (an event outlives any one message about it and can be announced more than once). Publishing an event only makes it visible — telling people is what a pānui is for, which keeps push notifications in one place.
@@ -204,6 +207,7 @@ Anyone may permanently erase their own account, in the app (`/profile/delete-acc
 - **Hours only ever come from `ATTENDED` shift signups.** There is no separate hours ledger, so logging an offline volunteer's hours means putting them on the shift (`addVolunteerToShift`) - added to a past shift they go straight on as `ATTENDED`.
 - **Every repeat is a `ShiftPattern`**, bounded or not. Shifts are generated `PATTERN_HORIZON_DAYS` (12 weeks) ahead by `src/lib/data/shift-patterns.ts`: on create/edit, and by `scheduleRosterTopUp()`, a throttled `after()` hook called from every roster read (staff shifts, calendar, volunteer shifts). There is no cron. Generation only moves `generatedThrough` forward, so a deleted generated shift or a closed day is never regenerated - the exception is cutting a pattern short, which rewinds it to the new last day so a later extension fills the gap. Removing a regular deletes their future pattern signups (not `CANCELLED`, which is reserved for a volunteer's own choice and never overridden), so re-adding them re-seats them; a one-off shift already at the same area/day/start time is adopted rather than doubled. Generated shifts are ordinary `Shift` rows (`patternId` set) and are edited individually.
 - **`ClosedDay` is enforced everywhere a shift is placed**: `createShift`/`updateShift` refuse it, generation skips it, and closing a day deletes its shifts (refused once attendance is marked) and pushes the volunteers who use the app. Reopening restores pattern shifts for that day (`refillReopenedDay`), not one-offs.
+- **Leave** (`VolunteerLeave`: `startsOn`/`endsOn` inclusive `@db.Date`, optional `reason`, no approval step). Volunteers log their own (web `/profile/leave`, app `/leave`, `/api/v1/leave`); staff log it for anyone from `/staff/leave` or the volunteer record. All three paths go through `src/lib/data/volunteer-leave.ts`. Leave is enforced wherever someone is seated: `decideSignup` and `decideStaffRoster` refuse a day on leave (staff can still record attendance on a past day), and `rosterRegulars` skips regulars on leave - read through `src/lib/data/leave-days.ts`, the counterpart to `closed-days.ts`. Saving leave works on the *difference* from what was there (`rosterChanges`), from today on: newly covered days take the volunteer off shifts - a regular's pattern seat is **deleted** (so it can be re-seated), a shift they chose is `CANCELLED`, and offers are declined - and days no longer covered put regulars back where there's room. One-off shifts are never restored. Past leave is the record and isn't edited; a volunteer cancels leave ahead and "comes back" from leave under way (`endLeaveDecision`), while staff can remove any of it. Staff changes push the volunteer.
 - **Offline volunteers** (`User.isOffline`): no password, email optional (`User.email` is nullable *only* for them). Sign-in paths assert an address via `toAuthenticatedUser`; staff UI falls back with `personName` / `contactLine` from `src/lib/format.ts`. They can't be impersonated or given a staff role. Redeeming a password reset clears `isOffline` and verifies the email - that's how one claims their record.
 
 ### Auth Roles
@@ -276,7 +280,7 @@ pnpm run db:studio    # prisma studio
 
 ## Mobile App (`apps/mobile`)
 
-Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: group `(auth)` (`login.tsx`, `register.tsx`); group `(tabs)` (`index.tsx`, `shifts.tsx`, `hours.tsx`, `training.tsx`, `profile.tsx`); top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; dynamic dirs `shift/`, `training/`, `notice/` (each a `[id].tsx`); and static nested dir `profile/` (`edit.tsx`)). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
+Expo SDK 56 / React Native 0.85.3 app for volunteers, using `expo-router` (file-based routes under `src/app`: group `(auth)` (`login.tsx`, `register.tsx`); group `(tabs)` (`index.tsx`, `shifts.tsx`, `hours.tsx`, `training.tsx`, `profile.tsx`); top-level screens `news.tsx`, `onboarding.tsx`, `schedule.tsx`; dynamic dirs `shift/`, `training/`, `notice/` (each a `[id].tsx`); and static nested dirs `profile/` (`edit.tsx`) and `leave/` (`index.tsx`, `edit.tsx`)). Currently **mock-first**: services in `src/services/*` read from `src/data/mock-db.ts`; data fetching is via `@tanstack/react-query` (keys in `src/lib/query-keys.ts`). Styling uses `@expo/ui` + `expo-glass-effect` with theme tokens in `src/constants/theme.ts`.
 
 - **Expo has changed** — `apps/mobile/AGENTS.md` (loaded via the `@AGENTS.md` include in `apps/mobile/CLAUDE.md`) mandates reading the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
 - Scripts (inside `apps/mobile`, or `pnpm mobile <script>`): `pnpm run dev` / `start` (expo start), `ios`, `android`, `web`, `lint` (expo lint), `typecheck`, `test` / `test:ci` (vitest).

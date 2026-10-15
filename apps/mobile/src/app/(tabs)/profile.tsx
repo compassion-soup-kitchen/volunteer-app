@@ -25,6 +25,8 @@ import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
+import { describeLeaveStatus, formatLeaveRange } from '@/lib/leave';
+import { getMyLeave } from '@/services/leave-service';
 import { getVolunteerProfile } from '@/services/profile-service';
 import type { ServiceArea, VolunteerStatus } from '@/types/models';
 
@@ -121,6 +123,38 @@ function AreaPill({ area }: { area: ServiceArea }) {
   );
 }
 
+/** Leave under way or coming up, or a prompt to log some. */
+function LeaveSummary({ onPress }: { onPress: () => void }) {
+  const { data } = useQuery({ queryKey: qk.leave, queryFn: getMyLeave });
+  const next = data?.current ?? data?.upcoming[0] ?? null;
+  const more = data ? (data.current ? 1 : 0) + data.upcoming.length - 1 : 0;
+
+  return (
+    <Card onPress={onPress} accessibilityLabel="Your leave" style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+      <IconChip icon="airplane-outline" tone={data?.current ? 'warning' : 'navy'} size={38} />
+      <View style={{ flex: 1, gap: 1 }}>
+        {data && next ? (
+          <>
+            <Text variant="bodyStrong">{formatLeaveRange(next, data.today)}</Text>
+            <Text variant="caption" color="textSecondary">
+              {describeLeaveStatus(next, data.today)}
+              {more > 0 ? ` · ${more} more booked` : ''}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text variant="bodyStrong">Log leave</Text>
+            <Text variant="caption" color="textSecondary">
+              We&apos;ll take you off the roster while you&apos;re away.
+            </Text>
+          </>
+        )}
+      </View>
+      <Icon name="chevron-forward" size={18} color="textTertiary" />
+    </Card>
+  );
+}
+
 function ProfileSkeleton() {
   return (
     <View style={{ gap: Spacing.xxxl }}>
@@ -186,6 +220,14 @@ export default function ProfileScreen() {
               </View>
               <Icon name="chevron-forward" size={18} raw={colors.onPrimaryTint} />
             </Card>
+          ) : null}
+
+          {/* Leave — the one thing on this screen that changes the roster */}
+          {!isOnboarding(data.status) ? (
+            <View style={{ gap: Spacing.lg }}>
+              <SectionHeader overline="Wā okioki · Leave" title="Going away?" divider />
+              <LeaveSummary onPress={() => router.push('/leave')} />
+            </View>
           ) : null}
 
           {/* Your details — the reachability + safety data the kitchen relies on */}

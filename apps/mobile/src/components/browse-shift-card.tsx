@@ -14,6 +14,8 @@ export type BrowseShiftCardProps = {
   /** Single-venue label shown beside the time (the kitchen at Tory Street). */
   location?: string;
   signedUp: boolean;
+  /** The day falls in the volunteer's leave - theirs to change, not to book. */
+  onLeave?: boolean;
   booking?: boolean;
   /** Open the full shift detail. */
   onPress: () => void;
@@ -39,12 +41,14 @@ export function BrowseShiftCard({
   capacity,
   location = 'Tory St',
   signedUp,
+  onLeave = false,
   booking,
   onPress,
   onBook,
 }: BrowseShiftCardProps) {
   const { full, scarce } = availability(signupCount, capacity);
   const isFull = full && !signedUp;
+  const away = onLeave && !signedUp;
 
   return (
     <Card style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.lg }}>
@@ -52,7 +56,7 @@ export function BrowseShiftCard({
         accessibilityRole="button"
         accessibilityLabel={`${areaName}, ${formatTimeRange(startTime, endTime)}, ${spotsLabel(signupCount, capacity)}`}
         onPress={onPress}
-        style={({ pressed }) => ({ flex: 1, gap: Spacing.sm, opacity: pressed || isFull ? 0.6 : 1 })}>
+        style={({ pressed }) => ({ flex: 1, gap: Spacing.sm, opacity: pressed || isFull || away ? 0.6 : 1 })}>
         <Text variant="heading" numberOfLines={1}>
           {areaName}
         </Text>
@@ -85,6 +89,8 @@ export function BrowseShiftCard({
       <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
         {signedUp ? (
           <Badge label="Booked" tone="success" icon="checkmark" />
+        ) : away ? (
+          <Badge label="On leave" tone="warning" icon="airplane-outline" />
         ) : isFull ? (
           <Badge label="Full" tone="neutral" />
         ) : (
