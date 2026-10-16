@@ -35,11 +35,11 @@ import { GroupBadge } from "@/components/brand/group-badge";
 import { getVolunteerTrainingHistory } from "@/lib/training-actions";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { formatDateOnly, formatTimestampInAppZone } from "@/lib/date-only";
-import { getMyLeave, type VolunteerLeaveOverview } from "@/lib/leave-actions";
+import { getMyLeave, type LeaveOverview } from "@/lib/leave-actions";
 import {
   describeLeaveStatus,
   formatLeaveRange,
-} from "@/lib/volunteer-leave";
+} from "@/lib/leave";
 
 export const metadata: Metadata = {
   title: "My Profile | Te Pūaroha",
@@ -444,7 +444,7 @@ export default async function ProfilePage() {
   );
 }
 
-function LeaveSummaryCard({ leave }: { leave: VolunteerLeaveOverview }) {
+function LeaveSummaryCard({ leave }: { leave: LeaveOverview }) {
   const ahead = [...(leave.current ? [leave.current] : []), ...leave.upcoming];
 
   return (

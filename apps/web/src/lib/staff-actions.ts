@@ -50,7 +50,7 @@ import {
   getTrainingHistoryForUser,
   type TrainingHistoryItem,
 } from "@/lib/data/volunteer-training";
-import { formatLeaveRange } from "@/lib/volunteer-leave";
+import { formatLeaveRange } from "@/lib/leave";
 
 // Thrown inside the role-change transaction to roll back a demotion that would
 // leave zero active admins; caught and mapped to a user-facing message.
@@ -186,7 +186,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
         },
       },
     }),
-    db.volunteerLeave.findMany({
+    db.leave.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
       select: {
@@ -194,7 +194,8 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
         endsOn: true,
         createdAt: true,
         createdById: true,
-        volunteer: { select: { userId: true, user: { select: { name: true } } } },
+        userId: true,
+        user: { select: { name: true } },
         createdBy: { select: { name: true } },
       },
     }),
@@ -222,10 +223,10 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
         endsOn: dateOnlyOf(leave.endsOn),
       });
       const byStaff =
-        leave.createdById !== leave.volunteer.userId && leave.createdBy?.name;
+        leave.createdById !== leave.userId && leave.createdBy?.name;
       return {
         type: "leave" as const,
-        label: leave.volunteer.user.name || "Unknown",
+        label: leave.user.name || "Unknown",
         detail: byStaff
           ? `is away ${dates} (logged by ${leave.createdBy!.name})`
           : `logged leave for ${dates}`,

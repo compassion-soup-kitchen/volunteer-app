@@ -12,7 +12,7 @@ import {
   leaveOn,
   onLeaveSignupMessage,
   type LeaveRange,
-} from "@/lib/volunteer-leave";
+} from "@/lib/leave";
 import {
   heldForOffersMessage,
   isHeldForOffers,

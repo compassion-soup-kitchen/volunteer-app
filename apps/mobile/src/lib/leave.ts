@@ -1,6 +1,6 @@
 /**
- * Leave - time a volunteer is away from the kitchen. Mirrors the rules in the
- * web app's `volunteer-leave.ts`; the server has the final say on everything,
+ * Leave - time someone is away from the kitchen. Mirrors the rules in the web
+ * app's `leave.ts`; the server has the final say on everything,
  * these keep the screens (and the offline mock) honest about what it will do.
  *
  * Dates are `YYYY-MM-DD` and a range is inclusive at both ends - "3 to 14
@@ -9,9 +9,21 @@
 
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns';
 
+import type { Role } from '@/types/models';
+
 export type LeaveRange = { startsOn: string; endsOn: string };
 
 export type LeaveStage = 'upcoming' | 'current' | 'past';
+
+/**
+ * Whether the profile screen offers leave. A volunteer gets it once they're
+ * past onboarding - before then there's no roster to be away from. The
+ * kitchen team keep leave whether or not they volunteer (a coordinator with no
+ * volunteer record reads as still onboarding), so they always do.
+ */
+export function offersLeave(input: { role: Role; onboarding: boolean }): boolean {
+  return input.role === 'COORDINATOR' || input.role === 'ADMIN' || !input.onboarding;
+}
 
 /** Matches the server: a short note, not a medical history. */
 export const LEAVE_REASON_MAX = 120;

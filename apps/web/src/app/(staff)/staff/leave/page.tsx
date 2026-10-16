@@ -9,9 +9,13 @@ import { IconChip } from "@/components/brand/icon-chip";
 import { PageHeader } from "@/components/brand/page-header";
 import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveDialog } from "@/components/leave/log-leave-dialog";
-import { getLeaveBoard, type StaffLeaveRecord } from "@/lib/leave-actions";
-import { RECENT_DAYS } from "@/lib/data/volunteer-leave";
-import { getVolunteerOptions } from "@/lib/shift-actions";
+import { auth } from "@/lib/auth";
+import {
+  getLeaveBoard,
+  getLeavePeopleOptions,
+  type StaffLeaveRecord,
+} from "@/lib/leave-actions";
+import { RECENT_DAYS } from "@/lib/data/leave";
 import type { DateOnly } from "@/lib/date-only";
 
 export const metadata: Metadata = {
@@ -19,14 +23,19 @@ export const metadata: Metadata = {
 };
 
 async function LeaveBoard() {
-  const [board, volunteers] = await Promise.all([getLeaveBoard(), getVolunteerOptions()]);
+  const [board, people, session] = await Promise.all([
+    getLeaveBoard(),
+    getLeavePeopleOptions(),
+    auth(),
+  ]);
   if (!board) notFound();
   const { today, current, upcoming, recent } = board;
+  const viewerUserId = session?.user?.id;
 
   return (
     <>
       <div className="flex justify-end">
-        <LogLeaveDialog today={today} volunteers={volunteers} />
+        <LogLeaveDialog today={today} people={people} viewerUserId={viewerUserId} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
@@ -36,6 +45,7 @@ async function LeaveBoard() {
             description="Back soonest first"
             entries={current}
             today={today}
+            viewerUserId={viewerUserId}
             empty="Everyone's around. Nobody is on leave today."
           />
           <LeaveSection
@@ -43,6 +53,7 @@ async function LeaveBoard() {
             description={`Leave that ended in the last ${RECENT_DAYS} days`}
             entries={recent}
             today={today}
+            viewerUserId={viewerUserId}
             empty="Nobody has come back from leave lately."
           />
         </div>
@@ -51,6 +62,7 @@ async function LeaveBoard() {
           description="Soonest first"
           entries={upcoming}
           today={today}
+          viewerUserId={viewerUserId}
           empty="No leave booked ahead."
         />
       </div>
@@ -63,12 +75,14 @@ function LeaveSection({
   description,
   entries,
   today,
+  viewerUserId,
   empty,
 }: {
   title: string;
   description: string;
   entries: StaffLeaveRecord[];
   today: DateOnly;
+  viewerUserId: string | undefined;
   empty: string;
 }) {
   return (
@@ -86,7 +100,8 @@ function LeaveSection({
             entries={entries}
             audience="staff"
             today={today}
-            showVolunteer
+            showPerson
+            viewerUserId={viewerUserId}
             stageBadge="none"
           />
         </div>
@@ -117,7 +132,7 @@ export default function StaffLeavePage() {
       <PageHeader
         eyebrow="Wā okioki · Leave"
         title="Leave"
-        description="Who's away, who's going, and who's just back. Volunteers log their own in the app; log it here for anyone who rings in."
+        description="Who's away, who's going, and who's just back - volunteers and the kitchen team. Volunteers log their own in the app; log it here for anyone who rings in, or for yourself."
       />
       <Suspense fallback={<BoardSkeleton />}>
         <LeaveBoard />

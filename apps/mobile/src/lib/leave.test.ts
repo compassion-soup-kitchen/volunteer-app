@@ -9,6 +9,7 @@ import {
   leaveActions,
   leaveFormProblem,
   leaveStage,
+  offersLeave,
 } from '@/lib/leave';
 
 const TODAY = '2026-10-16';
@@ -104,5 +105,17 @@ describe('afterLeaveNote', () => {
       'You can sign up again if your plans change and there’s still room.',
     );
     expect(afterLeaveNote([{ isRegular: true }, { isRegular: false }])).toMatch(/come back.*for the others/);
+  });
+});
+
+describe('offersLeave', () => {
+  it('waits for a volunteer to finish onboarding', () => {
+    expect(offersLeave({ role: 'VOLUNTEER', onboarding: true })).toBe(false);
+    expect(offersLeave({ role: 'VOLUNTEER', onboarding: false })).toBe(true);
+  });
+
+  it('always offers it to the kitchen team, volunteer record or not', () => {
+    expect(offersLeave({ role: 'COORDINATOR', onboarding: true })).toBe(true);
+    expect(offersLeave({ role: 'ADMIN', onboarding: true })).toBe(true);
   });
 });

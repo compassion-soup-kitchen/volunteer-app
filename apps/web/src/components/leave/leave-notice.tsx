@@ -7,7 +7,7 @@ import {
   describeLeaveStatus,
   formatLeaveRange,
   type LeaveRange,
-} from "@/lib/volunteer-leave";
+} from "@/lib/leave";
 
 /**
  * A quiet line on home about the volunteer's leave - so someone away isn't

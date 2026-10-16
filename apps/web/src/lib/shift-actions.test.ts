@@ -52,7 +52,7 @@ vi.mock("@/lib/db", () => ({
           update: signupUpdateMock,
         },
         shiftOffer: { updateMany: offerUpdateManyMock },
-        volunteerLeave: { findFirst: leaveFindFirstMock },
+        leave: { findFirst: leaveFindFirstMock },
       }),
   }),
 }));

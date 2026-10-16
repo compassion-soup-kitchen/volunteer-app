@@ -46,7 +46,7 @@ import {
   type RosterMonth,
 } from "@/lib/closed-day-actions";
 import { monthGrid } from "@/lib/closed-days";
-import { coversDay, formatLeaveRange } from "@/lib/volunteer-leave";
+import { coversDay, formatLeaveRange } from "@/lib/leave";
 import {
   addMonthsToDateOnly,
   formatDateOnly,

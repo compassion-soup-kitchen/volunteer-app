@@ -7,44 +7,46 @@ import {
   deleteLeave,
   endLeave,
   getLeaveBetween,
-  getLeaveOverview,
+  getLeavePeople,
+  getPersonLeave,
   getStaffLeaveOverview,
   previewLeave,
   saveLeave,
-  volunteerIdForUser,
   type LeaveActor,
   type LeaveMutationResult,
+  type LeaveOverview,
+  type LeavePersonOption,
   type LeavePreview,
   type StaffLeaveOverview,
   type StaffLeaveRecord,
-  type VolunteerLeaveOverview,
-} from "@/lib/data/volunteer-leave";
+} from "@/lib/data/leave";
 import { isDateOnly, todayInAppZone, type DateOnly } from "@/lib/date-only";
-import type { LeaveInput } from "@/lib/volunteer-leave";
+import type { LeaveInput } from "@/lib/leave";
 
 export type {
   LeaveMutationResult,
+  LeaveOverview,
+  LeavePersonOption,
   LeavePreview,
   LeaveRecord,
   LeaveShift,
   StaffLeaveOverview,
   StaffLeaveRecord,
-  VolunteerLeaveOverview,
-} from "@/lib/data/volunteer-leave";
+} from "@/lib/data/leave";
 
 const STAFF_ROLES = ["COORDINATOR", "ADMIN"];
 
 /**
- * Who is acting. Staff act on anyone's leave from the staff side; everyone
- * else only ever on their own. The same actions serve both, so the rules
- * can't drift between the two screens.
+ * Who is acting. Staff act on anyone's leave from the staff side, their own
+ * included; everyone else only ever on their own. The same actions serve both,
+ * so the rules can't drift between the two screens.
  */
 async function currentActor(): Promise<LeaveActor | null> {
   const session = await requireActiveSession();
   if (!session?.user?.id) return null;
   return STAFF_ROLES.includes(session.user.role)
     ? { kind: "staff", userId: session.user.id }
-    : { kind: "volunteer", userId: session.user.id };
+    : { kind: "self", userId: session.user.id };
 }
 
 async function requireStaffActor(): Promise<LeaveActor | null> {
@@ -56,22 +58,25 @@ const NOT_SIGNED_IN = { error: "You must be signed in." } as const;
 
 // ─── Reads ──────────────────────────────────────────────
 
-/** The signed-in volunteer's own leave. */
-export async function getMyLeave(): Promise<VolunteerLeaveOverview | null> {
+/** The signed-in person's own leave - a volunteer's, or a coordinator's. */
+export async function getMyLeave(): Promise<LeaveOverview | null> {
   await connection();
   const actor = await currentActor();
   if (!actor) return null;
-  const volunteerId = await volunteerIdForUser(actor.userId);
-  return volunteerId ? getLeaveOverview(volunteerId) : null;
+  return getPersonLeave(actor.userId);
 }
 
-/** One volunteer's leave, for their staff record. */
-export async function getVolunteerLeave(
-  volunteerId: string
-): Promise<VolunteerLeaveOverview | null> {
+/** Someone's leave, for their staff record. */
+export async function getLeaveFor(userId: string): Promise<LeaveOverview | null> {
   await connection();
   if (!(await requireStaffActor())) return null;
-  return getLeaveOverview(volunteerId);
+  return getPersonLeave(userId);
+}
+
+/** Everyone staff can log leave for - volunteers, the kitchen team, and themselves. */
+export async function getLeavePeopleOptions(): Promise<LeavePersonOption[]> {
+  if (!(await requireStaffActor())) return [];
+  return getLeavePeople();
 }
 
 /** Who's away now, soon, and just back - the staff leave board. */
@@ -105,7 +110,8 @@ export async function getAwayToday(): Promise<StaffLeaveRecord[]> {
  * the way - so the form can show it before anyone commits.
  */
 export async function previewLeaveChange(input: {
-  volunteerId?: string | null;
+  /** Whose leave - staff only, for new leave. */
+  userId?: string | null;
   leaveId?: string | null;
   startsOn: string;
   endsOn: string;
@@ -117,7 +123,8 @@ export async function previewLeaveChange(input: {
 
 /** Logs new leave, or changes leave already logged. */
 export async function saveLeaveChange(input: {
-  volunteerId?: string | null;
+  /** Whose leave - staff only, for new leave. */
+  userId?: string | null;
   leaveId?: string | null;
   data: LeaveInput;
 }): Promise<LeaveMutationResult> {

@@ -21,7 +21,7 @@ import {
 import { contactLine } from "@/lib/format";
 import { searchVolunteers } from "../volunteer-picker";
 import type { DateOnly } from "@/lib/date-only";
-import { formatLeaveRange } from "@/lib/volunteer-leave";
+import { formatLeaveRange } from "@/lib/leave";
 
 /** Someone on leave on the shift's day. */
 export type AwayVolunteer = { volunteerId: string; startsOn: DateOnly; endsOn: DateOnly };

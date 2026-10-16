@@ -35,7 +35,7 @@ import {
 } from "@/lib/shift-patterns";
 import { closedDatesBetween } from "@/lib/data/closed-days";
 import { leaveForVolunteers } from "@/lib/data/leave-days";
-import { leaveOn } from "@/lib/volunteer-leave";
+import { leaveOn } from "@/lib/leave";
 import { removeShifts, type RemovedShift } from "@/lib/data/shift-cancellation";
 
 type Db = PrismaClient | Prisma.TransactionClient;

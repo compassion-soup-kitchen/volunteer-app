@@ -30,38 +30,42 @@ import {
   MAX_LEAVE_LEAD_DAYS,
   formatLeaveLength,
   leaveStage,
-} from "@/lib/volunteer-leave";
+} from "@/lib/leave";
 
 const pickerDate = (date: DateOnly) => toPickerDate(parseDateOnly(date));
 
 interface LeaveFormProps {
-  /** Who is filling it in - decides the wording, not the rules. */
-  audience: "volunteer" | "staff";
+  /**
+   * Whose leave it reads as - "self" for your own, "staff" for someone else's.
+   * Decides the wording, not the rules.
+   */
+  audience: "self" | "staff";
   today: DateOnly;
   /** The leave being changed, or nothing for new leave. */
   leave?: LeaveRecord | null;
   /**
-   * Staff logging new leave name the volunteer. Null until they've chosen,
-   * which holds the preview and the save back.
+   * Staff logging new leave name the person - themselves included. Null until
+   * they've chosen, which holds the preview and the save back. Volunteers
+   * logging their own leave leave it out.
    */
-  volunteerId?: string | null;
-  /** The volunteer's first name, so staff read "Aroha comes off…". */
-  volunteerName?: string;
+  userId?: string | null;
+  /** Their first name, so staff read "Aroha comes off…". */
+  personName?: string;
   onSaved?: () => void;
   onCancel?: () => void;
 }
 
 /**
  * Logging or changing a stretch of leave. Before anything is saved it shows
- * exactly which shifts the volunteer will come off - leave changes the
- * roster, and nobody should find that out afterwards.
+ * exactly which shifts they will come off - leave changes the roster, and
+ * nobody should find that out afterwards.
  */
 export function LeaveForm({
   audience,
   today,
   leave = null,
-  volunteerId = null,
-  volunteerName,
+  userId = null,
+  personName,
   onSaved,
   onCancel,
 }: LeaveFormProps) {
@@ -76,18 +80,18 @@ export function LeaveForm({
 
   // Under way: the first day already happened, so it stays put.
   const started = leave ? leaveStage(leave, today) === "current" : false;
-  const needsVolunteer = audience === "staff" && !leave && !volunteerId;
-  const self = audience === "volunteer";
-  const who = self ? "you" : (volunteerName ?? "This volunteer");
+  const needsPerson = audience === "staff" && !leave && !userId;
+  const self = audience === "self";
+  const who = self ? "you" : (personName ?? "This person");
 
-  const ready = Boolean(startsOn && endsOn && !needsVolunteer);
-  const key = `${volunteerId}|${leave?.id}|${startsOn}|${endsOn}`;
+  const ready = Boolean(startsOn && endsOn && !needsPerson);
+  const key = `${userId}|${leave?.id}|${startsOn}|${endsOn}`;
 
   useEffect(() => {
-    if (!startsOn || !endsOn || needsVolunteer) return;
+    if (!startsOn || !endsOn || needsPerson) return;
     let cancelled = false;
     const timer = setTimeout(() => {
-      previewLeaveChange({ volunteerId, leaveId: leave?.id, startsOn, endsOn })
+      previewLeaveChange({ userId, leaveId: leave?.id, startsOn, endsOn })
         .then((value) => {
           if (!cancelled) setPreview({ key, value });
         })
@@ -99,7 +103,7 @@ export function LeaveForm({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [key, startsOn, endsOn, needsVolunteer, volunteerId, leave?.id]);
+  }, [key, startsOn, endsOn, needsPerson, userId, leave?.id]);
 
   const current = preview?.key === key ? preview.value : null;
   const checking = ready && current === null;
@@ -127,7 +131,7 @@ export function LeaveForm({
     setError(null);
     startTransition(async () => {
       const result = await saveLeaveChange({
-        volunteerId,
+        userId,
         leaveId: leave?.id,
         data: { startsOn, endsOn, reason },
       });
@@ -207,13 +211,13 @@ export function LeaveForm({
         <p id="leave-reason-help" className="text-xs text-muted-foreground">
           {self
             ? "Only you and the kitchen team see this."
-            : "Only the volunteer and staff see this."}
+            : `Only ${personName ?? "they"} and the kitchen team see this.`}
         </p>
       </div>
 
       {/* What saving will do to the roster, before it happens. */}
       <div aria-live="polite">
-        {needsVolunteer ? null : !ready ? (
+        {needsPerson ? null : !ready ? (
           <p className="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
             Choose the dates to see which shifts this affects.
           </p>

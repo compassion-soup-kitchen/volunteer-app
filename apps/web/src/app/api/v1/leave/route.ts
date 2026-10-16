@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
 import { withApiAuth } from "@/lib/api/auth";
 import { serializeLeaveOverview } from "@/lib/api/serializers";
-import {
-  getLeaveOverview,
-  saveLeave,
-  volunteerIdForUser,
-} from "@/lib/data/volunteer-leave";
+import { getPersonLeave, saveLeave } from "@/lib/data/leave";
 import { todayInAppZone } from "@/lib/date-only";
 import { readLeaveBody } from "@/lib/api/leave-body";
 
-/** The volunteer's own leave: under way, coming up, and the last few past. */
+/**
+ * Their own leave: under way, coming up, and the last few past. Volunteers and
+ * the kitchen team both keep it; anyone else gets `canLog: false`.
+ */
 export const GET = withApiAuth(async (_req, user) => {
-  const volunteerId = await volunteerIdForUser(user.id);
-  const overview = volunteerId ? await getLeaveOverview(volunteerId) : null;
+  const overview = await getPersonLeave(user.id);
   return NextResponse.json(serializeLeaveOverview(overview, todayInAppZone()));
 });
 
@@ -25,7 +23,7 @@ export const POST = withApiAuth(async (req, user) => {
   // Errors come back as a body, matching the shift and event endpoints.
   return NextResponse.json(
     await saveLeave({
-      actor: { kind: "volunteer", userId: user.id },
+      actor: { kind: "self", userId: user.id },
       data: { startsOn: body.startsOn, endsOn: body.endsOn, reason: body.reason },
     })
   );

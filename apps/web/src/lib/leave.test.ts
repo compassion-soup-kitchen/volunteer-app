@@ -6,6 +6,7 @@ import {
   endLeaveDecision,
   formatLeaveLength,
   formatLeaveRange,
+  keepsLeave,
   leaveInput,
   leaveLength,
   leaveLoggedNotice,
@@ -14,10 +15,27 @@ import {
   leaveStage,
   rosterChanges,
   subtractRange,
-} from "./volunteer-leave";
+} from "./leave";
 
 const TODAY = "2026-10-16";
 const range = (startsOn: string, endsOn: string) => ({ startsOn, endsOn });
+
+describe("keepsLeave", () => {
+  it("lets anyone with a volunteer record keep leave, whatever their role", () => {
+    expect(keepsLeave({ role: "VOLUNTEER", hasVolunteerProfile: true })).toBe(true);
+    expect(keepsLeave({ role: "COORDINATOR", hasVolunteerProfile: true })).toBe(true);
+  });
+
+  it("lets the kitchen team keep leave without one", () => {
+    expect(keepsLeave({ role: "COORDINATOR", hasVolunteerProfile: false })).toBe(true);
+    expect(keepsLeave({ role: "ADMIN", hasVolunteerProfile: false })).toBe(true);
+  });
+
+  it("waits for the application from everyone else", () => {
+    expect(keepsLeave({ role: "PUBLIC", hasVolunteerProfile: false })).toBe(false);
+    expect(keepsLeave({ role: "VOLUNTEER", hasVolunteerProfile: false })).toBe(false);
+  });
+});
 
 describe("leaveInput", () => {
   it("accepts a stretch of days with an optional reason", () => {
