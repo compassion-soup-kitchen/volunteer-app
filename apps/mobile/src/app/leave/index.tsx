@@ -78,16 +78,22 @@ function LeaveRow({
       {actions.canEdit ? (
         <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
           <View style={{ flex: 1 }}>
-            <Button title={stage === 'current' ? 'Change' : 'Edit'} variant="secondary" disabled={busy} onPress={onEdit} />
+            <Button
+              title={stage === 'current' ? 'Change' : 'Edit'}
+              variant="secondary"
+              size="md"
+              disabled={busy}
+              onPress={onEdit}
+            />
           </View>
           {actions.canEndNow ? (
             <View style={{ flex: 1 }}>
-              <Button title="I'm back" disabled={busy} onPress={onEnd} />
+              <Button title="I'm back" size="md" disabled={busy} onPress={onEnd} />
             </View>
           ) : null}
           {actions.canCancel ? (
             <View style={{ flex: 1 }}>
-              <Button title="Cancel leave" variant="ghost" disabled={busy} onPress={onCancel} />
+              <Button title="Cancel leave" variant="ghost" size="md" disabled={busy} onPress={onCancel} />
             </View>
           ) : null}
         </View>
