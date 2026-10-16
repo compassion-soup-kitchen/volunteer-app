@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.14.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.13.2...v1.14.0) (2026-10-16)
+
+
+### Features
+
+* let staff log their own leave, with or without a volunteer record ([33b8c2b](https://github.com/compassion-soup-kitchen/volunteer-app/commit/33b8c2bf4ec00634c7c6d3544b26263ca003ab8a))
+* let volunteers log leave, and keep the roster true to it ([c7f165e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/c7f165e5f4df2e873a2de2fa83604b50e8ab0893))
+* let volunteers log leave, and keep the roster true to it ([f566250](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f566250b50ffa216b922d4c73213ac30ebed5660))
+
 ## [1.13.2](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.13.1...v1.13.2) (2026-10-12)
 
 
