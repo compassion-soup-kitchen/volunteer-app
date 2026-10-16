@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,6 +18,7 @@ import {
 import { LEAVE_AFFECTS, qk } from '@/lib/query-keys';
 import { useToast } from '@/providers/toast-provider';
 import { getMyLeave, previewLeave, saveLeave } from '@/services/leave-service';
+import type { LeaveEntry } from '@/types/models';
 
 /** Picker dates are local midnight, built from parts so no timezone shifts the day. */
 function localDate(iso: string): Date {
@@ -28,41 +29,52 @@ function localDate(iso: string): Date {
 /**
  * Logging or changing a stretch of leave. Shows which shifts it takes the
  * volunteer off before they save - nobody should find that out afterwards.
+ *
+ * The form only mounts once the leave is loaded, so its fields start from the
+ * entry being changed instead of catching up a render later.
  */
 export default function EditLeaveScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const { data } = useQuery({ queryKey: qk.leave, queryFn: getMyLeave });
+  const existing = id
+    ? [data?.current, ...(data?.upcoming ?? [])].find((entry) => entry?.id === id) ?? null
+    : null;
+
+  if (!data || (id && !existing)) {
+    return (
+      <View style={{ padding: Layout.screenPadding, gap: Spacing.md }}>
+        <Stack.Screen options={{ title: id ? 'Change leave' : 'Log leave' }} />
+        {data ? (
+          <Text variant="body" color="textSecondary">
+            That leave can&apos;t be changed any more.
+          </Text>
+        ) : (
+          <Skeleton height={120} width="100%" />
+        )}
+      </View>
+    );
+  }
+
+  return <LeaveForm id={id ?? null} existing={existing} today={data.today} />;
+}
+
+function LeaveForm({ id, existing, today }: { id: string | null; existing: LeaveEntry | null; today: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const qc = useQueryClient();
 
-  const { data } = useQuery({ queryKey: qk.leave, queryFn: getMyLeave });
-  const existing = id
-    ? [data?.current, ...(data?.upcoming ?? [])].find((entry) => entry?.id === id) ?? null
-    : null;
-  const today = data?.today ?? '';
   const started = existing ? leaveStage(existing, today) === 'current' : false;
+  const [startsOn, setStartsOn] = useState(existing?.startsOn ?? '');
+  const [endsOn, setEndsOn] = useState(existing?.endsOn ?? '');
+  const [reason, setReason] = useState(existing?.reason ?? '');
 
-  const [startsOn, setStartsOn] = useState('');
-  const [endsOn, setEndsOn] = useState('');
-  const [reason, setReason] = useState('');
-  const loaded = useRef(false);
-
-  useEffect(() => {
-    if (existing && !loaded.current) {
-      loaded.current = true;
-      setStartsOn(existing.startsOn);
-      setEndsOn(existing.endsOn);
-      setReason(existing.reason ?? '');
-    }
-  }, [existing]);
-
-  const problem = today ? leaveFormProblem({ startsOn, endsOn, today, existing }) : null;
-  const ready = Boolean(today && startsOn && endsOn && !problem);
+  const problem = leaveFormProblem({ startsOn, endsOn, today, existing });
+  const ready = Boolean(startsOn && endsOn && !problem);
 
   const preview = useQuery({
     queryKey: ['leave', 'preview', id ?? 'new', startsOn, endsOn],
-    queryFn: () => previewLeave({ startsOn, endsOn, leaveId: id ?? null }),
+    queryFn: () => previewLeave({ startsOn, endsOn, leaveId: id }),
     enabled: ready,
   });
   const result = preview.data;
@@ -70,7 +82,7 @@ export default function EditLeaveScreen() {
   const shifts = result && !('error' in result) ? result.shifts : [];
 
   const save = useMutation({
-    mutationFn: () => saveLeave({ startsOn, endsOn, reason }, id ?? null),
+    mutationFn: () => saveLeave({ startsOn, endsOn, reason }, id),
     onSuccess: (res) => {
       if (res.error) {
         toast.error(res.error);
@@ -91,21 +103,6 @@ export default function EditLeaveScreen() {
       router.back();
     },
   });
-
-  if (id && !existing) {
-    return (
-      <View style={{ padding: Layout.screenPadding, gap: Spacing.md }}>
-        <Stack.Screen options={{ title: 'Change leave' }} />
-        {data ? (
-          <Text variant="body" color="textSecondary">
-            That leave can&apos;t be changed any more.
-          </Text>
-        ) : (
-          <Skeleton height={120} width="100%" />
-        )}
-      </View>
-    );
-  }
 
   const canSave = ready && !preview.isFetching && !blocker && !save.isPending;
   const minEnd = started ? today : startsOn || today;
@@ -150,16 +147,16 @@ export default function EditLeaveScreen() {
                     setStartsOn(value);
                     if (value && endsOn && endsOn < value) setEndsOn(value);
                   }}
-                  minimumDate={today ? localDate(addDaysIso(today, -30)) : undefined}
-                  maximumDate={today ? localDate(addDaysIso(today, 730)) : undefined}
+                  minimumDate={localDate(addDaysIso(today, -30))}
+                  maximumDate={localDate(addDaysIso(today, 730))}
                 />
               )}
               <DateField
                 label="Last day away"
                 value={endsOn}
                 onChange={setEndsOn}
-                minimumDate={today ? localDate(minEnd) : undefined}
-                maximumDate={today ? localDate(addDaysIso(minEnd, 365)) : undefined}
+                minimumDate={localDate(minEnd)}
+                maximumDate={localDate(addDaysIso(minEnd, 365))}
                 hint={
                   startsOn && endsOn && endsOn >= startsOn
                     ? `${formatLeaveLength({ startsOn, endsOn })} · back on ${formatShiftDate(addDaysIso(endsOn, 1))}`
