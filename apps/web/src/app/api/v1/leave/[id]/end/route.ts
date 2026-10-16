@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withApiAuth } from "@/lib/api/auth";
-import { endLeave } from "@/lib/data/volunteer-leave";
+import { endLeave } from "@/lib/data/leave";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -8,6 +8,6 @@ type Ctx = { params: Promise<{ id: string }> };
 export const POST = withApiAuth<Ctx>(async (_req, user, ctx) => {
   const { id } = await ctx.params;
   return NextResponse.json(
-    await endLeave({ actor: { kind: "volunteer", userId: user.id }, leaveId: id })
+    await endLeave({ actor: { kind: "self", userId: user.id }, leaveId: id })
   );
 });

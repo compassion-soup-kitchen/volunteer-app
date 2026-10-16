@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveForm } from "@/components/leave/log-leave-card";
 import { getMyLeave } from "@/lib/leave-actions";
-import { describeLeaveStatus, formatLeaveRange } from "@/lib/volunteer-leave";
+import { describeLeaveStatus, formatLeaveRange } from "@/lib/leave";
 
 export const metadata: Metadata = {
   title: "My leave | Te Pūaroha",
@@ -76,7 +76,7 @@ export default async function MyLeavePage() {
             </CardHeader>
             {ahead.length > 0 ? (
               <div className="border-t border-border">
-                <LeaveEntries entries={ahead} audience="volunteer" today={today} stageBadge="current" />
+                <LeaveEntries entries={ahead} audience="self" today={today} stageBadge="current" />
               </div>
             ) : (
               <CardContent className="border-t border-border pt-3 pb-5">
@@ -94,7 +94,7 @@ export default async function MyLeavePage() {
           </CardHeader>
           {past.length > 0 ? (
             <div className="border-t border-border">
-              <LeaveEntries entries={past} audience="volunteer" today={today} stageBadge="none" />
+              <LeaveEntries entries={past} audience="self" today={today} stageBadge="none" />
             </div>
           ) : (
             <CardContent className="border-t border-border pt-3 pb-5">

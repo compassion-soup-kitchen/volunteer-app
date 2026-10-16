@@ -23,7 +23,7 @@ import {
 } from "@remixicon/react";
 import { getAwayToday } from "@/lib/leave-actions";
 import { todayInAppZone } from "@/lib/date-only";
-import { describeLeaveStatus } from "@/lib/volunteer-leave";
+import { describeLeaveStatus } from "@/lib/leave";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
@@ -217,7 +217,7 @@ async function AwayTodaySection() {
             {shown.map((leave) => (
               <li key={leave.id}>
                 <Link
-                  href={`/staff/volunteers/${leave.volunteer.userId}`}
+                  href={`/staff/volunteers/${leave.person.userId}`}
                   className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                 >
                   <IconChip size="sm" tone="warning">
@@ -225,7 +225,7 @@ async function AwayTodaySection() {
                   </IconChip>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">
-                      {leave.volunteer.name}
+                      {leave.person.name}
                     </span>
                     <span className="block text-xs text-muted-foreground">
                       {describeLeaveStatus(leave, today)}

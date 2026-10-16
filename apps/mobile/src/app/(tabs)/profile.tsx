@@ -25,7 +25,7 @@ import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
-import { describeLeaveStatus, formatLeaveRange } from '@/lib/leave';
+import { describeLeaveStatus, formatLeaveRange, offersLeave } from '@/lib/leave';
 import { getMyLeave } from '@/services/leave-service';
 import { getVolunteerProfile } from '@/services/profile-service';
 import type { ServiceArea, VolunteerStatus } from '@/types/models';
@@ -179,7 +179,7 @@ function ProfileSkeleton() {
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: qk.profile,
     queryFn: getVolunteerProfile,
@@ -223,7 +223,7 @@ export default function ProfileScreen() {
           ) : null}
 
           {/* Leave — the one thing on this screen that changes the roster */}
-          {!isOnboarding(data.status) ? (
+          {user && offersLeave({ role: user.role, onboarding: isOnboarding(data.status) }) ? (
             <View style={{ gap: Spacing.lg }}>
               <SectionHeader overline="Wā okioki · Leave" title="Going away?" divider />
               <LeaveSummary onPress={() => router.push('/leave')} />

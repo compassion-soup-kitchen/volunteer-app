@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiAuth } from "@/lib/api/auth";
 import { serializeLeavePreview } from "@/lib/api/serializers";
-import { previewLeave } from "@/lib/data/volunteer-leave";
+import { previewLeave } from "@/lib/data/leave";
 import { readLeaveBody } from "@/lib/api/leave-body";
 
 /**
@@ -14,7 +14,7 @@ export const POST = withApiAuth(async (req, user) => {
     return NextResponse.json({ error: "Choose the days you're away." }, { status: 400 });
   }
   const preview = await previewLeave({
-    actor: { kind: "volunteer", userId: user.id },
+    actor: { kind: "self", userId: user.id },
     leaveId: body.leaveId,
     startsOn: body.startsOn,
     endsOn: body.endsOn,

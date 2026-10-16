@@ -41,11 +41,12 @@ export default async function ShiftDetailPage({
       <ShiftDetailView
         shift={shift}
         volunteers={volunteers}
-        away={away.map((leave) => ({
-          volunteerId: leave.volunteer.id,
-          startsOn: leave.startsOn,
-          endsOn: leave.endsOn,
-        }))}
+        away={away.flatMap((leave) =>
+          // Only someone with a volunteer record can be on the roster.
+          leave.person.volunteerId
+            ? [{ volunteerId: leave.person.volunteerId, startsOn: leave.startsOn, endsOn: leave.endsOn }]
+            : []
+        )}
       />
     </div>
   );

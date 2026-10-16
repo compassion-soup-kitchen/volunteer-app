@@ -2,13 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { tx, sendPushToUsers } = vi.hoisted(() => ({
   tx: {
-    volunteerLeave: {
+    leave: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
+    user: { findUnique: vi.fn() },
     volunteerProfile: { findUnique: vi.fn() },
     shiftSignup: {
       findMany: vi.fn(),
@@ -33,23 +34,33 @@ vi.mock("@/lib/db", () => ({
 }));
 
 import { parseDateOnly } from "@/lib/date-only";
-import { deleteLeave, endLeave, saveLeave, takeOffRoster } from "./volunteer-leave";
+import { deleteLeave, endLeave, previewLeave, saveLeave, takeOffRoster } from "./leave";
 
 const day = parseDateOnly;
-const volunteerActor = { kind: "volunteer", userId: "user-1" } as const;
+const volunteerActor = { kind: "self", userId: "user-1" } as const;
 const staffActor = { kind: "staff", userId: "staff-1" } as const;
+
+/**
+ * The people in these tests: Aroha volunteers (user-1, volunteer record vol-1),
+ * Amanda coordinates without volunteering (staff-1), and Tama has signed up
+ * but not yet applied (applicant-1).
+ */
+const PEOPLE: Record<string, { id: string; role: string; volunteerProfile: { id: string } | null }> = {
+  "user-1": { id: "user-1", role: "VOLUNTEER", volunteerProfile: { id: "vol-1" } },
+  "staff-1": { id: "staff-1", role: "COORDINATOR", volunteerProfile: null },
+  "applicant-1": { id: "applicant-1", role: "PUBLIC", volunteerProfile: null },
+};
 
 function leaveRow(startsOn: string, endsOn: string, ownerUserId = "user-1") {
   return {
     id: "leave-1",
-    volunteerId: "vol-1",
+    userId: ownerUserId,
     startsOn: day(startsOn),
     endsOn: day(endsOn),
     reason: null,
     createdAt: new Date(),
     createdById: ownerUserId,
     createdBy: { name: "Aroha", email: "aroha@example.org" },
-    volunteer: { userId: ownerUserId },
   };
 }
 
@@ -80,18 +91,21 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NZ_FRIDAY_MORNING);
   vi.clearAllMocks();
-  tx.volunteerLeave.findMany.mockResolvedValue([]);
+  tx.leave.findMany.mockResolvedValue([]);
   tx.shiftSignup.findMany.mockResolvedValue([]);
   tx.shift.findMany.mockResolvedValue([]);
   tx.shiftSignup.createMany.mockResolvedValue({ count: 0 });
+  tx.user.findUnique.mockImplementation(
+    async ({ where }: { where: { id: string } }) => PEOPLE[where.id] ?? null
+  );
   tx.volunteerProfile.findUnique.mockResolvedValue({
     id: "vol-1",
     userId: "user-1",
     status: "ACTIVE",
     user: { status: "ACTIVE" },
   });
-  tx.volunteerLeave.create.mockResolvedValue({ id: "leave-new" });
-  tx.volunteerLeave.update.mockResolvedValue({ id: "leave-1" });
+  tx.leave.create.mockResolvedValue({ id: "leave-new" });
+  tx.leave.update.mockResolvedValue({ id: "leave-1" });
 });
 
 describe("takeOffRoster", () => {
@@ -139,12 +153,12 @@ describe("saveLeave", () => {
     });
 
     expect(result).toEqual({ success: true, leaveId: "leave-new", removedShifts: 1, restoredShifts: 0 });
-    expect(tx.volunteerLeave.create).toHaveBeenCalledWith({
+    expect(tx.leave.create).toHaveBeenCalledWith({
       data: {
         startsOn: day("2026-10-12"),
         endsOn: day("2026-10-20"),
         reason: "Whānau in Napier",
-        volunteerId: "vol-1",
+        userId: "user-1",
         createdById: "user-1",
       },
       select: { id: true },
@@ -162,7 +176,7 @@ describe("saveLeave", () => {
   });
 
   it("refuses leave overlapping leave already logged", async () => {
-    tx.volunteerLeave.findMany.mockResolvedValue([
+    tx.leave.findMany.mockResolvedValue([
       { startsOn: day("2026-11-10"), endsOn: day("2026-11-20") },
     ]);
 
@@ -172,11 +186,11 @@ describe("saveLeave", () => {
     });
 
     expect(result).toEqual({ error: "That overlaps leave already logged for 10 – 20 Nov." });
-    expect(tx.volunteerLeave.create).not.toHaveBeenCalled();
+    expect(tx.leave.create).not.toHaveBeenCalled();
   });
 
   it("won't let a volunteer change someone else's leave", async () => {
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2026-11-03", "2026-11-14", "someone-else"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-11-03", "2026-11-14", "someone-else"));
 
     const result = await saveLeave({
       actor: volunteerActor,
@@ -185,7 +199,7 @@ describe("saveLeave", () => {
     });
 
     expect(result.error).toMatch(/couldn't be found/);
-    expect(tx.volunteerLeave.update).not.toHaveBeenCalled();
+    expect(tx.leave.update).not.toHaveBeenCalled();
   });
 
   it("tells the volunteer when staff log leave for them", async () => {
@@ -196,7 +210,7 @@ describe("saveLeave", () => {
 
     await saveLeave({
       actor: staffActor,
-      volunteerId: "vol-1",
+      userId: "user-1",
       data: { startsOn: "2026-11-03", endsOn: "2026-11-14" },
     });
 
@@ -208,7 +222,7 @@ describe("saveLeave", () => {
   });
 
   it("puts a regular back on the days a shortened leave gives up", async () => {
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2026-11-03", "2026-11-20"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-11-03", "2026-11-20"));
     tx.shift.findMany
       // Their pattern shifts on the days given back.
       .mockResolvedValueOnce([{ id: "pattern-shift" }])
@@ -235,14 +249,98 @@ describe("saveLeave", () => {
   });
 });
 
+describe("leave for the kitchen team", () => {
+  it("lets a coordinator with no volunteer record log their own leave, leaving the roster alone", async () => {
+    const result = await saveLeave({
+      actor: staffActor,
+      userId: "staff-1",
+      data: { startsOn: "2026-11-03", endsOn: "2026-11-14", reason: "Rarotonga" },
+    });
+
+    expect(result).toEqual({ success: true, leaveId: "leave-new", removedShifts: 0, restoredShifts: 0 });
+    expect(tx.leave.create).toHaveBeenCalledWith({
+      data: {
+        startsOn: day("2026-11-03"),
+        endsOn: day("2026-11-14"),
+        reason: "Rarotonga",
+        userId: "staff-1",
+        createdById: "staff-1",
+      },
+      select: { id: true },
+    });
+    // Nobody to take off shifts - they aren't on the roster.
+    expect(tx.shiftSignup.findMany).not.toHaveBeenCalled();
+    expect(tx.shiftOffer.updateMany).not.toHaveBeenCalled();
+    // And nobody to tell: they did it themselves.
+    expect(sendPushToUsers).not.toHaveBeenCalled();
+  });
+
+  it("lets them log it from the app too, where they act as themselves", async () => {
+    const result = await saveLeave({
+      actor: { kind: "self", userId: "staff-1" },
+      data: { startsOn: "2026-11-03", endsOn: "2026-11-14" },
+    });
+
+    expect(result).toMatchObject({ success: true });
+    expect(tx.leave.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "staff-1" }) })
+    );
+  });
+
+  it("previews no shifts for them without reading the roster", async () => {
+    const preview = await previewLeave({
+      actor: staffActor,
+      userId: "staff-1",
+      startsOn: "2026-11-03",
+      endsOn: "2026-11-14",
+    });
+
+    expect(preview).toEqual({ blocker: null, shifts: [] });
+    expect(tx.shiftSignup.findMany).not.toHaveBeenCalled();
+  });
+
+  it("doesn't push a coordinator about leave they removed themselves", async () => {
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-11-03", "2026-11-14", "staff-1"));
+
+    const result = await deleteLeave({ actor: staffActor, leaveId: "leave-1" });
+
+    expect(result).toMatchObject({ success: true, restoredShifts: 0 });
+    expect(sendPushToUsers).not.toHaveBeenCalled();
+  });
+
+  it("still waits for an application from someone who has only signed up", async () => {
+    const own = await saveLeave({
+      actor: { kind: "self", userId: "applicant-1" },
+      data: { startsOn: "2026-11-03", endsOn: "2026-11-14" },
+    });
+    expect(own.error).toMatch(/once your volunteer application is in/);
+
+    const byStaff = await saveLeave({
+      actor: staffActor,
+      userId: "applicant-1",
+      data: { startsOn: "2026-11-03", endsOn: "2026-11-14" },
+    });
+    expect(byStaff.error).toMatch(/only be logged for volunteers and the kitchen team/);
+    expect(tx.leave.create).not.toHaveBeenCalled();
+  });
+
+  it("asks staff who the leave is for when they haven't said", async () => {
+    const result = await saveLeave({
+      actor: staffActor,
+      data: { startsOn: "2026-11-03", endsOn: "2026-11-14" },
+    });
+    expect(result.error).toBe("Choose who the leave is for.");
+  });
+});
+
 describe("endLeave", () => {
   it("keeps the days away and ends the leave yesterday", async () => {
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
 
     const result = await endLeave({ actor: volunteerActor, leaveId: "leave-1" });
 
     expect(result).toMatchObject({ success: true });
-    expect(tx.volunteerLeave.update).toHaveBeenCalledWith({
+    expect(tx.leave.update).toHaveBeenCalledWith({
       where: { id: "leave-1" },
       data: { endsOn: day("2026-10-15") },
     });
@@ -251,21 +349,21 @@ describe("endLeave", () => {
 
 describe("deleteLeave", () => {
   it("won't let a volunteer erase leave they're on", async () => {
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
 
     const result = await deleteLeave({ actor: volunteerActor, leaveId: "leave-1" });
 
     expect(result.error).toMatch(/I'm back/);
-    expect(tx.volunteerLeave.delete).not.toHaveBeenCalled();
+    expect(tx.leave.delete).not.toHaveBeenCalled();
   });
 
   it("lets staff remove it, and tells the volunteer", async () => {
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
 
     const result = await deleteLeave({ actor: staffActor, leaveId: "leave-1" });
 
     expect(result).toMatchObject({ success: true });
-    expect(tx.volunteerLeave.delete).toHaveBeenCalledWith({ where: { id: "leave-1" } });
+    expect(tx.leave.delete).toHaveBeenCalledWith({ where: { id: "leave-1" } });
     expect(sendPushToUsers).toHaveBeenCalledWith(
       ["user-1"],
       expect.objectContaining({ title: "Your leave has changed" })
@@ -299,12 +397,12 @@ describe("in New Zealand time", () => {
 
   it("still says Friday at 11:30pm in Wellington, when UTC has long been Friday too", async () => {
     vi.setSystemTime(new Date("2026-10-16T10:30:00Z"));
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
 
     await endLeave({ actor: volunteerActor, leaveId: "leave-1" });
 
     // Back early on Friday: the last day away is Thursday.
-    expect(tx.volunteerLeave.update).toHaveBeenCalledWith({
+    expect(tx.leave.update).toHaveBeenCalledWith({
       where: { id: "leave-1" },
       data: { endsOn: day("2026-10-15") },
     });
@@ -313,11 +411,11 @@ describe("in New Zealand time", () => {
   it("rolls over at Wellington midnight, not UTC midnight", async () => {
     // 00:30 Saturday in Wellington is 11:30 Friday in UTC.
     vi.setSystemTime(new Date("2026-10-16T11:30:00Z"));
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2026-10-10", "2026-10-25"));
 
     await endLeave({ actor: volunteerActor, leaveId: "leave-1" });
 
-    expect(tx.volunteerLeave.update).toHaveBeenCalledWith({
+    expect(tx.leave.update).toHaveBeenCalledWith({
       where: { id: "leave-1" },
       data: { endsOn: day("2026-10-16") },
     });
@@ -326,11 +424,11 @@ describe("in New Zealand time", () => {
   it("keeps the day straight on the night daylight saving ends", async () => {
     // 01:30 NZST on Sunday 4 April 2027 - clocks went back at 3am NZDT.
     vi.setSystemTime(new Date("2027-04-03T13:30:00Z"));
-    tx.volunteerLeave.findUnique.mockResolvedValue(leaveRow("2027-04-01", "2027-04-10"));
+    tx.leave.findUnique.mockResolvedValue(leaveRow("2027-04-01", "2027-04-10"));
 
     await endLeave({ actor: volunteerActor, leaveId: "leave-1" });
 
-    expect(tx.volunteerLeave.update).toHaveBeenCalledWith({
+    expect(tx.leave.update).toHaveBeenCalledWith({
       where: { id: "leave-1" },
       data: { endsOn: day("2027-04-03") },
     });

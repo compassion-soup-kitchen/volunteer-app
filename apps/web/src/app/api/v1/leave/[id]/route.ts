@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withApiAuth } from "@/lib/api/auth";
-import { deleteLeave, saveLeave } from "@/lib/data/volunteer-leave";
+import { deleteLeave, saveLeave } from "@/lib/data/leave";
 import { readLeaveBody } from "@/lib/api/leave-body";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -14,7 +14,7 @@ export const PATCH = withApiAuth<Ctx>(async (req, user, ctx) => {
   }
   return NextResponse.json(
     await saveLeave({
-      actor: { kind: "volunteer", userId: user.id },
+      actor: { kind: "self", userId: user.id },
       leaveId: id,
       data: { startsOn: body.startsOn, endsOn: body.endsOn, reason: body.reason },
     })
@@ -25,6 +25,6 @@ export const PATCH = withApiAuth<Ctx>(async (req, user, ctx) => {
 export const DELETE = withApiAuth<Ctx>(async (_req, user, ctx) => {
   const { id } = await ctx.params;
   return NextResponse.json(
-    await deleteLeave({ actor: { kind: "volunteer", userId: user.id }, leaveId: id })
+    await deleteLeave({ actor: { kind: "self", userId: user.id }, leaveId: id })
   );
 });

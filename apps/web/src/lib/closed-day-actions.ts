@@ -34,7 +34,7 @@ import {
   refillReopenedDay,
   scheduleRosterTopUp,
 } from "@/lib/data/shift-patterns";
-import { getLeaveBetween } from "@/lib/data/volunteer-leave";
+import { getLeaveBetween } from "@/lib/data/leave";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ export type RosterMonth = {
   holidays: PublicHoliday[];
   /** Public holidays coming up that nobody has closed yet. */
   suggestions: PublicHoliday[];
-  /** Volunteers on leave during the grid, so a day shows who's away. */
+  /** People on leave during the grid - volunteers and staff - so a day shows who's away. */
   away: CalendarAway[];
 };
 
@@ -180,8 +180,8 @@ export async function getRosterMonth(month: DateOnly): Promise<RosterMonth | nul
     }),
     away: away.map((leave) => ({
       id: leave.id,
-      userId: leave.volunteer.userId,
-      name: leave.volunteer.name,
+      userId: leave.person.userId,
+      name: leave.person.name,
       startsOn: leave.startsOn,
       endsOn: leave.endsOn,
     })),

@@ -1,10 +1,14 @@
 /**
- * Volunteer leave against the database - logging it, changing it, and keeping
- * the roster true to it.
+ * Leave against the database - logging it, changing it, and keeping the
+ * roster true to it.
  *
  * Shared by the web Server Actions (volunteer and staff) and the mobile API, so
- * all three log leave the same way. The rules about *which days* are touched
- * live in the pure volunteer-leave.ts; this file applies them:
+ * all three log leave the same way. The rules about *who* keeps leave and
+ * *which days* are touched live in the pure leave.ts; this file applies them.
+ *
+ * Leave belongs to the person (`User`). Only someone with a volunteer record is
+ * on the roster, so only their leave touches it - a coordinator with no
+ * volunteer record just has the dates kept, for the people covering for them:
  *
  * - Days newly covered take the volunteer off shifts there. A seat a pattern
  *   gave them as a regular is deleted, so `rosterRegulars` can seat them again
@@ -37,10 +41,11 @@ import {
   leaveInput,
   leaveLoggedNotice,
   leaveRemovedNotice,
+  keepsLeave,
   leaveSaveBlocker,
   rosterChanges,
   type LeaveRange,
-} from "@/lib/volunteer-leave";
+} from "@/lib/leave";
 import { isSerializationFailure } from "@/lib/data/volunteer-shifts";
 import { rosterRegulars } from "@/lib/data/shift-patterns";
 import { overlapping, rangeOf } from "@/lib/data/leave-days";
@@ -52,7 +57,8 @@ type Db = PrismaClient | Prisma.TransactionClient;
 /** One stretch of leave, as every screen shows it. Days are calendar days. */
 export type LeaveRecord = {
   id: string;
-  volunteerId: string;
+  /** Whose leave it is. */
+  userId: string;
   startsOn: DateOnly;
   endsOn: DateOnly;
   reason: string | null;
@@ -72,7 +78,7 @@ export type LeaveShift = {
   isRegular: boolean;
 };
 
-export type VolunteerLeaveOverview = {
+export type LeaveOverview = {
   today: DateOnly;
   current: LeaveRecord | null;
   upcoming: LeaveRecord[];
@@ -80,15 +86,19 @@ export type VolunteerLeaveOverview = {
   past: LeaveRecord[];
 };
 
+/**
+ * Who is acting. `self` only ever touches their own leave, under the
+ * volunteer's rules; `staff` can act on anyone's, their own included.
+ */
 export type LeaveActor =
-  | { kind: "volunteer"; userId: string }
+  | { kind: "self"; userId: string }
   | { kind: "staff"; userId: string };
 
 export type LeaveMutationResult = {
   error?: string;
   success?: boolean;
   leaveId?: string;
-  /** Shifts the volunteer came off. */
+  /** Shifts they came off. */
   removedShifts?: number;
   /** Repeating-shift seats they were given back. */
   restoredShifts?: number;
@@ -101,26 +111,37 @@ export type LeavePreview = {
   shifts: LeaveShift[];
 };
 
+/** Someone leave can be logged for, in the staff picker. */
+export type LeavePersonOption = {
+  /** Their user id - leave belongs to the person. */
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  isOffline: boolean;
+  /** A coordinator or admin. */
+  isStaff: boolean;
+};
+
 const PAST_SHOWN = 6;
 
 const LEAVE_SELECT = {
   id: true,
-  volunteerId: true,
+  userId: true,
   startsOn: true,
   endsOn: true,
   reason: true,
   createdAt: true,
   createdById: true,
   createdBy: { select: { name: true, email: true } },
-  volunteer: { select: { userId: true } },
-} satisfies Prisma.VolunteerLeaveSelect;
+} satisfies Prisma.LeaveSelect;
 
-type LeaveRow = Prisma.VolunteerLeaveGetPayload<{ select: typeof LEAVE_SELECT }>;
+type LeaveRow = Prisma.LeaveGetPayload<{ select: typeof LEAVE_SELECT }>;
 
 function toRecord(row: LeaveRow): LeaveRecord {
   return {
     id: row.id,
-    volunteerId: row.volunteerId,
+    userId: row.userId,
     startsOn: dateOnlyOf(row.startsOn),
     endsOn: dateOnlyOf(row.endsOn),
     reason: row.reason,
@@ -128,7 +149,7 @@ function toRecord(row: LeaveRow): LeaveRecord {
     loggedBy: row.createdBy
       ? {
           name: personName(row.createdBy),
-          isSelf: row.createdById === row.volunteer.userId,
+          isSelf: row.createdById === row.userId,
         }
       : null,
   };
@@ -269,24 +290,24 @@ export async function putBackOnRoster(
   );
 }
 
-// ─── Volunteer reads ────────────────────────────────────
+// ─── Personal reads ─────────────────────────────────────
 
 /** Someone's leave, split the way their screen shows it. */
 export async function getLeaveOverview(
-  volunteerId: string,
+  userId: string,
   today: DateOnly = todayInAppZone()
-): Promise<VolunteerLeaveOverview> {
+): Promise<LeaveOverview> {
   const db = getDb();
   const day = parseDateOnly(today);
 
   const [ahead, past] = await Promise.all([
-    db.volunteerLeave.findMany({
-      where: { volunteerId, endsOn: { gte: day } },
+    db.leave.findMany({
+      where: { userId, endsOn: { gte: day } },
       orderBy: { startsOn: "asc" },
       select: LEAVE_SELECT,
     }),
-    db.volunteerLeave.findMany({
-      where: { volunteerId, endsOn: { lt: day } },
+    db.leave.findMany({
+      where: { userId, endsOn: { lt: day } },
       orderBy: { endsOn: "desc" },
       take: PAST_SHOWN,
       select: LEAVE_SELECT,
@@ -302,13 +323,40 @@ export async function getLeaveOverview(
   };
 }
 
-/** The profile behind a signed-in volunteer, if they have one. */
-export async function volunteerIdForUser(userId: string): Promise<string | null> {
-  const profile = await getDb().volunteerProfile.findUnique({
-    where: { userId },
-    select: { id: true },
+/**
+ * Someone's leave, or null when they aren't someone who keeps it - an
+ * applicant who hasn't applied yet, say.
+ */
+export async function getPersonLeave(
+  userId: string,
+  today: DateOnly = todayInAppZone()
+): Promise<LeaveOverview | null> {
+  const owner = await findOwner(getDb(), userId);
+  return owner?.keepsLeave ? getLeaveOverview(userId, today) : null;
+}
+
+// ─── Owners ─────────────────────────────────────────────
+
+/** Whose leave it is, and where they sit on the roster. */
+type LeaveOwner = {
+  userId: string;
+  /** Their volunteer record, if they have one - only then is there a roster to change. */
+  volunteerId: string | null;
+  keepsLeave: boolean;
+};
+
+async function findOwner(db: Db, userId: string): Promise<LeaveOwner | null> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, volunteerProfile: { select: { id: true } } },
   });
-  return profile?.id ?? null;
+  if (!user) return null;
+  const volunteerId = user.volunteerProfile?.id ?? null;
+  return {
+    userId: user.id,
+    volunteerId,
+    keepsLeave: keepsLeave({ role: user.role, hasVolunteerProfile: volunteerId !== null }),
+  };
 }
 
 // ─── Writes ─────────────────────────────────────────────
@@ -321,43 +369,43 @@ async function loadOwnedLeave(
   actor: LeaveActor,
   leaveId: string
 ): Promise<LeaveRow> {
-  const row = await tx.volunteerLeave.findUnique({
+  const row = await tx.leave.findUnique({
     where: { id: leaveId },
     select: LEAVE_SELECT,
   });
   // Someone else's leave reads as missing, not forbidden - it isn't theirs to know about.
-  if (!row || (actor.kind === "volunteer" && row.volunteer.userId !== actor.userId)) {
+  if (!row || (actor.kind === "self" && row.userId !== actor.userId)) {
     throw new LeaveRefused("That leave couldn't be found. It may have been removed.");
   }
   return row;
 }
 
-/** Whose leave a new entry is for: staff name the volunteer, volunteers are themselves. */
-async function targetVolunteer(
+/** Whose leave a new entry is for: staff name the person, everyone else is themselves. */
+async function targetOwner(
   tx: Db,
   actor: LeaveActor,
-  volunteerId: string | null
-): Promise<{ id: string; userId: string }> {
-  const profile =
-    actor.kind === "staff"
-      ? volunteerId
-        ? await tx.volunteerProfile.findUnique({
-            where: { id: volunteerId },
-            select: { id: true, userId: true },
-          })
-        : null
-      : await tx.volunteerProfile.findUnique({
-          where: { userId: actor.userId },
-          select: { id: true, userId: true },
-        });
-  if (!profile) {
-    throw new LeaveRefused(
-      actor.kind === "staff"
-        ? "Choose who the leave is for."
-        : "Leave can be logged once your volunteer application is in."
-    );
+  userId: string | null
+): Promise<LeaveOwner> {
+  if (actor.kind === "self") {
+    const owner = await findOwner(tx, actor.userId);
+    if (!owner?.keepsLeave) {
+      throw new LeaveRefused("Leave can be logged once your volunteer application is in.");
+    }
+    return owner;
   }
-  return profile;
+  if (!userId) throw new LeaveRefused("Choose who the leave is for.");
+  const owner = await findOwner(tx, userId);
+  if (!owner?.keepsLeave) {
+    throw new LeaveRefused("Leave can only be logged for volunteers and the kitchen team.");
+  }
+  return owner;
+}
+
+/** The owner of leave already logged. */
+async function ownerOfLeave(tx: Db, row: LeaveRow): Promise<LeaveOwner> {
+  return (
+    (await findOwner(tx, row.userId)) ?? { userId: row.userId, volunteerId: null, keepsLeave: false }
+  );
 }
 
 /** Runs a Serializable transaction, retrying once if it lost a race. */
@@ -384,8 +432,8 @@ function refusedOrFailed(error: unknown, where: string): LeaveMutationResult {
  */
 export async function previewLeave(input: {
   actor: LeaveActor;
-  /** Staff only, for new leave. */
-  volunteerId?: string | null;
+  /** Whose leave - staff only, for new leave. */
+  userId?: string | null;
   leaveId?: string | null;
   startsOn: string;
   endsOn: string;
@@ -401,13 +449,13 @@ export async function previewLeave(input: {
 
   try {
     const existing = input.leaveId ? await loadOwnedLeave(db, input.actor, input.leaveId) : null;
-    const volunteerId = existing
-      ? existing.volunteerId
-      : (await targetVolunteer(db, input.actor, input.volunteerId ?? null)).id;
+    const owner = existing
+      ? await ownerOfLeave(db, existing)
+      : await targetOwner(db, input.actor, input.userId ?? null);
 
-    const others = await db.volunteerLeave.findMany({
+    const others = await db.leave.findMany({
       where: {
-        volunteerId,
+        userId: owner.userId,
         ...(existing ? { id: { not: existing.id } } : {}),
         ...overlapping(range),
       },
@@ -418,7 +466,8 @@ export async function previewLeave(input: {
     const blocker = leaveSaveBlocker({ range, today, existing: before, others: others.map(rangeOf) });
     const { takeOff } = rosterChanges({ before, after: range, today });
 
-    return { blocker, shifts: await shiftsOnLeaveDays(db, volunteerId, takeOff) };
+    const shifts = owner.volunteerId ? await shiftsOnLeaveDays(db, owner.volunteerId, takeOff) : [];
+    return { blocker, shifts };
   } catch (error) {
     if (error instanceof LeaveRefused) return { error: error.message };
     throw error;
@@ -432,8 +481,8 @@ export async function previewLeave(input: {
  */
 export async function saveLeave(input: {
   actor: LeaveActor;
-  /** Staff only, for new leave. */
-  volunteerId?: string | null;
+  /** Whose leave - staff only, for new leave. */
+  userId?: string | null;
   /** Null to log new leave. */
   leaveId?: string | null;
   data: unknown;
@@ -449,7 +498,7 @@ export async function saveLeave(input: {
 
   let outcome: {
     leaveId: string;
-    volunteerUserId: string;
+    ownerUserId: string;
     removed: LeaveShift[];
     restored: number;
     isNew: boolean;
@@ -457,13 +506,13 @@ export async function saveLeave(input: {
   try {
     outcome = await serializable(async (tx) => {
       const existing = input.leaveId ? await loadOwnedLeave(tx, actor, input.leaveId) : null;
-      const volunteer = existing
-        ? { id: existing.volunteerId, userId: existing.volunteer.userId }
-        : await targetVolunteer(tx, actor, input.volunteerId ?? null);
+      const owner = existing
+        ? await ownerOfLeave(tx, existing)
+        : await targetOwner(tx, actor, input.userId ?? null);
 
-      const others = await tx.volunteerLeave.findMany({
+      const others = await tx.leave.findMany({
         where: {
-          volunteerId: volunteer.id,
+          userId: owner.userId,
           ...(existing ? { id: { not: existing.id } } : {}),
           ...overlapping(range),
         },
@@ -480,29 +529,33 @@ export async function saveLeave(input: {
         reason,
       };
       const saved = existing
-        ? await tx.volunteerLeave.update({ where: { id: existing.id }, data, select: { id: true } })
-        : await tx.volunteerLeave.create({
-            data: { ...data, volunteerId: volunteer.id, createdById: actor.userId },
+        ? await tx.leave.update({ where: { id: existing.id }, data, select: { id: true } })
+        : await tx.leave.create({
+            data: { ...data, userId: owner.userId, createdById: actor.userId },
             select: { id: true },
           });
 
-      const changes = rosterChanges({ before, after: range, today });
-      const removed = await takeOffRoster(tx, volunteer.id, changes.takeOff);
-      const restored = await putBackOnRoster(tx, volunteer.id, changes.putBack);
+      let removed: LeaveShift[] = [];
+      let restored = 0;
+      if (owner.volunteerId) {
+        const changes = rosterChanges({ before, after: range, today });
+        removed = await takeOffRoster(tx, owner.volunteerId, changes.takeOff);
+        restored = await putBackOnRoster(tx, owner.volunteerId, changes.putBack);
+      }
 
-      return { leaveId: saved.id, volunteerUserId: volunteer.userId, removed, restored, isNew: !existing };
+      return { leaveId: saved.id, ownerUserId: owner.userId, removed, restored, isNew: !existing };
     });
   } catch (error) {
     return refusedOrFailed(error, "saveLeave");
   }
 
-  if (actor.kind === "staff") {
+  if (loggedForSomeoneElse(actor, outcome.ownerUserId)) {
     const { title, body } = leaveLoggedNotice({
       range,
       removedShifts: outcome.removed.length,
       isNew: outcome.isNew,
     });
-    notifyVolunteer(outcome.volunteerUserId, title, body);
+    notifyOwner(outcome.ownerUserId, title, body);
   }
 
   revalidateLeave();
@@ -530,17 +583,19 @@ export async function endLeave(input: {
       if (decision.action === "reject") throw new LeaveRefused(decision.error);
 
       if (decision.action === "delete") {
-        await tx.volunteerLeave.delete({ where: { id: existing.id } });
+        await tx.leave.delete({ where: { id: existing.id } });
       } else {
-        await tx.volunteerLeave.update({
+        await tx.leave.update({
           where: { id: existing.id },
           data: { endsOn: parseDateOnly(decision.endsOn) },
         });
       }
 
+      const { volunteerId } = await ownerOfLeave(tx, existing);
+      if (!volunteerId) return 0;
       const after = decision.action === "delete" ? null : { ...before, endsOn: decision.endsOn };
       const { putBack } = rosterChanges({ before, after, today });
-      return putBackOnRoster(tx, existing.volunteerId, putBack);
+      return putBackOnRoster(tx, volunteerId, putBack);
     });
   } catch (error) {
     return refusedOrFailed(error, "endLeave");
@@ -557,7 +612,7 @@ export async function deleteLeave(input: {
 }): Promise<LeaveMutationResult> {
   const today = todayInAppZone();
 
-  let outcome: { restored: number; range: LeaveRange; volunteerUserId: string };
+  let outcome: { restored: number; range: LeaveRange; ownerUserId: string };
   try {
     outcome = await serializable(async (tx) => {
       const existing = await loadOwnedLeave(tx, input.actor, input.leaveId);
@@ -569,27 +624,33 @@ export async function deleteLeave(input: {
       });
       if (blocker) throw new LeaveRefused(blocker);
 
-      await tx.volunteerLeave.delete({ where: { id: existing.id } });
+      await tx.leave.delete({ where: { id: existing.id } });
+      const { volunteerId } = await ownerOfLeave(tx, existing);
       const { putBack } = rosterChanges({ before, after: null, today });
-      const restored = await putBackOnRoster(tx, existing.volunteerId, putBack);
-      return { restored, range: before, volunteerUserId: existing.volunteer.userId };
+      const restored = volunteerId ? await putBackOnRoster(tx, volunteerId, putBack) : 0;
+      return { restored, range: before, ownerUserId: existing.userId };
     });
   } catch (error) {
     return refusedOrFailed(error, "deleteLeave");
   }
 
   // Taking away leave that's still ahead changes their plans; tell them.
-  if (input.actor.kind === "staff" && outcome.range.endsOn >= today) {
+  if (loggedForSomeoneElse(input.actor, outcome.ownerUserId) && outcome.range.endsOn >= today) {
     const { title, body } = leaveRemovedNotice(outcome.range);
-    notifyVolunteer(outcome.volunteerUserId, title, body);
+    notifyOwner(outcome.ownerUserId, title, body);
   }
 
   revalidateLeave();
   return { success: true, restoredShifts: outcome.restored };
 }
 
-/** A push to the volunteer whose leave staff changed. Offline volunteers have no device, so it reaches no one. */
-function notifyVolunteer(userId: string, title: string, body: string) {
+/** Staff changing someone else's leave - the only change its owner didn't make themselves. */
+function loggedForSomeoneElse(actor: LeaveActor, ownerUserId: string): boolean {
+  return actor.kind === "staff" && actor.userId !== ownerUserId;
+}
+
+/** A push to the person whose leave staff changed. Offline volunteers have no device, so it reaches no one. */
+function notifyOwner(userId: string, title: string, body: string) {
   after(() => sendPushToUsers([userId], { title, body, data: { url: "/leave" } }));
 }
 
@@ -609,12 +670,15 @@ function revalidateLeave() {
 
 /** A stretch of leave with the person it belongs to, for staff screens. */
 export type StaffLeaveRecord = LeaveRecord & {
-  volunteer: {
-    id: string;
+  person: {
     userId: string;
+    /** Their volunteer record - null for staff who don't volunteer. */
+    volunteerId: string | null;
     name: string;
     phone: string | null;
     isOffline: boolean;
+    /** A coordinator or admin. */
+    isStaff: boolean;
   };
 };
 
@@ -629,29 +693,36 @@ export type StaffLeaveOverview = {
 /** How far back the "recently back" list reaches. */
 export const RECENT_DAYS = 30;
 
+const PERSON_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  isOffline: true,
+  volunteerProfile: { select: { id: true, phone: true } },
+} satisfies Prisma.UserSelect;
+
+type PersonRow = Prisma.UserGetPayload<{ select: typeof PERSON_SELECT }>;
+
+const isStaffRole = (role: PersonRow["role"]) => role === "COORDINATOR" || role === "ADMIN";
+
 const STAFF_LEAVE_SELECT = {
   ...LEAVE_SELECT,
-  volunteer: {
-    select: {
-      id: true,
-      userId: true,
-      phone: true,
-      user: { select: { name: true, email: true, isOffline: true } },
-    },
-  },
-} satisfies Prisma.VolunteerLeaveSelect;
+  user: { select: PERSON_SELECT },
+} satisfies Prisma.LeaveSelect;
 
-type StaffLeaveRow = Prisma.VolunteerLeaveGetPayload<{ select: typeof STAFF_LEAVE_SELECT }>;
+type StaffLeaveRow = Prisma.LeaveGetPayload<{ select: typeof STAFF_LEAVE_SELECT }>;
 
 function toStaffRecord(row: StaffLeaveRow): StaffLeaveRecord {
   return {
     ...toRecord(row),
-    volunteer: {
-      id: row.volunteer.id,
-      userId: row.volunteer.userId,
-      name: personName(row.volunteer.user),
-      phone: row.volunteer.phone,
-      isOffline: row.volunteer.user.isOffline,
+    person: {
+      userId: row.user.id,
+      volunteerId: row.user.volunteerProfile?.id ?? null,
+      name: personName(row.user),
+      phone: row.user.volunteerProfile?.phone ?? null,
+      isOffline: row.user.isOffline,
+      isStaff: isStaffRole(row.user.role),
     },
   };
 }
@@ -664,12 +735,12 @@ export async function getStaffLeaveOverview(
   const day = parseDateOnly(today);
 
   const [ahead, recent] = await Promise.all([
-    db.volunteerLeave.findMany({
+    db.leave.findMany({
       where: { endsOn: { gte: day } },
       orderBy: [{ startsOn: "asc" }, { endsOn: "asc" }],
       select: STAFF_LEAVE_SELECT,
     }),
-    db.volunteerLeave.findMany({
+    db.leave.findMany({
       where: {
         endsOn: { lt: day, gte: parseDateOnly(addDaysToDateOnly(today, -RECENT_DAYS)) },
       },
@@ -692,10 +763,37 @@ export async function getStaffLeaveOverview(
 
 /** Everyone away at some point in a stretch of days - for the calendar and rosters. */
 export async function getLeaveBetween(range: LeaveRange): Promise<StaffLeaveRecord[]> {
-  const rows = await getDb().volunteerLeave.findMany({
+  const rows = await getDb().leave.findMany({
     where: overlapping(range),
     orderBy: [{ startsOn: "asc" }],
     select: STAFF_LEAVE_SELECT,
   });
   return rows.map(toStaffRecord);
+}
+
+/**
+ * Everyone leave can be logged for: the active volunteers on the roster, and
+ * the kitchen team - the same people `keepsLeave` allows, less anyone archived
+ * or not yet active.
+ */
+export async function getLeavePeople(): Promise<LeavePersonOption[]> {
+  const people = await getDb().user.findMany({
+    where: {
+      status: "ACTIVE",
+      OR: [
+        { role: { in: ["COORDINATOR", "ADMIN"] } },
+        { volunteerProfile: { status: "ACTIVE" } },
+      ],
+    },
+    select: PERSON_SELECT,
+    orderBy: { name: "asc" },
+  });
+  return people.map((person) => ({
+    id: person.id,
+    name: personName(person),
+    email: person.email,
+    phone: person.volunteerProfile?.phone ?? null,
+    isOffline: person.isOffline,
+    isStaff: isStaffRole(person.role),
+  }));
 }

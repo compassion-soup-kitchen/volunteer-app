@@ -8,7 +8,7 @@ import {
   todayInAppZone,
 } from "@/lib/date-only";
 import { leaveForVolunteers } from "@/lib/data/leave-days";
-import { leaveOn, type LeaveRange } from "@/lib/volunteer-leave";
+import { leaveOn, type LeaveRange } from "@/lib/leave";
 import { getMilestones, type Milestone } from "@/lib/milestones";
 import { isHeldForOffers } from "@/lib/shift-offers";
 import { diffHours } from "./time";
@@ -183,8 +183,8 @@ export async function getDashboardDataForUser(
     : [];
 
   // Leave from today on: what home mentions, and days not worth suggesting.
-  const leaveAhead = await db.volunteerLeave.findMany({
-    where: { volunteerId: profile.id, endsOn: { gte: today } },
+  const leaveAhead = await db.leave.findMany({
+    where: { userId, endsOn: { gte: today } },
     orderBy: { startsOn: "asc" },
     take: 2,
     select: { startsOn: true, endsOn: true },

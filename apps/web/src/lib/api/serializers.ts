@@ -26,9 +26,9 @@ import type {
 import type { EventSummary } from "@/lib/data/events";
 import type {
   LeavePreview,
+  LeaveOverview,
   LeaveRecord,
-  VolunteerLeaveOverview,
-} from "@/lib/data/volunteer-leave";
+} from "@/lib/data/leave";
 import type { getProfileForUser } from "@/lib/data/volunteer-profile";
 import { getMilestones } from "@/lib/milestones";
 import { timestampToDateOnly } from "@/lib/date-only";
@@ -295,7 +295,7 @@ export function serializeLeave(leave: LeaveRecord) {
   };
 }
 
-export function serializeLeaveOverview(overview: VolunteerLeaveOverview | null, today: string) {
+export function serializeLeaveOverview(overview: LeaveOverview | null, today: string) {
   return {
     today: overview?.today ?? today,
     // No volunteer record yet, so there's nothing to take them off.

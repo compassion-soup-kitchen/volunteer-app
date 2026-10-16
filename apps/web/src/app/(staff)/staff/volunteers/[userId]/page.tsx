@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { getVolunteerDetail } from "@/lib/staff-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { contactLine } from "@/lib/format";
 import Link from "next/link";
 import { RiPencilLine, RiSuitcaseLine } from "@remixicon/react";
-import { getVolunteerLeave } from "@/lib/leave-actions";
-import { describeLeaveStatus } from "@/lib/volunteer-leave";
+import { getLeaveFor } from "@/lib/leave-actions";
+import { describeLeaveStatus } from "@/lib/leave";
 import { VolunteerRecord } from "./volunteer-record";
 
 export const metadata: Metadata = {
@@ -46,14 +47,16 @@ export default async function VolunteerDetailPage({
 }) {
   await connection();
   const { userId } = await params;
-  const detail = await getVolunteerDetail(userId);
+  const [detail, session] = await Promise.all([getVolunteerDetail(userId), auth()]);
+  const viewerUserId = session?.user?.id;
 
   if (!detail) {
     notFound();
   }
 
   const { user, profile } = detail;
-  const leave = profile ? await getVolunteerLeave(profile.id) : null;
+  // Volunteers and the kitchen team both keep leave, so it shows on either record.
+  const leave = await getLeaveFor(user.id);
 
   return (
     <div className="space-y-6">
@@ -92,7 +95,8 @@ export default async function VolunteerDetailPage({
             {profile ? (
               <StatusBadge status={profile.status} className="text-sm" />
             ) : (
-              <Badge variant="outline">No application yet</Badge>
+              // The kitchen team needn't apply; their role badge says who they are.
+              !ROLE_BADGE_VARIANT[user.role] && <Badge variant="outline">No application yet</Badge>
             )}
             {user.isOffline && profile && (
               <Button asChild variant="outline" size="sm">
@@ -106,7 +110,7 @@ export default async function VolunteerDetailPage({
         }
       />
 
-      <VolunteerRecord detail={detail} leave={leave} />
+      <VolunteerRecord detail={detail} leave={leave} viewerUserId={viewerUserId} />
     </div>
   );
 }

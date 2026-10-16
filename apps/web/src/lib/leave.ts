@@ -1,18 +1,19 @@
 /**
- * The rules for a volunteer's leave - time they're away from the kitchen -
- * kept pure so they can be tested without a database.
+ * The rules for leave - time someone is away from the kitchen - kept pure so
+ * they can be tested without a database.
  *
- * Leave changes the roster, not just a record: while it runs the volunteer
- * can't be signed up or rostered, regulars aren't seated on their repeating
- * shifts, and logging it takes them off shifts they were already on. This file
- * answers *which days* those effects reach; data/volunteer-leave.ts applies
- * them.
+ * Volunteers and the kitchen team both keep leave. For anyone on the roster it
+ * changes the roster, not just a record: while it runs they can't be signed up
+ * or rostered, regulars aren't seated on their repeating shifts, and logging
+ * it takes them off shifts they were already on. This file answers *who* keeps
+ * leave and *which days* those effects reach; data/leave.ts applies them.
  *
  * Everything is in `DateOnly` strings, so a stretch of days can't drift
  * across midnight the way `Date` arithmetic does (see date-only.ts). A range
  * is inclusive at both ends - "3 to 14 November" means back on the 15th.
  */
 
+import type { Role } from "@prisma/client";
 import { z } from "zod";
 
 import {
@@ -33,6 +34,18 @@ export const MAX_LEAVE_DAYS = 366;
 export const MAX_LEAVE_LEAD_DAYS = 730;
 
 export type LeaveRange = { startsOn: DateOnly; endsOn: DateOnly };
+
+const STAFF_ROLES: readonly Role[] = ["COORDINATOR", "ADMIN"];
+
+/**
+ * Who keeps leave: anyone with a volunteer record (it starts with their
+ * application), and the kitchen team whether or not they volunteer too - the
+ * people covering for a coordinator need to know they're away. Someone who has
+ * only signed up has nothing to be away from yet.
+ */
+export function keepsLeave(person: { role: Role; hasVolunteerProfile: boolean }): boolean {
+  return person.hasVolunteerProfile || STAFF_ROLES.includes(person.role);
+}
 
 export type LeaveStage = "upcoming" | "current" | "past";
 

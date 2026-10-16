@@ -8,7 +8,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { dateOnlyOf, parseDateOnly } from "@/lib/date-only";
-import type { LeaveRange } from "@/lib/volunteer-leave";
+import type { LeaveRange } from "@/lib/leave";
 
 type Reader = PrismaClient | Prisma.TransactionClient;
 
@@ -25,8 +25,9 @@ export function overlapping(range: LeaveRange) {
 }
 
 /**
- * Each volunteer's leave touching a stretch of days. Volunteers with none are
- * simply absent from the map.
+ * Each volunteer's leave touching a stretch of days, keyed by their volunteer
+ * record. Leave belongs to the person, so it's found through the user behind
+ * each record. Volunteers with none are simply absent from the map.
  */
 export async function leaveForVolunteers(
   db: Reader,
@@ -36,14 +37,20 @@ export async function leaveForVolunteers(
   const byVolunteer = new Map<string, LeaveRange[]>();
   if (volunteerIds.length === 0) return byVolunteer;
 
-  const rows = await db.volunteerLeave.findMany({
-    where: { volunteerId: { in: volunteerIds }, ...overlapping(range) },
-    select: { volunteerId: true, startsOn: true, endsOn: true },
+  const rows = await db.leave.findMany({
+    where: { user: { volunteerProfile: { id: { in: volunteerIds } } }, ...overlapping(range) },
+    select: {
+      startsOn: true,
+      endsOn: true,
+      user: { select: { volunteerProfile: { select: { id: true } } } },
+    },
   });
   for (const row of rows) {
-    const list = byVolunteer.get(row.volunteerId) ?? [];
+    const volunteerId = row.user.volunteerProfile?.id;
+    if (!volunteerId) continue;
+    const list = byVolunteer.get(volunteerId) ?? [];
     list.push(rangeOf(row));
-    byVolunteer.set(row.volunteerId, list);
+    byVolunteer.set(volunteerId, list);
   }
   return byVolunteer;
 }
@@ -54,8 +61,12 @@ export async function leaveCovering(
   volunteerId: string,
   date: Date
 ): Promise<LeaveRange | null> {
-  const row = await db.volunteerLeave.findFirst({
-    where: { volunteerId, startsOn: { lte: date }, endsOn: { gte: date } },
+  const row = await db.leave.findFirst({
+    where: {
+      user: { volunteerProfile: { id: volunteerId } },
+      startsOn: { lte: date },
+      endsOn: { gte: date },
+    },
     select: { startsOn: true, endsOn: true },
   });
   return row ? rangeOf(row) : null;

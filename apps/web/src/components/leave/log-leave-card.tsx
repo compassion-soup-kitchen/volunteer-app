@@ -17,7 +17,7 @@ export function LogLeaveForm({ today }: { today: DateOnly }) {
   return (
     <LeaveForm
       key={round}
-      audience="volunteer"
+      audience="self"
       today={today}
       onSaved={() => {
         setRound((value) => value + 1);

@@ -48,7 +48,7 @@ import type {
   VolunteerDetail,
   VolunteerDetailShift,
 } from "@/lib/staff-actions";
-import type { VolunteerLeaveOverview } from "@/lib/leave-actions";
+import type { LeaveOverview } from "@/lib/leave-actions";
 import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveDialog } from "@/components/leave/log-leave-dialog";
 import { VolunteerDocuments } from "./volunteer-documents";
@@ -78,14 +78,17 @@ const NOT_PROVIDED = (
 export function VolunteerRecord({
   detail,
   leave,
+  viewerUserId,
 }: {
   detail: VolunteerDetail;
-  leave: VolunteerLeaveOverview | null;
+  leave: LeaveOverview | null;
+  /** The staff member looking, so their own leave reads as theirs. */
+  viewerUserId: string | undefined;
 }) {
   const { user, profile, hours, training } = detail;
 
   if (!profile) {
-    return <NoApplicationYet detail={detail} />;
+    return <NoApplicationYet detail={detail} leave={leave} viewerUserId={viewerUserId} />;
   }
 
   const availability = summariseAvailability(profile.availability);
@@ -300,7 +303,8 @@ export function VolunteerRecord({
         {leave && (
           <LeaveCard
             leave={leave}
-            volunteer={{ id: profile.id, name: user.name ?? "this volunteer" }}
+            person={{ id: user.id, name: user.name ?? "this volunteer" }}
+            viewerUserId={viewerUserId}
           />
         )}
 
@@ -559,15 +563,27 @@ export function VolunteerRecord({
 }
 
 /**
- * Someone who signed in but never applied. There is no profile to read, so the
- * page says so plainly instead of rendering a wall of "Not provided".
+ * Someone with no volunteer profile to read - an applicant who never applied,
+ * or a coordinator or admin who doesn't volunteer themselves. The page says so
+ * plainly instead of rendering a wall of "Not provided". The kitchen team
+ * still keep leave, so theirs shows here.
  */
-function NoApplicationYet({ detail }: { detail: VolunteerDetail }) {
+function NoApplicationYet({
+  detail,
+  leave,
+  viewerUserId,
+}: {
+  detail: VolunteerDetail;
+  leave: LeaveOverview | null;
+  viewerUserId: string | undefined;
+}) {
   const { user } = detail;
+  const name = user.name || "This person";
+  const isStaff = user.role === "COORDINATOR" || user.role === "ADMIN";
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2">
+      <div className="space-y-6 lg:col-span-2">
         <Card variant="muted">
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2.5">
@@ -575,11 +591,13 @@ function NoApplicationYet({ detail }: { detail: VolunteerDetail }) {
                 <RiUserLine />
               </IconChip>
               <h2 className="font-serif text-xl font-medium tracking-tight">
-                No application yet
+                {isStaff ? "On the kitchen team" : "No application yet"}
               </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              {`${user.name || "This person"} has an account but hasn't submitted a volunteer application, so there's no profile to read - no contact details, emergency contact or availability. You can add them as a full volunteer from the directory, which skips the usual application and vetting.`}
+              {isStaff
+                ? `${name} is on the kitchen team and hasn't applied as a volunteer, so there's no volunteer profile, roster or hours here. Their leave is kept below, so the team knows when they're away.`
+                : `${name} has an account but hasn't submitted a volunteer application, so there's no profile to read - no contact details, emergency contact or availability. You can add them as a full volunteer from the directory, which skips the usual application and vetting.`}
             </p>
             <Button asChild variant="outline" size="sm">
               <Link href="/staff/volunteers">
@@ -589,6 +607,14 @@ function NoApplicationYet({ detail }: { detail: VolunteerDetail }) {
             </Button>
           </CardContent>
         </Card>
+
+        {leave && (
+          <LeaveCard
+            leave={leave}
+            person={{ id: user.id, name: user.name ?? "this person" }}
+            viewerUserId={viewerUserId}
+          />
+        )}
       </div>
       <AccountCard detail={detail} />
     </div>
@@ -691,17 +717,20 @@ function OfflineNote({ name }: { name: string | null }) {
  */
 function LeaveCard({
   leave,
-  volunteer,
+  person,
+  viewerUserId,
 }: {
-  leave: VolunteerLeaveOverview;
-  volunteer: { id: string; name: string };
+  leave: LeaveOverview;
+  /** Whose record this is, keyed by user id. */
+  person: { id: string; name: string };
+  viewerUserId: string | undefined;
 }) {
   const entries = [
     ...(leave.current ? [leave.current] : []),
     ...leave.upcoming,
     ...leave.past,
   ];
-  const firstName = volunteer.name.split(" ")[0];
+  const firstName = person.name.split(" ")[0];
 
   return (
     <Card>
@@ -712,7 +741,8 @@ function LeaveCard({
         <CardAction>
           <LogLeaveDialog
             today={leave.today}
-            volunteer={volunteer}
+            person={person}
+            viewerUserId={viewerUserId}
             size="sm"
             variant="outline"
           />
@@ -724,7 +754,8 @@ function LeaveCard({
             entries={entries}
             audience="staff"
             today={leave.today}
-            volunteerName={firstName}
+            personName={firstName}
+            viewerUserId={viewerUserId}
           />
         </div>
       ) : (

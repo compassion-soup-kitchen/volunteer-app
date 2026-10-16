@@ -9,7 +9,7 @@
  */
 
 import type { DateOnly } from "@/lib/date-only";
-import { onLeaveRosterMessage, type LeaveRange } from "@/lib/volunteer-leave";
+import { onLeaveRosterMessage, type LeaveRange } from "@/lib/leave";
 
 export type SignupState = "SIGNED_UP" | "ATTENDED" | "NO_SHOW" | "CANCELLED";
 
