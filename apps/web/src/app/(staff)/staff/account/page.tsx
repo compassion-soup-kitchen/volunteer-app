@@ -122,7 +122,7 @@ export default async function StaffAccountPage() {
       {/* Deleting your own account. Last on the page and visually apart, the
           way irreversible things should be - but self-service, because an
           account you can't erase yourself isn't one we should be keeping. */}
-      <Card className="border-destructive/40">
+      <Card variant="danger">
         <CardHeader className="border-b">
           <CardTitle className="text-destructive">Delete account</CardTitle>
         </CardHeader>

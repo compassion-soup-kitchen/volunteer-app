@@ -14,6 +14,8 @@ const cardVariants = cva(
         muted: "bg-muted text-foreground",
         // Deep cocoa feature card with a faint red corner glow — the hero device.
         ink: "rounded-2xl bg-ink text-ink-foreground shadow-md before:pointer-events-none before:absolute before:-top-20 before:-right-16 before:size-56 before:rounded-full before:bg-primary/25 before:blur-3xl",
+        // White card ringed in red - the edge of an irreversible action.
+        danger: "bg-card text-card-foreground ring-1 ring-destructive/40",
         // Soft red wash callout for the one brand moment per page.
         tint: "bg-primary-tint text-foreground ring-1 ring-primary/15 dark:ring-primary/25",
       },

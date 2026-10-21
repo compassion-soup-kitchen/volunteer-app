@@ -9,7 +9,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { OrDivider } from "../_components/or-divider";
 import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
 import { FormAlert } from "@/components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
@@ -131,12 +131,7 @@ export function LoginForm({
         </div>
       )}
 
-      <div className="relative my-6">
-        <Separator />
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
-          or continue with
-        </span>
-      </div>
+      <OrDivider>or continue with</OrDivider>
 
       <Button
         variant="outline"
