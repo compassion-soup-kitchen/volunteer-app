@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FormAlert } from "@/components/form-alert";
 import { DatePicker } from "@/components/date-picker";
 import { toDateOnly, toPickerDate } from "@/lib/date-only";
 import {
@@ -315,7 +316,7 @@ function EventForm({
             ) : null}
           </div>
 
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <FormAlert>{error}</FormAlert> : null}
         </div>
 
         <DialogFooter>

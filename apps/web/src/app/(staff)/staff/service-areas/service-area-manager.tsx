@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { Field, FieldControl, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -216,15 +217,18 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="area-name">Name</Label>
-              <Input
-                id="area-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Kitchen & Meals"
-              />
-            </div>
+            {/* Every refusal here is about the name - missing or taken. */}
+            <Field id="area-name" error={dialogError}>
+              <FieldLabel>Name</FieldLabel>
+              <FieldControl>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Kitchen & Meals"
+                />
+              </FieldControl>
+              <FieldError />
+            </Field>
             <div className="space-y-2">
               <Label htmlFor="area-desc">Description (optional)</Label>
               <Textarea
@@ -235,9 +239,6 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
                 rows={3}
               />
             </div>
-            {dialogError && (
-              <p className="text-sm text-destructive">{dialogError}</p>
-            )}
           </div>
 
           <DialogFooter>
