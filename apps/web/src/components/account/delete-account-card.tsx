@@ -96,7 +96,17 @@ export function DeleteAccountCard() {
     }
     // The row is gone but the session cookie isn't, so sign out explicitly -
     // otherwise every page would bounce off a session naming nobody.
-    await signOut({ redirectTo: "/" });
+    try {
+      await signOut({ redirectTo: "/" });
+    } catch {
+      // The account is already erased, so there's nothing to retry and the
+      // dialog must not stay locked. The session-ended route clears the
+      // cookie for an account that no longer exists - a route handler, so it
+      // needs a full page load rather than a client-side router push.
+      window.location.assign(
+        new URL("/api/auth/session-ended", window.location.origin).href
+      );
+    }
     return true;
   }
 
