@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  availableFrom,
   decideSignup,
   isSerializationFailure,
 } from "@/lib/data/volunteer-shifts";
@@ -288,5 +289,26 @@ describe("isSerializationFailure", () => {
     expect(isSerializationFailure(null)).toBe(false);
     expect(isSerializationFailure(undefined)).toBe(false);
     expect(isSerializationFailure("P2034")).toBe(false);
+  });
+});
+
+describe("availableFrom", () => {
+  // NZ morning on Wednesday 21 October, still Tuesday the 20th in UTC.
+  const nzMorning = new Date("2026-10-20T20:22:00.000Z");
+
+  it("starts today in Wellington when no day is asked for", () => {
+    expect(availableFrom(undefined, nzMorning)).toEqual(day("2026-10-21"));
+  });
+
+  it("floors a week under way to today, not its Monday", () => {
+    expect(availableFrom("2026-10-19", nzMorning)).toEqual(day("2026-10-21"));
+  });
+
+  it("keeps a day still to come", () => {
+    expect(availableFrom("2026-10-26", nzMorning)).toEqual(day("2026-10-26"));
+  });
+
+  it("ignores a malformed day", () => {
+    expect(availableFrom("next-week", nzMorning)).toEqual(day("2026-10-21"));
   });
 });

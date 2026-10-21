@@ -3,7 +3,7 @@
 import { after, connection } from "next/server";
 import { revalidatePath } from "next/cache";
 
-import { requireStaffSession } from "@/lib/action-auth";
+import { requireActiveSession, requireStaffSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { personName } from "@/lib/format";
 import {
@@ -15,8 +15,10 @@ import {
   type ClosureEntry,
 } from "@/lib/closed-days";
 import {
+  addDaysToDateOnly,
   dateOnlyOf,
   formatDateOnly,
+  isDateOnly,
   parseDateOnly,
   todayInAppZone,
   type DateOnly,
@@ -30,6 +32,7 @@ import {
   removeShifts,
   type RemovedShift,
 } from "@/lib/data/shift-cancellation";
+import { closuresBetween } from "@/lib/data/closed-days";
 import {
   refillReopenedDay,
   scheduleRosterTopUp,
@@ -106,6 +109,20 @@ export type CloseDaysResult = {
 const ATTENDANCE_RECORDED = ["ATTENDED", "NO_SHOW"] as const;
 
 // ─── Reads ──────────────────────────────────────────────
+
+/**
+ * The days a week starting `weekStart` the kitchen is shut, for both shift
+ * pages - volunteers see them too, since "closed for Labour Day" explains an
+ * empty day better than silence does.
+ */
+export async function getWeekClosures(
+  weekStart: DateOnly
+): Promise<{ date: DateOnly; reason: string }[]> {
+  if (!isDateOnly(weekStart)) return [];
+  const session = await requireActiveSession();
+  if (!session) return [];
+  return closuresBetween(getDb(), weekStart, addDaysToDateOnly(weekStart, 6));
+}
 
 /** Everything the month view shows: shifts, closures and holidays. */
 export async function getRosterMonth(month: DateOnly): Promise<RosterMonth | null> {

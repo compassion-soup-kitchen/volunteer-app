@@ -117,6 +117,18 @@ function toShiftWithDetails(
   };
 }
 
+/**
+ * The first day a volunteer can be shown shifts from. Today's shift is still
+ * worth showing today, so it floors to the start of the day rather than this
+ * instant - and a day already gone can't be taken, so an earlier `from` (the
+ * Monday of a week under way) floors there too.
+ */
+export function availableFrom(fromDate: string | undefined, now: Date): Date {
+  const startOfToday = startOfTodayInAppZone(now);
+  const requested = fromDate ? safeParseDateOnly(fromDate) : null;
+  return requested && requested > startOfToday ? requested : startOfToday;
+}
+
 export async function getAvailableShiftsForUser(
   userId: string,
   filters?: ShiftFilters
@@ -131,12 +143,8 @@ export async function getAvailableShiftsForUser(
     where: { userId },
   });
 
-  // Today's shift is still worth showing today, so "from" floors to the
-  // start of the day here rather than to this instant.
   const now = new Date();
-  const fromDate =
-    (filters?.fromDate ? safeParseDateOnly(filters.fromDate) : null) ??
-    startOfTodayInAppZone(now);
+  const fromDate = availableFrom(filters?.fromDate, now);
   const toDate = filters?.toDate ? safeParseDateOnly(filters.toDate) : null;
 
   const shifts = await db.shift.findMany({

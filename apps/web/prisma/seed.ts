@@ -869,6 +869,9 @@ async function main() {
           update: {},
           create: { date: parseDateOnly(holiday.date), reason: holiday.name, createdById: coordinator.id },
         });
+        // Closing a day takes its shifts off the roster, so the seed does too -
+        // a one-off above, dated a few days from today, can land on it.
+        await prisma.shift.deleteMany({ where: { date: parseDateOnly(holiday.date) } });
       }
 
       const placed = await materialisePattern(prisma, pattern, today);
