@@ -75,6 +75,12 @@ const palette = {
     warningTint: '#F7ECD6',
     onWarningTint: '#7A4900',
 
+    /** Info — a quiet navy for things in motion (signed up, booked), as on the web */
+    info: '#293E6B',
+    infoForeground: '#ffffff',
+    infoTint: '#E9EDF6',
+    onInfoTint: '#24365D',
+
     /** Danger — a deep oxblood, kept clearly distinct from the affirmative brand red */
     destructive: '#99161B',
     destructiveForeground: '#ffffff',
@@ -138,6 +144,11 @@ const palette = {
     warningForeground: '#241803',
     warningTint: 'rgba(224,164,76,0.18)',
     onWarningTint: '#F1C489',
+
+    info: '#7D97CF',
+    infoForeground: '#101828',
+    infoTint: 'rgba(125,151,207,0.18)',
+    onInfoTint: '#B3C4E8',
 
     destructive: '#FF6A72',
     destructiveForeground: '#1a1814',

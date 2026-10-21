@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, Share, View } from 'react-native';
 
 import { CapacityMeter, availability } from '@/components/capacity-meter';
-import { Badge, Button, Card, EmptyState, Icon, type IconName, SheetBody, Text } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Icon, type IconName, SheetBody, StatusBadge, Text } from '@/components/ui';
 import { FontFamily, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatLongDate, formatTimeRange } from '@/lib/format';
@@ -209,7 +209,7 @@ export default function ShiftDetailScreen() {
 
       <View style={{ marginTop: Spacing.md }}>
         {isSignedUp ? (
-          <Badge label="Booked" tone="success" icon="checkmark" />
+          <StatusBadge status="SIGNED_UP" />
         ) : onLeave ? (
           <Badge label="You're on leave" tone="warning" icon="airplane-outline" />
         ) : isFull ? (

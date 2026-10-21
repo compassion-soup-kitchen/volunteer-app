@@ -14,7 +14,6 @@ import { NextShiftHero } from '@/components/next-shift-hero';
 import { ShiftCard } from '@/components/shift-card';
 import { StatStrip } from '@/components/stat-strip';
 import {
-  Badge,
   Card,
   Divider,
   EmptyState,
@@ -23,6 +22,7 @@ import {
   Screen,
   SectionHeader,
   SkeletonCard,
+  StatusBadge,
   Text,
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -222,7 +222,7 @@ export default function DashboardScreen() {
                     {relativeDay(nextTraining.date)} · {formatTimeRange(nextTraining.startTime, nextTraining.endTime)}
                   </Text>
                 </View>
-                <Badge label="Booked" tone="navy" icon="checkmark" />
+                <StatusBadge status="REGISTERED" />
               </Card>
             </View>
           ) : null}

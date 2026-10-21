@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, View } from 'react-native';
 
 import { trainingTypeMeta } from '@/components/meta';
-import { Badge, Button, Card, EmptyState, Icon, type IconName, SheetBody, Text } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Icon, type IconName, SheetBody, StatusBadge, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatLongDate, formatTimeRange } from '@/lib/format';
@@ -125,7 +125,7 @@ export default function TrainingDetailScreen() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' }}>
         <Badge label={meta.label} tone={meta.tone} icon={meta.icon} />
         {isRegistered ? (
-          <Badge label="Registered" tone="success" icon="checkmark-circle" />
+          <StatusBadge status="REGISTERED" />
         ) : isFull ? (
           <Badge label="Full" tone="neutral" />
         ) : null}

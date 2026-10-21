@@ -4,17 +4,18 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { DateBlock } from '@/components/date-block';
-import { Badge, type BadgeTone, Card, Icon, type IconName, Screen, SkeletonCard, Text } from '@/components/ui';
+import { Card, type CommitmentStatus, Icon, Screen, SkeletonCard, StatusBadge, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
 import { getMySchedule, type ScheduleEntry, type ScheduleStatus } from '@/services/shifts-service';
 
-const STATUS: Record<ScheduleStatus, { label: string; tone: BadgeTone; icon?: IconName }> = {
-  CONFIRMED: { label: 'Confirmed', tone: 'success', icon: 'checkmark' },
-  ATTENDED: { label: 'Attended', tone: 'neutral', icon: 'checkmark' },
-  NO_SHOW: { label: 'Missed', tone: 'warning' },
+/** The schedule's wire status, read as the shared commitment badge. */
+const STATUS: Record<ScheduleStatus, CommitmentStatus> = {
+  CONFIRMED: 'SIGNED_UP',
+  ATTENDED: 'ATTENDED',
+  NO_SHOW: 'NO_SHOW',
 };
 
 /** A two-state pill toggle (Upcoming / Past). */
@@ -54,7 +55,6 @@ function Segmented({ value, onChange }: { value: 'upcoming' | 'past'; onChange: 
 
 function ScheduleCard({ entry, onPress }: { entry: ScheduleEntry; onPress: () => void }) {
   const { colors } = useTheme();
-  const status = STATUS[entry.status];
   return (
     <Card onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.lg }}>
       <DateBlock date={entry.date} />
@@ -67,7 +67,7 @@ function ScheduleCard({ entry, onPress }: { entry: ScheduleEntry; onPress: () =>
           {formatTimeRange(entry.startTime, entry.endTime)} · Tory St
         </Text>
       </View>
-      <Badge label={status.label} tone={status.tone} icon={status.icon} />
+      <StatusBadge status={STATUS[entry.status]} />
     </Card>
   );
 }
