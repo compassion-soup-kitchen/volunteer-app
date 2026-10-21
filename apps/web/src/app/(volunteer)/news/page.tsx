@@ -11,7 +11,7 @@ import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimestampInAppZone, todayInAppZone } from "@/lib/date-only";
 
 export const metadata: Metadata = {
-  title: "News & updates | Te Pūaroha",
+  title: "Notices | Te Pūaroha",
 };
 
 function formatNoticeDate(date: Date) {
@@ -39,7 +39,7 @@ export default async function NewsPage() {
     <div className="space-y-6">
       <PageHeader
         backHref="/dashboard"
-        eyebrow="Pānui · Notices"
+        eyebrow="Ngā pānui · Notices"
         title="From the kitchen team"
         description="Notices, newsletters and updates from your coordinators."
       />

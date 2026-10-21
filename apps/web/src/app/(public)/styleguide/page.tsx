@@ -180,7 +180,7 @@ export default function StyleguidePage() {
             </CardContent></Card>
             <Card><CardContent className="space-y-2.5 py-6">
               <Eyebrow>Eyebrow labels</Eyebrow>
-              <Eyebrow>Pānui · News</Eyebrow>
+              <Eyebrow>Ngā pānui · Notices</Eyebrow>
               <Eyebrow>Ō wāhi mahi · Shifts</Eyebrow>
             </CardContent></Card>
             <Card className="relative overflow-hidden"><CardContent className="py-6">

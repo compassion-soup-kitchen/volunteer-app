@@ -84,7 +84,7 @@ export default function StaffShiftsPage(props: { searchParams: SearchParams }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Ngā wāhi mahi · Roster"
+        eyebrow="Te rārangi mahi · Shifts"
         title="Shifts"
         description="Manage rostered mahi for volunteers, a week at a time"
         actions={

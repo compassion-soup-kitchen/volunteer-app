@@ -5,7 +5,7 @@ import { Eyebrow } from "./eyebrow";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
-  /** Optional bilingual eyebrow, e.g. "Ngā wāhi mahi · Roster". */
+  /** Optional bilingual eyebrow, e.g. "Te rārangi mahi · Shifts". */
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;

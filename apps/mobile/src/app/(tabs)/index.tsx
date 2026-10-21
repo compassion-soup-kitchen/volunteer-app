@@ -61,8 +61,8 @@ const ON_VIDEO_DIM = 'rgba(255,255,255,0.82)';
 function greeting(): string {
   const h = new Date().getHours();
   if (h < 12) return 'Mōrena'; // good morning
-  if (h < 18) return 'Ahiahi mārie'; // good afternoon
-  return 'Pō mārie'; // good evening
+  // Ahiahi spans afternoon and evening; "Pō mārie" is goodnight, a farewell.
+  return 'Ahiahi mārie'; // good afternoon, good evening
 }
 
 function openDirections() {
@@ -252,7 +252,7 @@ export default function DashboardScreen() {
           {topNotices.length > 0 ? (
             <View style={{ gap: Spacing.md }}>
               <SectionHeader
-                overline="Pānui"
+                overline="Ngā pānui"
                 title="Notices"
                 divider
                 actionLabel={notices.length > topNotices.length ? 'All notices' : undefined}

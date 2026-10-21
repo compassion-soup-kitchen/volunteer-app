@@ -33,7 +33,7 @@ export default async function ShiftDetailPage({
     <div className="space-y-6">
       <PageHeader
         backHref="/staff/shifts"
-        eyebrow="Te wāhi mahi · Shift"
+        eyebrow="Te rārangi mahi · Shift"
         title={shift.serviceArea.name}
         description="View and manage this shift"
       />

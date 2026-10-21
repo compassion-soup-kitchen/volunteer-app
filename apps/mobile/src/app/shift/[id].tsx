@@ -229,7 +229,7 @@ export default function ShiftDetailScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
           <Icon name="people-outline" size={19} color="primary" />
           <Text variant="callout" color="text" style={{ flex: 1 }}>
-            {`${shift.signupCount} of ${shift.capacity} ngā tūao signed up`}
+            {`${shift.signupCount} of ${shift.capacity} volunteers signed up`}
           </Text>
           <CapacityMeter taken={shift.signupCount} capacity={shift.capacity} size={9} />
         </View>

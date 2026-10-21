@@ -167,7 +167,7 @@ export default function ShiftsScreen() {
       {/* You're rostered on — personal anchor */}
       {roster.length > 0 ? (
         <View style={{ gap: Spacing.lg }}>
-          <SectionHeader overline="Kua rīhita koe" title="You're rostered on" />
+          <SectionHeader overline="Kua rēhita koe" title="You're rostered on" />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

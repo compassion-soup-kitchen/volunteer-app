@@ -62,8 +62,8 @@ function nzHour() {
 function greeting() {
   const h = nzHour();
   if (h < 12) return "Mōrena"; // good morning
-  if (h < 18) return "Ahiahi mārie"; // good afternoon
-  return "Pō mārie"; // good evening
+  // Ahiahi spans afternoon and evening; "Pō mārie" is goodnight, a farewell.
+  return "Ahiahi mārie"; // good afternoon, good evening
 }
 
 function formatToday() {
@@ -576,7 +576,7 @@ export default async function VolunteerDashboard() {
         <SectionHeader
           divider
           className="lg:border-t-0 lg:pt-0"
-          eyebrow="Pānui"
+          eyebrow="Ngā pānui"
           title="Notices"
           action={announcements.length > 0 ? { label: "All notices", href: "/news" } : undefined}
         />

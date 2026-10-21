@@ -53,7 +53,7 @@ const features = [
     alt: "The Impact screen, showing 39.5 hours given and progress towards the Mana honorific",
   },
   {
-    eyebrow: "Ako · Training",
+    eyebrow: "Whakangungu · Training",
     title: "Walk in\nshift-ready",
     body: "Keep your core modules up to date and book the sessions that build your confidence - in the kitchen, the dining room, and out in the community.",
     bullets: ["Track induction, health & safety and more", "Book training that fits your schedule", "Always know what's left to complete"],

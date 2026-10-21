@@ -88,7 +88,7 @@ export default function TrainingScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
-      <PageHeader overline="Ako · Learning" title="Training" subtitle={subtitle} illustration="korero" />
+      <PageHeader overline="Whakangungu" title="Training" subtitle={subtitle} illustration="korero" />
 
       {isLoading || !data ? (
         <View style={{ gap: Spacing.lg }}>

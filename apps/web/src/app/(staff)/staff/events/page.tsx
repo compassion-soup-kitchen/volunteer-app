@@ -37,7 +37,7 @@ export default function StaffEventsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Ngā hui · Gatherings"
+        eyebrow="Ngā hui · Events"
         title="Events"
         description="Parties, hui and working bees - invite the whānau and see who's coming."
       />
