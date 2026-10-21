@@ -89,12 +89,20 @@ const palette = {
 
     /** Deep "ink" surface — dark feature cards (quote hero, stat strips) */
     inkSurface: '#1C1815',
+    /** Edge of an ink card: invisible on paper, where the ink already stands out */
+    inkBorder: '#1C1815',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
     /** Rules, dividers and soft fills drawn on an ink surface */
     onInkHairline: 'rgba(251,247,242,0.14)',
     /** The soft red glow set behind an ink hero's corner or a brushstroke on ink */
     primaryGlow: 'rgba(228,0,43,0.22)',
+
+    /** Text and icons laid over photo or video, white in both themes */
+    onMedia: '#FFFFFF',
+    onMediaMuted: 'rgba(255,255,255,0.82)',
+    /** The soft shadow that keeps that text legible over moving footage */
+    mediaTextShadow: 'rgba(0,0,0,0.5)',
 
     /** Focus ring */
     ring: '#E4002B',
@@ -159,11 +167,20 @@ const palette = {
     destructiveTint: 'rgba(255,106,114,0.18)',
     onDestructiveTint: '#FF9AA1',
 
-    inkSurface: '#0F0C09',
+    /**
+     * Lifted above the canvas: an ink card darker than the page reads as a
+     * hole, not a feature. A hairline edge carries the rest of the emphasis.
+     */
+    inkSurface: '#2A221B',
+    inkBorder: 'rgba(251,247,242,0.12)',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
     onInkHairline: 'rgba(251,247,242,0.14)',
     primaryGlow: 'rgba(255,51,85,0.22)',
+
+    onMedia: '#FFFFFF',
+    onMediaMuted: 'rgba(255,255,255,0.82)',
+    mediaTextShadow: 'rgba(0,0,0,0.5)',
 
     ring: '#FF3355',
     scrim: 'rgba(0,0,0,0.62)',

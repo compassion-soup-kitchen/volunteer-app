@@ -44,9 +44,9 @@ const VENUE_QUERY = 'Compassion Soup Kitchen, Tory Street, Wellington';
  * Soft drop shadow so light greeting text stays legible over the moving footage.
  * iOS clips a text shadow to the glyph box, so the padding gives the 12px blur
  * room to render and the matching negative margin keeps the text in place.
+ * The colour comes from the `mediaTextShadow` token.
  */
 const HERO_SHADOW = {
-  textShadowColor: 'rgba(0,0,0,0.5)',
   textShadowOffset: { width: 0, height: 1 },
   textShadowRadius: 12,
   paddingHorizontal: 14,
@@ -54,8 +54,6 @@ const HERO_SHADOW = {
   paddingVertical: 14,
   marginVertical: -10,
 } as const;
-const ON_VIDEO = '#FFFFFF';
-const ON_VIDEO_DIM = 'rgba(255,255,255,0.82)';
 
 /** Time-of-day Te Reo greeting — kept distinct from the "Kia ora, {name}" headline. */
 function greeting(): string {
@@ -99,7 +97,7 @@ function UtilityBar({
           name="notifications-outline"
           size={23}
           color={onVideo ? undefined : 'textSecondary'}
-          raw={onVideo ? ON_VIDEO_DIM : undefined}
+          raw={onVideo ? colors.onMediaMuted : undefined}
         />
         {hasUnread ? (
           <View
@@ -123,6 +121,8 @@ function UtilityBar({
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const heroText = { ...HERO_SHADOW, textShadowColor: colors.mediaTextShadow };
   const { user } = useAuth();
   const firstName = (user?.name ?? 'there').split(' ')[0];
 
@@ -152,10 +152,10 @@ export default function DashboardScreen() {
 
           {/* Greeting — personal, floating on the footage */}
           <View>
-            <Text variant="overline" style={{ color: ON_VIDEO_DIM, ...HERO_SHADOW }}>
+            <Text variant="overline" style={{ color: colors.onMediaMuted, ...heroText }}>
               {greeting()}
             </Text>
-            <Text variant="display" style={{ color: ON_VIDEO, ...HERO_SHADOW }}>
+            <Text variant="display" style={{ color: colors.onMedia, ...heroText }}>
               Kia ora, {firstName}
             </Text>
           </View>
