@@ -74,7 +74,7 @@ function AreaCard({
           justifyContent: 'center',
           borderWidth: selected ? 0 : 1.5,
           borderColor: colors.borderStrong,
-          backgroundColor: selected ? colors.primary : 'transparent',
+          backgroundColor: selected ? colors.primaryFill : 'transparent',
         }}>
         {selected ? <Icon name="checkmark" size={14} raw={colors.primaryForeground} /> : null}
       </View>

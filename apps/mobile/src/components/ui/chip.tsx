@@ -19,16 +19,20 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
+      // 38pt drawn, 44pt to the touch.
+      hitSlop={{ top: 3, bottom: 3 }}
       style={({ pressed }) => [
         {
-          height: 38,
+          // A floor, not a fixed height, so larger Dynamic Type sizes aren't clipped.
+          minHeight: 38,
           paddingHorizontal: Spacing.lg,
+          paddingVertical: Spacing.sm,
           borderRadius: Radius.pill,
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: 1,
-          backgroundColor: selected ? colors.primary : colors.surface,
-          borderColor: selected ? colors.primary : colors.border,
+          backgroundColor: selected ? colors.primaryFill : colors.surface,
+          borderColor: selected ? colors.primaryFill : colors.border,
           opacity: pressed ? 0.85 : 1,
         },
       ]}>

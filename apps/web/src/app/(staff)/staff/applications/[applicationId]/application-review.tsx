@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   BleedList,
   DetailList,
@@ -287,11 +288,13 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
               ))}
             </BleedList>
           ) : (
-            <CardContent className="border-t border-border pt-4">
-              <p className="text-sm text-muted-foreground">
-                No agreements signed yet.
-              </p>
-            </CardContent>
+            <EmptyState
+              bare
+              size="compact"
+              icon={<RiShieldCheckLine />}
+              title="No agreements signed yet"
+              className="border-t border-border"
+            />
           )}
         </Card>
       </div>

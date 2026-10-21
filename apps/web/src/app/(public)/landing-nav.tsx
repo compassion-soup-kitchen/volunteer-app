@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { RiHandHeartLine, RiMenuLine, RiCloseLine } from "@remixicon/react";
@@ -17,16 +17,31 @@ const links = [
 
 export function LandingNav() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+    toggleRef.current?.focus();
+  };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md">
+    <nav
+      aria-label="Main"
+      className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md"
+      // On the whole nav, not the menu: right after opening, focus is still on
+      // the toggle, which sits outside the menu.
+      onKeyDown={(e) => {
+        if (menuOpen && e.key === "Escape") closeMenu();
+      }}
+    >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" aria-label="Te Pūaroha home" className="shrink-0">
           <Wordmark className="h-6 sm:h-7" />
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden items-center gap-7 md:flex">
+        {/* Desktop nav - from xl only: the wordmark plus every link needs about
+            1150px, and anything narrower wraps the links into the wordmark. */}
+        <div className="hidden items-center gap-7 whitespace-nowrap xl:flex">
           {links.map((l) => (
             <a
               key={l.href}
@@ -54,11 +69,14 @@ export function LandingNav() {
 
         {/* Mobile menu toggle */}
         <Button
+          ref={toggleRef}
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="xl:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-label="Menu"
+          aria-expanded={menuOpen}
+          aria-controls="landing-menu"
         >
           {menuOpen ? <RiCloseLine className="size-5" /> : <RiMenuLine className="size-5" />}
         </Button>
@@ -66,7 +84,10 @@ export function LandingNav() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="border-t border-border/60 bg-background px-6 py-4 md:hidden">
+        <div
+          id="landing-menu"
+          className="border-t border-border/60 bg-background px-6 py-4 xl:hidden"
+        >
           <div className="flex flex-col gap-3">
             {links.map((l) => (
               <a

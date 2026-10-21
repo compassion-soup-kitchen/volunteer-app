@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { IconChip } from "@/components/brand/icon-chip";
 import { FileDropzone } from "@/components/file-dropzone";
 import { FileRow } from "@/components/file-row";
 import {
@@ -48,6 +47,7 @@ import {
   UPLOAD_ACCEPT_ATTR,
 } from "@/lib/uploads";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 
 const TYPE_VARIANTS: Record<
   string,
@@ -291,21 +291,11 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
           </BleedList>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <IconChip size="lg">
-              <RiFileTextLine />
-            </IconChip>
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No files yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Uploaded policies and training material will appear here.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<RiFileTextLine />}
+          title="No files yet"
+          description="Uploaded policies and training material will appear here."
+        />
       )}
     </div>
   );

@@ -44,10 +44,18 @@ const palette = {
     border: '#ECE4DC',
     borderStrong: '#E0D6CB',
 
-    /** Brand red — Pūaroha */
+    /** Brand red — Pūaroha. Text, icons and marks; see `primaryFill` for surfaces. */
     primary: '#E4002B',
+    /**
+     * Solid red that carries `primaryForeground`: buttons, selected chips and
+     * checks, filled markers and banners. Fill any red surface with text or an
+     * icon on it from this, never from `primary`. The same red here; dark mode
+     * splits the two. White on it: 4.85:1.
+     */
+    primaryFill: '#E4002B',
+    /** White, on `primaryFill` (also the reversed wordmark over video). */
     primaryForeground: '#ffffff',
-    /** Pressed / inked brand red */
+    /** Pressed `primaryFill` (white on it: 6.86:1) */
     primaryPressed: '#B80022',
     /** Soft red wash for active states and brand badges */
     primaryTint: '#FCEBED',
@@ -61,7 +69,6 @@ const palette = {
 
     /** Accent == the single brand red: links and inline actions read as Pūaroha */
     accent: '#E4002B',
-    accentForeground: '#ffffff',
     accentTint: '#FCEBED',
     onAccentTint: '#B80022',
 
@@ -75,6 +82,12 @@ const palette = {
     warningTint: '#F7ECD6',
     onWarningTint: '#7A4900',
 
+    /** Info — a quiet navy for things in motion (signed up, booked), as on the web */
+    info: '#293E6B',
+    infoForeground: '#ffffff',
+    infoTint: '#E9EDF6',
+    onInfoTint: '#24365D',
+
     /** Danger — a deep oxblood, kept clearly distinct from the affirmative brand red */
     destructive: '#99161B',
     destructiveForeground: '#ffffff',
@@ -83,8 +96,22 @@ const palette = {
 
     /** Deep "ink" surface — dark feature cards (quote hero, stat strips) */
     inkSurface: '#1C1815',
+    /** Edge of an ink card: invisible on paper, where the ink already stands out */
+    inkBorder: '#1C1815',
+    /** Full-bleed ink (the auth masthead) that raised cards sit on, never inside */
+    inkBleed: '#1C1815',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
+    /** Rules, dividers and soft fills drawn on an ink surface */
+    onInkHairline: 'rgba(251,247,242,0.14)',
+    /** The soft red glow set behind an ink hero's corner or a brushstroke on ink */
+    primaryGlow: 'rgba(228,0,43,0.22)',
+
+    /** Text and icons laid over photo or video, white in both themes */
+    onMedia: '#FFFFFF',
+    onMediaMuted: 'rgba(255,255,255,0.82)',
+    /** The soft shadow that keeps that text legible over moving footage */
+    mediaTextShadow: 'rgba(0,0,0,0.5)',
 
     /** Focus ring */
     ring: '#E4002B',
@@ -113,9 +140,12 @@ const palette = {
     border: 'rgba(255,255,255,0.11)',
     borderStrong: 'rgba(255,255,255,0.18)',
 
+    /** Brightened so red text and icons read on the dark ground (5.15:1, 4.55:1 on `surface`), but too light to carry white (3.59:1). */
     primary: '#FF3355',
+    /** The light-mode brand red: white on it is 4.85:1, and as a shape it still holds 3.81:1 on `background`. */
+    primaryFill: '#E4002B',
     primaryForeground: '#ffffff',
-    primaryPressed: '#E4002B',
+    primaryPressed: '#B80022',
     primaryTint: 'rgba(255,51,85,0.18)',
     onPrimaryTint: '#FF94A4',
 
@@ -125,7 +155,6 @@ const palette = {
     onNavyTint: '#D8CDBE',
 
     accent: '#FF3355',
-    accentForeground: '#ffffff',
     accentTint: 'rgba(255,51,85,0.18)',
     onAccentTint: '#FF94A4',
 
@@ -139,14 +168,32 @@ const palette = {
     warningTint: 'rgba(224,164,76,0.18)',
     onWarningTint: '#F1C489',
 
+    info: '#7D97CF',
+    infoForeground: '#101828',
+    infoTint: 'rgba(125,151,207,0.18)',
+    onInfoTint: '#B3C4E8',
+
     destructive: '#FF6A72',
     destructiveForeground: '#1a1814',
     destructiveTint: 'rgba(255,106,114,0.18)',
     onDestructiveTint: '#FF9AA1',
 
-    inkSurface: '#0F0C09',
+    /**
+     * Lifted above the canvas: an ink card darker than the page reads as a
+     * hole, not a feature. A hairline edge carries the rest of the emphasis.
+     */
+    inkSurface: '#2A221B',
+    inkBorder: 'rgba(251,247,242,0.12)',
+    /** Stays deep in dark mode, so a card overlapping it still reads as raised */
+    inkBleed: '#0F0C09',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
+    onInkHairline: 'rgba(251,247,242,0.14)',
+    primaryGlow: 'rgba(255,51,85,0.22)',
+
+    onMedia: '#FFFFFF',
+    onMediaMuted: 'rgba(255,255,255,0.82)',
+    mediaTextShadow: 'rgba(0,0,0,0.5)',
 
     ring: '#FF3355',
     scrim: 'rgba(0,0,0,0.62)',
@@ -242,6 +289,19 @@ export const Typography: Record<TypographyVariant, TextStyleToken> = {
   stat: { fontSize: 22, lineHeight: 24, fontFamily: FontFamily.serif, letterSpacing: -0.2, fontVariant: ['tabular-nums'] },
   statLg: { fontSize: 48, lineHeight: 50, fontFamily: FontFamily.serif, letterSpacing: -0.6, fontVariant: ['tabular-nums'] },
   mono: { fontSize: 11, lineHeight: 15, fontFamily: mono, fontVariant: ['tabular-nums'] },
+};
+
+/**
+ * How far Dynamic Type may scale each variant. Body text scales freely; the big
+ * serif titles and figures are already large, and at the accessibility sizes
+ * they would otherwise take a whole line per word (or clip in a stat cell).
+ * Variants not listed here scale without a cap.
+ */
+export const MaxFontScale: Partial<Record<TypographyVariant, number>> = {
+  titleXl: 1.4,
+  display: 1.4,
+  stat: 1.4,
+  statLg: 1.4,
 };
 
 /* -------------------------------------------------------------------------- */

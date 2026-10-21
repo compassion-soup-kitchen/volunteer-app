@@ -4,9 +4,8 @@ import { notFound } from "next/navigation";
 import { RiSuitcaseLine } from "@remixicon/react";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { IconChip } from "@/components/brand/icon-chip";
 import { PageHeader } from "@/components/brand/page-header";
+import { EmptyState } from "@/components/brand/empty-state";
 import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveDialog } from "@/components/leave/log-leave-dialog";
 import { auth } from "@/lib/auth";
@@ -17,6 +16,7 @@ import {
 } from "@/lib/leave-actions";
 import { RECENT_DAYS } from "@/lib/data/leave";
 import type { DateOnly } from "@/lib/date-only";
+import { BoardSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Leave | Te Pūaroha",
@@ -46,7 +46,7 @@ async function LeaveBoard() {
             entries={current}
             today={today}
             viewerUserId={viewerUserId}
-            empty="Everyone's around. Nobody is on leave today."
+            empty={{ title: "Everyone's around", description: "Nobody is on leave today." }}
           />
           <LeaveSection
             title="Recently back"
@@ -54,7 +54,7 @@ async function LeaveBoard() {
             entries={recent}
             today={today}
             viewerUserId={viewerUserId}
-            empty="Nobody has come back from leave lately."
+            empty={{ title: "Nobody back lately", description: "No leave has ended in that time." }}
           />
         </div>
         <LeaveSection
@@ -63,7 +63,7 @@ async function LeaveBoard() {
           entries={upcoming}
           today={today}
           viewerUserId={viewerUserId}
-          empty="No leave booked ahead."
+          empty={{ title: "No leave booked ahead", description: "Leave logged for the days to come will show here." }}
         />
       </div>
     </>
@@ -83,7 +83,7 @@ function LeaveSection({
   entries: StaffLeaveRecord[];
   today: DateOnly;
   viewerUserId: string | undefined;
-  empty: string;
+  empty: { title: string; description: string };
 }) {
   return (
     <Card className="gap-0 pb-0">
@@ -106,23 +106,16 @@ function LeaveSection({
           />
         </div>
       ) : (
-        <div className="flex items-center gap-3 border-t border-border px-5 py-5">
-          <IconChip size="sm">
-            <RiSuitcaseLine />
-          </IconChip>
-          <p className="text-sm text-muted-foreground">{empty}</p>
-        </div>
+        <EmptyState
+          bare
+          size="compact"
+          icon={<RiSuitcaseLine />}
+          title={empty.title}
+          description={empty.description}
+          className="border-t border-border"
+        />
       )}
     </Card>
-  );
-}
-
-function BoardSkeleton() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Skeleton className="h-64 w-full rounded-xl" />
-      <Skeleton className="h-64 w-full rounded-xl" />
-    </div>
   );
 }
 

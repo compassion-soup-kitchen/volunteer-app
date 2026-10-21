@@ -20,7 +20,12 @@ export type SectionHeaderProps = {
 export function SectionHeader({ overline, title, actionLabel, onAction, divider }: SectionHeaderProps) {
   const row = (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: Spacing.md }}>
-      <View style={{ flex: 1, gap: 2 }}>
+      {/* One heading for VoiceOver's rotor: the eyebrow and the title read together. */}
+      <View
+        accessible
+        accessibilityRole="header"
+        accessibilityLabel={overline ? `${overline}, ${title}` : title}
+        style={{ flex: 1, gap: 2 }}>
         {overline ? (
           <Text variant="overline" color="primary">
             {overline}
@@ -32,7 +37,8 @@ export function SectionHeader({ overline, title, actionLabel, onAction, divider 
         <Pressable
           accessibilityRole="button"
           onPress={onAction}
-          hitSlop={8}
+          // The label row is 18pt tall; this brings the target up to 44pt.
+          hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}
           style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 1, opacity: pressed ? 0.55 : 1 }]}>
           <Text variant="label" color="accent">
             {actionLabel}

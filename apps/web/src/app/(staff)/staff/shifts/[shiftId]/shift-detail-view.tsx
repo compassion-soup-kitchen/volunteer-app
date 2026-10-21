@@ -26,7 +26,7 @@ import {
 import { StatusBadge } from "@/components/brand/status-badge";
 import { GroupBadges } from "@/components/brand/group-badge";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
-import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiTimeLine,
   RiTeamLine,
@@ -395,21 +395,16 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
           </CardAction>
         </CardHeader>
         {shift.signups.length === 0 ? (
-          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-            <IconChip size="lg">
-              <RiUserLine />
-            </IconChip>
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No one signed up yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {past
-                  ? "Record anyone who came, so their hours count."
-                  : "Volunteers appear here as they sign up, or add someone yourself."}
-              </p>
-            </div>
-          </CardContent>
+          <EmptyState
+            bare
+            icon={<RiUserLine />}
+            title="No one signed up yet"
+            description={
+              past
+                ? "Record anyone who came, so their hours count."
+                : "Volunteers appear here as they sign up, or add someone yourself."
+            }
+          />
         ) : (
           <ul className="divide-y divide-border">
             {shift.signups.map((signup) => (

@@ -11,7 +11,7 @@ const buttonVariants = cva(
       variant: {
         // The hero CTA — solid Pūaroha red with a soft brand glow.
         default:
-          "bg-primary text-primary-foreground shadow-cta hover:bg-primary/90 active:shadow-none",
+          "bg-primary-fill text-primary-foreground shadow-cta hover:bg-primary-fill/90 active:shadow-none",
         navy: "bg-navy text-navy-foreground hover:bg-navy/90",
         outline:
           "border-input bg-card shadow-2xs hover:bg-secondary/60 hover:text-foreground aria-expanded:bg-secondary aria-expanded:text-foreground dark:bg-input/30 dark:hover:bg-input/50",

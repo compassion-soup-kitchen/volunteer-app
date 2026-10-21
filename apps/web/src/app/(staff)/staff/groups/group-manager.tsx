@@ -41,9 +41,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FormAlert } from "@/components/form-alert";
-import { IconChip } from "@/components/brand/icon-chip";
 import { SectionHeader } from "@/components/brand/section-header";
 import { GroupBadge } from "@/components/brand/group-badge";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiAddLine,
   RiArchiveLine,
@@ -261,27 +261,18 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
         <SectionHeader title={`Active (${active.length})`} />
 
         {active.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-              <IconChip tone="brand" size="lg">
-                <RiGroupLine />
-              </IconChip>
-              <div>
-                <p className="font-serif text-lg font-medium tracking-tight">
-                  No groups yet
-                </p>
-                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                  Groups put a name to the crews you already have - Team
-                  Leaders, Guardian Angels, your Thursday regulars. They show
-                  beside people&apos;s names across the app.
-                </p>
-              </div>
+          <EmptyState
+            icon={<RiGroupLine />}
+            tone="brand"
+            title="No groups yet"
+            description="Groups put a name to the crews you already have - Team Leaders, Guardian Angels, your Thursday regulars. They show beside people's names across the app."
+            action={
               <Button onClick={openCreate} variant="outline">
                 <RiAddLine className="size-4" />
                 Create the first group
               </Button>
-            </CardContent>
-          </Card>
+            }
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {active.map((group) => (
@@ -443,11 +434,17 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
             </div>
 
             {memberMatches.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                {candidates.length === 0
-                  ? "No active volunteers yet."
-                  : "No one matches that search."}
-              </p>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiSearchLine />}
+                title={
+                  candidates.length === 0
+                    ? "No active volunteers yet"
+                    : "No one matches that search"
+                }
+                className="rounded-lg ring-1 ring-border"
+              />
             ) : (
               <ul className="max-h-72 overflow-y-auto rounded-lg ring-1 ring-border">
                 {memberMatches.map((person) => {

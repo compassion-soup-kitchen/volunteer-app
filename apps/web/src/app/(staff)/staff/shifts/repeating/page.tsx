@@ -4,10 +4,9 @@ import { RiAddLine, RiArrowRightSLine, RiRepeatLine } from "@remixicon/react";
 
 import { PageHeader } from "@/components/brand/page-header";
 import { IconChip } from "@/components/brand/icon-chip";
-import { Illustration } from "@/components/brand/illustration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   getShiftPatterns,
   type ShiftPatternSummary,
@@ -21,6 +20,7 @@ import { formatTimeRange, personName } from "@/lib/format";
 import { formatDateOnly, parseDateOnly, todayInAppZone } from "@/lib/date-only";
 import { cn } from "@/lib/utils";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 
 export const metadata: Metadata = {
   title: "Repeating shifts | Te Pūaroha",
@@ -106,20 +106,11 @@ export default async function RepeatingShiftsPage() {
       />
 
       {patterns.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <Illustration name="coffee" size={96} />
-            <div className="max-w-sm">
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No repeating shifts yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Create a shift and tick &ldquo;Repeat this shift&rdquo; to put
-                it on the roster every week, with its regulars.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          illustration="coffee"
+          title="No repeating shifts yet"
+          description="Create a shift and tick “Repeat this shift” to put it on the roster every week, with its regulars."
+        />
       ) : (
         <>
           {running.length > 0 && (

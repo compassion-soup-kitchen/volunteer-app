@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -36,7 +36,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { GroupBadges } from "@/components/brand/group-badge";
-import { IconChip } from "@/components/brand/icon-chip";
 import {
   RiSearchLine,
   RiTeamLine,
@@ -92,6 +91,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All statuses" },
@@ -477,21 +477,11 @@ export function VolunteerDirectory({
       )}
 
       {volunteers.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <IconChip size="lg">
-              <RiTeamLine />
-            </IconChip>
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No volunteers found
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Try adjusting your search or filters.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<RiTeamLine />}
+          title="No volunteers found"
+          description="Try adjusting your search or filters."
+        />
       ) : (
         <>
           {/* Desktop table - it only fits beside the sidebar from xl up

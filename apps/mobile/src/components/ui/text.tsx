@@ -1,6 +1,6 @@
 import { Text as RNText, type TextProps } from 'react-native';
 
-import { FontFamily, type ThemeColor, Typography, type TypographyVariant } from '@/constants/theme';
+import { FontFamily, MaxFontScale, type ThemeColor, Typography, type TypographyVariant } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Hanken Grotesk weight families — used to add inline emphasis to text variants. */
@@ -38,6 +38,7 @@ export function Text({
   const { colors } = useTheme();
   return (
     <RNText
+      maxFontSizeMultiplier={MaxFontScale[variant]}
       style={[
         Typography[variant],
         weight ? { fontFamily: weightFamily[weight] } : null,
