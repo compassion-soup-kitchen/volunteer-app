@@ -194,6 +194,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                     // The capacity line already says when it's full - no
                     // dead button repeating it.
                     <Button
+                      variant="secondary"
                       size="sm"
                       disabled={loading}
                       onClick={() => handleRegister(session.id)}

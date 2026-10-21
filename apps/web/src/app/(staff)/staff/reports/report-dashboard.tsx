@@ -258,10 +258,10 @@ export function ReportDashboard({
             </div>
             <div className="flex gap-2">
               <Button
+                variant="outline"
                 onClick={applyFilters}
                 disabled={isPending}
                 size="sm"
-                className="h-9"
               >
                 {isPending ? (
                   <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
@@ -274,7 +274,6 @@ export function ReportDashboard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-9"
                   onClick={clearFilters}
                   disabled={isPending}
                 >

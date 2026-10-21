@@ -279,12 +279,19 @@ export default async function VolunteerDashboard() {
                 aria-hidden
                 className="absolute inset-y-0 left-0 w-1 bg-primary"
               />
-              <CardContent className="flex items-center gap-4 sm:gap-5">
+              {/* The whole row is the link (the title stretches over it), so
+                  a phone - with no room for a button - can still open it. */}
+              <CardContent className="group/next relative flex items-center gap-4 sm:gap-5">
                 <DateBlock date={nextShiftDate} />
                 <span aria-hidden className="self-stretch border-l border-border" />
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="font-serif text-xl/tight font-medium tracking-tight">
-                    {nextShift.serviceArea.name}
+                    <Link
+                      href={volunteerShiftHref(nextShiftDate, todayInAppZone())}
+                      className="outline-none after:absolute after:inset-0 after:rounded-md group-hover/next:text-primary focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ring"
+                    >
+                      {nextShift.serviceArea.name}
+                    </Link>
                   </p>
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <RiTimeLine className="size-3.5 shrink-0" aria-hidden />
@@ -296,11 +303,13 @@ export default async function VolunteerDashboard() {
                     </p>
                   )}
                 </div>
-                <Button asChild size="sm" className="hidden sm:inline-flex">
-                  <Link href={volunteerShiftHref(nextShiftDate, todayInAppZone())}>
-                    View
-                  </Link>
-                </Button>
+                <span
+                  aria-hidden
+                  className="flex shrink-0 items-center gap-0.5 text-sm font-semibold text-primary"
+                >
+                  <span className="hidden sm:inline">View</span>
+                  <RiArrowRightSLine className="size-4 transition-transform group-hover/next:translate-x-0.5" />
+                </span>
               </CardContent>
 
               {dashboardData.upcomingShifts.length > 1 && (

@@ -258,9 +258,9 @@ export function HoursDetail({ data }: HoursDetailProps) {
         </Card>
 
         {/* Gratitude banner */}
-        <Card className="bg-primary text-primary-foreground ring-0">
+        <Card variant="tint">
           <CardContent className="flex items-center gap-3">
-            <RiHeartFill className="size-5 shrink-0" aria-hidden />
+            <RiHeartFill className="size-5 shrink-0 text-primary" aria-hidden />
             <p className="font-serif text-lg/snug font-medium tracking-tight">
               Ngā mihi - your time keeps the kitchen warm.
             </p>

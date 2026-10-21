@@ -502,6 +502,7 @@ function ShiftRow({
                     </Button>
                   )}
                   <Button
+                    variant="secondary"
                     size="sm"
                     onClick={onSignUp}
                     disabled={isFull || isLoading || heldForOthers}
