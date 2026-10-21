@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { eyebrowVariants } from "./eyebrow";
 import { cn } from "@/lib/utils";
 
 /**
@@ -239,8 +240,8 @@ export function StatTilesSkeleton({
             <div className="min-w-0 flex-1 space-y-1.5">
               {/* Labels wrap to two lines at most widths */}
               <div>
-                <TextLine className="eyebrow text-[0.62rem]" bar="w-20" />
-                <TextLine className="eyebrow text-[0.62rem]" bar="w-14" />
+                <TextLine className={eyebrowVariants({ size: "sm", tone: "inherit" })} bar="w-20" />
+                <TextLine className={eyebrowVariants({ size: "sm", tone: "inherit" })} bar="w-14" />
               </div>
               <TextLine className="font-serif text-3xl leading-none" bar="w-12" />
               <TextLine className="text-xs" bar="w-24" />
