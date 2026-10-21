@@ -128,12 +128,12 @@ export function RsvpControl({ event, showNote = true }: RsvpControlProps) {
               onPress={() => send(option, draftNote, CONFIRMATIONS[option])}
               style={({ pressed }) => ({
                 flex: 1,
-                minHeight: 48,
-                flexDirection: 'row',
+                minHeight: 60,
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 5,
-                paddingHorizontal: Spacing.sm,
+                gap: 4,
+                paddingHorizontal: Spacing.xs,
+                paddingVertical: Spacing.sm,
                 borderRadius: Radius.md,
                 borderCurve: 'continuous',
                 borderWidth: 1.5,
@@ -151,7 +151,9 @@ export function RsvpControl({ event, showNote = true }: RsvpControlProps) {
               ) : (
                 <Icon name={OPTION_ICON[option]} size={16} raw={fg} />
               )}
-              <Text variant="label" style={{ color: fg, flexShrink: 1 }} numberOfLines={1}>
+              {/* Icon over label: three side by side leave too little width for
+                  "I'll be there" beside its icon, so the label gets the full row. */}
+              <Text variant="label" center style={{ color: fg }} numberOfLines={2}>
                 {RSVP_LABELS[option]}
               </Text>
             </Pressable>
