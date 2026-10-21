@@ -31,7 +31,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldControl,
+  FieldControlGroup,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -152,22 +159,20 @@ export function PatternEditor({ pattern, volunteers }: PatternEditorProps) {
     });
   }
 
-  function handleStop() {
-    startTransition(async () => {
-      const result = await stopShiftPattern(pattern.id);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      const removed = result.removedShifts ?? 0;
-      toast.success(
-        removed > 0
-          ? `Stopped. ${removed} upcoming ${removed === 1 ? "shift was" : "shifts were"} taken off the roster.`
-          : "Stopped."
-      );
-      setConfirmStop(false);
-      router.refresh();
-    });
+  async function handleStop(): Promise<boolean> {
+    const result = await stopShiftPattern(pattern.id);
+    if (result.error) {
+      toast.error(result.error);
+      return false;
+    }
+    const removed = result.removedShifts ?? 0;
+    toast.success(
+      removed > 0
+        ? `Stopped. ${removed} upcoming ${removed === 1 ? "shift was" : "shifts were"} taken off the roster.`
+        : "Stopped."
+    );
+    router.refresh();
+    return true;
   }
 
   return (
@@ -242,79 +247,91 @@ export function PatternEditor({ pattern, volunteers }: PatternEditorProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <section className="space-y-2">
-            <Label>Regulars</Label>
-            <p className="text-sm text-muted-foreground">
+          <Field>
+            <FieldLabel>Regulars</FieldLabel>
+            <FieldDescription className="text-sm">
               Put on every shift automatically. Someone added now joins the
               upcoming ones; someone taken off gives up their places.
-            </p>
-            <VolunteerPicker
-              volunteers={options}
-              selectedIds={regularIds}
-              onChange={setRegularIds}
-              disabled={isPending || !running}
-            />
-          </section>
-
-          <section className="grid gap-5 border-t border-border pt-5 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="patternCapacity">Capacity</Label>
-              <Input
-                id="patternCapacity"
-                type="number"
-                min="1"
-                max="50"
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                className="w-24"
+            </FieldDescription>
+            <FieldControlGroup>
+              <VolunteerPicker
+                volunteers={options}
+                selectedIds={regularIds}
+                onChange={setRegularIds}
                 disabled={isPending || !running}
               />
-              {errors.capacity && (
-                <p className="text-sm text-destructive">{errors.capacity}</p>
-              )}
-            </div>
+            </FieldControlGroup>
+          </Field>
+
+          <section className="grid gap-5 border-t border-border pt-5 sm:grid-cols-2">
+            <Field id="patternCapacity" error={errors.capacity}>
+              <FieldLabel>Capacity</FieldLabel>
+              <FieldControl>
+                <Input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  className="w-24"
+                  disabled={isPending || !running}
+                />
+              </FieldControl>
+              <FieldError />
+            </Field>
 
             <div className="space-y-2">
-              <Label htmlFor="patternEnds">Ends</Label>
-              <Select
-                value={ends}
-                onValueChange={(value) => setEnds(value as "never" | "on")}
-                disabled={isPending || !running}
-              >
-                <SelectTrigger id="patternEnds">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="never">Keeps going</SelectItem>
-                  <SelectItem value="on">On a set day</SelectItem>
-                </SelectContent>
-              </Select>
+              <Field id="patternEnds">
+                <FieldLabel>Ends</FieldLabel>
+                <Select
+                  value={ends}
+                  onValueChange={(value) => setEnds(value as "never" | "on")}
+                  disabled={isPending || !running}
+                >
+                  <FieldControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FieldControl>
+                  <SelectContent>
+                    <SelectItem value="never">Keeps going</SelectItem>
+                    <SelectItem value="on">On a set day</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
               {ends === "on" && (
-                <DatePicker
-                  id="patternEndsOn"
-                  value={endsOn}
-                  onChange={setEndsOn}
-                  placeholder="Select the last day"
-                  fromDate={earliestEnd}
-                />
-              )}
-              {errors.endsOn && (
-                <p className="text-sm text-destructive">{errors.endsOn}</p>
+                <Field id="patternEndsOn" error={errors.endsOn}>
+                  {/* Sits under "Ends", which says what it is for sighted eyes. */}
+                  <FieldLabel className="sr-only">Last day</FieldLabel>
+                  <FieldControl>
+                    <DatePicker
+                      value={endsOn}
+                      onChange={setEndsOn}
+                      placeholder="Select the last day"
+                      fromDate={earliestEnd}
+                    />
+                  </FieldControl>
+                  <FieldError />
+                </Field>
               )}
             </div>
           </section>
 
-          <section className="space-y-2 border-t border-border pt-5">
-            <Label htmlFor="patternNotes">Notes (optional)</Label>
-            <Textarea
-              id="patternNotes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any details volunteers should know..."
-              rows={3}
-              disabled={isPending || !running}
-            />
-          </section>
+          <Field
+            id="patternNotes"
+            className="space-y-2 border-t border-border pt-5"
+          >
+            <FieldLabel>Notes (optional)</FieldLabel>
+            <FieldControl>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Any details volunteers should know..."
+                rows={3}
+                disabled={isPending || !running}
+              />
+            </FieldControl>
+          </Field>
 
           {running && (
             <div className="border-t border-border pt-5">
@@ -327,10 +344,7 @@ export function PatternEditor({ pattern, volunteers }: PatternEditorProps) {
         </CardContent>
       </Card>
 
-      <AlertDialog
-        open={confirmStop}
-        onOpenChange={(open) => !isPending && setConfirmStop(open)}
-      >
+      <AlertDialog open={confirmStop} onOpenChange={setConfirmStop}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Stop {pattern.serviceArea.name} repeating?</AlertDialogTitle>
@@ -341,16 +355,8 @@ export function PatternEditor({ pattern, volunteers }: PatternEditorProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Keep it running</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={(e) => {
-                e.preventDefault();
-                handleStop();
-              }}
-              disabled={isPending}
-            >
-              {isPending && <RiLoader4Line className="size-4 animate-spin" />}
+            <AlertDialogCancel>Keep it running</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onConfirm={handleStop}>
               Stop repeating
             </AlertDialogAction>
           </AlertDialogFooter>

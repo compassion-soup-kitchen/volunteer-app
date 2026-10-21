@@ -41,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FormAlert } from "@/components/form-alert";
 import {
   RiAddLine,
   RiAttachment2,
@@ -145,15 +146,16 @@ export function AnnouncementManager({
     setPendingFiles((current) => current.filter((_, i) => i !== index));
   }
 
-  async function handleRemoveAttachment(attachment: AnnouncementAttachmentSummary) {
-    setRemoveTarget(null);
+  async function handleRemoveAttachment(
+    attachment: AnnouncementAttachmentSummary
+  ): Promise<boolean> {
     setRemovingId(attachment.id);
     const result = await deleteAnnouncementAttachment(attachment.id);
     setRemovingId(null);
 
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
     // Keep the open dialog honest about what's still attached.
     setEditTarget((current) =>
@@ -168,6 +170,7 @@ export function AnnouncementManager({
     );
     toast.success(`"${attachment.fileName}" removed.`);
     refresh();
+    return true;
   }
 
   /**
@@ -287,7 +290,7 @@ export function AnnouncementManager({
     // the dialog closes and the files are added by editing the saved one.
     if (failed.length > 0 && editTarget) {
       setPendingFiles(failed);
-      setDialogError("Some files couldn't be attached — try those again.");
+      setDialogError("Some files couldn't be attached - try those again.");
       refresh();
       return;
     }
@@ -303,14 +306,15 @@ export function AnnouncementManager({
     refresh();
   }
 
-  async function handlePublish(announcement: StaffAnnouncement) {
+  async function handlePublish(announcement: StaffAnnouncement): Promise<boolean> {
     const result = await publishAnnouncement(announcement.id);
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
     toast.success(`"${announcement.title}" is live.`);
     refresh();
+    return true;
   }
 
   async function handleUnpublish(announcement: StaffAnnouncement) {
@@ -323,14 +327,15 @@ export function AnnouncementManager({
     refresh();
   }
 
-  async function handleDelete(announcement: StaffAnnouncement) {
+  async function handleDelete(announcement: StaffAnnouncement): Promise<boolean> {
     const result = await deleteAnnouncement(announcement.id);
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
     toast.success(`"${announcement.title}" deleted.`);
     refresh();
+    return true;
   }
 
   const drafts = announcements.filter((a) => a.sentAt === null);
@@ -521,9 +526,7 @@ export function AnnouncementManager({
 
             </div>
 
-            {dialogError && (
-              <p className="text-sm text-destructive">{dialogError}</p>
-            )}
+            {dialogError && <FormAlert>{dialogError}</FormAlert>}
           </div>
 
           <DialogFooter>
@@ -580,10 +583,7 @@ export function AnnouncementManager({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (publishTarget) handlePublish(publishTarget);
-                setPublishTarget(null);
-              }}
+              onConfirm={() => (publishTarget ? handlePublish(publishTarget) : false)}
             >
               Publish
             </AlertDialogAction>
@@ -607,9 +607,9 @@ export function AnnouncementManager({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => {
-                if (removeTarget) handleRemoveAttachment(removeTarget);
-              }}
+              onConfirm={() =>
+                removeTarget ? handleRemoveAttachment(removeTarget) : false
+              }
             >
               Remove
             </AlertDialogAction>
@@ -633,10 +633,7 @@ export function AnnouncementManager({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => {
-                if (deleteTarget) handleDelete(deleteTarget);
-                setDeleteTarget(null);
-              }}
+              onConfirm={() => (deleteTarget ? handleDelete(deleteTarget) : false)}
             >
               Delete
             </AlertDialogAction>

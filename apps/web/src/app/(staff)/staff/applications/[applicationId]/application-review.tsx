@@ -41,7 +41,6 @@ import {
   RiCheckLine,
   RiCloseLine,
   RiQuestionLine,
-  RiLoader4Line,
   RiMailLine,
   RiPhoneLine,
   RiMapPinLine,
@@ -85,14 +84,14 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
 
   async function handleDecision(
     decision: "APPROVED" | "DECLINED" | "INFO_REQUESTED"
-  ) {
+  ): Promise<boolean> {
     setIsSaving(true);
     const result = await reviewApplication(application.id, decision, notes);
     setIsSaving(false);
 
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
 
     const labels = {
@@ -104,6 +103,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     toast.success(labels[decision]);
     router.push("/staff/applications");
     router.refresh();
+    return true;
   }
 
   async function handleMojUpdate(newStatus: string) {
@@ -389,11 +389,8 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleDecision("APPROVED")}
+                      onConfirm={() => handleDecision("APPROVED")}
                     >
-                      {isSaving && (
-                        <RiLoader4Line className="mr-2 size-4 animate-spin" />
-                      )}
                       Confirm approval
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -432,12 +429,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleDecision("DECLINED")}
+                      onConfirm={() => handleDecision("DECLINED")}
                       variant="destructive"
                     >
-                      {isSaving && (
-                        <RiLoader4Line className="mr-2 size-4 animate-spin" />
-                      )}
                       Confirm decline
                     </AlertDialogAction>
                   </AlertDialogFooter>
