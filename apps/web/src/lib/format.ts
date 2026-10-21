@@ -6,7 +6,9 @@
 import {
   formatDateOnly,
   formatTimestampInAppZone,
+  parseDateOnly,
   timeOfDayInAppZone,
+  timestampToDateOnly,
 } from "@/lib/date-only";
 
 /** "09:00" -> "9am", "13:30" -> "1:30pm". */
@@ -44,11 +46,20 @@ export function formatTimestampWithTime(at: Date | string): string {
 }
 
 /**
- * A date of birth: "1 July 1990". Stored as the day itself at midnight UTC,
- * so it is a calendar day, not a timestamp.
+ * A date of birth: "1 July 1990".
+ *
+ * Stored two ways: staff entering an offline volunteer save the day at
+ * midnight UTC, while the web application form saves the picker's NZ
+ * midnight, which is the previous day in UTC. Reading the day in Wellington
+ * lands both on the right date (NZ is ahead of UTC, so UTC midnight is still
+ * the same day there), and matches how the age beside it is worked out.
  */
 export function formatDateOfBirth(date: Date): string {
-  return formatDateOnly(date, { day: "numeric", month: "long", year: "numeric" });
+  return formatDateOnly(parseDateOnly(timestampToDateOnly(date)), {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 /**

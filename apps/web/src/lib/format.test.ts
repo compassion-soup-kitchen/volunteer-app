@@ -76,9 +76,20 @@ describe("formatTimestampWithTime", () => {
 });
 
 describe("formatDateOfBirth", () => {
-  it("reads the stored day back unchanged", () => {
+  it("reads a day stored at midnight UTC (offline volunteers)", () => {
     expect(formatDateOfBirth(new Date("1990-07-01T00:00:00.000Z"))).toBe(
       "1 July 1990"
+    );
+  });
+
+  it("reads a day picked at NZ midnight (the web application form)", () => {
+    // 1 July picked in Wellington in winter (UTC+12) is 30 June 12:00Z.
+    expect(formatDateOfBirth(new Date("1990-06-30T12:00:00.000Z"))).toBe(
+      "1 July 1990"
+    );
+    // 1990 was NZDT (UTC+13) at the start of the year: 1 Jan is 31 Dec 11:00Z.
+    expect(formatDateOfBirth(new Date("1989-12-31T11:00:00.000Z"))).toBe(
+      "1 January 1990"
     );
   });
 });
