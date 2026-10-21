@@ -12,7 +12,14 @@ const PAD_TOP = 20; // headroom for the latest-value label
 const PAD_BOTTOM = 6;
 const PAD_X = 8; // keeps end dots off the card edge
 
+const AXIS_LABEL_W = 44;
+
 type Pt = { x: number; y: number };
+
+/** What the chart shows, for VoiceOver: `Hours by month. March, 4 hours. April, 6 hours.` */
+function trendLabel(data: HoursByMonth[]): string {
+  return ['Hours by month', ...data.map((m) => `${m.label}, ${m.hours} ${m.hours === 1 ? 'hour' : 'hours'}`)].join('. ');
+}
 
 /** Catmull-Rom → cubic-bézier smoothing for a soft, editorial trend line. */
 function smoothPath(p: Pt[]): string {
@@ -75,7 +82,11 @@ export function ImpactTrend({ data }: { data: HoursByMonth[] }) {
         </Text>
       </View>
 
-      <View onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      <View
+        onLayout={(e) => setW(e.nativeEvent.layout.width)}
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={trendLabel(data)}>
         {w > 0 ? (
           <Svg width={w} height={CHART_H}>
             <Defs>
@@ -111,9 +122,18 @@ export function ImpactTrend({ data }: { data: HoursByMonth[] }) {
           <View style={{ height: CHART_H }} />
         )}
 
-        {/* latest-value label, clamped within the chart width */}
+        {/* Latest-value label, clamped within the chart width. Backed with the
+            card's surface so the trend line can't run through the figure. */}
         {w > 0 && last ? (
-          <View style={{ position: 'absolute', left: labelClamp, top: Math.max(0, last.y - PAD_TOP) }}>
+          <View
+            style={{
+              position: 'absolute',
+              left: labelClamp,
+              top: Math.max(0, last.y - PAD_TOP),
+              paddingHorizontal: 3,
+              borderRadius: 4,
+              backgroundColor: colors.surface,
+            }}>
             <Text variant="caption" color="primary" weight="bold">
               {latest.hours}h
             </Text>
@@ -121,18 +141,29 @@ export function ImpactTrend({ data }: { data: HoursByMonth[] }) {
         ) : null}
       </View>
 
-      {/* month axis */}
-      <View style={{ flexDirection: 'row' }}>
-        {data.map((m, i) => (
-          <Text
-            key={m.month}
-            variant="overline"
-            center
-            color={i === n - 1 ? 'primary' : 'textTertiary'}
-            style={{ flex: 1, fontSize: 9, letterSpacing: 0.3 }}>
-            {i % step === 0 || i === n - 1 ? m.label.slice(0, 3) : ''}
-          </Text>
-        ))}
+      {/* Month axis: each label centred under its point. At a readable size a
+          label is wider than a month's share of the axis, so they are placed,
+          not laid out in a row. The invisible "M" gives the axis its height. */}
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Text variant="overline" maxFontSizeMultiplier={1.3} style={{ opacity: 0 }}>
+          M
+        </Text>
+        {w > 0
+          ? data.map((m, i) =>
+              i % step === 0 || i === n - 1 ? (
+                <Text
+                  key={m.month}
+                  variant="overline"
+                  center
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.3}
+                  color={i === n - 1 ? 'primary' : 'textTertiary'}
+                  style={{ position: 'absolute', top: 0, left: pts[i].x - AXIS_LABEL_W / 2, width: AXIS_LABEL_W }}>
+                  {m.label.slice(0, 3)}
+                </Text>
+              ) : null,
+            )
+          : null}
       </View>
     </Card>
   );

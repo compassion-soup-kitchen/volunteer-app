@@ -23,16 +23,22 @@ export function formatMonthYear(date: string): string {
   return format(parseDate(date), 'MMMM yyyy');
 }
 
-/** `9:00 am` from `09:00` */
+/**
+ * `9am` from `09:00`, `1:30pm` from `13:30`. Matches the web app's
+ * `formatTime`, so a shift reads the same on both.
+ */
 export function formatTime(time: string): string {
-  const [hStr, m] = time.split(':');
+  const [hStr, mStr] = time.split(':');
   const h = Number(hStr);
+  const m = Number(mStr);
+  if (Number.isNaN(h) || Number.isNaN(m)) return time;
   const period = h >= 12 ? 'pm' : 'am';
   const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${m} ${period}`;
+  const minutes = m === 0 ? '' : `:${String(m).padStart(2, '0')}`;
+  return `${h12}${minutes}${period}`;
 }
 
-/** `9:00 am – 1:00 pm` */
+/** `9am – 1pm`. Both ends always carry their period, even when they share one. */
 export function formatTimeRange(start: string, end: string): string {
   return `${formatTime(start)} – ${formatTime(end)}`;
 }

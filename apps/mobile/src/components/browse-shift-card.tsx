@@ -1,9 +1,10 @@
 import { Pressable, View } from 'react-native';
 
 import { CapacityMeter, availability, spotsLabel } from '@/components/capacity-meter';
-import { Badge, Button, Card, Icon, Text } from '@/components/ui';
+import { Badge, Button, Card, Icon, StatusBadge, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { formatTimeRange } from '@/lib/format';
+import { VENUE } from '@/lib/venue';
 
 export type BrowseShiftCardProps = {
   areaName: string;
@@ -28,7 +29,7 @@ export type BrowseShiftCardProps = {
  * decides on: the area (serif), then when and where, then how many spots are
  * left (seat meter + urgency-coloured label). The action sits to the right —
  * a native SwiftUI (Liquid Glass on iOS 26) Book button for open shifts, a calm
- * "Booked" or "Full" marker otherwise.
+ * "Signed up" or "Full" marker otherwise.
  *
  * The tap-to-detail surface and the Book button are siblings (not nested), so
  * the native button owns its own touches and never double-fires navigation.
@@ -39,7 +40,7 @@ export function BrowseShiftCard({
   endTime,
   signupCount,
   capacity,
-  location = 'Tory St',
+  location = VENUE.short,
   signedUp,
   onLeave = false,
   booking,
@@ -88,7 +89,7 @@ export function BrowseShiftCard({
 
       <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
         {signedUp ? (
-          <Badge label="Booked" tone="success" icon="checkmark" />
+          <StatusBadge status="SIGNED_UP" />
         ) : away ? (
           <Badge label="On leave" tone="warning" icon="airplane-outline" />
         ) : isFull ? (

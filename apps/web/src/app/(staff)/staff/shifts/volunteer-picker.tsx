@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { GroupBadge, GroupBadges } from "@/components/brand/group-badge";
+import { EmptyState } from "@/components/brand/empty-state";
 import { RiCloseLine, RiSearchLine, RiUserAddLine } from "@remixicon/react";
 import type { OfferStatus } from "@/lib/shift-offers";
 import type { VolunteerOption } from "@/lib/shift-actions";
@@ -205,11 +206,16 @@ export function VolunteerPicker({
           )}
 
           {matches.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-              {volunteers.length === 0
-                ? "No active volunteers yet."
-                : "No one matches that search."}
-            </p>
+            <EmptyState
+              bare
+              size="compact"
+              icon={<RiSearchLine />}
+              title={
+                volunteers.length === 0
+                  ? "No active volunteers yet"
+                  : "No one matches that search"
+              }
+            />
           ) : (
             <ul className="max-h-64 overflow-y-auto p-1">
               {matches.map((volunteer) => {

@@ -24,7 +24,10 @@ export function TextField({ label, error, hint, secure, style, onFocus, onBlur, 
 
   return (
     <View style={{ gap: 6 }}>
-      <Text variant="label">{label}</Text>
+      {/* The input carries the label itself, so VoiceOver doesn't read it twice. */}
+      <Text variant="label" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {label}
+      </Text>
       <View style={{ justifyContent: 'center' }}>
         <TextInput
           style={[
@@ -39,11 +42,15 @@ export function TextField({ label, error, hint, secure, style, onFocus, onBlur, 
               paddingTop: multiline ? Spacing.md : 0,
               paddingRight: secure ? 46 : Spacing.md,
               color: colors.text,
+              fontFamily: Typography.body.fontFamily,
               fontSize: Typography.body.fontSize,
               textAlignVertical: multiline ? 'top' : 'center',
             },
             style,
           ]}
+          // Without these, VoiceOver reads the placeholder and never the label.
+          accessibilityLabel={label}
+          accessibilityHint={error ?? hint}
           placeholderTextColor={colors.textTertiary}
           secureTextEntry={hidden}
           multiline={multiline}

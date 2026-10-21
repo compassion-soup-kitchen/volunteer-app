@@ -121,7 +121,11 @@ export function MilestoneJourney({ milestones, totalHours }: { milestones: Miles
                 const isReached = m.reached;
                 const isNext = next?.hours === m.hours;
                 return (
-                  <View key={m.hours} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+                  <View
+                    key={m.hours}
+                    accessible
+                    accessibilityLabel={`${m.term}, ${m.hours} hours, ${isReached ? 'earned' : isNext ? 'next' : 'not yet earned'}`}
+                    style={{ flex: 1, alignItems: 'center', gap: 6 }}>
                     <View
                       style={{
                         width: DOT,
@@ -138,8 +142,7 @@ export function MilestoneJourney({ milestones, totalHours }: { milestones: Miles
                     <Text
                       variant="overline"
                       center
-                      color={isReached ? 'text' : isNext ? 'warning' : 'textTertiary'}
-                      style={{ fontSize: 9, letterSpacing: 0.2 }}>
+                      color={isReached ? 'text' : isNext ? 'warning' : 'textTertiary'}>
                       {m.hours}
                     </Text>
                   </View>

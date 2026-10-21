@@ -54,8 +54,10 @@ export function Card({
         ? colors.surfaceMuted
         : colors.surface;
 
-  // Only the plain white surface carries the hairline ring; fills and tints don't.
-  const bordered = !plain && !tint && !muted;
+  // The plain white surface carries the hairline ring, and ink its own edge
+  // (which only shows in dark mode); other fills and tints go without.
+  const ink = !plain && tone === 'ink';
+  const bordered = ink || (!plain && !tint && !muted);
   const pad = padding ?? (plain ? 0 : Spacing.lg);
 
   const base: ViewStyle = {
@@ -63,7 +65,7 @@ export function Card({
     borderRadius: radius ?? (elevated ? Radius.xl : Radius.lg),
     borderCurve: 'continuous',
     borderWidth: bordered ? 1 : 0,
-    borderColor: bordered ? colors.border : undefined,
+    borderColor: ink ? colors.inkBorder : bordered ? colors.border : undefined,
     padding: pad,
   };
 
@@ -75,9 +77,11 @@ export function Card({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      onPressIn={() => {
+      // The tick lands with the tap that navigates, not the touch that might
+      // turn into a scroll - the same moment a Button fires its own.
+      onPress={() => {
         if (process.env.EXPO_OS === 'ios') Haptics.selectionAsync();
+        onPress();
       }}
       style={({ pressed }) => [
         base,

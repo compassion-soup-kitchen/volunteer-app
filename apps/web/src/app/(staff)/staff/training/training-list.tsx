@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
 import { DateBlock } from "@/components/brand/date-block";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { SectionHeader } from "@/components/brand/section-header";
-import { Illustration } from "@/components/brand/illustration";
 import {
   RiArrowRightSLine,
   RiMapPinLine,
@@ -21,6 +20,7 @@ import {
   todayInAppZone,
 } from "@/lib/date-only";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 
 interface TrainingListProps {
   sessions: StaffTrainingSession[];
@@ -29,19 +29,11 @@ interface TrainingListProps {
 export function TrainingList({ sessions }: TrainingListProps) {
   if (sessions.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <Illustration name="book" size={96} />
-          <div>
-            <p className="font-serif text-lg font-medium tracking-tight">
-              No training sessions yet
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create one to get started.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        illustration="book"
+        title="No training sessions yet"
+        description="Create one to get started."
+      />
     );
   }
 

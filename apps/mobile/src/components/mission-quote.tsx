@@ -16,7 +16,7 @@ export function MissionQuote() {
       <Illustration
         name="heart"
         height={132}
-        tint="rgba(228,0,43,0.22)"
+        tint={colors.primaryGlow}
         style={{ position: 'absolute', right: -22, bottom: -28 }}
       />
       <Text variant="overline" style={{ color: colors.onInkMuted }}>

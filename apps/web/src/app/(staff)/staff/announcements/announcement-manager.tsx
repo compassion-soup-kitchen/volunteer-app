@@ -9,7 +9,7 @@ import { FileDropzone } from "@/components/file-dropzone";
 import { FileRow } from "@/components/file-row";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +56,6 @@ import {
   RiUserLine,
 } from "@remixicon/react";
 import { SectionHeader } from "@/components/brand/section-header";
-import { Illustration } from "@/components/brand/illustration";
 import { toast } from "sonner";
 import { AnnouncementAttachments } from "@/components/announcement-attachments";
 import {
@@ -84,6 +83,7 @@ import {
   type AnnouncementAudience,
 } from "@/lib/announcement-schema";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 import { formatTimestamp } from "@/lib/format";
 
 const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
@@ -339,19 +339,11 @@ export function AnnouncementManager({
       </div>
 
       {announcements.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <Illustration name="korero" size={96} />
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No pānui yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Write your first pānui to share news with the whānau.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          illustration="korero"
+          title="No pānui yet"
+          description="Write your first pānui to share news with the whānau."
+        />
       ) : (
         <>
           {drafts.length > 0 && (

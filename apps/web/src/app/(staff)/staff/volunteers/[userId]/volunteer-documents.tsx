@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { BleedList } from "@/components/brand/detail-list";
 import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiDownloadLine,
   RiFileTextLine,
@@ -98,11 +99,13 @@ export function VolunteerDocuments({
           ))}
         </BleedList>
       ) : (
-        <CardContent className="border-t border-border pt-4">
-          <p className="text-sm text-muted-foreground">
-            No files held for this volunteer.
-          </p>
-        </CardContent>
+        <EmptyState
+          bare
+          size="compact"
+          icon={<RiFileTextLine />}
+          title="No files held for this volunteer"
+          className="border-t border-border"
+        />
       )}
     </Card>
   );

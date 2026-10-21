@@ -26,11 +26,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { StatFigure } from "@/components/brand/stat-figure";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiArchiveLine,
   RiEditLine,
   RiInboxUnarchiveLine,
   RiLoader4Line,
+  RiGroupLine,
   RiPenNibLine,
   RiRefreshLine,
   RiSaveLine,
@@ -380,9 +382,13 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
           </ul>
 
           {detail.volunteers.length === 0 && (
-            <p className="px-5 py-6 text-center text-sm text-muted-foreground">
-              No active volunteers
-            </p>
+            <EmptyState
+              bare
+              size="compact"
+              icon={<RiGroupLine />}
+              title="No active volunteers"
+              description="Once volunteers are active, you'll see who has signed this."
+            />
           )}
         </div>
       </Card>

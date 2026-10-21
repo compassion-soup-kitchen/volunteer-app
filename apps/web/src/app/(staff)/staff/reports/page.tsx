@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   getReportSummary,
   getHoursByServiceArea,
@@ -11,26 +10,11 @@ import {
 } from "@/lib/report-actions";
 import { ReportDashboard } from "./report-dashboard";
 import { PageHeader } from "@/components/brand/page-header";
+import { ReportsSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Pūrongo — Reports | Te Pūaroha Staff",
 };
-
-function ReportsSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 w-full" />
-        ))}
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
-      </div>
-    </div>
-  );
-}
 
 async function ReportsContent({
   searchParams,
