@@ -7,7 +7,6 @@ import {
   getRecentActivity,
 } from "@/lib/staff-actions";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   RiTeamLine,
   RiFileListLine,
@@ -32,6 +31,7 @@ import { StatFigure } from "@/components/brand/stat-figure";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
 import { EmptyState } from "@/components/brand/empty-state";
+import { StatsSkeleton, ActivitySkeleton, AwayTodaySkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Staff Dashboard | Te Pūaroha",
@@ -60,7 +60,7 @@ export default async function StaffDashboard() {
         </Suspense>
 
         <div className="min-w-0 space-y-8">
-          <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+          <Suspense fallback={<AwayTodaySkeleton />}>
             <AwayTodaySection />
           </Suspense>
           <QuickActions />
@@ -290,42 +290,3 @@ function QuickActions() {
   );
 }
 
-function StatsSkeleton() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {[...Array(4)].map((_, i) => (
-        <Card key={i}>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-8 w-14" />
-            <Skeleton className="h-3 w-20" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function ActivitySkeleton() {
-  return (
-    <div className="min-w-0 space-y-4">
-      <div className="space-y-1.5">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-6 w-40" />
-      </div>
-      <Card>
-        <div className="space-y-3 px-5">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <Skeleton className="size-8 rounded-md" />
-              <div className="flex-1 space-y-1.5">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-}

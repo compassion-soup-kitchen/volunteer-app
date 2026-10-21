@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { RiSuitcaseLine } from "@remixicon/react";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/brand/page-header";
 import { EmptyState } from "@/components/brand/empty-state";
 import { LeaveEntries } from "@/components/leave/leave-entries";
@@ -17,6 +16,7 @@ import {
 } from "@/lib/leave-actions";
 import { RECENT_DAYS } from "@/lib/data/leave";
 import type { DateOnly } from "@/lib/date-only";
+import { BoardSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Leave | Te Pūaroha",
@@ -116,15 +116,6 @@ function LeaveSection({
         />
       )}
     </Card>
-  );
-}
-
-function BoardSkeleton() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Skeleton className="h-64 w-full rounded-xl" />
-      <Skeleton className="h-64 w-full rounded-xl" />
-    </div>
   );
 }
 
