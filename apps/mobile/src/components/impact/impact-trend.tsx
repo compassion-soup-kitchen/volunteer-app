@@ -122,9 +122,18 @@ export function ImpactTrend({ data }: { data: HoursByMonth[] }) {
           <View style={{ height: CHART_H }} />
         )}
 
-        {/* latest-value label, clamped within the chart width */}
+        {/* Latest-value label, clamped within the chart width. Backed with the
+            card's surface so the trend line can't run through the figure. */}
         {w > 0 && last ? (
-          <View style={{ position: 'absolute', left: labelClamp, top: Math.max(0, last.y - PAD_TOP) }}>
+          <View
+            style={{
+              position: 'absolute',
+              left: labelClamp,
+              top: Math.max(0, last.y - PAD_TOP),
+              paddingHorizontal: 3,
+              borderRadius: 4,
+              backgroundColor: colors.surface,
+            }}>
             <Text variant="caption" color="primary" weight="bold">
               {latest.hours}h
             </Text>
