@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { SectionHeader } from "@/components/brand/section-header";
 
 export const metadata: Metadata = {
-  title: "My Documents | Te Pūaroha",
+  title: "My documents | Te Pūaroha",
 };
 
 function DocumentsSkeleton() {

@@ -8,7 +8,7 @@ import { getStaffEvents } from "@/lib/event-actions";
 import { EventManager } from "./event-manager";
 
 export const metadata: Metadata = {
-  title: "Events | Te Pūaroha Staff",
+  title: "Events | Te Pūaroha",
 };
 
 function EventsSkeleton() {

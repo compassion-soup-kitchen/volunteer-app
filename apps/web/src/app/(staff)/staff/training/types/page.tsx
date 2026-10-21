@@ -5,7 +5,7 @@ import { TrainingTypeManager } from "./training-type-manager";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Training Types | Te Pūaroha Staff",
+  title: "Training types | Te Pūaroha",
 };
 
 // Coordinators schedule the training, so unlike service areas (admin-only) they

@@ -32,7 +32,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Te Pūaroha | Compassion Soup Kitchen - Volunteer",
+  title: "Compassion Soup Kitchen volunteers | Te Pūaroha",
   description:
     "Nau mai, haere mai. Join Compassion Soup Kitchen volunteers in serving meals, building community, and restoring mana in Aotearoa New Zealand.",
   icons: {

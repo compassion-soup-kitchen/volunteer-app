@@ -9,7 +9,7 @@ import { TrainingList } from "./training-list";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Training Sessions | Te Pūaroha Staff",
+  title: "Training sessions | Te Pūaroha",
 };
 
 function TrainingListSkeleton() {

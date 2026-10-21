@@ -33,7 +33,7 @@ import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
 
 export const metadata: Metadata = {
-  title: "Staff Dashboard | Te Pūaroha",
+  title: "Staff dashboard | Te Pūaroha",
 };
 
 export default async function StaffDashboard() {

@@ -4,7 +4,7 @@ import { AuthShell } from "../auth-shell";
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export const metadata: Metadata = {
-  title: "Forgot Password | Te Pūaroha",
+  title: "Forgot password | Te Pūaroha",
   description:
     "Request a password reset link for your Compassion Soup Kitchen volunteer account.",
 };

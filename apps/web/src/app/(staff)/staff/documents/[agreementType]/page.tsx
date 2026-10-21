@@ -8,7 +8,7 @@ import { AgreementDetailView } from "./agreement-detail";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Agreement Detail | Te Pūaroha Staff",
+  title: "Agreement details | Te Pūaroha",
 };
 
 function DetailSkeleton() {

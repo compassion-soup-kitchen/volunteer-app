@@ -4,7 +4,7 @@ import { AuthShell } from "../auth-shell";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
-  title: "Nau mai - Join Us | Te Pūaroha",
+  title: "Nau mai · Join us | Te Pūaroha",
   description:
     "Create your Compassion Soup Kitchen volunteer account and start making a difference in your community.",
 };

@@ -18,7 +18,7 @@ import { SectionHeading } from "@/components/brand/section-heading";
 import { Wordmark } from "@/components/brand/wordmark";
 
 export const metadata: Metadata = {
-  title: "Privacy Statement | Te Pūaroha",
+  title: "Privacy statement | Te Pūaroha",
   description:
     "How Compassion Soup Kitchen (Te Pūaroha) collects, uses, and looks after volunteers' personal information under the NZ Privacy Act 2020.",
 };

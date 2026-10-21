@@ -12,7 +12,7 @@ import { SectionHeader } from "@/components/brand/section-header";
 import { NewAgreementDialog } from "./new-agreement-dialog";
 
 export const metadata: Metadata = {
-  title: "Documents | Te Pūaroha Staff",
+  title: "Documents | Te Pūaroha",
 };
 
 function DocumentsSkeleton() {

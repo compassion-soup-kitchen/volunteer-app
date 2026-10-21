@@ -6,7 +6,7 @@ import { TrainingForm } from "./training-form";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "New Training Session | Te Pūaroha Staff",
+  title: "New training session | Te Pūaroha",
 };
 
 async function TrainingFormLoader() {

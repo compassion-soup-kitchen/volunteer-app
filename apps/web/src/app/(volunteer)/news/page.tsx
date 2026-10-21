@@ -11,7 +11,7 @@ import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimestampInAppZone, todayInAppZone } from "@/lib/date-only";
 
 export const metadata: Metadata = {
-  title: "News & Updates | Te Pūaroha",
+  title: "News & updates | Te Pūaroha",
 };
 
 function formatNoticeDate(date: Date) {

@@ -10,7 +10,7 @@ import { getVisibleTeam } from "@/lib/group-actions";
 import { memberCountLabel } from "@/lib/volunteer-groups";
 
 export const metadata: Metadata = {
-  title: "Our Team | Te Pūaroha",
+  title: "Our team | Te Pūaroha",
 };
 
 function initials(name: string) {

@@ -4,7 +4,7 @@ import { AuthShell } from "../auth-shell";
 import { VerifyEmailStatus } from "./verify-email-status";
 
 export const metadata: Metadata = {
-  title: "Confirm Email | Te Pūaroha",
+  title: "Confirm email | Te Pūaroha",
   description:
     "Confirm the email address for your Compassion Soup Kitchen volunteer account.",
 };

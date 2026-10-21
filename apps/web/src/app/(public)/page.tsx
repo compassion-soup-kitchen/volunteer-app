@@ -329,7 +329,7 @@ export default function Home() {
                 </a>
               </p>
               <p className="text-xs text-muted-foreground">
-                Registered Charity{" "}
+                Registered charity{" "}
                 <a href="https://www.register.charities.govt.nz/Charity/CC10246" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 transition-colors hover:text-primary">
                   CC 10246
                 </a>

@@ -24,7 +24,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Browse Shifts | Te Pūaroha",
+  title: "Browse shifts | Te Pūaroha",
 };
 
 type SearchParams = Promise<{ [key: string]: string | undefined }>;

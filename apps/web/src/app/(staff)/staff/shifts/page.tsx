@@ -19,7 +19,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Manage Shifts | Te Pūaroha",
+  title: "Manage shifts | Te Pūaroha",
 };
 
 type SearchParams = Promise<{ [key: string]: string | undefined }>;

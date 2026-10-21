@@ -120,7 +120,7 @@ export function LoginForm({
               Signing in...
             </>
           ) : (
-            "Sign In"
+            "Sign in"
           )}
         </Button>
       </form>

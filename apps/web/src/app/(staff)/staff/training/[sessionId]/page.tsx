@@ -6,7 +6,7 @@ import { TrainingDetailView } from "./training-detail-view";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Training Detail | Te Pūaroha Staff",
+  title: "Training session | Te Pūaroha",
 };
 
 export default async function TrainingDetailPage({

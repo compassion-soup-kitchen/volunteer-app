@@ -7,7 +7,7 @@ import { Wordmark } from "@/components/brand/wordmark";
 import { RiArrowLeftLine, RiHomeHeartLine } from "@remixicon/react";
 
 export const metadata: Metadata = {
-  title: "Kei te ngaro - Page not found | Te Pūaroha",
+  title: "Kei te ngaro · Page not found | Te Pūaroha",
 };
 
 /**

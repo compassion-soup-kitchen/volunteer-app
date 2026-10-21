@@ -6,7 +6,7 @@ import { ShiftForm } from "../shift-form";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Create Shift | Te Pūaroha",
+  title: "Create shift | Te Pūaroha",
 };
 
 export default async function NewShiftPage(props: {

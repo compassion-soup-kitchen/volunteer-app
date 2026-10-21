@@ -6,7 +6,7 @@ import { LoginForm } from "./login-form";
 import { demoLoginsEnabled } from "@/lib/demo-accounts";
 
 export const metadata: Metadata = {
-  title: "Kia ora - Sign In | Te Pūaroha",
+  title: "Kia ora · Sign in | Te Pūaroha",
   description:
     "Sign in to your Compassion Soup Kitchen volunteer account to manage shifts and connect with whānau.",
 };

@@ -7,7 +7,7 @@ import { ServiceAreaManager } from "./service-area-manager";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Service Areas | Te Pūaroha",
+  title: "Service areas | Te Pūaroha",
 };
 
 export default async function ServiceAreasPage() {
