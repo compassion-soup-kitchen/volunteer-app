@@ -31,6 +31,7 @@ import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { BleedList } from "@/components/brand/detail-list";
 import { MissionRail } from "@/components/brand/mission-rail";
 import {
   signUpForShift,
@@ -293,8 +294,8 @@ export function ShiftBrowser({
                   </h2>
                 </div>
 
-                <Card className="gap-0 py-0">
-                  <ul className="divide-y divide-border">
+                <Card>
+                  <BleedList>
                     {closed && (
                       <li className="flex items-center gap-2 px-4 py-4 text-sm text-muted-foreground sm:px-5">
                         <RiDoorClosedLine aria-hidden className="size-4 shrink-0" />
@@ -317,7 +318,7 @@ export function ShiftBrowser({
                         onDecline={() => handleDeclineOffer(shift.id)}
                       />
                     ))}
-                  </ul>
+                  </BleedList>
                 </Card>
               </section>
             );

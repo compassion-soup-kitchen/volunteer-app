@@ -125,7 +125,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                 </p>
               </CardContent>
             ) : (
-              <ul className="divide-y divide-border">
+              <BleedList>
                 {data.byServiceArea.map((area, i) => {
                   const accent = AREA_ACCENTS[i % AREA_ACCENTS.length];
                   const share =
@@ -157,7 +157,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                     </li>
                   );
                 })}
-              </ul>
+              </BleedList>
             )}
           </Card>
         </section>
@@ -168,7 +168,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
         {/* Milestones */}
         <Card>
           <CardHeader>
-            <CardTitle>Tohu mahi · Milestones</CardTitle>
+            <CardTitle className="text-base">Tohu mahi · Milestones</CardTitle>
             <CardDescription>
               Recognition for your dedication to our whānau
             </CardDescription>

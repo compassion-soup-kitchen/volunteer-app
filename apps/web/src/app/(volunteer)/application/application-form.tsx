@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,16 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [currentStep, setCurrentStep] = useState(0);
+  const stepsRef = useRef<HTMLOListElement>(null);
+
+  // The step strip scrolls sideways when it doesn't fit, with its scrollbar
+  // hidden, so keep the current step centred in it.
+  useEffect(() => {
+    const strip = stepsRef.current;
+    const step = strip?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!strip || !step) return;
+    strip.scrollTo({ left: step.offsetLeft - (strip.clientWidth - step.offsetWidth) / 2 });
+  }, [currentStep]);
 
   // Form state
   const [phone, setPhone] = useState("");
@@ -203,7 +213,10 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
           {" · "}
           {STEPS[currentStep].label}
         </p>
-        <ol className="flex items-center overflow-x-auto pb-1">
+        <ol
+          ref={stepsRef}
+          className="relative flex items-center overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {STEPS.map((step, i) => {
             const isDone = i < currentStep;
             const isActive = i === currentStep;
