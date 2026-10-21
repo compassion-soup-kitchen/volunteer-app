@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,6 +62,8 @@ import {
   isTodayInAppZone,
 } from "@/lib/date-only";
 import { formatHoldUntil, isHeldForOffers } from "@/lib/shift-offers";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 
 interface ShiftDetailViewProps {
   shift: StaffShift;
@@ -76,7 +77,7 @@ interface ShiftDetailViewProps {
 function VolunteerContact({ volunteer }: { volunteer: RosterVolunteer }) {
   return (
     <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-      {volunteer.user.isOffline && <Badge variant="neutral">Offline</Badge>}
+      {volunteer.user.isOffline && <StatusBadge status="OFFLINE" />}
       <span className="truncate">
         {contactLine({ email: volunteer.user.email, phone: volunteer.phone })}
       </span>
@@ -91,20 +92,6 @@ const LONG_DATE: Intl.DateTimeFormatOptions = {
   year: "numeric",
 };
 
-/** How each answer to an offer reads: passing on a shift is not a failure. */
-const OFFER_BADGES = {
-  PENDING: { label: "Yet to answer", variant: "warning" },
-  ACCEPTED: { label: "Taking it", variant: "success" },
-  DECLINED: { label: "Passed", variant: "neutral" },
-} as const;
-
-function initials(name: string | null): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProps) {
   const router = useRouter();
@@ -192,7 +179,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                 {today ? (
                   <Badge>Today</Badge>
                 ) : (
-                  <Badge variant="neutral">Past</Badge>
+                  <StatusBadge status="PAST" />
                 )}
               </CardAction>
             )}
@@ -230,9 +217,9 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
 
             {shift.notes && (
               <div className="rounded-lg bg-muted p-3">
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Notes
-                </p>
+                </Eyebrow>
                 <p className="mt-1 text-sm">{shift.notes}</p>
               </div>
             )}
@@ -240,9 +227,9 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
             {/* Attendance summary for past/today shifts */}
             {canMarkAttendance && shift.signups.length > 0 && (
               <div className="rounded-lg bg-muted p-3">
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Attendance summary
-                </p>
+                </Eyebrow>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="font-semibold text-success tnum">
@@ -305,15 +292,25 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
               </CardDescription>
               <CardAction>
                 {held ? (
-                  <Badge variant="warning" className="gap-1">
-                    <RiLockLine aria-hidden className="size-3" />
-                    Held
-                  </Badge>
+                  <StatusBadge
+                    status="HELD"
+                    label={
+                      <>
+                        <RiLockLine aria-hidden />
+                        Held
+                      </>
+                    }
+                  />
                 ) : (
-                  <Badge variant="neutral" className="gap-1">
-                    <RiLockUnlockLine aria-hidden className="size-3" />
-                    Open
-                  </Badge>
+                  <StatusBadge
+                    status="OPEN"
+                    label={
+                      <>
+                        <RiLockUnlockLine aria-hidden />
+                        Open
+                      </>
+                    }
+                  />
                 )}
               </CardAction>
             </CardHeader>
@@ -334,12 +331,8 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                       className="mt-1"
                     />
                   </div>
-                  <Badge
-                    variant={OFFER_BADGES[offer.status].variant}
-                    className="shrink-0"
-                  >
-                    {OFFER_BADGES[offer.status].label}
-                  </Badge>
+                  {/* Passing on a shift is not a failure, so DECLINED reads neutral */}
+                  <StatusBadge status={`OFFER_${offer.status}`} className="shrink-0" />
                 </li>
               ))}
             </ul>
@@ -412,11 +405,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                 key={signup.id}
                 className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3"
               >
-                <Avatar>
-                  <AvatarFallback>
-                    {initials(signup.volunteer.user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <PersonAvatar name={signup.volunteer.user.name} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <p className="truncate text-sm font-semibold">
@@ -444,12 +433,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Button
                       size="sm"
-                      variant={signup.status === "ATTENDED" ? "secondary" : "outline"}
-                      className={
-                        signup.status === "ATTENDED"
-                          ? "bg-success-tint text-success-tint-foreground hover:bg-success-tint/80"
-                          : undefined
-                      }
+                      variant={signup.status === "ATTENDED" ? "success-tint" : "outline"}
                       aria-pressed={signup.status === "ATTENDED"}
                       disabled={isPending && markingId === signup.id}
                       onClick={() =>
@@ -465,12 +449,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                     </Button>
                     <Button
                       size="sm"
-                      variant={signup.status === "NO_SHOW" ? "secondary" : "outline"}
-                      className={
-                        signup.status === "NO_SHOW"
-                          ? "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80"
-                          : undefined
-                      }
+                      variant={signup.status === "NO_SHOW" ? "destructive-tint" : "outline"}
                       aria-pressed={signup.status === "NO_SHOW"}
                       disabled={isPending && markingId === signup.id}
                       onClick={() =>

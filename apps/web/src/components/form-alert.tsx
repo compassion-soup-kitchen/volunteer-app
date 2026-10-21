@@ -6,7 +6,7 @@ export function FormAlert({ children }: { children: React.ReactNode }) {
   return (
     <div
       role="alert"
-      className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+      className="rounded-md bg-destructive-tint px-3 py-2.5 text-sm text-destructive-tint-foreground"
     >
       {children}
     </div>

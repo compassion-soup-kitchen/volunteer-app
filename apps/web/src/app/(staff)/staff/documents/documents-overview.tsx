@@ -14,6 +14,10 @@ import {
 import type { AgreementOverview } from "@/lib/document-actions";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { BleedList } from "@/components/brand/detail-list";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/brand/empty-state";
 
 function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
@@ -24,7 +28,7 @@ function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
     <li>
       <Link
         href={`/staff/documents/${agreement.agreementType}`}
-        className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+        className={cn(rowLinkVariants(), "py-3.5")}
       >
         <IconChip tone={retired ? "neutral" : "brand"}>
           {retired ? <RiArchiveLine /> : <RiFileTextLine />}
@@ -48,24 +52,32 @@ function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
             </Badge>
           )}
           {!retired && agreement.pendingReAckCount > 0 && (
-            <Badge variant="warning">
-              {agreement.pendingReAckCount} to confirm
-            </Badge>
+            <StatusBadge
+              status="NEEDS_CONFIRMING"
+              label={`${agreement.pendingReAckCount} to confirm`}
+            />
           )}
           {!retired &&
             agreement.pendingReAckCount === 0 &&
             agreement.signedOutdatedCount > 0 && (
-              <Badge variant="neutral">
-                {agreement.signedOutdatedCount} on an older version
-              </Badge>
+              <StatusBadge
+                status="OUTDATED"
+                label={`${agreement.signedOutdatedCount} on an older version`}
+              />
             )}
         </div>
 
         {retired ? (
-          <Badge variant="neutral" className="shrink-0">
-            <RiArchiveLine />
-            Retired
-          </Badge>
+          <StatusBadge
+            status="RETIRED"
+            className="shrink-0"
+            label={
+              <>
+                <RiArchiveLine />
+                Retired
+              </>
+            }
+          />
         ) : (
           <div className="shrink-0 text-right">
             <StatFigure
@@ -73,7 +85,7 @@ function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
               value={agreement.confirmedCount}
               unit={`/${agreement.totalVolunteers}`}
             />
-            <p className="text-[0.68rem] text-muted-foreground">confirmed</p>
+            <p className="text-2xs text-muted-foreground">confirmed</p>
           </div>
         )}
 
@@ -129,9 +141,9 @@ export function DocumentsOverview({
 
       {retired.length > 0 && (
         <div className="space-y-2">
-          <p className="eyebrow text-[0.62rem] text-muted-foreground">
+          <Eyebrow size="sm" tone="muted">
             Retired
-          </p>
+          </Eyebrow>
           <Card className="opacity-80">
             <BleedList>
               {retired.map((agreement) => (

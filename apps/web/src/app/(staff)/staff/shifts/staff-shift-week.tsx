@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -32,6 +31,7 @@ import { Card } from "@/components/ui/card";
 import { DateBlock } from "@/components/brand/date-block";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
+import { StatusBadge } from "@/components/brand/status-badge";
 import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiAddLine,
@@ -255,7 +255,7 @@ export function StaffShiftWeek({
               variant="destructive"
             >
               {/* The action shows its own spinner while the delete runs. */}
-              {!isDeleting && <RiDeleteBinLine className="mr-2 size-4" />}
+              {!isDeleting && <RiDeleteBinLine data-icon="inline-start" className="size-4" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -390,16 +390,26 @@ function ShiftRow({
             />
           )}
           {held && (
-            <Badge variant="warning" className="gap-1">
-              <RiLockLine aria-hidden className="size-3" />
-              First refusal
-            </Badge>
+            <StatusBadge
+              status="HELD"
+              label={
+                <>
+                  <RiLockLine aria-hidden />
+                  First refusal
+                </>
+              }
+            />
           )}
           {markAttendance && (
-            <Badge variant="warning" className="gap-1">
-              <RiCheckboxCircleLine aria-hidden className="size-3" />
-              Mark attendance
-            </Badge>
+            <StatusBadge
+              status="ATTENDANCE_DUE"
+              label={
+                <>
+                  <RiCheckboxCircleLine aria-hidden />
+                  Mark attendance
+                </>
+              }
+            />
           )}
         </div>
         <p className="truncate text-sm text-muted-foreground">
@@ -447,18 +457,18 @@ function ShiftRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => router.push(href)}>
-            <RiEyeLine className="mr-2 size-4" />
+            <RiEyeLine className="size-4" />
             View details
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push(`${href}/edit`)}>
-            <RiPencilLine className="mr-2 size-4" />
+            <RiPencilLine className="size-4" />
             Edit shift
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
+            variant="destructive"
             onClick={onDelete}
           >
-            <RiDeleteBinLine className="mr-2 size-4" />
+            <RiDeleteBinLine className="size-4" />
             Delete shift
           </DropdownMenuItem>
         </DropdownMenuContent>

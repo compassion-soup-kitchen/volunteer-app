@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +46,8 @@ import {
   type StaffTrainingSession,
 } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 import {
   formatDateOnly,
   isPastInAppZone,
@@ -68,13 +69,6 @@ function formatDate(date: Date): string {
   return formatDateOnly(date, LONG_DATE);
 }
 
-function initials(name: string | null): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 export function TrainingDetailView({ session }: TrainingDetailViewProps) {
   const router = useRouter();
@@ -146,7 +140,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
               {today ? (
                 <Badge>Today</Badge>
               ) : (
-                <Badge variant="neutral">Past</Badge>
+                <StatusBadge status="PAST" />
               )}
             </CardAction>
           )}
@@ -183,9 +177,9 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
 
           {session.description && (
             <div className="rounded-lg bg-muted p-3">
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 Description
-              </p>
+              </Eyebrow>
               <p className="mt-1 text-sm">{session.description}</p>
             </div>
           )}
@@ -193,9 +187,9 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
           {/* Attendance summary */}
           {canMarkAttendance && session.attendances.length > 0 && (
             <div className="rounded-lg bg-muted p-3">
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 Attendance summary
-              </p>
+              </Eyebrow>
               <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="font-semibold text-success tnum">
@@ -278,11 +272,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
                 key={attendance.id}
                 className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3"
               >
-                <Avatar>
-                  <AvatarFallback>
-                    {initials(attendance.volunteer.user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <PersonAvatar name={attendance.volunteer.user.name} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
                     {attendance.volunteer.user.name || "-"}
@@ -296,12 +286,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Button
                       size="sm"
-                      variant={attendance.status === "ATTENDED" ? "secondary" : "outline"}
-                      className={
-                        attendance.status === "ATTENDED"
-                          ? "bg-success-tint text-success-tint-foreground hover:bg-success-tint/80"
-                          : undefined
-                      }
+                      variant={attendance.status === "ATTENDED" ? "success-tint" : "outline"}
                       aria-pressed={attendance.status === "ATTENDED"}
                       disabled={isPending && markingId === attendance.id}
                       onClick={() =>
@@ -317,12 +302,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
                     </Button>
                     <Button
                       size="sm"
-                      variant={attendance.status === "NO_SHOW" ? "secondary" : "outline"}
-                      className={
-                        attendance.status === "NO_SHOW"
-                          ? "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80"
-                          : undefined
-                      }
+                      variant={attendance.status === "NO_SHOW" ? "destructive-tint" : "outline"}
                       aria-pressed={attendance.status === "NO_SHOW"}
                       disabled={isPending && markingId === attendance.id}
                       onClick={() =>

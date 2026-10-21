@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Wordmark } from "@/components/brand/wordmark";
+import { Eyebrow, eyebrowVariants } from "@/components/brand/eyebrow";
 import {
   Sheet,
   SheetClose,
@@ -208,12 +209,9 @@ function SidebarPanel({
           return (
             <div key={group.label ?? gi} className={gi > 0 ? "mt-5" : undefined}>
               {group.label && (
-                <p
-                  id={labelId}
-                  className="eyebrow mb-1.5 px-3 text-[0.62rem] text-sidebar-muted-foreground"
-                >
+                <Eyebrow id={labelId} size="sm" tone="sidebar" className="mb-1.5 px-3">
                   {group.label}
-                </p>
+                </Eyebrow>
               )}
               <ul aria-labelledby={labelId} className="space-y-0.5">
                 {group.items.map((item) => {
@@ -271,7 +269,7 @@ function SidebarPanel({
               <span className="block truncate text-sm font-semibold text-sidebar-accent-foreground">
                 {user.name}
               </span>
-              <span className="eyebrow block truncate text-[0.6rem] text-sidebar-muted-foreground">
+              <span className={cn(eyebrowVariants({ size: "sm", tone: "sidebar" }), "block truncate")}>
                 {user.role === "ADMIN" ? "Admin" : "Coordinator"}
               </span>
             </span>

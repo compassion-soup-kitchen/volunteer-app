@@ -17,6 +17,13 @@ describe("cn", () => {
     expect(cn("text-sm text-base")).toBe("text-base");
   });
 
+  it("keeps the app's own text-2xs size beside a text colour", () => {
+    expect(cn("text-2xs", "text-muted-foreground")).toBe(
+      "text-2xs text-muted-foreground",
+    );
+    expect(cn("text-2xs", "text-sm")).toBe("text-sm");
+  });
+
   it("merges conditional class objects", () => {
     expect(cn("base", { active: true, hidden: false })).toBe("base active");
   });

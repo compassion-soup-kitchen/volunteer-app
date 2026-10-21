@@ -76,6 +76,17 @@ export function personName(person: {
 }
 
 /**
+ * One or two letters for an avatar: first and last name, so "Mere Te Rangi"
+ * reads "MR". A missing name shows "?" rather than an empty circle.
+ */
+export function initials(name: string | null | undefined): string {
+  const parts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase() || "?";
+}
+
+/**
  * The one line under someone's name that says how to reach them. An offline
  * volunteer often has no email, and a phone number is what staff ring.
  */

@@ -525,7 +525,7 @@ export function AnnouncementManager({
             {editTarget ? (
               <Button onClick={() => handleSave(false)} disabled={isSaving}>
                 {isSaving && (
-                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                 )}
                 Save changes
               </Button>
@@ -540,7 +540,7 @@ export function AnnouncementManager({
                 </Button>
                 <Button onClick={() => handleSave(true)} disabled={isSaving}>
                   {isSaving && (
-                    <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                    <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                   )}
                   <RiSendPlaneLine className="size-4" />
                   Publish now
@@ -698,22 +698,22 @@ function AnnouncementRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onEdit}>
-            <RiEditLine className="mr-2 size-4" />
+            <RiEditLine className="size-4" />
             Edit
           </DropdownMenuItem>
           {isDraft ? (
             <DropdownMenuItem onClick={onPublish}>
-              <RiSendPlaneLine className="mr-2 size-4" />
+              <RiSendPlaneLine className="size-4" />
               Publish
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem onClick={onUnpublish}>
-              <RiEyeOffLine className="mr-2 size-4" />
+              <RiEyeOffLine className="size-4" />
               Unpublish
             </DropdownMenuItem>
           )}
           <DropdownMenuItem variant="destructive" onClick={onDelete}>
-            <RiDeleteBinLine className="mr-2 size-4" />
+            <RiDeleteBinLine className="size-4" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>

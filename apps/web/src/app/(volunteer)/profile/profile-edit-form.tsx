@@ -20,6 +20,7 @@ import {
 } from "@remixicon/react";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { updateVolunteerProfile } from "@/lib/application-actions";
+import { eyebrowVariants } from "@/components/brand/eyebrow";
 
 interface ProfileEditFormProps {
   profile: {
@@ -88,7 +89,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         <form onSubmit={handleSave} className="space-y-6">
           {/* Contact */}
           <div className="space-y-4">
-            <h3 className="eyebrow text-muted-foreground">Contact</h3>
+            <h3 className={eyebrowVariants({ tone: "muted" })}>Contact</h3>
             <Field id="edit-phone">
               <FieldLabel>Phone</FieldLabel>
               <FieldControl>
@@ -110,7 +111,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
 
           {/* Emergency Contact */}
           <div className="space-y-4 border-t border-border pt-6">
-            <h3 className="eyebrow text-muted-foreground">Emergency contact</h3>
+            <h3 className={eyebrowVariants({ tone: "muted" })}>Emergency contact</h3>
             {/* Someone else's details, so the browser shouldn't fill in yours. */}
             <Field id="edit-ec-name">
               <FieldLabel>Name</FieldLabel>
@@ -147,7 +148,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
 
           {/* About - named "About you" as on the application, where it was first written */}
           <Field id="edit-bio" className="space-y-4 border-t border-border pt-6">
-            <FieldLabel className="eyebrow text-muted-foreground">About you</FieldLabel>
+            <FieldLabel className={eyebrowVariants({ tone: "muted" })}>About you</FieldLabel>
             <FieldControl>
               <Textarea
                 value={bio}

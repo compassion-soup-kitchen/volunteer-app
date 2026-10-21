@@ -25,6 +25,7 @@ import { DatePicker } from "@/components/date-picker";
 import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 import { cn } from "@/lib/utils";
 import {
   createShift,
@@ -422,22 +423,16 @@ export function ShiftForm({
                       {WEEKDAYS_FROM_MONDAY.map((day) => {
                         const selected = weekdays.includes(day.value);
                         return (
-                          <button
+                          <ToggleChip
                             key={day.value}
-                            type="button"
+                            pressed={selected}
                             onClick={() => toggleWeekday(day.value)}
                             disabled={isPending}
-                            aria-pressed={selected}
                             aria-label={day.label}
-                            className={cn(
-                              "min-w-12 rounded-md px-3 py-1.5 text-sm font-semibold ring-1 transition-colors",
-                              selected
-                                ? "bg-primary-fill text-primary-foreground ring-primary-fill"
-                                : "bg-card text-muted-foreground ring-border hover:text-foreground"
-                            )}
+                            className="min-w-12 px-3 font-semibold"
                           >
                             {day.short}
-                          </button>
+                          </ToggleChip>
                         );
                       })}
                     </FieldControlGroup>

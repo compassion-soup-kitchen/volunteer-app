@@ -35,9 +35,9 @@ export function AuthShell({ eyebrow, title, subtitle, children, footer }: AuthSh
             people, it is people.
           </p>
         </blockquote>
-        <p className="relative text-xs font-semibold uppercase tracking-[0.16em] text-paper/50">
+        <Eyebrow tone="ink" className="relative">
           Te Pūaroha · Since 1901
-        </p>
+        </Eyebrow>
       </aside>
 
       <main className="flex flex-col justify-center px-6 py-12 sm:px-10">
@@ -45,7 +45,7 @@ export function AuthShell({ eyebrow, title, subtitle, children, footer }: AuthSh
           <Link href="/" aria-label="Te Pūaroha home" className="mb-10 inline-flex lg:hidden">
             <Wordmark className="h-7" />
           </Link>
-          <Eyebrow className="text-primary">{eyebrow}</Eyebrow>
+          <Eyebrow>{eyebrow}</Eyebrow>
           <h1 className="mt-3 font-serif text-3xl font-light tracking-tight">{title}</h1>
           <p className="mt-2 leading-relaxed text-muted-foreground">{subtitle}</p>
           <div className="mt-8">{children}</div>

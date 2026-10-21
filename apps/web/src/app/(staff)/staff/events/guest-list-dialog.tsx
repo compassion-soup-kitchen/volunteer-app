@@ -26,6 +26,7 @@ import {
   type RsvpResponse,
 } from "@/lib/event-rsvp";
 import { getEventGuests, type EventGuest, type StaffEvent } from "@/lib/event-actions";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 const RESPONSE_VARIANTS: Record<RsvpResponse, "success" | "warning" | "neutral"> = {
   GOING: "success",
@@ -129,7 +130,7 @@ export function GuestListDialog({
 
         {eligibility.ok ? (
           <div className="space-y-2">
-            <p className="eyebrow text-[0.62rem] text-muted-foreground">Your reply</p>
+            <Eyebrow size="sm" tone="muted">Your reply</Eyebrow>
             <RsvpControl
               eventId={event.id}
               response={event.myRsvp?.response ?? null}

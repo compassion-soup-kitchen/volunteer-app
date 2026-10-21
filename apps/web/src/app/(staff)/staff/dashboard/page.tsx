@@ -30,6 +30,9 @@ import { SectionHeader } from "@/components/brand/section-header";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/brand/empty-state";
 import { StatsSkeleton, ActivitySkeleton, AwayTodaySkeleton } from "./skeleton";
 
@@ -118,9 +121,9 @@ async function StatsCards() {
         const body = (
           <CardContent className="flex items-start justify-between gap-3">
             <div className="space-y-1.5">
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 {card.label}
-              </p>
+              </Eyebrow>
               <StatFigure value={card.value} unit={card.unit} />
               <p className="text-xs text-muted-foreground">{card.sublabel}</p>
             </div>
@@ -226,7 +229,7 @@ async function AwayTodaySection() {
               <li key={leave.id}>
                 <Link
                   href={`/staff/volunteers/${leave.person.userId}`}
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                  className={cn(rowLinkVariants(), "px-4 py-2.5")}
                 >
                   <IconChip size="sm" tone="warning">
                     <RiSuitcaseLine />
@@ -271,7 +274,7 @@ function QuickActions() {
             <li key={action.href}>
               <Link
                 href={action.href}
-                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                className={cn(rowLinkVariants(), "px-4 py-2.5")}
               >
                 <IconChip size="sm">
                   <action.icon />

@@ -23,18 +23,23 @@ import {
   RiHeartFill,
 } from "@remixicon/react";
 import type { VolunteerHoursData } from "@/lib/dashboard-actions";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { BleedList } from "@/components/brand/detail-list";
+import { ListCard } from "@/components/brand/list-card";
 
 interface HoursDetailProps {
   data: VolunteerHoursData;
 }
 
-/** Row accent rotation for the area ledger: icon tone + matching bar colour. */
+/**
+ * Row accent rotation for the area ledger: an icon tone and the chart colour
+ * of the same hue (red, ochre, cocoa, green), so a row's chip and bar match.
+ */
 const AREA_ACCENTS = [
   { tone: "brand", bar: "bg-chart-1" },
-  { tone: "info", bar: "bg-chart-2" },
-  { tone: "warning", bar: "bg-chart-3" },
+  { tone: "warning", bar: "bg-chart-2" },
+  { tone: "neutral", bar: "bg-chart-3" },
   { tone: "success", bar: "bg-chart-4" },
-  { tone: "neutral", bar: "bg-chart-5" },
 ] as const;
 
 export function HoursDetail({ data }: HoursDetailProps) {
@@ -73,9 +78,9 @@ export function HoursDetail({ data }: HoursDetailProps) {
         <Card variant="ink">
           <CardContent className="space-y-4">
             <div className="flex items-start justify-between gap-3">
-              <p className="eyebrow text-ink-muted-foreground">
+              <Eyebrow tone="ink">
                 Tō wā · Time given
-              </p>
+              </Eyebrow>
               {data.hoursThisMonth > 0 && (
                 <span className="shrink-0 rounded-sm bg-ink-foreground/15 px-2.5 py-1 text-xs font-semibold text-ink-foreground">
                   +{data.hoursThisMonth}h this month
@@ -96,9 +101,9 @@ export function HoursDetail({ data }: HoursDetailProps) {
             <Card key={tile.label}>
               <CardContent className="flex items-start justify-between gap-3">
                 <div className="space-y-1.5">
-                  <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted">
                     {tile.label}
-                  </p>
+                  </Eyebrow>
                   <StatFigure value={tile.value} unit={tile.unit} />
                   <p className="text-xs text-muted-foreground">{tile.sublabel}</p>
                 </div>
@@ -122,7 +127,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
             />
           ) : (
             <Card>
-              <ul className="divide-y divide-border">
+              <BleedList>
                 {data.byServiceArea.map((area, i) => {
                   const accent = AREA_ACCENTS[i % AREA_ACCENTS.length];
                   const share =
@@ -154,7 +159,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
                     </li>
                   );
                 })}
-              </ul>
+              </BleedList>
             </Card>
           )}
         </section>
@@ -165,7 +170,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
         {/* Milestones */}
         <Card>
           <CardHeader>
-            <CardTitle>Tohu mahi · Milestones</CardTitle>
+            <CardTitle className="text-base">Tohu mahi · Milestones</CardTitle>
             <CardDescription>
               Recognition for your dedication to our whānau
             </CardDescription>
@@ -222,10 +227,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
         </Card>
 
         {/* Monthly breakdown */}
-        <Card className="gap-0 pb-2">
-          <CardHeader className="pb-3">
-            <CardTitle>Month by month</CardTitle>
-          </CardHeader>
+        <ListCard title="Month by month">
           {data.byMonth.length === 0 ? (
             <EmptyState
               bare
@@ -236,7 +238,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
               className="border-t border-border"
             />
           ) : (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {data.byMonth.map((month) => (
                 <li
                   key={month.month}
@@ -258,14 +260,14 @@ export function HoursDetail({ data }: HoursDetailProps) {
                   />
                 </li>
               ))}
-            </ul>
+            </BleedList>
           )}
-        </Card>
+        </ListCard>
 
         {/* Gratitude banner */}
-        <Card className="bg-primary-fill text-primary-foreground ring-0">
+        <Card variant="tint">
           <CardContent className="flex items-center gap-3">
-            <RiHeartFill className="size-5 shrink-0" aria-hidden />
+            <RiHeartFill className="size-5 shrink-0 text-primary" aria-hidden />
             <p className="font-serif text-lg/snug font-medium tracking-tight">
               Ngā mihi - your time keeps the kitchen warm.
             </p>

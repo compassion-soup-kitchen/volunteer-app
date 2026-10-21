@@ -1,5 +1,6 @@
 import { IconChip } from "./icon-chip";
 import { cn } from "@/lib/utils";
+import { eyebrowVariants } from "@/components/brand/eyebrow";
 
 /**
  * The hairline-divided body shared by every card whose rows run to the card's
@@ -7,8 +8,8 @@ import { cn } from "@/lib/utils";
  * padding - the rows already carry their own, so the card's full py-5 around
  * them reads as a dead gap: under a header only the bottom is trimmed, and a
  * list that is the whole card loses both. Marking the list means no call site
- * has to decide, and an empty state (a `CardContent` instead) keeps normal
- * padding without anyone thinking about it.
+ * has to decide. A bare `EmptyState` in its place is trimmed the same way,
+ * since it carries its own padding too.
  */
 const bleedListClass =
   "divide-y divide-border border-t border-border first:border-t-0";
@@ -58,7 +59,7 @@ export function DetailList({ facts, className }: DetailListProps) {
             </IconChip>
           ) : null}
           <div className="min-w-0">
-            <dt className="eyebrow text-[0.62rem] text-muted-foreground">
+            <dt className={eyebrowVariants({ size: "sm", tone: "muted" })}>
               {fact.label}
             </dt>
             <dd className="text-sm font-medium break-words">{fact.value}</dd>

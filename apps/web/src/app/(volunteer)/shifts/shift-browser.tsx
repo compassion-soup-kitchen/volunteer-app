@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,9 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { EmptyState } from "@/components/brand/empty-state";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { BleedList } from "@/components/brand/detail-list";
+import { MissionRail } from "@/components/brand/mission-rail";
 import {
   signUpForShift,
   cancelShiftSignup,
@@ -200,7 +203,7 @@ export function ShiftBrowser({
               >
                 <span
                   className={cn(
-                    "text-[11px] font-semibold",
+                    "text-2xs font-semibold",
                     day.date === today ? "text-primary" : "text-muted-foreground"
                   )}
                 >
@@ -235,20 +238,13 @@ export function ShiftBrowser({
           {filterOptions.map((area) => {
             const selected = areaId === area.id;
             return (
-              <button
+              <ToggleChip
                 key={area.id ?? "all"}
-                type="button"
-                aria-pressed={selected}
+                pressed={selected}
                 onClick={() => go(weekStart, area.id)}
-                className={cn(
-                  "inline-flex h-9 shrink-0 items-center rounded-md px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-                  selected
-                    ? "bg-primary-fill text-primary-foreground"
-                    : "bg-card text-muted-foreground ring-1 ring-border hover:text-foreground"
-                )}
               >
                 {area.name}
-              </button>
+              </ToggleChip>
             );
           })}
         </div>
@@ -294,8 +290,8 @@ export function ShiftBrowser({
                   </h2>
                 </div>
 
-                <Card className="gap-0 py-0">
-                  <ul className="divide-y divide-border">
+                <Card>
+                  <BleedList>
                     {closed && (
                       <li className="flex items-center gap-2 px-4 py-4 text-sm text-muted-foreground sm:px-5">
                         <RiDoorClosedLine aria-hidden className="size-4 shrink-0" />
@@ -318,7 +314,7 @@ export function ShiftBrowser({
                         onDecline={() => handleDeclineOffer(shift.id)}
                       />
                     ))}
-                  </ul>
+                  </BleedList>
                 </Card>
               </section>
             );
@@ -383,8 +379,7 @@ function ShiftRow({
   return (
     <li className="relative flex gap-4 px-4 py-4 sm:px-5">
       {(isSignedUp || offeredToMe) && (
-        // The red mission rail marks the volunteer's own commitment
-        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-primary" />
+        <MissionRail />
       )}
 
       {/* Start over finish, so a day reads down like a timetable */}
@@ -404,21 +399,31 @@ function ShiftRow({
               {shift.serviceArea.name}
             </h3>
             {isSignedUp ? (
-              <Badge className="shrink-0">Signed up</Badge>
+              <StatusBadge status="SIGNED_UP" className="shrink-0" />
             ) : onLeave ? (
-              <Badge variant="warning" className="shrink-0 gap-1">
-                <RiSuitcaseLine aria-hidden className="size-3" />
-                On leave
-              </Badge>
+              <StatusBadge
+                status="ON_LEAVE"
+                className="shrink-0"
+                label={
+                  <>
+                    <RiSuitcaseLine aria-hidden />
+                    On leave
+                  </>
+                }
+              />
             ) : offeredToMe ? (
-              <Badge variant="warning" className="shrink-0">
-                Yours first
-              </Badge>
+              <StatusBadge status="OFFER_PENDING" label="Yours first" className="shrink-0" />
             ) : heldForOthers ? (
-              <Badge variant="neutral" className="shrink-0 gap-1">
-                <RiLockLine aria-hidden className="size-3" />
-                Held
-              </Badge>
+              <StatusBadge
+                status="HELD_FOR_OTHERS"
+                className="shrink-0"
+                label={
+                  <>
+                    <RiLockLine aria-hidden />
+                    Held
+                  </>
+                }
+              />
             ) : null}
           </div>
 
@@ -469,9 +474,9 @@ function ShiftRow({
               ) : isSignedUp ? (
                 <Button variant="outline" size="sm" onClick={onCancel} disabled={isLoading}>
                   {isLoading ? (
-                    <RiLoader4Line className="mr-1 size-3.5 animate-spin" />
+                    <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                   ) : (
-                    <RiCloseLine className="mr-1 size-3.5" />
+                    <RiCloseLine data-icon="inline-start" className="size-3.5" />
                   )}
                   Cancel
                 </Button>
@@ -488,14 +493,15 @@ function ShiftRow({
                     </Button>
                   )}
                   <Button
+                    variant="secondary"
                     size="sm"
                     onClick={onSignUp}
                     disabled={isFull || isLoading || heldForOthers}
                   >
                     {isLoading ? (
-                      <RiLoader4Line className="mr-1 size-3.5 animate-spin" />
+                      <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                     ) : (
-                      <RiCheckLine className="mr-1 size-3.5" />
+                      <RiCheckLine data-icon="inline-start" className="size-3.5" />
                     )}
                     {offeredToMe ? "Take it" : "Sign up"}
                   </Button>

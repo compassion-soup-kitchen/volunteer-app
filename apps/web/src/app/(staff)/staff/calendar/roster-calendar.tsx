@@ -57,6 +57,7 @@ import { formatTime, formatTimeRange } from "@/lib/format";
 import type { PublicHoliday } from "@/lib/nz-public-holidays";
 import { cn } from "@/lib/utils";
 import { CloseDayDialog, describeClosureOutcome } from "./close-day-dialog";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 const WEEKDAY_HEADINGS = [
   { short: "Mon", label: "Monday" },
@@ -548,10 +549,10 @@ function DayPanel({
 
           {away.length > 0 && (
             <div className="border-t border-border px-5 py-3">
-              <p className="eyebrow mb-1.5 flex items-center gap-1.5 text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted" className="mb-1.5 flex items-center gap-1.5">
                 <RiSuitcaseLine aria-hidden className="size-3" />
                 On leave · {away.length}
-              </p>
+              </Eyebrow>
               <ul className="space-y-1">
                 {away.map((leave) => (
                   <li key={leave.id} className="flex items-baseline justify-between gap-3 text-sm">

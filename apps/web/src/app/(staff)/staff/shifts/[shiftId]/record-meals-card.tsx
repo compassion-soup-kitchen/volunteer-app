@@ -18,6 +18,7 @@ import { RiLoader4Line, RiRestaurantLine } from "@remixicon/react";
 import { toast } from "sonner";
 import { recordShiftMeals } from "@/lib/shift-actions";
 import { MEALS_SERVED_MAX, mealsServedSchema } from "@/lib/shift-meals";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatTimestampWithTime } from "@/lib/format";
 
 interface RecordMealsCardProps {
@@ -78,9 +79,9 @@ export function RecordMealsCard({
       <CardContent className="space-y-4">
         {hasRecorded && (
           <div className="rounded-lg bg-muted p-4">
-            <p className="eyebrow text-[0.62rem] text-muted-foreground">
+            <Eyebrow size="sm" tone="muted">
               Meals shared
-            </p>
+            </Eyebrow>
             <StatFigure
               value={mealsServed}
               unit={mealsServed === 1 ? "meal" : "meals"}

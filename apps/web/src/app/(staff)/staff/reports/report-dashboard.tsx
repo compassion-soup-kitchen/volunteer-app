@@ -259,15 +259,15 @@ export function ReportDashboard({
             </div>
             <div className="flex gap-2">
               <Button
+                variant="outline"
                 onClick={applyFilters}
                 disabled={isPending}
                 size="sm"
-                className="h-9"
               >
                 {isPending ? (
-                  <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                  <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                 ) : (
-                  <RiFilterLine className="mr-1.5 size-3.5" />
+                  <RiFilterLine data-icon="inline-start" className="size-3.5" />
                 )}
                 Apply
               </Button>
@@ -275,7 +275,6 @@ export function ReportDashboard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-9"
                   onClick={clearFilters}
                   disabled={isPending}
                 >
@@ -327,9 +326,9 @@ export function ReportDashboard({
             <Card key={stat.label}>
               <CardContent className="flex items-start justify-between gap-3">
                 <div className="space-y-1.5">
-                  <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted">
                     {stat.label}
-                  </p>
+                  </Eyebrow>
                   <StatFigure value={stat.value} unit={stat.unit} />
                   <p className="text-xs text-muted-foreground">
                     {stat.sublabel}
@@ -447,15 +446,15 @@ export function ReportDashboard({
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-muted p-4 text-center">
                   <StatFigure value={onboarding.totalApplications} />
-                  <p className="eyebrow mt-1.5 text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted" className="mt-1.5">
                     Total applications
-                  </p>
+                  </Eyebrow>
                 </div>
                 <div className="rounded-lg bg-muted p-4 text-center">
                   <StatFigure value={onboarding.activeVolunteers} />
-                  <p className="eyebrow mt-1.5 text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted" className="mt-1.5">
                     Active volunteers
-                  </p>
+                  </Eyebrow>
                 </div>
               </div>
               <ul className="divide-y divide-border">
@@ -517,9 +516,9 @@ export function ReportDashboard({
               disabled={exporting !== null}
             >
               {exporting === "summary" ? (
-                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
               ) : (
-                <RiFileChartLine className="mr-1.5 size-3.5" />
+                <RiFileChartLine data-icon="inline-start" className="size-3.5" />
               )}
               Monthly summary
             </Button>
@@ -530,9 +529,9 @@ export function ReportDashboard({
               disabled={exporting !== null}
             >
               {exporting === "shifts" ? (
-                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
               ) : (
-                <RiDownloadLine className="mr-1.5 size-3.5" />
+                <RiDownloadLine data-icon="inline-start" className="size-3.5" />
               )}
               Shifts CSV
             </Button>
@@ -543,9 +542,9 @@ export function ReportDashboard({
               disabled={exporting !== null}
             >
               {exporting === "volunteers" ? (
-                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
               ) : (
-                <RiDownloadLine className="mr-1.5 size-3.5" />
+                <RiDownloadLine data-icon="inline-start" className="size-3.5" />
               )}
               Volunteers CSV
             </Button>

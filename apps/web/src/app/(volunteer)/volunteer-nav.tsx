@@ -99,7 +99,7 @@ export function VolunteerNav({
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex min-w-14 flex-col items-center gap-0.5 px-2 pt-2 pb-1.5 text-[11px] transition-colors",
+                  "flex min-w-14 flex-col items-center gap-0.5 px-2 pt-2 pb-1.5 text-2xs transition-colors",
                   isActive
                     ? "font-semibold text-primary"
                     : "font-medium text-muted-foreground hover:text-foreground"

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StatusBadge } from "@/components/brand/status-badge";
 import { contactLine } from "@/lib/format";
 import type { DateOnly } from "@/lib/date-only";
 import type { LeavePersonOption } from "@/lib/leave-actions";
@@ -43,8 +44,8 @@ function PersonBadges({ person, isYou }: { person: LeavePersonOption; isYou: boo
   return (
     <>
       {isYou && <Badge variant="outline">You</Badge>}
-      {person.isStaff && <Badge variant="info">Staff</Badge>}
-      {person.isOffline && <Badge variant="neutral">Offline</Badge>}
+      {person.isStaff && <StatusBadge status="STAFF" />}
+      {person.isOffline && <StatusBadge status="OFFLINE" />}
     </>
   );
 }
