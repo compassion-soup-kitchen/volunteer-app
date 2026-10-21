@@ -53,6 +53,7 @@ const SF_SYMBOLS: Partial<Record<IconName, string>> = {
   leaf: 'leaf.fill',
   'location-outline': 'mappin.and.ellipse',
   'log-in-outline': 'arrow.right.square',
+  'mail-outline': 'envelope',
   'paper-plane-outline': 'paperplane',
   'log-out-outline': 'rectangle.portrait.and.arrow.right',
   medkit: 'cross.case.fill',
@@ -66,6 +67,7 @@ const SF_SYMBOLS: Partial<Record<IconName, string>> = {
   'shield-checkmark': 'checkmark.shield.fill',
   time: 'clock.fill',
   'time-outline': 'clock',
+  'trash-outline': 'trash',
   trophy: 'trophy.fill',
 };
 
