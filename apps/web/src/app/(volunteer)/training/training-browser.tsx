@@ -63,18 +63,14 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
     });
   }
 
-  function handleCancel(sessionId: string) {
-    setActionId(sessionId);
-    setCancelId(null);
-    startTransition(async () => {
-      const result = await cancelTrainingRegistration(sessionId);
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Registration cancelled.");
-      }
-      setActionId(null);
-    });
+  async function handleCancel(sessionId: string): Promise<boolean> {
+    const result = await cancelTrainingRegistration(sessionId);
+    if (result.error) {
+      toast.error(result.error);
+      return false;
+    }
+    toast.success("Registration cancelled.");
+    return true;
   }
 
   if (sessions.length === 0) {
@@ -216,7 +212,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Keep registration</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => cancelId && handleCancel(cancelId)}
+              onConfirm={() => (cancelId ? handleCancel(cancelId) : false)}
               variant="destructive"
             >
               Cancel registration

@@ -79,19 +79,17 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
     });
   }
 
-  function handleAskEveryoneAgain() {
-    startTransition(async () => {
-      await setAgreementReAckRequired(detail.agreementType, true);
-      toast.success("Everyone has been asked to confirm this again");
-    });
+  async function handleAskEveryoneAgain(): Promise<boolean> {
+    await setAgreementReAckRequired(detail.agreementType, true);
+    toast.success("Everyone has been asked to confirm this again");
+    return true;
   }
 
-  function handleArchive(archived: boolean) {
-    startTransition(async () => {
-      await setAgreementArchived(detail.agreementType, archived);
-      toast.success(archived ? "Agreement retired" : "Agreement restored");
-      if (archived) router.push("/staff/documents");
-    });
+  async function handleArchive(archived: boolean): Promise<boolean> {
+    await setAgreementArchived(detail.agreementType, archived);
+    toast.success(archived ? "Agreement retired" : "Agreement restored");
+    if (archived) router.push("/staff/documents");
+    return true;
   }
 
   const signedOutdated = detail.volunteers.filter(
@@ -230,7 +228,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleAskEveryoneAgain}>
+                    <AlertDialogAction onConfirm={handleAskEveryoneAgain}>
                       Ask everyone
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -242,7 +240,11 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleArchive(false)}
+                onClick={() =>
+                  startTransition(async () => {
+                    await handleArchive(false);
+                  })
+                }
                 disabled={isPending}
               >
                 <RiInboxUnarchiveLine className="size-3.5" />
@@ -268,7 +270,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleArchive(true)}>
+                    <AlertDialogAction onConfirm={() => handleArchive(true)}>
                       Retire agreement
                     </AlertDialogAction>
                   </AlertDialogFooter>

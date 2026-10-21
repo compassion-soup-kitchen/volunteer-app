@@ -2,12 +2,16 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type ComponentProps } from "react";
 import { Input } from "@/components/ui/input";
 import { RiMapPinLine } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 
-interface AddressAutocompleteProps {
+interface AddressAutocompleteProps
+  extends Pick<
+    ComponentProps<"input">,
+    "aria-invalid" | "aria-describedby" | "aria-required"
+  > {
   value: string;
   onChange: (address: string) => void;
   id?: string;
@@ -77,6 +81,7 @@ export function AddressAutocomplete({
   id = "address",
   placeholder = "Start typing your address…",
   disabled,
+  ...aria
 }: AddressAutocompleteProps) {
   const [isReady, setIsReady] = useState(false);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
@@ -172,6 +177,7 @@ export function AddressAutocomplete({
         placeholder="Your street address, suburb, city"
         autoComplete="street-address"
         disabled={disabled}
+        {...aria}
       />
     );
   }
@@ -188,6 +194,7 @@ export function AddressAutocomplete({
         placeholder={placeholder}
         autoComplete="off"
         disabled={disabled}
+        {...aria}
       />
 
       {hasSuggestions && (

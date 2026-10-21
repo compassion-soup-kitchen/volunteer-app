@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldControl, FieldError, FieldLabel } from "@/components/ui/field";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { IconChip } from "@/components/brand/icon-chip";
 import { RiLoader4Line, RiRestaurantLine } from "@remixicon/react";
@@ -41,7 +41,8 @@ export function RecordMealsCard({
   const [error, setError] = useState<string | null>(null);
   const hasRecorded = mealsServed != null;
 
-  function handleSave() {
+  function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     const count = value.trim() === "" ? NaN : Number(value);
     const parsed = mealsServedSchema.safeParse(count);
     if (!parsed.success) {
@@ -98,32 +99,35 @@ export function RecordMealsCard({
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="meals-served">
-            {hasRecorded ? "Update the count" : "How many meals went out?"}
-          </Label>
-          <div className="flex gap-2">
-            <Input
-              id="meals-served"
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={MEALS_SERVED_MAX}
-              step={1}
-              placeholder="e.g. 120"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              disabled={isPending}
-            />
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? (
-                <RiLoader4Line className="size-4 animate-spin" />
-              ) : null}
-              {hasRecorded ? "Update" : "Save"}
-            </Button>
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </div>
+        <form onSubmit={handleSave} noValidate>
+          <Field id="meals-served" error={error}>
+            <FieldLabel>
+              {hasRecorded ? "Update the count" : "How many meals went out?"}
+            </FieldLabel>
+            <div className="flex gap-2">
+              <FieldControl>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={MEALS_SERVED_MAX}
+                  step={1}
+                  placeholder="e.g. 120"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  disabled={isPending}
+                />
+              </FieldControl>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? (
+                  <RiLoader4Line className="size-4 animate-spin" />
+                ) : null}
+                {hasRecorded ? "Update" : "Save"}
+              </Button>
+            </div>
+            <FieldError />
+          </Field>
+        </form>
       </CardContent>
     </Card>
   );

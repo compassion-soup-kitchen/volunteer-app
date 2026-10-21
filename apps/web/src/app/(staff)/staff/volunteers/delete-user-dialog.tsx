@@ -5,7 +5,6 @@ import {
   RiAlertLine,
   RiDeleteBin6Line,
   RiInformationLine,
-  RiLoader4Line,
 } from "@remixicon/react";
 import {
   AlertDialog,
@@ -109,23 +108,24 @@ export function DeleteUserDialog({
     blocker === null &&
     matchesDeletionConfirmation(confirmation, summary.confirmationPhrase);
 
-  async function handleConfirm() {
-    if (!target || !canDelete) return;
+  async function handleConfirm(): Promise<boolean> {
+    if (!target || !canDelete) return false;
     setDeleting(true);
     const result = await deleteUser(target.userId, confirmation);
     setDeleting(false);
     if (result.error) {
       onError(result.error);
-      return;
+      return false;
     }
     onDeleted(target.name || "That account");
+    return true;
   }
 
   return (
     <AlertDialog
       open={target !== null}
       onOpenChange={(open) => {
-        if (!open && !deleting) onClose();
+        if (!open) onClose();
       }}
     >
       <AlertDialogContent>
@@ -187,25 +187,15 @@ export function DeleteUserDialog({
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting}>
-            {blocker ? "Close" : "Cancel"}
-          </AlertDialogCancel>
+          <AlertDialogCancel>{blocker ? "Close" : "Cancel"}</AlertDialogCancel>
           {!blocker && !loadError && (
             <AlertDialogAction
-              onClick={(e) => {
-                // Keep the dialog open while the delete runs so the spinner and
-                // any error land somewhere the admin is still looking.
-                e.preventDefault();
-                void handleConfirm();
-              }}
-              disabled={!canDelete || deleting}
+              onConfirm={handleConfirm}
+              disabled={!canDelete}
               variant="destructive"
             >
               {deleting ? (
-                <>
-                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" aria-hidden />
-                  Deleting…
-                </>
+                "Deleting…"
               ) : (
                 <>
                   <RiDeleteBin6Line data-icon="inline-start" className="size-4" aria-hidden />

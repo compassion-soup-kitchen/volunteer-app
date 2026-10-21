@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldControl,
+  FieldControlGroup,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  RequiredFieldsNote,
+} from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -424,15 +432,6 @@ function getStepDescription(step: number): string {
   }
 }
 
-function FieldError({ error }: { error?: string }) {
-  if (!error) return null;
-  return (
-    <p role="alert" className="text-sm text-destructive">
-      {error}
-    </p>
-  );
-}
-
 // ─── Step Components ─────────────────────────────────
 
 function StepContact({
@@ -445,41 +444,42 @@ function StepContact({
 }) {
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="phone">Phone number *</Label>
-        <Input
-          id="phone"
-          type="tel"
-          autoComplete="tel"
-          placeholder="021 123 4567"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <FieldError error={errors.phone} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="address">Address *</Label>
-        <AddressAutocomplete
-          id="address"
-          value={address}
-          onChange={setAddress}
-        />
-        <FieldError error={errors.address} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="dob">Date of birth</Label>
-        <DatePicker
-          id="dob"
-          value={dateOfBirth}
-          onChange={setDateOfBirth}
-          placeholder="Select your date of birth"
-          toDate={new Date()}
-          fromDate={new Date("1920-01-01")}
-        />
-        <p className="text-xs text-muted-foreground">
+      <RequiredFieldsNote />
+      <Field id="phone" error={errors.phone} required>
+        <FieldLabel>Phone number</FieldLabel>
+        <FieldControl>
+          <Input
+            type="tel"
+            autoComplete="tel"
+            placeholder="021 123 4567"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </FieldControl>
+        <FieldError />
+      </Field>
+      <Field id="address" error={errors.address} required>
+        <FieldLabel>Address</FieldLabel>
+        <FieldControl>
+          <AddressAutocomplete value={address} onChange={setAddress} />
+        </FieldControl>
+        <FieldError />
+      </Field>
+      <Field id="dob">
+        <FieldLabel>Date of birth</FieldLabel>
+        <FieldControl>
+          <DatePicker
+            value={dateOfBirth}
+            onChange={setDateOfBirth}
+            placeholder="Select your date of birth"
+            toDate={new Date()}
+            fromDate={new Date("1920-01-01")}
+          />
+        </FieldControl>
+        <FieldDescription>
           Optional - helps us match you with appropriate mahi
-        </p>
-      </div>
+        </FieldDescription>
+      </Field>
     </div>
   );
 }
@@ -494,40 +494,44 @@ function StepEmergency({
 }) {
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="ec-name">Contact name *</Label>
-        <Input
-          id="ec-name"
-          autoComplete="off"
-          placeholder="Full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <FieldError error={errors.emergencyContactName} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="ec-phone">Contact phone *</Label>
-        <Input
-          id="ec-phone"
-          type="tel"
-          autoComplete="off"
-          placeholder="021 987 6543"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <FieldError error={errors.emergencyContactPhone} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="ec-relationship">Relationship *</Label>
-        <Input
-          id="ec-relationship"
-          autoComplete="off"
-          placeholder="e.g. Partner, Parent, Friend"
-          value={relationship}
-          onChange={(e) => setRelationship(e.target.value)}
-        />
-        <FieldError error={errors.emergencyContactRelationship} />
-      </div>
+      <RequiredFieldsNote />
+      <Field id="ec-name" error={errors.emergencyContactName} required>
+        <FieldLabel>Contact name</FieldLabel>
+        <FieldControl>
+          <Input
+            autoComplete="off"
+            placeholder="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </FieldControl>
+        <FieldError />
+      </Field>
+      <Field id="ec-phone" error={errors.emergencyContactPhone} required>
+        <FieldLabel>Contact phone</FieldLabel>
+        <FieldControl>
+          <Input
+            type="tel"
+            autoComplete="off"
+            placeholder="021 987 6543"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </FieldControl>
+        <FieldError />
+      </Field>
+      <Field id="ec-relationship" error={errors.emergencyContactRelationship} required>
+        <FieldLabel>Relationship</FieldLabel>
+        <FieldControl>
+          <Input
+            autoComplete="off"
+            placeholder="e.g. Partner, Parent, Friend"
+            value={relationship}
+            onChange={(e) => setRelationship(e.target.value)}
+          />
+        </FieldControl>
+        <FieldError />
+      </Field>
     </div>
   );
 }
@@ -540,13 +544,14 @@ function StepAvailability({
   errors: Record<string, string>;
 }) {
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+    <Field error={errors.availability} className="space-y-4">
+      <FieldLabel className="sr-only">When you&apos;re available</FieldLabel>
+      <FieldDescription className="text-sm">
         Tap the times you&apos;re generally available. This helps us find the best shifts for you.
-      </p>
-      <FieldError error={errors.availability} />
+      </FieldDescription>
+      <FieldError />
 
-      <div className="space-y-2">
+      <FieldControlGroup className="space-y-2">
         {/* Header row */}
         <div className="grid grid-cols-4 gap-2 text-center text-xs font-medium text-muted-foreground">
           <div />
@@ -575,8 +580,8 @@ function StepAvailability({
             })}
           </div>
         ))}
-      </div>
-    </div>
+      </FieldControlGroup>
+    </Field>
   );
 }
 
@@ -589,13 +594,14 @@ function StepInterests({
   errors: Record<string, string>;
 }) {
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+    <Field error={errors.interests} className="space-y-4">
+      <FieldLabel className="sr-only">Areas of interest</FieldLabel>
+      <FieldDescription className="text-sm">
         Choose the areas where you&apos;d like to contribute. You can volunteer across multiple areas.
-      </p>
-      <FieldError error={errors.interests} />
+      </FieldDescription>
+      <FieldError />
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <FieldControlGroup className="grid gap-3 sm:grid-cols-2">
         {serviceAreas.map((area) => {
           const isSelected = selected.includes(area.id);
           return (
@@ -626,8 +632,8 @@ function StepInterests({
             </ToggleChip>
           );
         })}
-      </div>
-    </div>
+      </FieldControlGroup>
+    </Field>
   );
 }
 
@@ -641,12 +647,12 @@ function StepSkills({
 }) {
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <Label>Relevant skills</Label>
-        <p className="text-xs text-muted-foreground">
+      <Field className="space-y-3">
+        <FieldLabel>Relevant skills</FieldLabel>
+        <FieldDescription>
           Select any that apply - don&apos;t worry if none do, all help is welcome
-        </p>
-        <div className="flex flex-wrap gap-2">
+        </FieldDescription>
+        <FieldControlGroup className="flex flex-wrap gap-2">
           {SKILL_OPTIONS.map((skill) => {
             const isSelected = selectedSkills.includes(skill);
             return (
@@ -661,20 +667,21 @@ function StepSkills({
               </ToggleChip>
             );
           })}
-        </div>
-      </div>
+        </FieldControlGroup>
+      </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="bio">About you</Label>
-        <Textarea
-          id="bio"
-          placeholder="Tell us a bit about yourself - why you'd like to volunteer, any experience you have, or anything else you'd like us to know…"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          rows={4}
-        />
-        <p className="text-xs text-muted-foreground">Optional</p>
-      </div>
+      <Field id="bio">
+        <FieldLabel>About you</FieldLabel>
+        <FieldControl>
+          <Textarea
+            placeholder="Tell us a bit about yourself - why you'd like to volunteer, any experience you have, or anything else you'd like us to know…"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            rows={4}
+          />
+        </FieldControl>
+        <FieldDescription>Optional</FieldDescription>
+      </Field>
     </div>
   );
 }
@@ -692,6 +699,8 @@ function StepAgreements({
 }) {
   return (
     <div className="space-y-8">
+      <RequiredFieldsNote className="-mb-4" />
+
       {/* Code of Conduct */}
       <div className="space-y-4">
         <div>
@@ -717,27 +726,30 @@ function StepAgreements({
           </ul>
         </div>
 
-        <div className="flex items-start gap-3">
-          <Checkbox
-            id="agree-coc"
-            checked={agreedCoc}
-            onCheckedChange={(checked) => setAgreedCoc(checked === true)}
-          />
-          <Label htmlFor="agree-coc" className="text-sm leading-snug">
-            I have read and agree to follow the Code of Conduct *
-          </Label>
-        </div>
-        <FieldError error={errors.coc} />
+        <Field id="agree-coc" error={errors.coc} required>
+          <div className="flex items-start gap-3">
+            <FieldControl>
+              <Checkbox
+                checked={agreedCoc}
+                onCheckedChange={(checked) => setAgreedCoc(checked === true)}
+              />
+            </FieldControl>
+            <FieldLabel className="text-sm leading-snug">
+              I have read and agree to follow the Code of Conduct
+            </FieldLabel>
+          </div>
+          <FieldError />
+        </Field>
 
         {agreedCoc && (
-          <>
+          <Field error={errors.cocSignature}>
             <SignaturePad
               onSignatureChange={setCocSignature}
               initialValue={cocSignature}
               label="Sign the Code of Conduct"
             />
-            <FieldError error={errors.cocSignature} />
-          </>
+            <FieldError />
+          </Field>
         )}
       </div>
 
@@ -765,27 +777,30 @@ function StepAgreements({
           </ul>
         </div>
 
-        <div className="flex items-start gap-3">
-          <Checkbox
-            id="agree-safeguarding"
-            checked={agreedSafeguarding}
-            onCheckedChange={(checked) => setAgreedSafeguarding(checked === true)}
-          />
-          <Label htmlFor="agree-safeguarding" className="text-sm leading-snug">
-            I have read and agree to the Safeguarding Policy *
-          </Label>
-        </div>
-        <FieldError error={errors.safeguarding} />
+        <Field id="agree-safeguarding" error={errors.safeguarding} required>
+          <div className="flex items-start gap-3">
+            <FieldControl>
+              <Checkbox
+                checked={agreedSafeguarding}
+                onCheckedChange={(checked) => setAgreedSafeguarding(checked === true)}
+              />
+            </FieldControl>
+            <FieldLabel className="text-sm leading-snug">
+              I have read and agree to the Safeguarding Policy
+            </FieldLabel>
+          </div>
+          <FieldError />
+        </Field>
 
         {agreedSafeguarding && (
-          <>
+          <Field error={errors.safeguardingSignature}>
             <SignaturePad
               onSignatureChange={setSafeguardingSignature}
               initialValue={safeguardingSignature}
               label="Sign the Safeguarding Policy"
             />
-            <FieldError error={errors.safeguardingSignature} />
-          </>
+            <FieldError />
+          </Field>
         )}
       </div>
     </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldControl, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -56,7 +56,8 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
     window.history.back();
   }
 
-  function handleSave() {
+  function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     startTransition(async () => {
       const result = await updateVolunteerProfile({
         phone,
@@ -84,104 +85,110 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
           Update your contact and emergency information
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Contact */}
-        <div className="space-y-4">
-          <h3 className={eyebrowVariants({ tone: "muted" })}>Contact</h3>
-          <div className="space-y-2">
-            <Label htmlFor="edit-phone">Phone</Label>
-            <Input
-              id="edit-phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+      <CardContent>
+        <form onSubmit={handleSave} className="space-y-6">
+          {/* Contact */}
+          <div className="space-y-4">
+            <h3 className={eyebrowVariants({ tone: "muted" })}>Contact</h3>
+            <Field id="edit-phone">
+              <FieldLabel>Phone</FieldLabel>
+              <FieldControl>
+                <Input
+                  type="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </FieldControl>
+            </Field>
+            <Field id="edit-address">
+              <FieldLabel>Address</FieldLabel>
+              <FieldControl>
+                <AddressAutocomplete value={address} onChange={setAddress} />
+              </FieldControl>
+            </Field>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-address">Address</Label>
-            <AddressAutocomplete
-              id="edit-address"
-              value={address}
-              onChange={setAddress}
-            />
-          </div>
-        </div>
 
-        {/* Emergency Contact */}
-        <div className="space-y-4 border-t border-border pt-6">
-          <h3 className={eyebrowVariants({ tone: "muted" })}>Emergency contact</h3>
-          <div className="space-y-2">
-            <Label htmlFor="edit-ec-name">Name</Label>
-            <Input
-              id="edit-ec-name"
-              value={ecName}
-              onChange={(e) => setEcName(e.target.value)}
-            />
+          {/* Emergency Contact */}
+          <div className="space-y-4 border-t border-border pt-6">
+            <h3 className={eyebrowVariants({ tone: "muted" })}>Emergency contact</h3>
+            {/* Someone else's details, so the browser shouldn't fill in yours. */}
+            <Field id="edit-ec-name">
+              <FieldLabel>Name</FieldLabel>
+              <FieldControl>
+                <Input
+                  autoComplete="off"
+                  value={ecName}
+                  onChange={(e) => setEcName(e.target.value)}
+                />
+              </FieldControl>
+            </Field>
+            <Field id="edit-ec-phone">
+              <FieldLabel>Phone</FieldLabel>
+              <FieldControl>
+                <Input
+                  type="tel"
+                  autoComplete="off"
+                  value={ecPhone}
+                  onChange={(e) => setEcPhone(e.target.value)}
+                />
+              </FieldControl>
+            </Field>
+            <Field id="edit-ec-rel">
+              <FieldLabel>Relationship</FieldLabel>
+              <FieldControl>
+                <Input
+                  autoComplete="off"
+                  value={ecRelationship}
+                  onChange={(e) => setEcRelationship(e.target.value)}
+                />
+              </FieldControl>
+            </Field>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-ec-phone">Phone</Label>
-            <Input
-              id="edit-ec-phone"
-              type="tel"
-              value={ecPhone}
-              onChange={(e) => setEcPhone(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-ec-rel">Relationship</Label>
-            <Input
-              id="edit-ec-rel"
-              value={ecRelationship}
-              onChange={(e) => setEcRelationship(e.target.value)}
-            />
-          </div>
-        </div>
 
-        {/* About */}
-        <div className="space-y-4 border-t border-border pt-6">
-          <h3 className={eyebrowVariants({ tone: "muted" })}>About you</h3>
-          <div className="space-y-2">
-            <Label htmlFor="edit-bio">Bio</Label>
-            <Textarea
-              id="edit-bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
+          {/* About - named "About you" as on the application, where it was first written */}
+          <Field id="edit-bio" className="space-y-4 border-t border-border pt-6">
+            <FieldLabel className={eyebrowVariants({ tone: "muted" })}>About you</FieldLabel>
+            <FieldControl>
+              <Textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                rows={3}
+              />
+            </FieldControl>
+          </Field>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isPending}
-            className="gap-1.5"
-          >
-            <RiCloseLine className="size-4" />
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={isPending}
-            className="gap-1.5"
-          >
-            {isPending ? (
-              <>
-                <RiLoader4Line className="size-4 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              <>
-                <RiCheckLine className="size-4" />
-                Save changes
-              </>
-            )}
-          </Button>
-        </div>
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isPending}
+              className="gap-1.5"
+            >
+              <RiCloseLine className="size-4" />
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="gap-1.5"
+            >
+              {isPending ? (
+                <>
+                  <RiLoader4Line className="size-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <RiCheckLine className="size-4" />
+                  Save changes
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

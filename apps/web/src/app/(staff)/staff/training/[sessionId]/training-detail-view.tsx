@@ -73,7 +73,6 @@ function formatDate(date: Date): string {
 export function TrainingDetailView({ session }: TrainingDetailViewProps) {
   const router = useRouter();
   const [showDelete, setShowDelete] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [markingId, setMarkingId] = useState<string | null>(null);
   const past = isPastInAppZone(session.date);
@@ -86,17 +85,15 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
     (a) => a.status === "REGISTERED"
   );
 
-  async function handleDelete() {
-    setIsDeleting(true);
+  async function handleDelete(): Promise<boolean> {
     const result = await deleteTrainingSession(session.id);
     if (result.error) {
       toast.error(result.error);
-      setIsDeleting(false);
-      setShowDelete(false);
-    } else {
-      toast.success("Training session deleted.");
-      router.push("/staff/training");
+      return false;
     }
+    toast.success("Training session deleted.");
+    router.push("/staff/training");
+    return true;
   }
 
   function handleMarkAttendance(attendanceId: string, status: "ATTENDED" | "NO_SHOW") {
@@ -336,15 +333,8 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              variant="destructive"
-            >
-              {isDeleting && (
-                <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onConfirm={handleDelete} variant="destructive">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -165,15 +165,12 @@ export function VolunteerDirectory({
     null
   );
   const [archiveReason, setArchiveReason] = useState("");
-  const [archiving, setArchiving] = useState(false);
   const [roleTarget, setRoleTarget] = useState<{
     volunteer: VolunteerListItem;
     newRole: AssignableRole;
   } | null>(null);
-  const [changingRole, setChangingRole] = useState(false);
   const [impersonateTarget, setImpersonateTarget] =
     useState<VolunteerListItem | null>(null);
-  const [impersonating, setImpersonating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<VolunteerListItem | null>(
     null
   );
@@ -321,21 +318,18 @@ export function VolunteerDirectory({
     reload({});
   }
 
-  async function handleArchiveConfirm() {
-    if (!archiveTarget) return;
-    setArchiving(true);
+  async function handleArchiveConfirm(): Promise<boolean> {
+    if (!archiveTarget) return false;
     const result = await archiveVolunteer(archiveTarget.user.id, archiveReason);
-    setArchiving(false);
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
     toast.success(
       `${archiveTarget.user.name || "Volunteer"} archived. Their hours stay in reporting.`
     );
-    setArchiveTarget(null);
-    setArchiveReason("");
     reload({});
+    return true;
   }
 
   async function handleRestore(volunteer: VolunteerListItem) {
@@ -348,15 +342,13 @@ export function VolunteerDirectory({
     reload({});
   }
 
-  async function handleImpersonateConfirm() {
+  async function handleImpersonateConfirm(): Promise<boolean> {
     const volunteer = impersonateTarget;
-    if (!volunteer) return;
-    setImpersonating(true);
+    if (!volunteer) return false;
     const result = await startImpersonation(volunteer.user.id);
     if ("error" in result) {
-      setImpersonating(false);
       toast.error(result.error);
-      return;
+      return false;
     }
     // Swap the session token to the target (the jwt callback enforces authority
     // and opens the audit row). `update()` resolves to the new session, so read
@@ -366,36 +358,33 @@ export function VolunteerDirectory({
     // route coordinators on to /staff/dashboard.
     const updated = await update({ impersonate: volunteer.user.id });
     if (!updated?.user?.impersonator) {
-      setImpersonating(false);
       toast.error(
         `Couldn't start viewing as ${volunteer.user.name || "this person"}. Please try again.`
       );
-      return;
+      return false;
     }
-    setImpersonateTarget(null);
     router.push("/dashboard");
     router.refresh();
+    return true;
   }
 
-  async function handleRoleChangeConfirm() {
-    if (!roleTarget) return;
-    setChangingRole(true);
+  async function handleRoleChangeConfirm(): Promise<boolean> {
+    if (!roleTarget) return false;
     const result = await updateUserRole(
       roleTarget.volunteer.user.id,
       roleTarget.newRole
     );
-    setChangingRole(false);
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
     const roleLabel = ROLE_LABEL[roleTarget.newRole].toLowerCase();
     const article = roleTarget.newRole === "ADMIN" ? "an" : "a";
     toast.success(
       `${roleTarget.volunteer.user.name || "This person"} is now ${article} ${roleLabel}. They'll need to sign out and back in for it to take effect.`
     );
-    setRoleTarget(null);
     reload({});
+    return true;
   }
 
   return (
@@ -727,20 +716,9 @@ export function VolunteerDirectory({
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={archiving}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleArchiveConfirm}
-              disabled={archiving}
-              variant="destructive"
-            >
-              {archiving ? (
-                <>
-                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
-                  Archiving…
-                </>
-              ) : (
-                "Archive account"
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onConfirm={handleArchiveConfirm} variant="destructive">
+              Archive account
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -777,22 +755,10 @@ export function VolunteerDirectory({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={changingRole}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRoleChangeConfirm}
-              disabled={changingRole}
-            >
-              {changingRole ? (
-                <>
-                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
-                  Updating…
-                </>
-              ) : (
-                roleTarget &&
-                `Make ${ROLE_LABEL[roleTarget.newRole].toLowerCase()}`
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onConfirm={handleRoleChangeConfirm}>
+              {roleTarget &&
+                `Make ${ROLE_LABEL[roleTarget.newRole].toLowerCase()}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -801,7 +767,7 @@ export function VolunteerDirectory({
       <AlertDialog
         open={impersonateTarget !== null}
         onOpenChange={(open) => {
-          if (!open && !impersonating) setImpersonateTarget(null);
+          if (!open) setImpersonateTarget(null);
         }}
       >
         <AlertDialogContent>
@@ -820,23 +786,9 @@ export function VolunteerDirectory({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={impersonating}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                // Keep the dialog open while the session swaps and navigates.
-                e.preventDefault();
-                void handleImpersonateConfirm();
-              }}
-              disabled={impersonating}
-            >
-              {impersonating ? (
-                <>
-                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
-                  Starting…
-                </>
-              ) : (
-                "View as this person"
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onConfirm={handleImpersonateConfirm}>
+              View as this person
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

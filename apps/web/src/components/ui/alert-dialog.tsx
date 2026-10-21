@@ -2,14 +2,93 @@
 
 import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
+import { RiLoader4Line } from "@remixicon/react"
+import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
+/**
+ * What an action's `onConfirm` resolves to: true closes the dialog, false
+ * keeps it open (the handler has already said what went wrong).
+ */
+type AlertDialogConfirm = () => Promise<boolean> | boolean
+
+type AlertDialogContextValue = {
+  pending: boolean
+  confirm: (handler: AlertDialogConfirm) => void
+}
+
+const AlertDialogContext = React.createContext<AlertDialogContextValue>({
+  pending: false,
+  confirm: () => {},
+})
+
+/**
+ * Owns the open state - controlled or not - so an action that confirms
+ * something slow can hold the dialog open with both buttons disabled until it
+ * settles, and close only once it worked.
+ */
 function AlertDialog({
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : uncontrolledOpen
+  const [pending, setPending] = React.useState(false)
+
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      if (!isControlled) setUncontrolledOpen(next)
+      onOpenChange?.(next)
+    },
+    [isControlled, onOpenChange]
+  )
+
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      // Escape and the overlay can't walk away from a confirmation mid-flight.
+      if (!next && pending) return
+      setOpen(next)
+    },
+    [pending, setOpen]
+  )
+
+  const confirm = React.useCallback(
+    async (handler: AlertDialogConfirm) => {
+      setPending(true)
+      let succeeded = false
+      try {
+        succeeded = await handler()
+      } catch (error) {
+        console.error(error)
+        toast.error("Something went wrong. Please try again.")
+      } finally {
+        setPending(false)
+      }
+      if (succeeded) setOpen(false)
+    },
+    [setOpen]
+  )
+
+  const context = React.useMemo(
+    () => ({ pending, confirm: (handler: AlertDialogConfirm) => void confirm(handler) }),
+    [pending, confirm]
+  )
+
+  return (
+    <AlertDialogContext.Provider value={context}>
+      <AlertDialogPrimitive.Root
+        data-slot="alert-dialog"
+        open={open}
+        onOpenChange={handleOpenChange}
+        {...props}
+      />
+    </AlertDialogContext.Provider>
+  )
 }
 
 function AlertDialogTrigger({
@@ -147,20 +226,45 @@ function AlertDialogDescription({
   )
 }
 
+/**
+ * Pass `onConfirm` for anything that waits on the server: the dialog stays
+ * open with a spinner here and both buttons disabled, then closes when it
+ * resolves true. Resolving false (or throwing) leaves it open to try again.
+ * A plain `onClick` closes the dialog straight away, as Radix does.
+ */
 function AlertDialogAction({
   className,
   variant = "default",
   size = "default",
+  onConfirm,
+  onClick,
+  disabled,
+  children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
-  Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+  Pick<React.ComponentProps<typeof Button>, "variant" | "size"> & {
+    onConfirm?: AlertDialogConfirm
+  }) {
+  const { pending, confirm } = React.useContext(AlertDialogContext)
+
   return (
     <Button variant={variant} size={size} asChild>
       <AlertDialogPrimitive.Action
         data-slot="alert-dialog-action"
         className={cn(className)}
+        disabled={disabled || pending}
+        aria-busy={pending || undefined}
+        onClick={(event) => {
+          onClick?.(event)
+          if (!onConfirm || event.defaultPrevented) return
+          event.preventDefault()
+          confirm(onConfirm)
+        }}
         {...props}
-      />
+      >
+        {pending && <RiLoader4Line className="size-4 animate-spin" aria-hidden />}
+        {children}
+      </AlertDialogPrimitive.Action>
     </Button>
   )
 }
@@ -169,14 +273,18 @@ function AlertDialogCancel({
   className,
   variant = "outline",
   size = "default",
+  disabled,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+  const { pending } = React.useContext(AlertDialogContext)
+
   return (
     <Button variant={variant} size={size} asChild>
       <AlertDialogPrimitive.Cancel
         data-slot="alert-dialog-cancel"
         className={cn(className)}
+        disabled={disabled || pending}
         {...props}
       />
     </Button>

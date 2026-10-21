@@ -96,7 +96,6 @@ const LONG_DATE: Intl.DateTimeFormatOptions = {
 export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProps) {
   const router = useRouter();
   const [showDelete, setShowDelete] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [markingId, setMarkingId] = useState<string | null>(null);
   const past = isPastInAppZone(shift.date);
@@ -113,32 +112,28 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
     StaffShift["signups"][number] | null
   >(null);
 
-  function handleRemove() {
-    if (!removeTarget) return;
-    const target = removeTarget;
-    startTransition(async () => {
-      const result = await removeVolunteerFromShift(target.id);
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(`${personName(target.volunteer.user)} is off this shift.`);
-        router.refresh();
-      }
-      setRemoveTarget(null);
-    });
+  async function handleRemove(
+    target: StaffShift["signups"][number]
+  ): Promise<boolean> {
+    const result = await removeVolunteerFromShift(target.id);
+    if (result.error) {
+      toast.error(result.error);
+      return false;
+    }
+    toast.success(`${personName(target.volunteer.user)} is off this shift.`);
+    router.refresh();
+    return true;
   }
 
-  async function handleDelete() {
-    setIsDeleting(true);
+  async function handleDelete(): Promise<boolean> {
     const result = await deleteShift(shift.id);
     if (result.error) {
       toast.error(result.error);
-      setIsDeleting(false);
-      setShowDelete(false);
-    } else {
-      toast.success("Shift deleted.");
-      router.push("/staff/shifts");
+      return false;
     }
+    toast.success("Shift deleted.");
+    router.push("/staff/shifts");
+    return true;
   }
 
   function handleMarkAttendance(signupId: string, status: "ATTENDED" | "NO_SHOW") {
@@ -475,7 +470,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
       {/* Take someone off the roster */}
       <AlertDialog
         open={removeTarget !== null}
-        onOpenChange={(open) => !open && !isPending && setRemoveTarget(null)}
+        onOpenChange={(open) => !open && setRemoveTarget(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -488,16 +483,11 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Keep them on</AlertDialogCancel>
+            <AlertDialogCancel>Keep them on</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={(e) => {
-                e.preventDefault();
-                handleRemove();
-              }}
-              disabled={isPending}
+              onConfirm={() => (removeTarget ? handleRemove(removeTarget) : false)}
             >
-              {isPending && <RiLoader4Line className="size-4 animate-spin" />}
               Take them off
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -517,15 +507,8 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              variant="destructive"
-            >
-              {isDeleting && (
-                <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onConfirm={handleDelete} variant="destructive">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

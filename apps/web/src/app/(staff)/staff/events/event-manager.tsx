@@ -88,7 +88,6 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
   const [publishTarget, setPublishTarget] = useState<StaffEvent | null>(null);
   const [cancelTarget, setCancelTarget] = useState<StaffEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StaffEvent | null>(null);
-  const [working, setWorking] = useState(false);
 
   const today = todayInAppZone();
 
@@ -111,17 +110,16 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
   async function run(
     action: () => Promise<{ error?: string; success?: boolean }>,
     successMessage: string
-  ) {
-    setWorking(true);
+  ): Promise<boolean> {
     const result = await action();
-    setWorking(false);
 
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
     toast.success(successMessage);
     refresh();
+    return true;
   }
 
   const upcoming = events.filter(
@@ -249,13 +247,10 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              disabled={working}
-              onClick={() => {
-                if (publishTarget) {
-                  const target = publishTarget;
-                  run(() => publishEvent(target.id), `"${target.title}" is live.`);
-                }
-                setPublishTarget(null);
+              onConfirm={() => {
+                if (!publishTarget) return false;
+                const target = publishTarget;
+                return run(() => publishEvent(target.id), `"${target.title}" is live.`);
               }}
             >
               Share it
@@ -282,16 +277,13 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
             <AlertDialogCancel>Keep it on</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={working}
-              onClick={() => {
-                if (cancelTarget) {
-                  const target = cancelTarget;
-                  run(
-                    () => cancelEvent(target.id),
-                    `"${target.title}" is cancelled and everyone who replied has been told.`
-                  );
-                }
-                setCancelTarget(null);
+              onConfirm={() => {
+                if (!cancelTarget) return false;
+                const target = cancelTarget;
+                return run(
+                  () => cancelEvent(target.id),
+                  `"${target.title}" is cancelled and everyone who replied has been told.`
+                );
               }}
             >
               Cancel the event
@@ -320,13 +312,10 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={working}
-              onClick={() => {
-                if (deleteTarget) {
-                  const target = deleteTarget;
-                  run(() => deleteEvent(target.id), `"${target.title}" deleted.`);
-                }
-                setDeleteTarget(null);
+              onConfirm={() => {
+                if (!deleteTarget) return false;
+                const target = deleteTarget;
+                return run(() => deleteEvent(target.id), `"${target.title}" deleted.`);
               }}
             >
               Delete
