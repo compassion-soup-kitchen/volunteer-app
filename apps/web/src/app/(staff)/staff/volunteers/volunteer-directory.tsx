@@ -413,8 +413,10 @@ export function VolunteerDirectory({
   return (
     <div className="space-y-4">
       {/* Search + filters */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative w-full lg:max-w-xs">
+      {/* Search gets its own row until there's room for it beside three
+          selects without squeezing its placeholder to a few letters */}
+      <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center">
+        <div className="relative w-full 2xl:max-w-xs">
           <RiSearchLine
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
@@ -503,8 +505,9 @@ export function VolunteerDirectory({
         </Card>
       ) : (
         <>
-          {/* Desktop table - eight columns only fit beside the sidebar from
-              xl up; narrower screens get the list below */}
+          {/* Desktop table - it only fits beside the sidebar from xl up
+              (narrower screens get the list below), and Interests waits for
+              2xl; they're on each volunteer's record either way. */}
           <div className="hidden xl:block">
             <Card>
               <Table className="[&_td]:px-3 [&_th]:px-3 [&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5">
@@ -514,7 +517,7 @@ export function VolunteerDirectory({
                     <TableHead>Status</TableHead>
                     <TableHead>MoJ</TableHead>
                     <TableHead>Groups</TableHead>
-                    <TableHead>Interests</TableHead>
+                    <TableHead className="hidden 2xl:table-cell">Interests</TableHead>
                     <TableHead className="text-right">Shifts</TableHead>
                     <TableHead className="text-right">Joined</TableHead>
                     <TableHead className="w-10">
@@ -587,7 +590,7 @@ export function VolunteerDirectory({
                           <span className="text-sm text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden 2xl:table-cell">
                         <div className="flex flex-wrap gap-1">
                           {vol.interests.slice(0, 2).map((i) => (
                             <Badge key={i.id} variant="outline">
