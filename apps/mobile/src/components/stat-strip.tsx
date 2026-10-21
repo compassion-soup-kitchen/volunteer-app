@@ -7,7 +7,7 @@ import { useTheme } from '@/hooks/use-theme';
 export type StatStripItem = { value: string; label: string };
 
 /**
- * A dark "ink" strip of headline figures — serif numerals over tiny uppercase
+ * A dark "ink" strip of headline figures: serif numerals over small uppercase
  * labels, split by hairline dividers. The mission-forward dashboard summary.
  */
 export function StatStrip({ items }: { items: StatStripItem[] }) {
@@ -17,6 +17,9 @@ export function StatStrip({ items }: { items: StatStripItem[] }) {
       {items.map((item, i) => (
         <View
           key={item.label}
+          // One element per figure, so VoiceOver says "4 hours", not "4" then "HOURS".
+          accessible
+          accessibilityLabel={`${item.value} ${item.label.toLowerCase()}`}
           style={{
             flex: 1,
             alignItems: 'center',
@@ -27,9 +30,7 @@ export function StatStrip({ items }: { items: StatStripItem[] }) {
           <Text variant="stat" style={{ color: colors.onInk }}>
             {item.value}
           </Text>
-          <Text
-            variant="overline"
-            style={{ color: colors.onInkMuted, fontSize: 9, letterSpacing: 1 }}>
+          <Text variant="overline" style={{ color: colors.onInkMuted }}>
             {item.label}
           </Text>
         </View>
