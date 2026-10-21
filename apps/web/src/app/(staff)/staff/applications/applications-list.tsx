@@ -141,7 +141,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden sm:block">
+          <div className="hidden md:block">
             <Card>
               <Table className="[&_td]:px-3 [&_th]:px-3 [&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5">
                 <TableHeader>
@@ -218,7 +218,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
           </div>
 
           {/* Mobile hairline list */}
-          <Card className="sm:hidden">
+          <Card className="md:hidden">
             <BleedList>
               {sorted.map((app) => (
                 <li key={app.id}>

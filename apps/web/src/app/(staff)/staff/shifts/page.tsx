@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getStaffShifts } from "@/lib/shift-actions";
 import { todayInAppZone } from "@/lib/date-only";
+import { pageOfShifts, staffShiftsLimit } from "@/lib/staff-shift-pages";
 import { getServiceAreas } from "@/lib/application-actions";
 import { StaffShiftList } from "./staff-shift-list";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,11 @@ export const metadata: Metadata = {
 export default async function StaffShiftsPage() {
   await connection();
   // Matches the list's default "Upcoming" filter, so the first paint agrees with it.
-  const [shifts, serviceAreas] = await Promise.all([
-    getStaffShifts({ fromDate: todayInAppZone() }),
+  const [rows, serviceAreas] = await Promise.all([
+    getStaffShifts({ fromDate: todayInAppZone(), limit: staffShiftsLimit(1) }),
     getServiceAreas(),
   ]);
+  const { shifts, hasMore } = pageOfShifts(rows, 1);
 
   return (
     <div className="space-y-6">
@@ -47,6 +49,7 @@ export default async function StaffShiftsPage() {
 
       <StaffShiftList
         initialShifts={shifts}
+        initialHasMore={hasMore}
         serviceAreas={serviceAreas}
       />
     </div>

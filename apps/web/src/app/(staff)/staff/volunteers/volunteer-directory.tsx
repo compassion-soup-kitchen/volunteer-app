@@ -503,8 +503,9 @@ export function VolunteerDirectory({
         </Card>
       ) : (
         <>
-          {/* Desktop table */}
-          <div className="hidden sm:block">
+          {/* Desktop table - eight columns only fit beside the sidebar from
+              xl up; narrower screens get the list below */}
+          <div className="hidden xl:block">
             <Card>
               <Table className="[&_td]:px-3 [&_th]:px-3 [&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5">
                 <TableHeader>
@@ -631,7 +632,7 @@ export function VolunteerDirectory({
           </div>
 
           {/* Mobile hairline list */}
-          <Card className="sm:hidden">
+          <Card className="xl:hidden">
             <BleedList>
               {volunteers.map((vol) => (
                 <li

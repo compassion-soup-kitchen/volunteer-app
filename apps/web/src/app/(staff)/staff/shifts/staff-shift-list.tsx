@@ -43,12 +43,14 @@ import {
   RiTimeLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
+import Link from "next/link";
 import {
   getStaffShifts,
   deleteShift,
   type StaffShift,
-  type ShiftFilters,
+  type StaffShiftFilters,
 } from "@/lib/shift-actions";
+import { pageOfShifts, staffShiftsLimit } from "@/lib/staff-shift-pages";
 import { formatTimeRange } from "@/lib/format";
 import {
   addDaysToDateOnly,
@@ -61,25 +63,30 @@ import { isHeldForOffers } from "@/lib/shift-offers";
 import { BleedList } from "@/components/brand/detail-list";
 
 interface StaffShiftListProps {
+  /** The first page of upcoming shifts. */
   initialShifts: StaffShift[];
+  initialHasMore: boolean;
   serviceAreas: { id: string; name: string }[];
 }
 
 export function StaffShiftList({
   initialShifts,
+  initialHasMore,
   serviceAreas,
 }: StaffShiftListProps) {
   const router = useRouter();
   const [shifts, setShifts] = useState(initialShifts);
+  const [pages, setPages] = useState(1);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [serviceAreaFilter, setServiceAreaFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("upcoming");
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<StaffShift | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  function applyFilters(areaId: string, time: string) {
+  function applyFilters(areaId: string, time: string, pageCount = 1) {
     startTransition(async () => {
-      const filters: ShiftFilters = {};
+      const filters: StaffShiftFilters = { limit: staffShiftsLimit(pageCount) };
       if (areaId !== "all") filters.serviceAreaId = areaId;
       const today = todayInAppZone();
       if (time === "upcoming") {
@@ -88,8 +95,10 @@ export function StaffShiftList({
         // Today's shifts belong with the upcoming ones, not the archive.
         filters.toDate = addDaysToDateOnly(today, -1);
       }
-      const result = await getStaffShifts(filters);
-      setShifts(result);
+      const page = pageOfShifts(await getStaffShifts(filters), pageCount);
+      setShifts(page.shifts);
+      setHasMore(page.hasMore);
+      setPages(pageCount);
     });
   }
 
@@ -111,7 +120,7 @@ export function StaffShiftList({
       toast.error(result.error);
     } else {
       toast.success("Shift deleted.");
-      applyFilters(serviceAreaFilter, timeFilter);
+      applyFilters(serviceAreaFilter, timeFilter, pages);
     }
     setIsDeleting(false);
     setDeleteTarget(null);
@@ -178,10 +187,13 @@ export function StaffShiftList({
               const held = isHeldForOffers(shift);
               const shiftYear = shift.date.getUTCFullYear();
               return (
-                <li key={shift.id}>
-                  <div
-                    className="flex cursor-pointer items-center gap-4 px-5 py-3.5 transition-colors hover:bg-secondary/40"
-                    onClick={() => router.push(`/staff/shifts/${shift.id}`)}
+                <li
+                  key={shift.id}
+                  className="flex items-center gap-4 pr-5 transition-colors hover:bg-secondary/40"
+                >
+                  <Link
+                    href={`/staff/shifts/${shift.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-4 py-3.5 pl-5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                   >
                     <DateBlock
                       date={shift.date}
@@ -235,54 +247,59 @@ export function StaffShiftList({
                         {shift.signups.length}/{shift.capacity} filled
                       </span>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Shift actions"
-                          onClick={(e) => e.stopPropagation()}
+                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Shift actions"
                         >
-                          <RiMoreLine className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/staff/shifts/${shift.id}`);
-                          }}
-                        >
-                          <RiEyeLine className="mr-2 size-4" />
-                          View details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/staff/shifts/${shift.id}/edit`);
-                          }}
-                        >
-                          <RiPencilLine className="mr-2 size-4" />
-                          Edit shift
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteTarget(shift);
-                          }}
-                        >
-                          <RiDeleteBinLine className="mr-2 size-4" />
-                          Delete shift
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                        <RiMoreLine className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/staff/shifts/${shift.id}`)}
+                      >
+                        <RiEyeLine className="mr-2 size-4" />
+                        View details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(`/staff/shifts/${shift.id}/edit`)
+                        }
+                      >
+                        <RiPencilLine className="mr-2 size-4" />
+                        Edit shift
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteTarget(shift)}
+                      >
+                        <RiDeleteBinLine className="mr-2 size-4" />
+                        Delete shift
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </li>
               );
             })}
           </BleedList>
         </Card>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            disabled={isPending}
+            onClick={() => applyFilters(serviceAreaFilter, timeFilter, pages + 1)}
+          >
+            {isPending && <RiLoader4Line className="size-4 animate-spin" />}
+            Show more shifts
+          </Button>
+        </div>
       )}
 
       {/* Delete confirmation dialog */}
