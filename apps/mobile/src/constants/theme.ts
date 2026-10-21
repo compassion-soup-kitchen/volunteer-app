@@ -91,6 +91,10 @@ const palette = {
     inkSurface: '#1C1815',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
+    /** Rules, dividers and soft fills drawn on an ink surface */
+    onInkHairline: 'rgba(251,247,242,0.14)',
+    /** The soft red glow set behind an ink hero's corner or a brushstroke on ink */
+    primaryGlow: 'rgba(228,0,43,0.22)',
 
     /** Focus ring */
     ring: '#E4002B',
@@ -158,6 +162,8 @@ const palette = {
     inkSurface: '#0F0C09',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
+    onInkHairline: 'rgba(251,247,242,0.14)',
+    primaryGlow: 'rgba(255,51,85,0.22)',
 
     ring: '#FF3355',
     scrim: 'rgba(0,0,0,0.62)',
