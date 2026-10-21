@@ -6,7 +6,7 @@ import { ScrollView, View } from 'react-native';
 
 import { BrowseShiftCard } from '@/components/browse-shift-card';
 import { RosterShiftPill } from '@/components/roster-shift-pill';
-import { Badge, Button, Chip, EmptyState, Screen, SectionHeader, SkeletonCard, Text } from '@/components/ui';
+import { Badge, Button, Chip, EmptyState, PageHeader, Screen, SectionHeader, SkeletonCard, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { qk } from '@/lib/query-keys';
@@ -143,26 +143,21 @@ export default function ShiftsScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
-      {/* Title */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.md }}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text variant="overline" color="primary">
-            Te rārangi mahi
-          </Text>
-          <Text variant="display">Shifts</Text>
-          <Text variant="body" color="textSecondary">
-            {subtitle}
-          </Text>
-        </View>
-        <Button
-          title="Roster"
-          variant="secondary"
-          size="md"
-          icon="calendar-outline"
-          fullWidth={false}
-          onPress={() => router.push('/schedule')}
-        />
-      </View>
+      <PageHeader
+        overline="Te rārangi mahi"
+        title="Shifts"
+        subtitle={subtitle}
+        right={
+          <Button
+            title="Roster"
+            variant="secondary"
+            size="md"
+            icon="calendar-outline"
+            fullWidth={false}
+            onPress={() => router.push('/schedule')}
+          />
+        }
+      />
 
       {/* You're rostered on — personal anchor */}
       {roster.length > 0 ? (

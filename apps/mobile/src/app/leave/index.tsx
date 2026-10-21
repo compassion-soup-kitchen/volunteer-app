@@ -9,6 +9,7 @@ import {
   Card,
   Divider,
   IconChip,
+  PageHeader,
   Screen,
   SectionHeader,
   SkeletonCard,
@@ -153,15 +154,11 @@ export default function LeaveScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
-      <View style={{ gap: 4 }}>
-        <Text variant="overline" color="primary">
-          Wā okioki
-        </Text>
-        <Text variant="display">My leave</Text>
-        <Text variant="body" color="textSecondary">
-          Going away? Let the kitchen know, and we&apos;ll take you off the roster while you&apos;re gone.
-        </Text>
-      </View>
+      <PageHeader
+        overline="Wā okioki"
+        title="My leave"
+        subtitle="Going away? Let the kitchen know, and we'll take you off the roster while you're gone."
+      />
 
       {isLoading || !data ? (
         <View style={{ gap: Spacing.md }}>

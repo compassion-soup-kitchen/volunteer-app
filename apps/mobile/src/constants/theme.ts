@@ -82,6 +82,12 @@ const palette = {
     warningTint: '#F7ECD6',
     onWarningTint: '#7A4900',
 
+    /** Info — a quiet navy for things in motion (signed up, booked), as on the web */
+    info: '#293E6B',
+    infoForeground: '#ffffff',
+    infoTint: '#E9EDF6',
+    onInfoTint: '#24365D',
+
     /** Danger — a deep oxblood, kept clearly distinct from the affirmative brand red */
     destructive: '#99161B',
     destructiveForeground: '#ffffff',
@@ -90,8 +96,22 @@ const palette = {
 
     /** Deep "ink" surface — dark feature cards (quote hero, stat strips) */
     inkSurface: '#1C1815',
+    /** Edge of an ink card: invisible on paper, where the ink already stands out */
+    inkBorder: '#1C1815',
+    /** Full-bleed ink (the auth masthead) that raised cards sit on, never inside */
+    inkBleed: '#1C1815',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
+    /** Rules, dividers and soft fills drawn on an ink surface */
+    onInkHairline: 'rgba(251,247,242,0.14)',
+    /** The soft red glow set behind an ink hero's corner or a brushstroke on ink */
+    primaryGlow: 'rgba(228,0,43,0.22)',
+
+    /** Text and icons laid over photo or video, white in both themes */
+    onMedia: '#FFFFFF',
+    onMediaMuted: 'rgba(255,255,255,0.82)',
+    /** The soft shadow that keeps that text legible over moving footage */
+    mediaTextShadow: 'rgba(0,0,0,0.5)',
 
     /** Focus ring */
     ring: '#E4002B',
@@ -148,14 +168,32 @@ const palette = {
     warningTint: 'rgba(224,164,76,0.18)',
     onWarningTint: '#F1C489',
 
+    info: '#7D97CF',
+    infoForeground: '#101828',
+    infoTint: 'rgba(125,151,207,0.18)',
+    onInfoTint: '#B3C4E8',
+
     destructive: '#FF6A72',
     destructiveForeground: '#1a1814',
     destructiveTint: 'rgba(255,106,114,0.18)',
     onDestructiveTint: '#FF9AA1',
 
-    inkSurface: '#0F0C09',
+    /**
+     * Lifted above the canvas: an ink card darker than the page reads as a
+     * hole, not a feature. A hairline edge carries the rest of the emphasis.
+     */
+    inkSurface: '#2A221B',
+    inkBorder: 'rgba(251,247,242,0.12)',
+    /** Stays deep in dark mode, so a card overlapping it still reads as raised */
+    inkBleed: '#0F0C09',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
+    onInkHairline: 'rgba(251,247,242,0.14)',
+    primaryGlow: 'rgba(255,51,85,0.22)',
+
+    onMedia: '#FFFFFF',
+    onMediaMuted: 'rgba(255,255,255,0.82)',
+    mediaTextShadow: 'rgba(0,0,0,0.5)',
 
     ring: '#FF3355',
     scrim: 'rgba(0,0,0,0.62)',

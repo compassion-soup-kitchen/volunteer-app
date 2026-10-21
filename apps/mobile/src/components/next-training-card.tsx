@@ -2,7 +2,7 @@ import { View } from 'react-native';
 
 import { DateBlock } from '@/components/date-block';
 import { trainingTypeMeta } from '@/components/meta';
-import { Badge, Button, Card, Icon, type IconName, Text } from '@/components/ui';
+import { Badge, Button, Card, Icon, type IconName, StatusBadge, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange, relativeDay } from '@/lib/format';
@@ -45,7 +45,7 @@ export function NextTrainingCard({ session, pending, onCancel }: NextTrainingCar
           <View style={{ flex: 1, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' }}>
               <Badge label={meta.label} tone={meta.tone} />
-              <Badge label="Registered" tone="success" icon="checkmark-circle" />
+              <StatusBadge status="REGISTERED" />
             </View>
             <Text variant="heading" numberOfLines={2}>
               {session.title}
