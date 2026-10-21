@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Layout, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+/** What iOS keeps visible above a fully expanded form sheet. */
+const SHEET_TOP_GAP = 10;
 
 export type SheetBodyProps = {
   children: ReactNode;
@@ -20,11 +23,17 @@ export type SheetBodyProps = {
 export function SheetBody({ children, footer }: SheetBodyProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  // The tallest a form sheet gets: the screen less the status bar and the
+  // strip of the screen behind that iOS leaves showing above the sheet.
+  const maxHeight = height - insets.top - SHEET_TOP_GAP;
 
   return (
-    // `maxHeight` hands the sheet's capped height down, so the ScrollView
-    // (which shrinks but never grows) gets a bound once the content outgrows it.
-    <View style={{ backgroundColor: colors.background, maxHeight: '100%' }}>
+    // A fit-to-contents sheet sizes itself from this view, so the cap has to
+    // be a number: a percentage has nothing to resolve against, and the
+    // ScrollView collapses. Under the cap the ScrollView (which shrinks but
+    // never grows) is exactly as tall as its content.
+    <View style={{ backgroundColor: colors.background, maxHeight }}>
       <ScrollView
         style={{ flexGrow: 0 }}
         showsVerticalScrollIndicator={false}
