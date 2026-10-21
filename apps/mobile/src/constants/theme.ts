@@ -91,6 +91,8 @@ const palette = {
     inkSurface: '#1C1815',
     /** Edge of an ink card: invisible on paper, where the ink already stands out */
     inkBorder: '#1C1815',
+    /** Full-bleed ink (the auth masthead) that raised cards sit on, never inside */
+    inkBleed: '#1C1815',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
     /** Rules, dividers and soft fills drawn on an ink surface */
@@ -173,6 +175,8 @@ const palette = {
      */
     inkSurface: '#2A221B',
     inkBorder: 'rgba(251,247,242,0.12)',
+    /** Stays deep in dark mode, so a card overlapping it still reads as raised */
+    inkBleed: '#0F0C09',
     onInk: '#FBF7F2',
     onInkMuted: 'rgba(251,247,242,0.66)',
     onInkHairline: 'rgba(251,247,242,0.14)',

@@ -49,7 +49,7 @@ export function AuthScreen({ overline, title, subtitle, children }: AuthScreenPr
           contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + Spacing.xl }}>
           <View
             style={{
-              backgroundColor: colors.inkSurface,
+              backgroundColor: colors.inkBleed,
               paddingTop: insets.top + Spacing.xxl,
               paddingBottom: Spacing.huge + CARD_OVERLAP,
               paddingHorizontal: Layout.screenPadding,
