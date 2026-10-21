@@ -1,5 +1,57 @@
 # Changelog
 
+## [1.15.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.14.0...v1.15.0) (2026-10-21)
+
+
+### Features
+
+* **mobile:** forgot password, and no pre-filled sign-in email ([426f741](https://github.com/compassion-soup-kitchen/volunteer-app/commit/426f74133d2d5544caf683e95c4e1f5503f4db2e))
+* **web:** Field ties each label, hint and error to its control ([2f2a7ae](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2f2a7ae78bdd272ed6bdfbd9ad1d6a9fe5fb503c))
+* **web:** in-layout error pages for the volunteer and staff areas ([2fb6233](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2fb6233f0d0f3ff294fa05c855fd2ee0a83e7770))
+* **web:** one EmptyState for every empty list ([13e29ea](https://github.com/compassion-soup-kitchen/volunteer-app/commit/13e29ea5e8b33853650c47fdc52a96364f0b77cf))
+* **web:** page the shift lists a week at a time ([4471c2e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/4471c2eb7c765b2d83ef85dd18b262ab8523db72))
+* **web:** skeletons for every volunteer and staff page while it loads ([89e331d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/89e331dbd59e9c6c3ef7719c76c371c7a8161b77))
+* **web:** sortable volunteer directory and applications list ([77572fd](https://github.com/compassion-soup-kitchen/volunteer-app/commit/77572fdb4e2ea65a5d1ee0885cad3853af1bce1d))
+
+
+### Bug Fixes
+
+* **mobile:** shift sheets describe the real mahi, and detail sheets scroll ([4e267ec](https://github.com/compassion-soup-kitchen/volunteer-app/commit/4e267ec00b68bb140b377d19fabf0464b573dbe9))
+* **web:** a repeated ?sort= no longer breaks the volunteer and application pages ([11c3314](https://github.com/compassion-soup-kitchen/volunteer-app/commit/11c331423c4380d488889dcb0ea45e9e8a67eacf))
+* **web:** a welcome that retires, and shift cancels that ask first ([f19968f](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f19968f6e4faf83be426baeb186b3e3163d3c2d5))
+* **web:** account deletion can't lock its dialog if sign-out fails ([632efc7](https://github.com/compassion-soup-kitchen/volunteer-app/commit/632efc7ba932e94c5c08d99b2b95e21b2fcaa880))
+* **web:** add a viewport export so safe-area insets apply ([b59a2c6](https://github.com/compassion-soup-kitchen/volunteer-app/commit/b59a2c6b4640316c505de306f3d62c3714249d06))
+* **web:** application form announces required fields and errors ([af664a4](https://github.com/compassion-soup-kitchen/volunteer-app/commit/af664a40a4ef645478ce56436b96ce7f0df40d3c))
+* **web:** confirmation dialogs hold open until the action settles ([582349d](https://github.com/compassion-soup-kitchen/volunteer-app/commit/582349db4ba64435fdc0a763664b5cf8cbf5e39e))
+* **web:** destructive menu items and icon spacing come from the components ([d15ba04](https://github.com/compassion-soup-kitchen/volunteer-app/commit/d15ba04d48f3004e4388e0a235e89e2205706780))
+* **web:** Escape closes the landing menu straight after opening it ([4ffced4](https://github.com/compassion-soup-kitchen/volunteer-app/commit/4ffced4e51a10650d843a34a387aa6ccbc2f829a))
+* **web:** footer values wrap on narrow phones ([aa70c4e](https://github.com/compassion-soup-kitchen/volunteer-app/commit/aa70c4e412fbcd2ec18969d50ff43b10a372952c))
+* **web:** form controls that match and don't zoom on iPhone ([762d302](https://github.com/compassion-soup-kitchen/volunteer-app/commit/762d30274460b3afb5035ff15cb7d2a7e6b13cb9))
+* **web:** landing motion respects reduced motion, and the hero renders visible ([db297f1](https://github.com/compassion-soup-kitchen/volunteer-app/commit/db297f18b5ca563f14cf6a7f090e0f36d2f72114))
+* **web:** landing nav collapses to the menu until the row fits ([504d790](https://github.com/compassion-soup-kitchen/volunteer-app/commit/504d79042dac359229b757e13b756c6d1bcbbebd))
+* **web:** lists that fill a card no longer sit in a padding band ([2cec6af](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2cec6afa6cab2c07ca98a1075b3737e89f44287f))
+* **web:** login divider without a patch, and a delete card that draws its edge ([40ef5e4](https://github.com/compassion-soup-kitchen/volunteer-app/commit/40ef5e465667e75a71afd5754fe5bfb9f128ac32))
+* **web:** monthly trends as two small charts with titled axes and a text summary ([2e029f8](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2e029f88a2aa27117790e5bd66847efe2a95e1dd))
+* **web:** navigation accessibility and layout ([88140c6](https://github.com/compassion-soup-kitchen/volunteer-app/commit/88140c61c3c7f8eebc3f76162b07913f10079a2f))
+* **web:** one solid red button per view ([90a33fa](https://github.com/compassion-soup-kitchen/volunteer-app/commit/90a33fa9bc6841b6145713ccac25e84478dd5488))
+* **web:** polish found while checking the consistency pass ([8ee29bb](https://github.com/compassion-soup-kitchen/volunteer-app/commit/8ee29bb6ab1fe8a581953181d0619eedf7590bfd))
+* **web:** profile edit saves on Enter ([c68d1f9](https://github.com/compassion-soup-kitchen/volunteer-app/commit/c68d1f9f3b70895c385eb9f0aeda88faba7ead89))
+* **web:** read dates of birth on the Wellington calendar ([d7946b0](https://github.com/compassion-soup-kitchen/volunteer-app/commit/d7946b074db0c67518eb764ff487aa05d2735e17))
+* **web:** sort menu for the volunteer and application lists on smaller screens ([7053433](https://github.com/compassion-soup-kitchen/volunteer-app/commit/705343305c2beec35d6d5532ccab5c165e47415d))
+* **web:** staff calendar cells readable on laptops, short shifts announced, arrow keys ([08f5bfd](https://github.com/compassion-soup-kitchen/volunteer-app/commit/08f5bfd4ae94e3bcd6938b6930d7afc546ed2d79))
+* **web:** staff dates read in New Zealand time ([6d373d1](https://github.com/compassion-soup-kitchen/volunteer-app/commit/6d373d1ddfeb1cd5ebe837b62854cbef2b7e10fb))
+* **web:** staff dates read in New Zealand time ([410896b](https://github.com/compassion-soup-kitchen/volunteer-app/commit/410896b475f7058879fa9f77c541860eac1852da))
+* **web:** staff form errors are linked to their fields ([581d6b7](https://github.com/compassion-soup-kitchen/volunteer-app/commit/581d6b72a960bf83887643ce8f3bb6c854ff7bce))
+* **web:** staff sidebar is a real dialog below lg, with focus you can see ([85058e6](https://github.com/compassion-soup-kitchen/volunteer-app/commit/85058e6b7e9ce0d459481db34386686c63650cd5))
+* **web:** staff tables that read left to right and shift lists that end ([b2eb1c8](https://github.com/compassion-soup-kitchen/volunteer-app/commit/b2eb1c828c581d8c818672a8fa1794b8810518a2))
+* **web:** stat cards line their figures up and drop the decorative rainbow ([689df01](https://github.com/compassion-soup-kitchen/volunteer-app/commit/689df0143f51c2fe16357b8a5d82019075b260e1))
+* **web:** status badges take their colour from StatusBadge alone ([9538ac4](https://github.com/compassion-soup-kitchen/volunteer-app/commit/9538ac4504eeda65b5d6ceea60afdd86556347ef))
+* **web:** tokens for the form alert, dialog scrim, attendance and area colours ([276765b](https://github.com/compassion-soup-kitchen/volunteer-app/commit/276765bd7e1c29e0a0b36582ced72492c8b7307c))
+* **web:** volunteer directory fits from xl without squeezing search ([3928cca](https://github.com/compassion-soup-kitchen/volunteer-app/commit/3928ccab7f85ab78721dafbc541b0563f88b7cb6))
+* **web:** volunteer nav announces where you are, and tabs drop the back chevron ([8b2a047](https://github.com/compassion-soup-kitchen/volunteer-app/commit/8b2a047afead509219c0ed46a38ea24fdcda3df0))
+* **web:** white text on red fills passes AA in dark mode ([9e4f188](https://github.com/compassion-soup-kitchen/volunteer-app/commit/9e4f1887769f50c75df42c807c0e58fd8057c85b))
+* white text on red fills passes AA in dark mode (web + mobile) ([5ec9599](https://github.com/compassion-soup-kitchen/volunteer-app/commit/5ec9599ed0abba40b3a24488b344824648b30d89))
+
 ## [1.14.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.13.2...v1.14.0) (2026-10-16)
 
 
