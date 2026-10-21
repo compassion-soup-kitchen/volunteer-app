@@ -7,7 +7,7 @@ import { Wordmark } from "@/components/brand/wordmark";
 import { RiArrowLeftLine, RiHomeHeartLine } from "@remixicon/react";
 
 export const metadata: Metadata = {
-  title: "Kei te ngaro — Page not found | Te Pūaroha",
+  title: "Kei te ngaro · Page not found | Te Pūaroha",
 };
 
 /**
@@ -33,7 +33,7 @@ export default function NotFound() {
         <span aria-hidden className="mx-auto mt-5 block h-0.5 w-16 rounded-full bg-primary" />
         <p className="mt-6 text-base leading-relaxed text-muted-foreground">
           Whatever lived here has moved on, or the link is a little out of date.
-          No harm done — let&apos;s get you back to the kai and the mahi.
+          No harm done - let&apos;s get you back to the kai and the mahi.
         </p>
 
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">

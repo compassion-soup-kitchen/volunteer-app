@@ -34,7 +34,7 @@ import { EmptyState } from "@/components/brand/empty-state";
 import { StatsSkeleton, ActivitySkeleton, AwayTodaySkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
-  title: "Staff Dashboard | Te Pūaroha",
+  title: "Staff dashboard | Te Pūaroha",
 };
 
 export default async function StaffDashboard() {

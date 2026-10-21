@@ -100,7 +100,7 @@ export default function GlobalError({
           <h1 className="ge-title">That didn&apos;t go to plan</h1>
           <span aria-hidden className="ge-rule" />
           <p className="ge-body">
-            Something hiccuped on our side — it wasn&apos;t you. Give it another
+            Something hiccuped on our side - it wasn&apos;t you. Give it another
             go, and if it keeps happening, let the coordinator team know.
           </p>
           <button type="button" className="ge-button" onClick={reset}>

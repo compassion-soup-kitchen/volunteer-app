@@ -168,7 +168,7 @@ export function TrainingForm({
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What will be covered in this session..."
+                  placeholder="What will be covered in this session…"
                   rows={3}
                 />
               </FieldControl>

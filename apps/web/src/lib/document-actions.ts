@@ -234,7 +234,7 @@ export async function getAgreementDetail(
       const latest = v.signedAgreements[0] ?? null;
       return {
         id: v.id,
-        userName: v.user.name || "—",
+        userName: v.user.name || "-",
         userEmail: v.user.email,
         signedVersion: latest?.documentVersion ?? null,
         signedAt: latest?.signedAt ?? null,

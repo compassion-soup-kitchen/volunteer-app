@@ -58,7 +58,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     if (!warnedUnconfigured) {
       warnedUnconfigured = true;
       console.warn(
-        "Email is not configured (set RESEND_API_KEY and EMAIL_FROM) — outgoing email will be skipped."
+        "Email is not configured (set RESEND_API_KEY and EMAIL_FROM) - outgoing email will be skipped."
       );
     }
     return { ok: false, skipped: true };

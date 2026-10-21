@@ -142,7 +142,7 @@ export function ShiftBrowser({
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success("No worries — we've passed it on.");
+      toast.success("No worries - we've passed it on.");
       refresh();
     }
     setLoadingShiftId(null);
@@ -435,7 +435,7 @@ function ShiftRow({
 
           {heldForOthers && shift.offersCloseOn && (
             <p className="text-sm text-muted-foreground">
-              Offered to the regular crew until {formatHoldUntil(shift.offersCloseOn)} —
+              Offered to the regular crew until {formatHoldUntil(shift.offersCloseOn)} -
               open to everyone after that.
             </p>
           )}

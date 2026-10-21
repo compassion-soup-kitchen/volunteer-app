@@ -194,7 +194,7 @@ export function DeleteUserDialog({
               variant="destructive"
             >
               {deleting ? (
-                "Deleting..."
+                "Deleting…"
               ) : (
                 <>
                   <RiDeleteBin6Line className="mr-2 size-4" aria-hidden />

@@ -279,7 +279,7 @@ export function AnnouncementManager({
       editTarget
         ? "Pānui updated."
         : publish
-          ? "Pānui published — it's live now."
+          ? "Pānui published - it's live now."
           : "Draft saved."
     );
 
@@ -510,7 +510,7 @@ export function AnnouncementManager({
                 maxFilesMessage={`A pānui can carry ${MAX_ANNOUNCEMENT_ATTACHMENTS} files at most.`}
                 hint={
                   canAttachMore
-                    ? `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)} each`
+                    ? `PDF, Word, or image - up to ${formatFileSize(MAX_UPLOAD_BYTES)} each`
                     : "Remove a file before adding another."
                 }
                 onFilesAccepted={handleFilesChosen}

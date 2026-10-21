@@ -237,7 +237,7 @@ export function OfflineVolunteerForm({ serviceAreas, values }: OfflineVolunteerF
                 id="ov-ec-rel"
                 value={fields.emergencyContactRelationship}
                 onChange={set("emergencyContactRelationship")}
-                placeholder="Daughter, neighbour..."
+                placeholder="Daughter, neighbour…"
                 autoComplete="off"
                 disabled={isPending}
               />
@@ -331,7 +331,7 @@ export function OfflineVolunteerForm({ serviceAreas, values }: OfflineVolunteerF
               value={fields.bio}
               onChange={set("bio")}
               rows={3}
-              placeholder="Best way to reach them, the shift they always do..."
+              placeholder="Best way to reach them, the shift they always do…"
               disabled={isPending}
             />
             <p className="text-xs text-muted-foreground">

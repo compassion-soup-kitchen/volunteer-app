@@ -57,7 +57,7 @@ export function ResendVerificationForm({ email }: { email?: string }) {
         {pending ? (
           <>
             <RiLoader4Line className="size-4 animate-spin" />
-            Sending link...
+            Sending link…
           </>
         ) : (
           "Resend verification email"

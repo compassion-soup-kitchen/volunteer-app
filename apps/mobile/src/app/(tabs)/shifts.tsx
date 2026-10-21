@@ -123,7 +123,7 @@ export default function ShiftsScreen() {
         toast.error(res.error);
         return;
       }
-      toast.success("You're on the roster — ka pai!");
+      toast.success("You're on the roster - ka pai!");
       qc.invalidateQueries({ queryKey: qk.shiftsAll });
       qc.invalidateQueries({ queryKey: qk.schedule });
       qc.invalidateQueries({ queryKey: qk.dashboard });
@@ -162,7 +162,7 @@ export default function ShiftsScreen() {
       {/* You're rostered on — personal anchor */}
       {roster.length > 0 ? (
         <View style={{ gap: Spacing.lg }}>
-          <SectionHeader overline="Kua rīhita koe" title="You're rostered on" />
+          <SectionHeader overline="Kua rēhita koe" title="You're rostered on" />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -212,7 +212,7 @@ export default function ShiftsScreen() {
             message={
               areaFilter
                 ? 'Try another area, or check back soon.'
-                : 'New shifts are added each week — check back soon.'
+                : 'New shifts are added each week - check back soon.'
             }
             actionLabel={areaFilter ? 'Show all areas' : undefined}
             onAction={areaFilter ? () => setAreaFilter(null) : undefined}

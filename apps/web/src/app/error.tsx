@@ -41,7 +41,7 @@ export default function Error({
         </h1>
         <span aria-hidden className="mx-auto mt-5 block h-0.5 w-16 rounded-full bg-primary" />
         <p className="mt-6 text-base leading-relaxed text-muted-foreground">
-          Something hiccuped on our side — it wasn&apos;t you. Give it another
+          Something hiccuped on our side - it wasn&apos;t you. Give it another
           go, and if it keeps happening, let the coordinator team know.
         </p>
 

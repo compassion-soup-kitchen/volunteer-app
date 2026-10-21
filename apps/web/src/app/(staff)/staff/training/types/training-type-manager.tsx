@@ -220,7 +220,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
             <DialogDescription>
               {editTarget
                 ? "Renaming updates this type everywhere it appears, including on sessions already run."
-                : "Training types group your sessions — induction, food safety, whatever your kaupapa needs."}
+                : "Training types group your sessions - induction, food safety, whatever your kaupapa needs."}
             </DialogDescription>
           </DialogHeader>
 
@@ -242,7 +242,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={TRAINING_TYPE_DESCRIPTION_MAX}
-                placeholder="What this training covers..."
+                placeholder="What this training covers…"
                 rows={3}
               />
             </div>

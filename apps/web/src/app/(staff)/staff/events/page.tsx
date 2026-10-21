@@ -8,7 +8,7 @@ import { EventManager } from "./event-manager";
 import { EventsSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
-  title: "Events | Te Pūaroha Staff",
+  title: "Events | Te Pūaroha",
 };
 
 async function EventsContent() {
@@ -27,9 +27,9 @@ export default function StaffEventsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Ngā hui · Gatherings"
+        eyebrow="Ngā hui · Events"
         title="Events"
-        description="Parties, hui and working bees — invite the whānau and see who's coming."
+        description="Parties, hui and working bees - invite the whānau and see who's coming."
       />
       <Suspense fallback={<EventsSkeleton />}>
         <EventsContent />

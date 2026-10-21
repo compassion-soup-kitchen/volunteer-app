@@ -301,7 +301,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
               <CardDescription>
                 {held && shift.offersCloseOn
                   ? `Held for these volunteers until ${formatHoldUntil(shift.offersCloseOn)}`
-                  : "Open to all volunteers — the offer has run its course"}
+                  : "Open to all volunteers - the offer has run its course"}
               </CardDescription>
               <CardAction>
                 {held ? (

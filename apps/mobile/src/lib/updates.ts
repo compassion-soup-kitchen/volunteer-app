@@ -69,7 +69,7 @@ export function versionLabel(
   update: { isEmbeddedLaunch: boolean; createdAt?: Date | null },
   otaManaged: boolean,
 ): string {
-  const base = `Version ${version ?? '—'}`;
+  const base = `Version ${version ?? '-'}`;
   if (!otaManaged || update.isEmbeddedLaunch || !update.createdAt) return base;
   return `${base} · updated ${format(update.createdAt, 'd MMM')}`;
 }

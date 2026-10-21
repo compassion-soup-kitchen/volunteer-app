@@ -225,7 +225,7 @@ export async function toggleTrainingTypeArchive(id: string): Promise<Result> {
     if (activeCount <= 1) {
       return {
         error:
-          "This is the only active training type — add another before archiving this one.",
+          "This is the only active training type - add another before archiving this one.",
       };
     }
   }

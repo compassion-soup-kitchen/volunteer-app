@@ -187,7 +187,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                 hint={
                   pendingFile
                     ? "Drop another to replace it"
-                    : `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)}`
+                    : `PDF, Word, or image - up to ${formatFileSize(MAX_UPLOAD_BYTES)}`
                 }
                 onFilesAccepted={([file]) => setPendingFile(file)}
               />

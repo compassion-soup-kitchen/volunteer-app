@@ -337,7 +337,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
                 value={description}
                 maxLength={GROUP_DESCRIPTION_MAX}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What this group does, or when to turn to them..."
+                placeholder="What this group does, or when to turn to them…"
                 rows={2}
               />
             </div>
@@ -427,7 +427,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
               <Input
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
-                placeholder="Search by name or email..."
+                placeholder="Search by name or email…"
                 aria-label="Search people"
                 className="pl-9"
               />

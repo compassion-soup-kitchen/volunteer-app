@@ -24,7 +24,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Browse Shifts | Te Pūaroha",
+  title: "Browse shifts | Te Pūaroha",
 };
 
 type SearchParams = Promise<{ [key: string]: string | undefined }>;
@@ -61,7 +61,7 @@ export default async function ShiftsPage(props: { searchParams: SearchParams }) 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Ngā wāhi mahi · Roster"
+        eyebrow="Te rārangi mahi · Shifts"
         title="Available shifts"
         description="Browse and sign up for upcoming mahi"
       />

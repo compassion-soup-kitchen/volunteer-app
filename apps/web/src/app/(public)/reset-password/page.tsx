@@ -4,7 +4,7 @@ import { AuthShell } from "../auth-shell";
 import { ResetPasswordForm } from "./reset-password-form";
 
 export const metadata: Metadata = {
-  title: "Reset Password | Te Pūaroha",
+  title: "Reset password | Te Pūaroha",
   description:
     "Choose a new password for your Compassion Soup Kitchen volunteer account.",
 };

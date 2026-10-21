@@ -8,7 +8,7 @@ import { dateOnlyOf } from "@/lib/date-only";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Shift Details | Te Pūaroha",
+  title: "Shift details | Te Pūaroha",
 };
 
 export default async function ShiftDetailPage({
@@ -33,7 +33,7 @@ export default async function ShiftDetailPage({
     <div className="space-y-6">
       <PageHeader
         backHref="/staff/shifts"
-        eyebrow="Te wāhi mahi · Shift"
+        eyebrow="Te rārangi mahi · Shift"
         title={shift.serviceArea.name}
         description="View and manage this shift"
       />

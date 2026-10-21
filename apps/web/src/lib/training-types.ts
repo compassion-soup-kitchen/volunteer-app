@@ -155,10 +155,10 @@ export function trainingTypeDeleteBlocker(type: {
   sessionCount: number;
 }): string | null {
   if (isSeededTrainingType(type.key)) {
-    return "This is one of the built-in types — you can rename it or archive it, but not delete it.";
+    return "This is one of the built-in types - you can rename it or archive it, but not delete it.";
   }
   if (type.sessionCount > 0) {
-    return `${type.sessionCount} training session${type.sessionCount === 1 ? " uses" : "s use"} this type. Archive it instead — it will stay on past sessions but won't be offered for new ones.`;
+    return `${type.sessionCount} training session${type.sessionCount === 1 ? " uses" : "s use"} this type. Archive it instead - it will stay on past sessions but won't be offered for new ones.`;
   }
   return null;
 }

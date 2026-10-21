@@ -586,7 +586,7 @@ export function ShiftForm({
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any details volunteers should know..."
+                  placeholder="Any details volunteers should know…"
                   rows={3}
                 />
               </FieldControl>

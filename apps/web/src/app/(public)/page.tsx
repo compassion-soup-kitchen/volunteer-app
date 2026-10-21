@@ -53,9 +53,9 @@ const features = [
     alt: "The Impact screen, showing 39.5 hours given and progress towards the Mana honorific",
   },
   {
-    eyebrow: "Ako · Training",
+    eyebrow: "Whakangungu · Training",
     title: "Walk in\nshift-ready",
-    body: "Keep your core modules up to date and book the sessions that build your confidence — in the kitchen, the dining room, and out in the community.",
+    body: "Keep your core modules up to date and book the sessions that build your confidence - in the kitchen, the dining room, and out in the community.",
     bullets: ["Track induction, health & safety and more", "Book training that fits your schedule", "Always know what's left to complete"],
     src: "/app/training.png",
     alt: "The Training screen, showing core modules complete and an upcoming booked session",
@@ -63,7 +63,7 @@ const features = [
   {
     eyebrow: "Tō kōtaha · Profile",
     title: "Your details,\nalways to hand",
-    body: "Check your standing and police vetting at a glance, keep your contact details current, and have your emergency contact ready — all in one tidy place.",
+    body: "Check your standing and police vetting at a glance, keep your contact details current, and have your emergency contact ready - all in one tidy place.",
     bullets: ["Standing and vetting at a glance", "Update your contact details anytime", "Your emergency contact, ready if needed"],
     src: "/app/profile.png",
     alt: "The Profile screen, showing active standing, cleared police vetting and contact details",
@@ -94,7 +94,7 @@ export default function Home() {
             <p className="mx-auto mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground lg:mx-0">
               The Te Pūaroha app brings your roster, your training, and your impact
               into one warm, simple place. Pick up shifts, track your hours, and
-              stay close to your whānau — wherever you are.
+              stay close to your whānau - wherever you are.
             </p>
             <div className="mt-8 flex flex-col items-center gap-4 lg:items-start">
               <div className="flex flex-col items-center gap-3 sm:flex-row">
@@ -149,7 +149,7 @@ export default function Home() {
               <br className="hidden sm:block" /> in one app
             </SectionHeading>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-              Built for the way you actually volunteer — quick to pick up, warm to
+              Built for the way you actually volunteer - quick to pick up, warm to
               use, and there in your pocket whenever you need it.
             </p>
           </motion.div>
@@ -173,7 +173,7 @@ export default function Home() {
               </SectionHeading>
               <div className="mt-7 space-y-4 text-base leading-relaxed text-muted-foreground">
                 <p>
-                  For over 125 years, Compassion Soup Kitchen — Te Pūaroha — has
+                  For over 125 years, Compassion Soup Kitchen - Te Pūaroha - has
                   served anyone who walks through our doors, no questions asked.
                   Every plate of kai carries the aroha of hundreds of volunteers.
                 </p>
@@ -329,7 +329,7 @@ export default function Home() {
                 </a>
               </p>
               <p className="text-xs text-muted-foreground">
-                Registered Charity{" "}
+                Registered charity{" "}
                 <a href="https://www.register.charities.govt.nz/Charity/CC10246" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 transition-colors hover:text-primary">
                   CC 10246
                 </a>
