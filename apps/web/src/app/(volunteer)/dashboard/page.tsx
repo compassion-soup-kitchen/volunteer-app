@@ -39,6 +39,7 @@ import { getRecentAnnouncements } from "@/lib/announcement-actions";
 import { getUnansweredInvitations } from "@/lib/event-actions";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimeRange } from "@/lib/format";
+import { volunteerShiftHref } from "@/lib/roster-week";
 
 export const metadata: Metadata = {
   title: "Dashboard | Te Pūaroha",
@@ -300,7 +301,9 @@ export default async function VolunteerDashboard() {
                   )}
                 </div>
                 <Button asChild size="sm" className="hidden sm:inline-flex">
-                  <Link href="/shifts">View</Link>
+                  <Link href={volunteerShiftHref(nextShiftDate, todayInAppZone())}>
+                    View
+                  </Link>
                 </Button>
               </CardContent>
 
@@ -366,7 +369,7 @@ export default async function VolunteerDashboard() {
               {dashboardData.openShiftsForYou.slice(0, 3).map((shift) => (
                 <li key={shift.id}>
                   <Link
-                    href="/shifts"
+                    href={volunteerShiftHref(new Date(shift.date), todayInAppZone())}
                     className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                   >
                     <div className="min-w-0 flex-1">
