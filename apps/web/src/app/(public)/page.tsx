@@ -84,7 +84,9 @@ export default function Home() {
           style={{ background: "radial-gradient(closest-side, color-mix(in oklab, var(--primary) 14%, transparent), transparent)" }}
         />
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-16 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:pb-28">
-          <motion.div {...fadeUp} className="relative text-center lg:text-left">
+          {/* The hero is the first thing anyone sees, so it's in the server
+              HTML at full strength - no waiting on JavaScript to fade it in. */}
+          <div className="relative text-center lg:text-left">
             <Eyebrow className="text-primary">Nau mai · Haere mai</Eyebrow>
             <h1 className="mt-4 font-serif text-4xl font-light leading-[1.05] tracking-tight text-balance sm:text-5xl lg:text-[3.4rem]">
               Volunteer with us,
@@ -120,12 +122,12 @@ export default function Home() {
                 </span>
               </div>
             </div>
-          </motion.div>
+          </div>
 
+          {/* Settles into place, but is visible from the first paint. */}
           <motion.div
-            initial={{ opacity: 0, y: 32, rotate: -4 }}
-            whileInView={{ opacity: 1, y: 0, rotate: -2 }}
-            viewport={{ once: true, margin: "-60px" }}
+            initial={{ y: 32, rotate: -4 }}
+            animate={{ y: 0, rotate: -2 }}
             transition={{ duration: 0.7, delay: 0.1, ease }}
             className="relative mx-auto w-full max-w-[300px] lg:max-w-none lg:justify-self-center"
           >
