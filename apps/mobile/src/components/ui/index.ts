@@ -14,6 +14,7 @@ export { PageHeader } from './page-header';
 export { ProgressBar } from './progress-bar';
 export { Screen } from './screen';
 export { SectionHeader } from './section-header';
+export { SheetBody } from './sheet-body';
 export { Skeleton, SkeletonCard } from './skeleton';
 export { Stat } from './stat';
 export { Text } from './text';

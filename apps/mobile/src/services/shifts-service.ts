@@ -27,7 +27,7 @@ export async function getServiceAreas(): Promise<ServiceArea[]> {
 
 function area(id: string): ShiftServiceArea {
   const a = areaById(id);
-  return { id, name: a?.name ?? 'Shift', maori: a?.maori };
+  return { id, name: a?.name ?? 'Shift', maori: a?.maori, description: a?.description ?? null };
 }
 
 function toDetails(s: ShiftRecord): ShiftWithDetails {

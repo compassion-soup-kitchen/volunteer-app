@@ -24,7 +24,7 @@ describe("serializeShift", () => {
       endTime: "13:00",
       capacity: 6,
       notes: null,
-      serviceArea: { id: "area-1", name: "Kitchen" },
+      serviceArea: { id: "area-1", name: "Kitchen", description: null },
       signupCount: 4,
       userSignupId: null,
       userSignupStatus: null,
@@ -41,7 +41,7 @@ describe("serializeShift", () => {
       endTime: "13:00",
       capacity: 6,
       notes: null,
-      serviceArea: { id: "area-1", name: "Kitchen" },
+      serviceArea: { id: "area-1", name: "Kitchen", description: null },
       signupCount: 4,
       userSignupId: null,
       userSignupStatus: null,
@@ -60,7 +60,7 @@ describe("serializeShift", () => {
       endTime: "13:00",
       capacity: 6,
       notes: null,
-      serviceArea: { id: "area-1", name: "Kitchen" },
+      serviceArea: { id: "area-1", name: "Kitchen", description: null },
       signupCount: 0,
       userSignupId: null,
       userSignupStatus: null,
@@ -81,7 +81,7 @@ describe("serializeShift", () => {
       endTime: "13:00",
       capacity: 6,
       notes: null,
-      serviceArea: { id: "area-1", name: "Kitchen" },
+      serviceArea: { id: "area-1", name: "Kitchen", description: null },
       signupCount: 0,
       userSignupId: null,
       userSignupStatus: null,
@@ -122,7 +122,7 @@ describe("serializeDashboard", () => {
       date: new Date("2026-07-18T00:00:00.000Z"),
       startTime: "09:00",
       endTime: "13:00",
-      serviceArea: { id: "area-1", name: "Kitchen" },
+      serviceArea: { id: "area-1", name: "Kitchen", description: null },
       notes: null,
     };
 
@@ -152,6 +152,7 @@ describe("serializeDashboard", () => {
     expect(result.upcomingShifts[0].serviceArea).toEqual({
       id: "area-1",
       name: "Kitchen",
+      description: null,
     });
     expect(result.totalHours).toBe(120);
     expect(result.milestones[0].term).toBe("Whetū");

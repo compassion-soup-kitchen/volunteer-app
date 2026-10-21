@@ -80,6 +80,8 @@ export interface ShiftServiceArea {
   id: string;
   name: string;
   maori?: string;
+  /** What the mahi in this area is, as staff describe it. */
+  description?: string | null;
 }
 
 /** A shift on the volunteer's personal roster (signed up, upcoming). */

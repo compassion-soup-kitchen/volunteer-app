@@ -28,7 +28,7 @@ export type ShiftWithDetails = {
   endTime: string;
   capacity: number;
   notes: string | null;
-  serviceArea: { id: string; name: string };
+  serviceArea: { id: string; name: string; description: string | null };
   signupCount: number;
   userSignupId: string | null; // null if user hasn't signed up
   userSignupStatus: string | null;
@@ -71,14 +71,14 @@ type ShiftWithSignups = {
   capacity: number;
   notes: string | null;
   offersCloseOn: Date | null;
-  serviceArea: { id: string; name: string };
+  serviceArea: { id: string; name: string; description: string | null };
   signups: { id: string; volunteerId: string; status: string }[];
   offers: { volunteerId: string; status: OfferStatus }[];
 };
 
 /** Signups and offers both come back with the shift wherever it's read. */
 const shiftDetailInclude = {
-  serviceArea: { select: { id: true, name: true } },
+  serviceArea: { select: { id: true, name: true, description: true } },
   signups: {
     where: { status: { in: ["SIGNED_UP", "ATTENDED"] } },
     select: { id: true, volunteerId: true, status: true },
