@@ -193,7 +193,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div {...fadeUp} transition={{ duration: 0.5, delay: 0.15, ease }}>
-              <div className="relative overflow-hidden rounded-3xl bg-primary px-8 py-12 text-primary-foreground sm:px-12 sm:py-14">
+              <div className="relative overflow-hidden rounded-3xl bg-primary-fill px-8 py-12 text-primary-foreground sm:px-12 sm:py-14">
                 <Kowhaiwhai tone="light" className="pointer-events-none absolute -bottom-16 -right-16 w-72 opacity-[0.12]" />
                 <blockquote className="relative font-serif text-2xl font-light leading-snug tracking-tight sm:text-[1.7rem]">
                   He aha te mea nui o te ao?
@@ -201,12 +201,12 @@ export default function Home() {
                   He tangata, he tangata, he tangata.
                 </blockquote>
                 <Separator className="relative my-6 bg-primary-foreground/25" />
-                <p className="relative text-sm leading-relaxed text-primary-foreground/80">
+                <p className="relative text-sm leading-relaxed">
                   What is the most important thing in the world?
                   <br />
                   It is people, it is people, it is people.
                 </p>
-                <p className={`relative mt-4 ${eyebrowOnDark} text-primary-foreground/60`}>
+                <p className={`relative mt-4 ${eyebrowOnDark}`}>
                   Māori whakataukī
                 </p>
               </div>

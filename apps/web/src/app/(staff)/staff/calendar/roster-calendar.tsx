@@ -369,7 +369,7 @@ function DayCell({
       <span
         className={cn(
           "grid size-6 place-items-center rounded-full text-xs font-semibold tnum",
-          isToday && "bg-primary text-primary-foreground"
+          isToday && "bg-primary-fill text-primary-foreground"
         )}
       >
         {Number(date.slice(8))}

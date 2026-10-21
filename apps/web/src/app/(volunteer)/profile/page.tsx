@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DeleteAccountCard } from "@/components/account/delete-account-card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { PageHeader } from "@/components/brand/page-header";
+import { EmptyState } from "@/components/brand/empty-state";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +29,10 @@ import {
   RiArrowRightLine,
   RiGraduationCapLine,
   RiSuitcaseLine,
+  RiGroupLine,
+  RiCalendarLine,
+  RiHeartLine,
+  RiStarLine,
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
 import { getMyGroups } from "@/lib/group-actions";
@@ -115,7 +120,6 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6 pb-24">
       <PageHeader
-        backHref="/dashboard"
         eyebrow="Tō kōtaha · Profile"
         title={
           <span className="flex items-center gap-3">
@@ -253,11 +257,14 @@ export default async function ProfilePage() {
                 ))}
               </ul>
             ) : (
-              <CardContent className="border-t border-border pt-3 pb-2">
-                <p className="text-sm text-muted-foreground">
-                  No training sessions yet
-                </p>
-              </CardContent>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiGraduationCapLine />}
+                title="No training sessions yet"
+                description="Sessions you register for will show up here."
+                className="border-t border-border"
+              />
             )}
           </Card>
 
@@ -304,11 +311,14 @@ export default async function ProfilePage() {
                 ))}
               </ul>
             ) : (
-              <CardContent className="border-t border-border pt-3 pb-2">
-                <p className="text-sm text-muted-foreground">
-                  No agreements signed
-                </p>
-              </CardContent>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiShieldCheckLine />}
+                title="No agreements signed"
+                description="Agreements you confirm will appear here."
+                className="border-t border-border"
+              />
             )}
           </Card>
         </div>
@@ -332,20 +342,24 @@ export default async function ProfilePage() {
                 </Button>
               </CardAction>
             </CardHeader>
-            <CardContent className="border-t border-border pt-3 pb-2">
-              {myGroups.length > 0 ? (
+            {myGroups.length > 0 ? (
+              <CardContent className="border-t border-border pt-3 pb-2">
                 <div className="flex flex-wrap gap-2">
                   {myGroups.map((group) => (
                     <GroupBadge key={group.id} group={group} />
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  You&apos;re not in a group yet. Have a look at who&apos;s who
-                  on the team page.
-                </p>
-              )}
-            </CardContent>
+              </CardContent>
+            ) : (
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiGroupLine />}
+                title="Not in a group yet"
+                description="Have a look at who's who on the team page."
+                className="border-t border-border"
+              />
+            )}
           </Card>
 
           {/* Availability */}
@@ -374,11 +388,14 @@ export default async function ProfilePage() {
                 ))}
               </ul>
             ) : (
-              <CardContent className="border-t border-border pt-3 pb-2">
-                <p className="text-sm text-muted-foreground">
-                  No availability set
-                </p>
-              </CardContent>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiCalendarLine />}
+                title="No availability set"
+                description="Add the days that suit you so coordinators know when to ask."
+                className="border-t border-border"
+              />
             )}
           </Card>
 
@@ -387,19 +404,24 @@ export default async function ProfilePage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Areas of interest</CardTitle>
             </CardHeader>
-            <CardContent className="border-t border-border pt-3 pb-2">
-              {profile.interests.length > 0 ? (
+            {profile.interests.length > 0 ? (
+              <CardContent className="border-t border-border pt-3 pb-2">
                 <div className="flex flex-wrap gap-2">
                   {profile.interests.map((area) => (
                     <Pill key={area.id}>{area.name}</Pill>
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No interests selected
-                </p>
-              )}
-            </CardContent>
+              </CardContent>
+            ) : (
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiHeartLine />}
+                title="No interests chosen"
+                description="Pick the kinds of mahi you enjoy when you edit your profile."
+                className="border-t border-border"
+              />
+            )}
           </Card>
 
           {/* Skills & about */}
@@ -407,21 +429,27 @@ export default async function ProfilePage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Skills &amp; about</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 border-t border-border pt-3 pb-2">
-              {profile.skills.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.skills.map((skill) => (
-                    <Pill key={skill}>{skill}</Pill>
-                  ))}
-                </div>
-              )}
-              {profile.bio && <p className="text-sm">{profile.bio}</p>}
-              {profile.skills.length === 0 && !profile.bio && (
-                <p className="text-sm text-muted-foreground">
-                  No details provided
-                </p>
-              )}
-            </CardContent>
+            {profile.skills.length > 0 || profile.bio ? (
+              <CardContent className="space-y-3 border-t border-border pt-3 pb-2">
+                {profile.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.skills.map((skill) => (
+                      <Pill key={skill}>{skill}</Pill>
+                    ))}
+                  </div>
+                )}
+                {profile.bio && <p className="text-sm">{profile.bio}</p>}
+              </CardContent>
+            ) : (
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiStarLine />}
+                title="Nothing added yet"
+                description="Share your skills or a few words about yourself."
+                className="border-t border-border"
+              />
+            )}
           </Card>
 
           {/* Deleting your own account. Last in the rail and visually apart,

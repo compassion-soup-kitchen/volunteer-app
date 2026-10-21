@@ -2,25 +2,15 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { RiAddLine, RiSettings3Line } from "@remixicon/react";
 import { getStaffTrainingSessions } from "@/lib/training-actions";
 import { TrainingList } from "./training-list";
 import { PageHeader } from "@/components/brand/page-header";
+import { TrainingListSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Training Sessions | Te Pūaroha Staff",
 };
-
-function TrainingListSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-24 w-full rounded-xl" />
-      ))}
-    </div>
-  );
-}
 
 async function TrainingContent() {
   const sessions = await getStaffTrainingSessions();

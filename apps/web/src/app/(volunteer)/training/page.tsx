@@ -28,7 +28,6 @@ export default function VolunteerTrainingPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        backHref="/dashboard"
         eyebrow="Whakangungu · Training"
         title="Training"
         description="Browse and register for upcoming training sessions"

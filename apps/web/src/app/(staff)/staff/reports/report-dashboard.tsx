@@ -11,6 +11,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { StatCard } from "@/components/brand/stat-card";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   Select,
   SelectContent,
@@ -329,9 +330,12 @@ export function ReportDashboard({
             {byArea.length > 0 ? (
               <HoursChart data={byArea} />
             ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No shift data for this period
-              </p>
+              <EmptyState
+                bare
+                icon={<RiFileChartLine />}
+                title="No shift data for this period"
+                description="Try a wider date range, or check back once attendance is marked."
+              />
             )}
           </CardContent>
         </Card>
@@ -346,9 +350,12 @@ export function ReportDashboard({
             {trends.length > 0 ? (
               <TrendsChart data={trends} />
             ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No trend data available
-              </p>
+              <EmptyState
+                bare
+                icon={<RiFileChartLine />}
+                title="No trend data yet"
+                description="Trends build up month by month as shifts are attended."
+              />
             )}
           </CardContent>
         </Card>
@@ -394,9 +401,12 @@ export function ReportDashboard({
             </ul>
           ) : (
             <CardContent>
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No attendance data for this period
-              </p>
+              <EmptyState
+                bare
+                icon={<RiCheckLine />}
+                title="No attendance data for this period"
+                description="Try a wider date range."
+              />
             </CardContent>
           )}
         </Card>

@@ -21,11 +21,16 @@ export type EmptyStateProps = {
 };
 
 /** Maps a tone to the theme colour used to tint a brand illustration. */
-const toneTint: Record<Tone, 'primary' | 'navy' | 'success' | 'warning' | 'accent' | 'textTertiary' | 'text'> = {
+const toneTint: Record<
+  Tone,
+  'primary' | 'navy' | 'success' | 'warning' | 'info' | 'destructive' | 'accent' | 'textTertiary' | 'text'
+> = {
   brand: 'primary',
   navy: 'navy',
   success: 'success',
   warning: 'warning',
+  info: 'info',
+  destructive: 'destructive',
   accent: 'accent',
   neutral: 'textTertiary',
   ink: 'text',

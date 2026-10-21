@@ -15,6 +15,8 @@ const barTint: Record<Tone, 'primary' | 'success' | 'navy' | 'accent' | 'warning
   success: 'success',
   warning: 'warning',
   accent: 'accent',
+  info: 'navy',
+  destructive: 'primary',
   neutral: 'primary',
   ink: 'primary',
 };

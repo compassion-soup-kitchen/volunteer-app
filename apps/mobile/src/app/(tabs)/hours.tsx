@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { View } from 'react-native';
 
 import { AreaLedger, ImpactTrend, MilestoneJourney } from '@/components/impact';
+import { HeroFigure, InkHero } from '@/components/ink-hero';
 import {
   Card,
   EmptyState,
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui';
 import { type IconName } from '@/components/ui/icon';
 import { type Tone } from '@/components/ui/tones';
-import { FontFamily, Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDuration } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
@@ -35,7 +36,7 @@ function MomentumPill({ label }: { label: string }) {
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: Radius.pill,
-        backgroundColor: 'rgba(255,255,255,0.14)',
+        backgroundColor: colors.onInkHairline,
       }}>
       <Icon name="caret-up" size={12} raw={colors.onInk} />
       <Text variant="caption" weight="bold" style={{ color: colors.onInk }}>
@@ -118,39 +119,14 @@ export default function HoursScreen() {
       ) : (
         <>
           {/* HERO — lifetime time given, with this-month momentum */}
-          <Card tone="ink" elevated padding={Spacing.xl} style={{ overflow: 'hidden', gap: Spacing.md }}>
-            <View
-              style={{
-                position: 'absolute',
-                right: -30,
-                top: -30,
-                width: 130,
-                height: 130,
-                borderRadius: 65,
-                backgroundColor: 'rgba(228,0,43,0.22)',
-              }}
-            />
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.md }}>
-              <Text variant="overline" style={{ color: colors.onInkMuted, letterSpacing: 1.4 }}>
-                Tō wā · Time given
-              </Text>
-              {data.hoursThisMonth > 0 ? <MomentumPill label={`${formatDuration(data.hoursThisMonth)} this month`} /> : null}
-            </View>
-            <Text
-              style={{
-                fontFamily: FontFamily.serif,
-                fontSize: 52,
-                lineHeight: 56,
-                letterSpacing: -0.6,
-                color: colors.onInk,
-              }}>
-              {data.totalHours}
-              <Text style={{ fontFamily: FontFamily.serif, fontSize: 22, color: colors.onInkMuted }}> hrs</Text>
-            </Text>
+          <InkHero
+            overline="Tō wā · Time given"
+            aside={data.hoursThisMonth > 0 ? <MomentumPill label={`${formatDuration(data.hoursThisMonth)} this month`} /> : null}>
+            <HeroFigure value={data.totalHours} unit="hrs" />
             <Text variant="caption" style={{ color: colors.onInkMuted }}>
               Across {data.totalShifts} {data.totalShifts === 1 ? 'shift' : 'shifts'} since you joined
             </Text>
-          </Card>
+          </InkHero>
 
           {/* JOURNEY — promoted high; the motivational spine */}
           <MilestoneJourney milestones={data.milestones} totalHours={data.totalHours} />
@@ -191,7 +167,7 @@ export default function HoursScreen() {
             plain
             padding={Spacing.lg}
             radius={Radius.lg}
-            style={{ backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+            style={{ backgroundColor: colors.primaryFill, flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
             <Icon name="heart" size={22} raw={colors.primaryForeground} />
             <Text variant="callout" style={{ flex: 1, color: colors.primaryForeground }}>
               Thank you, {firstName} — your time keeps the kitchen warm.

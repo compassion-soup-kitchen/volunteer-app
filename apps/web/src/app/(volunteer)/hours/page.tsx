@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import { getVolunteerHoursData } from "@/lib/dashboard-actions";
 import { HoursDetail } from "./hours-detail";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
-import { IconChip } from "@/components/brand/icon-chip";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/brand/empty-state";
 import { PageHeader } from "@/components/brand/page-header";
 import { RiTimeLine } from "@remixicon/react";
 
@@ -37,21 +38,17 @@ async function HoursContent() {
 
   if (!data) {
     return (
-      <Card className="rounded-2xl">
-        <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
-          <IconChip tone="brand" size="lg">
-            <RiTimeLine />
-          </IconChip>
-          <div>
-            <p className="font-serif text-lg font-medium tracking-tight">
-              Nothing to count just yet
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Complete your application to start tracking hours.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<RiTimeLine />}
+        tone="brand"
+        title="Nothing to count just yet"
+        description="Complete your application to start tracking hours."
+        action={
+          <Button asChild size="sm">
+            <Link href="/application">Go to my application</Link>
+          </Button>
+        }
+      />
     );
   }
 
@@ -62,7 +59,6 @@ export default function HoursPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        backHref="/dashboard"
         eyebrow="Tō pānga · Your impact"
         title="Your impact"
         description="Every hour of mahi you've shared with the kitchen"

@@ -4,6 +4,7 @@ import {
   isSessionAccountActive,
   sessionOwnerId,
 } from "@/lib/data/session-account";
+import { MAIN_CONTENT_ID, SkipLink } from "@/components/skip-link";
 import { VolunteerNav } from "./volunteer-nav";
 import { VolunteerFooter } from "./volunteer-footer";
 
@@ -38,9 +39,14 @@ export default async function VolunteerLayout({
 
   return (
     <div className="flex min-h-dvh flex-col bg-background pb-16 sm:pb-0">
+      <SkipLink />
       <VolunteerNav user={session.user} />
       {/* Editorial column on mobile, opening out to the full width on desktop */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pt-6 pb-4 sm:px-8 sm:pt-8">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="mx-auto w-full max-w-6xl flex-1 px-5 pt-6 pb-4 outline-none sm:px-8 sm:pt-8"
+      >
         {children}
       </main>
       <VolunteerFooter />

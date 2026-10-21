@@ -125,7 +125,7 @@ export default function StyleguidePage() {
           <SectionHeading eyebrow="Ngā tae · Colour" size="sm">A palette pulled from the brand</SectionHeading>
           <Eyebrow className="mt-10">Brand</Eyebrow>
           <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-4">
-            <Swatch className="bg-primary" dark name="Pūaroha red" role="Primary action" token="--primary" />
+            <Swatch className="bg-primary-fill" dark name="Pūaroha red" role="Primary action" token="--primary-fill" />
             <Swatch className="bg-navy" dark name="Aubert navy" role="Structure" token="--navy" />
             <Swatch className="bg-ink" dark name="Ink" role="Text" token="--ink" />
             <Swatch className="bg-paper" name="Paper" role="Page ground" token="--paper" />
@@ -192,7 +192,7 @@ export default function StyleguidePage() {
           <div className="mt-5 grid gap-5 sm:grid-cols-3">
             {([
               { bg: "bg-navy", icon: <RiCalendarLine className="size-6" />, label: "My shifts" },
-              { bg: "bg-primary", icon: <RiTimeLine className="size-6" />, label: "My hours" },
+              { bg: "bg-primary-fill", icon: <RiTimeLine className="size-6" />, label: "My hours" },
               { bg: "bg-muted-foreground", icon: <RiGraduationCapLine className="size-6" />, label: "Training" },
             ] as const).map((c) => (
               <div key={c.label} className={cn("flex min-h-[140px] flex-col justify-between rounded-2xl p-5 text-white", c.bg)}>

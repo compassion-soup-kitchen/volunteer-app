@@ -3,14 +3,16 @@ import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { EventCard } from '@/components/event-card';
-import { Card, EmptyState, Screen, SectionHeader, SkeletonCard, Text } from '@/components/ui';
+import { Card, EmptyState, PageHeader, Screen, SectionHeader, SkeletonCard, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { formatShiftDate } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
 import { getPastEvents, getUpcomingEvents } from '@/services/events-service';
 
 export default function EventsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const upcoming = useQuery({ queryKey: qk.events, queryFn: getUpcomingEvents });
   const past = useQuery({ queryKey: qk.pastEvents, queryFn: getPastEvents });
@@ -26,15 +28,7 @@ export default function EventsScreen() {
       }}
       refreshing={upcoming.isRefetching}
       insetTop={false}>
-      <View style={{ gap: 4 }}>
-        <Text variant="overline" color="primary">
-          Ngā hui
-        </Text>
-        <Text variant="display">Come along</Text>
-        <Text variant="body" color="textSecondary">
-          Parties, hui and get-togethers for the whānau.
-        </Text>
-      </View>
+      <PageHeader overline="Ngā hui" title="Come along" subtitle="Parties, hui and get-togethers for the whānau." />
 
       {upcoming.isLoading ? (
         <View style={{ gap: Spacing.md }}>
@@ -73,7 +67,7 @@ export default function EventsScreen() {
                   paddingVertical: Spacing.md,
                   gap: 2,
                   borderTopWidth: index === 0 ? 0 : 1,
-                  borderTopColor: 'transparent',
+                  borderTopColor: colors.border,
                 }}>
                 <Text variant="callout">{event.title}</Text>
                 <Text variant="caption" color="textTertiary">
