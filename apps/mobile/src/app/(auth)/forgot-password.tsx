@@ -5,6 +5,7 @@ import { Pressable } from 'react-native';
 import { AuthScreen, AuthSwitch } from '@/components/auth/auth-screen';
 import { Button, Card, Text, TextField } from '@/components/ui';
 import { Shadows, Spacing } from '@/constants/theme';
+import { useAnnounce } from '@/hooks/use-announce';
 import { requestPasswordReset } from '@/services/auth-service';
 
 export default function ForgotPasswordScreen() {
@@ -13,6 +14,7 @@ export default function ForgotPasswordScreen() {
 
   const [email, setEmail] = useState(params.email ?? '');
   const [error, setError] = useState<string | null>(null);
+  useAnnounce(error);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
 

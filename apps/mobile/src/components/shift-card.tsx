@@ -5,6 +5,7 @@ import { serviceAreaMeta } from '@/components/meta';
 import { type BadgeTone, Icon, type IconName, Text, toneColors } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { shiftCardLabel } from '@/lib/a11y';
 import { formatTimeRange } from '@/lib/format';
 
 export type ShiftCardProps = {
@@ -28,7 +29,7 @@ export function ShiftCard({ areaId, areaName, date, startTime, endTime, badge, m
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${areaName}, ${formatTimeRange(startTime, endTime)}`}
+      accessibilityLabel={shiftCardLabel({ areaName, date, startTime, endTime, meta, badge: badge?.label })}
       onPress={onPress}
       style={({ pressed }) => ({ gap: Spacing.sm, opacity: pressed ? 0.6 : 1 })}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.lg }}>

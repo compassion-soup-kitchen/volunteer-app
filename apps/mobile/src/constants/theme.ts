@@ -291,6 +291,19 @@ export const Typography: Record<TypographyVariant, TextStyleToken> = {
   mono: { fontSize: 11, lineHeight: 15, fontFamily: mono, fontVariant: ['tabular-nums'] },
 };
 
+/**
+ * How far Dynamic Type may scale each variant. Body text scales freely; the big
+ * serif titles and figures are already large, and at the accessibility sizes
+ * they would otherwise take a whole line per word (or clip in a stat cell).
+ * Variants not listed here scale without a cap.
+ */
+export const MaxFontScale: Partial<Record<TypographyVariant, number>> = {
+  titleXl: 1.4,
+  display: 1.4,
+  stat: 1.4,
+  statLg: 1.4,
+};
+
 /* -------------------------------------------------------------------------- */
 /*  Spacing, radius, layout                                                    */
 /* -------------------------------------------------------------------------- */

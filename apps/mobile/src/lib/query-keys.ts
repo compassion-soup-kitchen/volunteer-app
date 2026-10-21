@@ -9,6 +9,8 @@ export const qk = {
   notice: (id: string) => ['notice', id] as const,
   /** Every notice, for invalidating them all without knowing which one is open. */
   noticesAll: ['notice'] as const,
+  /** When this person last opened the notices feed - a device-local read, not the API. */
+  noticesSeen: (userId: string) => ['notices-seen', userId] as const,
   events: ['events'] as const,
   pastEvents: ['events', 'past'] as const,
   event: (id: string) => ['event', id] as const,
