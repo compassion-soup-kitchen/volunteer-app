@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,14 @@ import {
   type ApplicationListItem,
 } from "@/lib/staff-actions";
 import { BleedList } from "@/components/brand/detail-list";
+import { SortableTableHead, useUrlSort } from "@/components/sortable-table-head";
+import {
+  APPLICATION_COLUMNS,
+  DEFAULT_APPLICATION_SORT,
+  sortApplications,
+  type ApplicationSortKey,
+  type Sort,
+} from "@/lib/table-sort";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All" },
@@ -47,10 +55,15 @@ function initials(name: string | null | undefined) {
 
 interface ApplicationsListProps {
   initialApplications: ApplicationListItem[];
+  // `?sort=` from the URL, so the first render is already sorted.
+  initialSort: Sort<ApplicationSortKey> | null;
 }
 
-export function ApplicationsList({ initialApplications }: ApplicationsListProps) {
+export function ApplicationsList({ initialApplications, initialSort }: ApplicationsListProps) {
   const [applications, setApplications] = useState(initialApplications);
+  const [sortChoice, setSort] = useUrlSort(initialSort);
+  const sort = sortChoice ?? DEFAULT_APPLICATION_SORT;
+  const sorted = useMemo(() => sortApplications(applications, sort), [applications, sort]);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -74,9 +87,14 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
     });
   }
 
-  const pending = applications.filter((a) => a.status === "PENDING");
-  const others = applications.filter((a) => a.status !== "PENDING");
-  const sorted = [...pending, ...others];
+  function sortProps(key: ApplicationSortKey) {
+    return {
+      sortKey: key,
+      sort,
+      firstDirection: APPLICATION_COLUMNS[key].firstDirection,
+      onSort: setSort,
+    };
+  }
 
   return (
     <div className="space-y-4">
@@ -146,10 +164,12 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
               <Table className="[&_td]:px-3 [&_th]:px-3 [&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead>Applicant</TableHead>
+                    <SortableTableHead {...sortProps("name")}>Applicant</SortableTableHead>
                     <TableHead>Interests</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Submitted</TableHead>
+                    <SortableTableHead {...sortProps("status")}>Status</SortableTableHead>
+                    <SortableTableHead {...sortProps("submitted")} align="right">
+                      Submitted
+                    </SortableTableHead>
                     <TableHead className="w-10">
                       <span className="sr-only">Open</span>
                     </TableHead>

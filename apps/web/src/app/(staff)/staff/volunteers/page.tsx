@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import { getVolunteersList } from "@/lib/staff-actions";
+import { VOLUNTEER_SORT_KEYS, parseSort } from "@/lib/table-sort";
 import { getAssignableGroups } from "@/lib/group-actions";
 import { VolunteerDirectory } from "./volunteer-directory";
 import { PageHeader } from "@/components/brand/page-header";
@@ -13,8 +14,13 @@ export const metadata: Metadata = {
   title: "Volunteers | Te Pūaroha",
 };
 
-export default async function VolunteersPage() {
+export default async function VolunteersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>;
+}) {
   await connection();
+  const { sort } = await searchParams;
   const [volunteers, groups, session] = await Promise.all([
     getVolunteersList(),
     getAssignableGroups(),
@@ -39,6 +45,7 @@ export default async function VolunteersPage() {
 
       <VolunteerDirectory
         initialVolunteers={volunteers}
+        initialSort={parseSort(sort, VOLUNTEER_SORT_KEYS)}
         groups={groups}
         currentUserId={session?.user?.id ?? ""}
         isAdmin={session?.user?.role === "ADMIN"}

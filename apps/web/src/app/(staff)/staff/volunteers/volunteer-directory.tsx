@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -92,6 +92,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { BleedList } from "@/components/brand/detail-list";
+import { SortableTableHead, useUrlSort } from "@/components/sortable-table-head";
+import {
+  VOLUNTEER_COLUMNS,
+  sortVolunteers,
+  type Sort,
+  type VolunteerSortKey,
+} from "@/lib/table-sort";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All statuses" },
@@ -142,6 +149,8 @@ function initials(name: string | null | undefined) {
 
 interface VolunteerDirectoryProps {
   initialVolunteers: VolunteerListItem[];
+  // `?sort=` from the URL, so the first render is already sorted.
+  initialSort: Sort<VolunteerSortKey> | null;
   // Active groups people can be filtered by and filed into.
   groups: GroupChip[];
   // The signed-in admin's user id — used to stop them changing their own role.
@@ -159,6 +168,7 @@ const ACCOUNT_OPTIONS: { value: "ACTIVE" | "ARCHIVED" | "ALL"; label: string }[]
 
 export function VolunteerDirectory({
   initialVolunteers,
+  initialSort,
   groups,
   currentUserId,
   isAdmin,
@@ -166,6 +176,8 @@ export function VolunteerDirectory({
   const { update } = useSession();
   const router = useRouter();
   const [volunteers, setVolunteers] = useState(initialVolunteers);
+  const [sort, setSort] = useUrlSort(initialSort);
+  const sorted = useMemo(() => sortVolunteers(volunteers, sort), [volunteers, sort]);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [groupFilter, setGroupFilter] = useState("ALL");
   const [accountFilter, setAccountFilter] = useState<"ACTIVE" | "ARCHIVED" | "ALL">(
@@ -308,6 +320,15 @@ export function VolunteerDirectory({
   function handleSearch(value: string) {
     setSearch(value);
     reload({ search: value });
+  }
+
+  function sortProps(key: VolunteerSortKey) {
+    return {
+      sortKey: key,
+      sort,
+      firstDirection: VOLUNTEER_COLUMNS[key].firstDirection,
+      onSort: setSort,
+    };
   }
 
   async function handleStatusChange(
@@ -513,20 +534,24 @@ export function VolunteerDirectory({
               <Table className="[&_td]:px-3 [&_th]:px-3 [&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead>Volunteer</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHead {...sortProps("name")}>Volunteer</SortableTableHead>
+                    <SortableTableHead {...sortProps("status")}>Status</SortableTableHead>
                     <TableHead>MoJ</TableHead>
                     <TableHead>Groups</TableHead>
                     <TableHead className="hidden 2xl:table-cell">Interests</TableHead>
-                    <TableHead className="text-right">Shifts</TableHead>
-                    <TableHead className="text-right">Joined</TableHead>
+                    <SortableTableHead {...sortProps("shifts")} align="right">
+                      Shifts
+                    </SortableTableHead>
+                    <SortableTableHead {...sortProps("joined")} align="right">
+                      Joined
+                    </SortableTableHead>
                     <TableHead className="w-10">
                       <span className="sr-only">Actions</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {volunteers.map((vol) => (
+                  {sorted.map((vol) => (
                     <TableRow
                       key={vol.id}
                       className={cn(
@@ -637,7 +662,7 @@ export function VolunteerDirectory({
           {/* Mobile hairline list */}
           <Card className="xl:hidden">
             <BleedList>
-              {volunteers.map((vol) => (
+              {sorted.map((vol) => (
                 <li
                   key={vol.id}
                   className={cn(
