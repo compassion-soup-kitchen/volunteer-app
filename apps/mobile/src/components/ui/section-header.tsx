@@ -20,7 +20,12 @@ export type SectionHeaderProps = {
 export function SectionHeader({ overline, title, actionLabel, onAction, divider }: SectionHeaderProps) {
   const row = (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: Spacing.md }}>
-      <View style={{ flex: 1, gap: 2 }}>
+      {/* One heading for VoiceOver's rotor: the eyebrow and the title read together. */}
+      <View
+        accessible
+        accessibilityRole="header"
+        accessibilityLabel={overline ? `${overline}, ${title}` : title}
+        style={{ flex: 1, gap: 2 }}>
         {overline ? (
           <Text variant="overline" color="primary">
             {overline}
