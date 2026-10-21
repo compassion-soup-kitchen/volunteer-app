@@ -10,7 +10,6 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
-import { VENUE } from '@/lib/venue';
 import { getMySchedule, type ScheduleEntry, type ScheduleStatus } from '@/services/shifts-service';
 
 /** The schedule's wire status, read as the shared commitment badge. */
@@ -37,7 +36,7 @@ function ScheduleCard({ entry, onPress }: { entry: ScheduleEntry; onPress: () =>
           {entry.areaName}
         </Text>
         <Text variant="caption" color="textSecondary" numberOfLines={1}>
-          {formatTimeRange(entry.startTime, entry.endTime)} · {VENUE.short}
+          {formatTimeRange(entry.startTime, entry.endTime)}
         </Text>
       </View>
       <StatusBadge status={STATUS[entry.status]} />
