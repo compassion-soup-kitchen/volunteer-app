@@ -36,10 +36,10 @@ const palette = {
 
     /** Primary text — deep cocoa "ink" */
     text: '#1C1815',
-    /** Secondary / supporting text — warm taupe */
-    textSecondary: '#8A7F76',
-    /** Tertiary / hints, timestamps, inactive */
-    textTertiary: '#A89D94',
+    /** Secondary / supporting text — warm taupe (5.4:1 on the canvas, matches web) */
+    textSecondary: '#6F6459',
+    /** Tertiary / hints, timestamps, inactive — still AA on canvas and cards */
+    textTertiary: '#7A6F65',
 
     border: '#ECE4DC',
     borderStrong: '#E0D6CB',
@@ -108,7 +108,7 @@ const palette = {
 
     text: '#FBF7F2',
     textSecondary: '#B7AC9F',
-    textTertiary: '#8A7F72',
+    textTertiary: '#9A8F82',
 
     border: 'rgba(255,255,255,0.11)',
     borderStrong: 'rgba(255,255,255,0.18)',
