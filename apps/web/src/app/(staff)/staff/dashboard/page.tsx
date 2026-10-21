@@ -6,7 +6,7 @@ import {
   getStaffDashboardStats,
   getRecentActivity,
 } from "@/lib/staff-actions";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   RiTeamLine,
   RiFileListLine,
@@ -27,10 +27,9 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
 import { SectionHeader } from "@/components/brand/section-header";
-import { StatFigure } from "@/components/brand/stat-figure";
+import { StatCard } from "@/components/brand/stat-card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
-import { Eyebrow } from "@/components/brand/eyebrow";
 import { rowLinkVariants } from "@/components/brand/row-link";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/brand/empty-state";
@@ -76,75 +75,39 @@ export default async function StaffDashboard() {
 async function StatsCards() {
   const stats = await getStaffDashboardStats();
 
-  const cards = [
-    {
-      label: "Active volunteers",
-      value: stats?.activeVolunteers ?? 0,
-      unit: undefined as string | undefined,
-      sublabel: "Kaimahi tūao",
-      icon: RiTeamLine,
-      href: "/staff/volunteers",
-      tone: "brand" as const,
-    },
-    {
-      label: "Pending applications",
-      value: stats?.pendingApplications ?? 0,
-      unit: undefined,
-      sublabel: "Awaiting review",
-      icon: RiFileListLine,
-      href: "/staff/applications",
-      tone: (stats?.pendingApplications ?? 0) > 0 ? ("warning" as const) : ("neutral" as const),
-    },
-    {
-      label: "Shifts this week",
-      value: stats?.shiftsThisWeek ?? 0,
-      unit: undefined,
-      sublabel: "Mahi o te wiki",
-      icon: RiCalendarLine,
-      href: "/staff/shifts",
-      tone: "info" as const,
-    },
-    {
-      label: "Hours this month",
-      value: stats?.hoursThisMonth ?? 0,
-      unit: "h",
-      sublabel: "Total volunteer hours",
-      icon: RiTimeLine,
-      href: null,
-      tone: "success" as const,
-    },
-  ];
+  const pending = stats?.pendingApplications ?? 0;
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map((card) => {
-        const body = (
-          <CardContent className="flex items-start justify-between gap-3">
-            <div className="space-y-1.5">
-              <Eyebrow size="sm" tone="muted">
-                {card.label}
-              </Eyebrow>
-              <StatFigure value={card.value} unit={card.unit} />
-              <p className="text-xs text-muted-foreground">{card.sublabel}</p>
-            </div>
-            <IconChip tone={card.tone} size="sm">
-              <card.icon />
-            </IconChip>
-          </CardContent>
-        );
-        return card.href ? (
-          <Card key={card.label} className="transition-colors hover:ring-input">
-            <Link
-              href={card.href}
-              className="block focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
-            >
-              {body}
-            </Link>
-          </Card>
-        ) : (
-          <Card key={card.label}>{body}</Card>
-        );
-      })}
+      <StatCard
+        label="Active volunteers"
+        value={stats?.activeVolunteers ?? 0}
+        sublabel="Kaimahi tūao"
+        icon={RiTeamLine}
+        href="/staff/volunteers"
+      />
+      <StatCard
+        label="Pending applications"
+        value={pending}
+        sublabel="Awaiting review"
+        icon={RiFileListLine}
+        tone={pending > 0 ? "warning" : "neutral"}
+        href="/staff/applications"
+      />
+      <StatCard
+        label="Shifts this week"
+        value={stats?.shiftsThisWeek ?? 0}
+        sublabel="Mahi o te wiki"
+        icon={RiCalendarLine}
+        href="/staff/shifts"
+      />
+      <StatCard
+        label="Hours this month"
+        value={stats?.hoursThisMonth ?? 0}
+        unit="h"
+        sublabel="Total volunteer hours"
+        icon={RiTimeLine}
+      />
     </div>
   );
 }

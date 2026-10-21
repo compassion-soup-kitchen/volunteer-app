@@ -236,17 +236,15 @@ export function StatTilesSkeleton({
     <div className={cn("grid gap-3 sm:grid-cols-2 xl:grid-cols-4", className)}>
       {range(count).map((i) => (
         <Card key={i}>
-          <CardContent className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1 space-y-1.5">
-              {/* Labels wrap to two lines at most widths */}
-              <div>
-                <TextLine className={eyebrowVariants({ size: "sm", tone: "inherit" })} bar="w-20" />
-                <TextLine className={eyebrowVariants({ size: "sm", tone: "inherit" })} bar="w-14" />
-              </div>
-              <TextLine className="font-serif text-3xl leading-none" bar="w-12" />
-              <TextLine className="text-xs" bar="w-24" />
-            </div>
+          {/* StatCard's layout: figure beside the chip, then label and sublabel full width. */}
+          <CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
+            <TextLine className="font-serif text-3xl leading-none" bar="w-12" />
             <Skeleton className="size-8 shrink-0" />
+            <TextLine
+              className={cn(eyebrowVariants({ size: "sm", tone: "inherit" }), "col-span-2 mt-1.5")}
+              bar="w-28"
+            />
+            <TextLine className="col-span-2 text-xs" bar="w-24" />
           </CardContent>
         </Card>
       ))}

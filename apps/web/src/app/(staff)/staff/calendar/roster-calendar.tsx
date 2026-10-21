@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -55,6 +55,14 @@ import {
 } from "@/lib/date-only";
 import { formatTime, formatTimeRange } from "@/lib/format";
 import type { PublicHoliday } from "@/lib/nz-public-holidays";
+import {
+  describeDay,
+  isGridKey,
+  isShort,
+  moveInGrid,
+  shortAreaName,
+  shortCount,
+} from "@/lib/roster-calendar";
 import { cn } from "@/lib/utils";
 import { CloseDayDialog, describeClosureOutcome } from "./close-day-dialog";
 import { Eyebrow } from "@/components/brand/eyebrow";
@@ -133,6 +141,12 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
         : data.month
   );
 
+  // The one day in the grid that takes Tab focus (a roving tabindex): the
+  // arrow keys move it, so the month is a single Tab stop rather than 42.
+  const [focused, setFocused] = useState<DateOnly>(selected);
+  const days = useMemo(() => weeks.flat(), [weeks]);
+  const cellRefs = useRef(new Map<DateOnly, HTMLButtonElement>());
+
   const [closing, setClosing] = useState<{ date: DateOnly; reason: string } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -143,6 +157,7 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
    */
   function selectDay(date: DateOnly) {
     setSelected(date);
+    setFocused(date);
     if (window.matchMedia("(min-width: 1024px)").matches) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     requestAnimationFrame(() =>
@@ -153,6 +168,17 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
     );
   }
 
+  /** Arrow keys walk the days, Home and End the week; Enter or Space picks one. */
+  function handleGridKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!isGridKey(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
+    const index = days.findIndex((day) => day.date === focused);
+    if (index === -1) return;
+    event.preventDefault();
+    const next = days[moveInGrid(index, event.key, days.length)].date;
+    setFocused(next);
+    cellRefs.current.get(next)?.focus();
+  }
+
   const refresh = () => router.refresh();
 
   return (
@@ -160,7 +186,11 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
       <Card className="gap-0 self-start py-0">
         <MonthHeader month={data.month} today={data.today} />
 
-        <div role="grid" aria-label={formatDateOnly(parseDateOnly(data.month), { month: "long", year: "numeric" })}>
+        <div
+          role="grid"
+          aria-label={formatDateOnly(parseDateOnly(data.month), { month: "long", year: "numeric" })}
+          onKeyDown={handleGridKeyDown}
+        >
           <div role="row" className="grid grid-cols-7 border-y border-border bg-muted/50">
             {WEEKDAY_HEADINGS.map((day) => (
               <div
@@ -184,6 +214,12 @@ export function RosterCalendar({ data, initialDate }: RosterCalendarProps) {
                   isToday={day.date === data.today}
                   isPast={day.date < data.today}
                   selected={day.date === selected}
+                  tabbable={day.date === focused}
+                  cellRef={(el) => {
+                    if (el) cellRefs.current.set(day.date, el);
+                    else cellRefs.current.delete(day.date);
+                  }}
+                  onFocus={() => setFocused(day.date)}
                   shifts={shiftsByDate.get(day.date) ?? []}
                   closure={closedByDate.get(day.date) ?? null}
                   holiday={holidayByDate.get(day.date) ?? null}
@@ -274,6 +310,10 @@ interface DayCellProps {
   isToday: boolean;
   isPast: boolean;
   selected: boolean;
+  /** The day that takes Tab focus - every other day is reached with the arrows. */
+  tabbable: boolean;
+  cellRef: (el: HTMLButtonElement | null) => void;
+  onFocus: () => void;
   shifts: CalendarShift[];
   closure: CalendarClosedDay | null;
   holiday: PublicHoliday | null;
@@ -282,44 +322,43 @@ interface DayCellProps {
   onSelect: () => void;
 }
 
-/** Whether a shift still needs people - the thing a coordinator scans for. */
-function isShort(shift: CalendarShift): boolean {
-  return shift.filled < shift.capacity;
-}
-
 function DayCell({
   date,
   inMonth,
   isToday,
   isPast,
   selected,
+  tabbable,
+  cellRef,
+  onFocus,
   shifts,
   closure,
   holiday,
   awayCount,
   onSelect,
 }: DayCellProps) {
-  const summary = closure
-    ? `closed, ${closure.reason}`
-    : [
-        holiday?.name,
-        shifts.length === 0
-          ? "nothing rostered"
-          : `${shifts.length} ${shifts.length === 1 ? "shift" : "shifts"}`,
-        awayCount > 0 ? `${awayCount} on leave` : null,
-      ]
-        .filter(Boolean)
-        .join(", ");
+  const summary = describeDay({
+    shifts,
+    isPast,
+    closureReason: closure?.reason ?? null,
+    holidayName: holiday?.name ?? null,
+    awayCount,
+  });
+  const short = shortCount(shifts, isPast);
 
   return (
     <button
+      ref={cellRef}
       type="button"
       role="gridcell"
+      tabIndex={tabbable ? 0 : -1}
       aria-selected={selected}
+      aria-current={isToday ? "date" : undefined}
       aria-label={`${longDay(date)}: ${summary}`}
       onClick={onSelect}
+      onFocus={onFocus}
       className={cn(
-        "relative flex min-h-16 flex-col gap-1 border-r border-b border-border p-1.5 text-left transition-colors outline-none last:border-r-0 sm:min-h-28 sm:p-2",
+        "@container relative flex min-h-16 flex-col gap-1 border-r border-b border-border p-1.5 text-left transition-colors outline-none last:border-r-0 sm:min-h-28 sm:p-2",
         "focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-inset",
         closure ? "closed-hatch" : "hover:bg-secondary/40",
         !inMonth && "text-muted-foreground/60",
@@ -361,7 +400,33 @@ function DayCell({
             ))}
           </span>
 
-          <span aria-hidden className="hidden flex-col gap-0.5 sm:flex">
+          {/*
+            A cell too narrow for "9am Kitchen" - most laptops, where the day
+            panel shares the row - counts its shifts instead, and says how many
+            still need people in words as well as colour. Picking the day
+            lists them in the panel.
+          */}
+          {shifts.length > 0 && (
+            <span
+              aria-hidden
+              className={cn(
+                "hidden flex-col gap-0.5 text-[0.7rem]/tight sm:flex @[6rem]:hidden",
+                isPast && "opacity-60"
+              )}
+            >
+              <span className="font-semibold tnum">
+                {shifts.length} {shifts.length === 1 ? "shift" : "shifts"}
+              </span>
+              {short > 0 && (
+                <span className="flex items-baseline gap-1 font-medium text-warning-tint-foreground">
+                  <span className="size-1.5 shrink-0 translate-y-[-0.1em] rounded-full bg-warning" />
+                  <span className="tnum">{short} short</span>
+                </span>
+              )}
+            </span>
+          )}
+
+          <span aria-hidden className="hidden flex-col gap-0.5 @[6rem]:flex">
             {shifts.slice(0, CELL_SHIFT_LIMIT).map((shift) => (
               <span
                 key={shift.id}
@@ -377,7 +442,9 @@ function DayCell({
                   )}
                 />
                 <span className="font-semibold tnum">{formatTime(shift.startTime)}</span>
-                <span className="truncate text-muted-foreground">{shift.serviceAreaName}</span>
+                <span className="truncate text-muted-foreground">
+                  {shortAreaName(shift.serviceAreaName)}
+                </span>
               </span>
             ))}
             {shifts.length > CELL_SHIFT_LIMIT && (
