@@ -28,7 +28,7 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
 import { SectionHeader } from "@/components/brand/section-header";
-import { StatFigure } from "@/components/brand/stat-figure";
+import { StatCard } from "@/components/brand/stat-card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
 
@@ -72,75 +72,39 @@ export default async function StaffDashboard() {
 async function StatsCards() {
   const stats = await getStaffDashboardStats();
 
-  const cards = [
-    {
-      label: "Active volunteers",
-      value: stats?.activeVolunteers ?? 0,
-      unit: undefined as string | undefined,
-      sublabel: "Kaimahi tūao",
-      icon: RiTeamLine,
-      href: "/staff/volunteers",
-      tone: "brand" as const,
-    },
-    {
-      label: "Pending applications",
-      value: stats?.pendingApplications ?? 0,
-      unit: undefined,
-      sublabel: "Awaiting review",
-      icon: RiFileListLine,
-      href: "/staff/applications",
-      tone: (stats?.pendingApplications ?? 0) > 0 ? ("warning" as const) : ("neutral" as const),
-    },
-    {
-      label: "Shifts this week",
-      value: stats?.shiftsThisWeek ?? 0,
-      unit: undefined,
-      sublabel: "Mahi o te wiki",
-      icon: RiCalendarLine,
-      href: "/staff/shifts",
-      tone: "info" as const,
-    },
-    {
-      label: "Hours this month",
-      value: stats?.hoursThisMonth ?? 0,
-      unit: "h",
-      sublabel: "Total volunteer hours",
-      icon: RiTimeLine,
-      href: null,
-      tone: "success" as const,
-    },
-  ];
+  const pending = stats?.pendingApplications ?? 0;
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map((card) => {
-        const body = (
-          <CardContent className="flex items-start justify-between gap-3">
-            <div className="space-y-1.5">
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
-                {card.label}
-              </p>
-              <StatFigure value={card.value} unit={card.unit} />
-              <p className="text-xs text-muted-foreground">{card.sublabel}</p>
-            </div>
-            <IconChip tone={card.tone} size="sm">
-              <card.icon />
-            </IconChip>
-          </CardContent>
-        );
-        return card.href ? (
-          <Card key={card.label} className="transition-colors hover:ring-input">
-            <Link
-              href={card.href}
-              className="block focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
-            >
-              {body}
-            </Link>
-          </Card>
-        ) : (
-          <Card key={card.label}>{body}</Card>
-        );
-      })}
+      <StatCard
+        label="Active volunteers"
+        value={stats?.activeVolunteers ?? 0}
+        sublabel="Kaimahi tūao"
+        icon={RiTeamLine}
+        href="/staff/volunteers"
+      />
+      <StatCard
+        label="Pending applications"
+        value={pending}
+        sublabel="Awaiting review"
+        icon={RiFileListLine}
+        tone={pending > 0 ? "warning" : "neutral"}
+        href="/staff/applications"
+      />
+      <StatCard
+        label="Shifts this week"
+        value={stats?.shiftsThisWeek ?? 0}
+        sublabel="Mahi o te wiki"
+        icon={RiCalendarLine}
+        href="/staff/shifts"
+      />
+      <StatCard
+        label="Hours this month"
+        value={stats?.hoursThisMonth ?? 0}
+        unit="h"
+        sublabel="Total volunteer hours"
+        icon={RiTimeLine}
+      />
     </div>
   );
 }
@@ -289,8 +253,8 @@ function StatsSkeleton() {
       {[...Array(4)].map((_, i) => (
         <Card key={i}>
           <CardContent className="space-y-2">
-            <Skeleton className="h-3 w-24" />
             <Skeleton className="h-8 w-14" />
+            <Skeleton className="h-3 w-24" />
             <Skeleton className="h-3 w-20" />
           </CardContent>
         </Card>

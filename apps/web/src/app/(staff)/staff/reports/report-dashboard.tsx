@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/date-picker";
 import { toDateOnly, todayInAppZone, toPickerDate } from "@/lib/date-only";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { IconChip } from "@/components/brand/icon-chip";
+import { StatCard } from "@/components/brand/stat-card";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { StatusBadge } from "@/components/brand/status-badge";
 import {
@@ -289,57 +289,32 @@ export function ReportDashboard({
       {/* Summary Stats */}
       {summary && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            {
-              label: "Total hours",
-              value: summary.totalHours,
-              unit: "h" as string | undefined,
-              sublabel: "Ngā hāora",
-              icon: RiTimeLine,
-              tone: "brand" as const,
-            },
-            {
-              label: "Total shifts",
-              value: summary.totalShifts,
-              unit: undefined,
-              sublabel: "Ngā mahi",
-              icon: RiCalendarLine,
-              tone: "info" as const,
-            },
-            {
-              label: "Unique volunteers",
-              value: summary.uniqueVolunteers,
-              unit: undefined,
-              sublabel: "Kaimahi tūao",
-              icon: RiTeamLine,
-              tone: "neutral" as const,
-            },
-            {
-              label: "Attendance rate",
-              value: summary.overallAttendanceRate,
-              unit: "%",
-              sublabel: "Attended of signed up",
-              icon: RiCheckLine,
-              tone: "success" as const,
-            },
-          ].map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="flex items-start justify-between gap-3">
-                <div className="space-y-1.5">
-                  <p className="eyebrow text-[0.62rem] text-muted-foreground">
-                    {stat.label}
-                  </p>
-                  <StatFigure value={stat.value} unit={stat.unit} />
-                  <p className="text-xs text-muted-foreground">
-                    {stat.sublabel}
-                  </p>
-                </div>
-                <IconChip tone={stat.tone} size="sm">
-                  <stat.icon />
-                </IconChip>
-              </CardContent>
-            </Card>
-          ))}
+          <StatCard
+            label="Total hours"
+            value={summary.totalHours}
+            unit="h"
+            sublabel="Ngā hāora"
+            icon={RiTimeLine}
+          />
+          <StatCard
+            label="Total shifts"
+            value={summary.totalShifts}
+            sublabel="Ngā mahi"
+            icon={RiCalendarLine}
+          />
+          <StatCard
+            label="Unique volunteers"
+            value={summary.uniqueVolunteers}
+            sublabel="Kaimahi tūao"
+            icon={RiTeamLine}
+          />
+          <StatCard
+            label="Attendance rate"
+            value={summary.overallAttendanceRate}
+            unit="%"
+            sublabel="Attended of signed up"
+            icon={RiCheckLine}
+          />
         </div>
       )}
 
