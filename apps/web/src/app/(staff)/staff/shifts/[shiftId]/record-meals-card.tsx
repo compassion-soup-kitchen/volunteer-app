@@ -18,22 +18,13 @@ import { RiLoader4Line, RiRestaurantLine } from "@remixicon/react";
 import { toast } from "sonner";
 import { recordShiftMeals } from "@/lib/shift-actions";
 import { MEALS_SERVED_MAX, mealsServedSchema } from "@/lib/shift-meals";
+import { formatTimestampWithTime } from "@/lib/format";
 
 interface RecordMealsCardProps {
   shiftId: string;
   mealsServed: number | null;
   mealsRecordedAt: Date | null;
   mealsRecordedByName: string | null;
-}
-
-function formatRecordedAt(date: Date): string {
-  return new Date(date).toLocaleString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 export function RecordMealsCard({
@@ -99,7 +90,8 @@ export function RecordMealsCard({
                 {mealsRecordedByName
                   ? `Recorded by ${mealsRecordedByName}`
                   : "Recorded"}
-                {mealsRecordedAt ? ` · ${formatRecordedAt(mealsRecordedAt)}` : ""}
+                {mealsRecordedAt &&
+                  `${mealsRecordedByName ? " ·" : ""} ${formatTimestampWithTime(mealsRecordedAt)}`}
               </p>
             )}
           </div>

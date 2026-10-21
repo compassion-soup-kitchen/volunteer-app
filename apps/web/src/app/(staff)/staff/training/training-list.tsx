@@ -14,7 +14,11 @@ import {
 } from "@remixicon/react";
 import type { StaffTrainingSession } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
-import { isPastInAppZone, isTodayInAppZone } from "@/lib/date-only";
+import {
+  isPastInAppZone,
+  isTodayInAppZone,
+  todayInAppZone,
+} from "@/lib/date-only";
 import { BleedList } from "@/components/brand/detail-list";
 import { EmptyState } from "@/components/brand/empty-state";
 
@@ -84,7 +88,7 @@ function SessionRow({
   const activeCount = session.attendances.length;
   const today = isTodayInAppZone(session.date);
   const sessionYear = session.date.getUTCFullYear();
-  const currentYear = new Date().getFullYear();
+  const currentYear = Number(todayInAppZone().slice(0, 4));
 
   return (
     <li>

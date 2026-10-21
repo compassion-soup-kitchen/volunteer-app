@@ -84,6 +84,7 @@ import {
 } from "@/lib/announcement-schema";
 import { BleedList } from "@/components/brand/detail-list";
 import { EmptyState } from "@/components/brand/empty-state";
+import { formatTimestamp } from "@/lib/format";
 
 const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
   ALL: "Everyone",
@@ -96,14 +97,6 @@ const AUDIENCE_VARIANTS: Record<AnnouncementAudience, "info" | "neutral"> = {
   VOLUNTEERS: "neutral",
   COORDINATORS: "neutral",
 };
-
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 interface AnnouncementManagerProps {
   initialAnnouncements: StaffAnnouncement[];
@@ -672,8 +665,8 @@ function AnnouncementRow({
           <span className="flex items-center gap-1.5">
             <RiCalendarLine className="size-3.5" aria-hidden />
             {announcement.sentAt
-              ? `Published ${formatDate(announcement.sentAt)}`
-              : `Created ${formatDate(announcement.createdAt)}`}
+              ? `Published ${formatTimestamp(announcement.sentAt)}`
+              : `Created ${formatTimestamp(announcement.createdAt)}`}
           </span>
           {announcement.authorName && (
             <span className="flex items-center gap-1.5">
