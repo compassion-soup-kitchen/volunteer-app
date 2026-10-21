@@ -55,6 +55,16 @@ export function nextSort<K extends string>(
   return { key, direction: firstDirection };
 }
 
+/**
+ * One choice in the sort menu that stands in for the headers where a table
+ * becomes a list (phones and tablets): a column, a direction, and how a
+ * coordinator would say it.
+ */
+export interface SortOption<K extends string> {
+  sort: Sort<K>;
+  label: string;
+}
+
 /** `aria-sort` for a header: only the column doing the sorting says so. */
 export function ariaSort<K extends string>(
   sort: Sort<K> | null,
@@ -134,6 +144,18 @@ export const VOLUNTEER_COLUMNS: Record<VolunteerSortKey, Column<VolunteerListIte
 };
 
 /** No sort leaves the directory in the server's order. Ties fall back to name. */
+/** Every column both ways round, each column's natural direction first. */
+export const VOLUNTEER_SORT_OPTIONS: SortOption<VolunteerSortKey>[] = [
+  { sort: { key: "name", direction: "asc" }, label: "Name, A to Z" },
+  { sort: { key: "name", direction: "desc" }, label: "Name, Z to A" },
+  { sort: { key: "status", direction: "asc" }, label: "Status, just applied first" },
+  { sort: { key: "status", direction: "desc" }, label: "Status, inactive first" },
+  { sort: { key: "shifts", direction: "desc" }, label: "Most shifts" },
+  { sort: { key: "shifts", direction: "asc" }, label: "Fewest shifts" },
+  { sort: { key: "joined", direction: "desc" }, label: "Joined most recently" },
+  { sort: { key: "joined", direction: "asc" }, label: "Joined longest ago" },
+];
+
 export function sortVolunteers(
   rows: readonly VolunteerListItem[],
   sort: Sort<VolunteerSortKey> | null
@@ -169,6 +191,15 @@ export const DEFAULT_APPLICATION_SORT: Sort<ApplicationSortKey> = {
   key: "status",
   direction: "asc",
 };
+
+export const APPLICATION_SORT_OPTIONS: SortOption<ApplicationSortKey>[] = [
+  { sort: { key: "status", direction: "asc" }, label: "Needs review first" },
+  { sort: { key: "status", direction: "desc" }, label: "Decided first" },
+  { sort: { key: "submitted", direction: "desc" }, label: "Newest first" },
+  { sort: { key: "submitted", direction: "asc" }, label: "Oldest first" },
+  { sort: { key: "name", direction: "asc" }, label: "Name, A to Z" },
+  { sort: { key: "name", direction: "desc" }, label: "Name, Z to A" },
+];
 
 /**
  * Ties fall back to newest first: within a status, the application a

@@ -91,9 +91,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { BleedList } from "@/components/brand/detail-list";
-import { SortableTableHead, useUrlSort } from "@/components/sortable-table-head";
+import { SortableTableHead, SortSelect, useUrlSort } from "@/components/sortable-table-head";
 import {
   VOLUNTEER_COLUMNS,
+  VOLUNTEER_SORT_OPTIONS,
   sortVolunteers,
   type Sort,
   type VolunteerSortKey,
@@ -649,7 +650,14 @@ export function VolunteerDirectory({
             </Card>
           </div>
 
-          {/* Mobile hairline list */}
+          {/* Mobile hairline list - no headers, so the sort is a menu. */}
+          <SortSelect
+            sort={sort}
+            options={VOLUNTEER_SORT_OPTIONS}
+            onSort={setSort}
+            label="Sort volunteers"
+            className="xl:hidden"
+          />
           <Card className="xl:hidden">
             <BleedList>
               {sorted.map((vol) => (

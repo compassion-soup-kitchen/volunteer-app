@@ -3,8 +3,22 @@
 import { useState } from "react";
 import { RiArrowDownLine, RiArrowUpDownLine, RiArrowUpLine } from "@remixicon/react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TableHead } from "@/components/ui/table";
-import { ariaSort, formatSort, nextSort, type Sort, type SortDirection } from "@/lib/table-sort";
+import {
+  ariaSort,
+  formatSort,
+  nextSort,
+  type Sort,
+  type SortDirection,
+  type SortOption,
+} from "@/lib/table-sort";
 import { cn } from "@/lib/utils";
 
 interface SortableTableHeadProps<K extends string> {
@@ -58,6 +72,59 @@ export function SortableTableHead<K extends string>({
         />
       </button>
     </TableHead>
+  );
+}
+
+interface SortSelectProps<K extends string> {
+  sort: Sort<K> | null;
+  options: SortOption<K>[];
+  onSort: (sort: Sort<K>) => void;
+  /** Names what is being sorted, for screen readers: "Sort volunteers". */
+  label: string;
+  className?: string;
+}
+
+/**
+ * The headers' stand-in where a table folds into a list on smaller screens:
+ * the same sort, chosen from a menu, so the list's order is always visible
+ * and changeable - including one that arrived in a shared `?sort=` link.
+ */
+export function SortSelect<K extends string>({
+  sort,
+  options,
+  onSort,
+  label,
+  className,
+}: SortSelectProps<K>) {
+  return (
+    <Select
+      value={sort ? formatSort(sort) : ""}
+      onValueChange={(value) => {
+        const option = options.find((o) => formatSort(o.sort) === value);
+        if (option) onSort(option.sort);
+      }}
+    >
+      <SelectTrigger className={cn("w-full sm:w-60", className)}>
+        <RiArrowUpDownLine aria-hidden className="text-muted-foreground" />
+        {/* Not aria-label, which would hide the chosen order from screen readers. */}
+        <span className="sr-only">{label}: </span>
+        {/* Grows so the trigger's justify-between leaves the value beside the
+            icon, not centred. Radix's SelectValue drops className, hence the span. */}
+        <span className="min-w-0 flex-1 truncate text-left">
+          <SelectValue placeholder="Sort by" />
+        </span>
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => {
+          const value = formatSort(option.sort);
+          return (
+            <SelectItem key={value} value={value}>
+              {option.label}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 }
 

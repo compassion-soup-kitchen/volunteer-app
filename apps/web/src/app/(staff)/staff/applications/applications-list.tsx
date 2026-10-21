@@ -27,9 +27,10 @@ import {
   type ApplicationListItem,
 } from "@/lib/staff-actions";
 import { BleedList } from "@/components/brand/detail-list";
-import { SortableTableHead, useUrlSort } from "@/components/sortable-table-head";
+import { SortableTableHead, SortSelect, useUrlSort } from "@/components/sortable-table-head";
 import {
   APPLICATION_COLUMNS,
+  APPLICATION_SORT_OPTIONS,
   DEFAULT_APPLICATION_SORT,
   sortApplications,
   type ApplicationSortKey,
@@ -227,7 +228,14 @@ export function ApplicationsList({ initialApplications, initialSort }: Applicati
             </Card>
           </div>
 
-          {/* Mobile hairline list */}
+          {/* Mobile hairline list - no headers, so the sort is a menu. */}
+          <SortSelect
+            sort={sort}
+            options={APPLICATION_SORT_OPTIONS}
+            onSort={setSort}
+            label="Sort applications"
+            className="md:hidden"
+          />
           <Card className="md:hidden">
             <BleedList>
               {sorted.map((app) => (

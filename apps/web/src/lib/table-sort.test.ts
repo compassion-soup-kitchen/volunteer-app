@@ -4,8 +4,10 @@ import type { ApplicationListItem, VolunteerListItem } from "@/lib/staff-actions
 
 import {
   APPLICATION_SORT_KEYS,
+  APPLICATION_SORT_OPTIONS,
   DEFAULT_APPLICATION_SORT,
   VOLUNTEER_SORT_KEYS,
+  VOLUNTEER_SORT_OPTIONS,
   ariaSort,
   formatSort,
   nextSort,
@@ -119,6 +121,21 @@ describe("ariaSort", () => {
     expect(ariaSort({ ...sort, direction: "asc" }, "name")).toBe("ascending");
     expect(ariaSort(sort, "status")).toBeUndefined();
     expect(ariaSort(null, "name")).toBeUndefined();
+  });
+});
+
+describe("sort menu options", () => {
+  it.each([
+    ["volunteers", VOLUNTEER_SORT_OPTIONS, VOLUNTEER_SORT_KEYS],
+    ["applications", APPLICATION_SORT_OPTIONS, APPLICATION_SORT_KEYS],
+  ] as const)("offer every %s column both ways round, once each", (_, options, keys) => {
+    const values = options.map((option) => formatSort(option.sort));
+    expect(new Set(values).size).toBe(values.length);
+    expect([...values].sort()).toEqual(keys.flatMap((key) => [key, `-${key}`]).sort());
+  });
+
+  it("starts the applications menu on the list's default order", () => {
+    expect(APPLICATION_SORT_OPTIONS[0].sort).toEqual(DEFAULT_APPLICATION_SORT);
   });
 });
 
