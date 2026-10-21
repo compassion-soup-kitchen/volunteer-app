@@ -63,7 +63,7 @@ export function TrainingReadiness({ readiness }: { readiness: Readiness }) {
               width: 46,
               height: 46,
               borderRadius: 23,
-              backgroundColor: colors.primary,
+              backgroundColor: colors.primaryFill,
               alignItems: 'center',
               justifyContent: 'center',
             }}>
@@ -117,7 +117,7 @@ function StatusDot({ state }: { state: TrainingModule['state'] }) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: colors.primary,
+          backgroundColor: colors.primaryFill,
           alignItems: 'center',
           justifyContent: 'center',
         }}>

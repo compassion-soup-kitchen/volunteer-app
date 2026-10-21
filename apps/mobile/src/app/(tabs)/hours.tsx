@@ -191,7 +191,7 @@ export default function HoursScreen() {
             plain
             padding={Spacing.lg}
             radius={Radius.lg}
-            style={{ backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+            style={{ backgroundColor: colors.primaryFill, flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
             <Icon name="heart" size={22} raw={colors.primaryForeground} />
             <Text variant="callout" style={{ flex: 1, color: colors.primaryForeground }}>
               Thank you, {firstName} — your time keeps the kitchen warm.

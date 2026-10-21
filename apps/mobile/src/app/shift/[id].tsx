@@ -62,7 +62,7 @@ function AvatarStack({ count }: { count: number }) {
               width: 34,
               height: 34,
               borderRadius: 17,
-              backgroundColor: colors.primary,
+              backgroundColor: colors.primaryFill,
               borderWidth: 2,
               borderColor: colors.background,
               marginLeft: -9,

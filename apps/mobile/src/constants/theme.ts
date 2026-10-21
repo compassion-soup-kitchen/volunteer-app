@@ -44,10 +44,18 @@ const palette = {
     border: '#ECE4DC',
     borderStrong: '#E0D6CB',
 
-    /** Brand red — Pūaroha */
+    /** Brand red — Pūaroha. Text, icons and marks; see `primaryFill` for surfaces. */
     primary: '#E4002B',
+    /**
+     * Solid red that carries `primaryForeground`: buttons, selected chips and
+     * checks, filled markers and banners. Fill any red surface with text or an
+     * icon on it from this, never from `primary`. The same red here; dark mode
+     * splits the two. White on it: 4.85:1.
+     */
+    primaryFill: '#E4002B',
+    /** White, on `primaryFill` (also the reversed wordmark over video). */
     primaryForeground: '#ffffff',
-    /** Pressed / inked brand red */
+    /** Pressed `primaryFill` (white on it: 6.86:1) */
     primaryPressed: '#B80022',
     /** Soft red wash for active states and brand badges */
     primaryTint: '#FCEBED',
@@ -61,7 +69,6 @@ const palette = {
 
     /** Accent == the single brand red: links and inline actions read as Pūaroha */
     accent: '#E4002B',
-    accentForeground: '#ffffff',
     accentTint: '#FCEBED',
     onAccentTint: '#B80022',
 
@@ -113,9 +120,12 @@ const palette = {
     border: 'rgba(255,255,255,0.11)',
     borderStrong: 'rgba(255,255,255,0.18)',
 
+    /** Brightened so red text and icons read on the dark ground (5.15:1, 4.55:1 on `surface`), but too light to carry white (3.59:1). */
     primary: '#FF3355',
+    /** The light-mode brand red: white on it is 4.85:1, and as a shape it still holds 3.81:1 on `background`. */
+    primaryFill: '#E4002B',
     primaryForeground: '#ffffff',
-    primaryPressed: '#E4002B',
+    primaryPressed: '#B80022',
     primaryTint: 'rgba(255,51,85,0.18)',
     onPrimaryTint: '#FF94A4',
 
@@ -125,7 +135,6 @@ const palette = {
     onNavyTint: '#D8CDBE',
 
     accent: '#FF3355',
-    accentForeground: '#ffffff',
     accentTint: 'rgba(255,51,85,0.18)',
     onAccentTint: '#FF94A4',
 
