@@ -19,7 +19,7 @@ function StepMarker({ index, state }: { index: number; state: StepState }) {
   const { colors } = useTheme();
   if (state === 'done') {
     return (
-      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primaryFill, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="checkmark" size={16} raw={colors.primaryForeground} />
       </View>
     );

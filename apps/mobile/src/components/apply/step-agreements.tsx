@@ -71,7 +71,7 @@ function CheckRow({
             justifyContent: 'center',
             borderWidth: checked ? 0 : 1.5,
             borderColor: error ? colors.destructive : colors.borderStrong,
-            backgroundColor: checked ? colors.primary : colors.surface,
+            backgroundColor: checked ? colors.primaryFill : colors.surface,
           }}>
           {checked ? <Icon name="checkmark" size={16} raw={colors.primaryForeground} /> : null}
         </View>
