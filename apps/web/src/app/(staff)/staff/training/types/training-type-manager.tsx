@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { SectionHeader } from "@/components/brand/section-header";
 import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
@@ -58,6 +58,7 @@ import {
   TRAINING_TYPE_NAME_MAX,
 } from "@/lib/training-types";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 
 interface TrainingTypeManagerProps {
   initialTypes: TrainingTypeWithStats[];
@@ -163,21 +164,11 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
           title={`Active (${active.length})`}
         />
         {active.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-              <IconChip tone="brand" size="lg">
-                <RiGraduationCapLine />
-              </IconChip>
-              <div>
-                <p className="font-serif text-lg font-medium tracking-tight">
-                  No training types yet
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Add one so sessions can be scheduled against it.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={<RiGraduationCapLine />}
+            title="No training types yet"
+            description="Add one so sessions can be scheduled against it."
+          />
         ) : (
           <Card>
             <BleedList>

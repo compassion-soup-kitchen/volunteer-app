@@ -27,12 +27,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { DateBlock } from "@/components/brand/date-block";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
-import { Illustration } from "@/components/brand/illustration";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiAddLine,
   RiCheckboxCircleLine,
@@ -201,19 +201,11 @@ export function StaffShiftWeek({
 
       {/* One card for the week, a row of days down the left */}
       {days.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <Illustration name="coffee" size={96} />
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                Every shift this week has its people
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Turn off &ldquo;Needs people&rdquo; to see the whole week.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          illustration="coffee"
+          title="Every shift this week has its people"
+          description="Turn off “Needs people” to see the whole week."
+        />
       ) : (
         <Card
           className={cn(

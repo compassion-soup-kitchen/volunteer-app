@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import {
   AlertDialog,
@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
-import { Illustration } from "@/components/brand/illustration";
+import { EmptyState } from "@/components/brand/empty-state";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { BleedList } from "@/components/brand/detail-list";
@@ -251,19 +251,15 @@ export function ShiftBrowser({
       </div>
 
       {days.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-            <Illustration name="cafe" size={96} />
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                Nothing open this week
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {areaId
-                  ? "Try another area, or have a look at the week after."
-                  : "New mahi is added regularly - have a look at the week after."}
-              </p>
-            </div>
+        <EmptyState
+          illustration="cafe"
+          title="Nothing open this week"
+          description={
+            areaId
+              ? "Try another area, or have a look at the week after."
+              : "New mahi is added regularly - have a look at the week after."
+          }
+          action={
             <Button
               variant="outline"
               size="sm"
@@ -272,8 +268,8 @@ export function ShiftBrowser({
               Next week
               <RiArrowRightSLine />
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <div
           className={cn("space-y-8 transition-opacity", isPending && "opacity-60")}

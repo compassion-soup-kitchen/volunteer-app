@@ -25,9 +25,9 @@ const eyebrowVariants = cva("eyebrow", {
     tone: {
       brand: "text-primary",
       muted: "text-muted-foreground",
-      sidebar: "text-sidebar-foreground/50",
+      sidebar: "text-sidebar-muted-foreground",
       ink: "text-ink-muted-foreground",
-      onPrimary: "text-primary-foreground/70",
+      onPrimary: "text-primary-foreground",
       inherit: "",
     },
   },

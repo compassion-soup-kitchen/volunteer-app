@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Role } from "@prisma/client";
-import { RiLoader4Line } from "@remixicon/react";
+import { RiGroupLine, RiLoader4Line } from "@remixicon/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { StatFigure } from "@/components/brand/stat-figure";
+import { EmptyState } from "@/components/brand/empty-state";
 import { RsvpControl } from "@/components/event/rsvp-control";
 import {
   awaitingReply,
@@ -171,9 +172,13 @@ export function GuestListDialog({
               Loading the guest list…
             </div>
           ) : guests.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Nobody is invited to this one yet.
-            </p>
+            <EmptyState
+              bare
+              size="compact"
+              icon={<RiGroupLine />}
+              title="Nobody is invited to this one yet"
+              className="px-0"
+            />
           ) : (
             <ul className="divide-y divide-border">
               {guests.map((guest) => (

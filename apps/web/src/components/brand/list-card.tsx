@@ -21,8 +21,9 @@ interface ListCardProps extends Omit<React.ComponentProps<typeof Card>, "title">
 
 /**
  * ListCard - a titled card whose body is a list: a `BleedList` or
- * `DetailList` of hairline rows, or a `ListCardBody` for anything else (chips,
- * a paragraph, the empty line). The record pages are built from these.
+ * `DetailList` of hairline rows, a `ListCardBody` for anything else (chips,
+ * a paragraph), or a bare compact `EmptyState` when there's nothing to list.
+ * The record pages are built from these.
  */
 export function ListCard({
   title,
@@ -58,16 +59,8 @@ export function ListCard({
   );
 }
 
-/** A ListCard body that isn't rows: chips, a paragraph, the empty line. */
+/** A ListCard body that isn't rows: chips, a paragraph. */
 export function ListCardBody({ className, ...props }: React.ComponentProps<typeof CardContent>) {
   return <CardContent className={cn("border-t border-border pt-3", className)} {...props} />;
 }
 
-/** The quiet line a ListCard shows when it has nothing to list. */
-export function ListCardEmpty({ children }: { children: React.ReactNode }) {
-  return (
-    <ListCardBody>
-      <p className="text-sm text-muted-foreground">{children}</p>
-    </ListCardBody>
-  );
-}

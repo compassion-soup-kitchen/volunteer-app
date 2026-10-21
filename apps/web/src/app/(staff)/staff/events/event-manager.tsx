@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +37,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DateBlock } from "@/components/brand/date-block";
-import { Illustration } from "@/components/brand/illustration";
 import { SectionHeader } from "@/components/brand/section-header";
 import { EventFacts } from "@/components/event/event-facts";
 import { formatDateOnly, todayInAppZone } from "@/lib/date-only";
@@ -60,6 +59,7 @@ import { GuestListDialog } from "./guest-list-dialog";
 import { AnnounceEventDialog } from "./announce-event-dialog";
 import { BleedList } from "@/components/brand/detail-list";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { EmptyState } from "@/components/brand/empty-state";
 
 const AUDIENCE_LABELS: Record<StaffEvent["audience"], string> = {
   ALL: "Everyone",
@@ -148,24 +148,17 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
       </div>
 
       {events.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <Illustration name="korero" size={96} />
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No events yet
-              </p>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Put the Christmas party, a hui or a working bee in the diary, then
-                share it and see who can come.
-              </p>
-            </div>
+        <EmptyState
+          illustration="korero"
+          title="No events yet"
+          description="Put the Christmas party, a hui or a working bee in the diary, then share it and see who can come."
+          action={
             <Button variant="secondary" onClick={openCreate}>
               <RiAddLine className="size-4" />
               New event
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         sections
           .filter((section) => section.items.length > 0)

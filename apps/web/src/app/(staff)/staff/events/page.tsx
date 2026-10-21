@@ -1,25 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/brand/page-header";
 import { auth } from "@/lib/auth";
 import { getStaffEvents } from "@/lib/event-actions";
 import { EventManager } from "./event-manager";
+import { EventsSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Events | Te Pūaroha Staff",
 };
-
-function EventsSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-28 w-full rounded-xl" />
-      ))}
-    </div>
-  );
-}
 
 async function EventsContent() {
   // The coordinator's own role decides whether they can reply to each event —

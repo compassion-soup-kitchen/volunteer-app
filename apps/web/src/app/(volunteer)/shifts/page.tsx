@@ -61,7 +61,6 @@ export default async function ShiftsPage(props: { searchParams: SearchParams }) 
   return (
     <div className="space-y-6">
       <PageHeader
-        backHref="/dashboard"
         eyebrow="Ngā wāhi mahi · Roster"
         title="Available shifts"
         description="Browse and sign up for upcoming mahi"

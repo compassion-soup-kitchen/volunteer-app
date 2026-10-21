@@ -6,12 +6,13 @@ import { RiSuitcaseLine } from "@remixicon/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { PageHeader } from "@/components/brand/page-header";
+import { EmptyState } from "@/components/brand/empty-state";
 import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveForm } from "@/components/leave/log-leave-card";
 import { getMyLeave } from "@/lib/leave-actions";
 import { describeLeaveStatus, formatLeaveRange } from "@/lib/leave";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { ListCard, ListCardEmpty } from "@/components/brand/list-card";
+import { ListCard } from "@/components/brand/list-card";
 
 export const metadata: Metadata = {
   title: "My leave | Te Pūaroha",
@@ -76,7 +77,14 @@ export default async function MyLeavePage() {
             {ahead.length > 0 ? (
               <LeaveEntries entries={ahead} audience="self" today={today} stageBadge="current" />
             ) : (
-              <ListCardEmpty>No leave logged. We&apos;ll see you on the roster.</ListCardEmpty>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiSuitcaseLine />}
+                title="No leave logged"
+                description="We'll see you on the roster."
+                className="border-t border-border"
+              />
             )}
           </ListCard>
         </div>
@@ -85,7 +93,14 @@ export default async function MyLeavePage() {
           {past.length > 0 ? (
             <LeaveEntries entries={past} audience="self" today={today} stageBadge="none" />
           ) : (
-            <ListCardEmpty>Nothing yet.</ListCardEmpty>
+            <EmptyState
+              bare
+              size="compact"
+              icon={<RiSuitcaseLine />}
+              title="No past leave"
+              description="Leave you've taken will be kept here."
+              className="border-t border-border"
+            />
           )}
         </ListCard>
       </div>

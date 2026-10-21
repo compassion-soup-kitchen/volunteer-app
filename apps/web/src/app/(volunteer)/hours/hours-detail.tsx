@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import { ShareBar } from "@/components/brand/share-bar";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { SectionHeader } from "@/components/brand/section-header";
@@ -24,7 +25,7 @@ import {
 import type { VolunteerHoursData } from "@/lib/dashboard-actions";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { BleedList } from "@/components/brand/detail-list";
-import { ListCard, ListCardEmpty } from "@/components/brand/list-card";
+import { ListCard } from "@/components/brand/list-card";
 
 interface HoursDetailProps {
   data: VolunteerHoursData;
@@ -117,14 +118,15 @@ export function HoursDetail({ data }: HoursDetailProps) {
         {/* Area ledger — where your time goes */}
         <section className="space-y-4">
           <SectionHeader eyebrow="Ngā wāhanga" title="Where your time goes" />
-          <Card>
-            {data.byServiceArea.length === 0 ? (
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  No hours recorded yet
-                </p>
-              </CardContent>
-            ) : (
+          {data.byServiceArea.length === 0 ? (
+            <EmptyState
+              size="compact"
+              icon={<RiTimeLine />}
+              title="No hours recorded yet"
+              description="Each area you help in will show up here after your first shift."
+            />
+          ) : (
+            <Card>
               <BleedList>
                 {data.byServiceArea.map((area, i) => {
                   const accent = AREA_ACCENTS[i % AREA_ACCENTS.length];
@@ -158,8 +160,8 @@ export function HoursDetail({ data }: HoursDetailProps) {
                   );
                 })}
               </BleedList>
-            )}
-          </Card>
+            </Card>
+          )}
         </section>
       </div>
 
@@ -227,7 +229,14 @@ export function HoursDetail({ data }: HoursDetailProps) {
         {/* Monthly breakdown */}
         <ListCard title="Month by month">
           {data.byMonth.length === 0 ? (
-            <ListCardEmpty>No hours recorded yet</ListCardEmpty>
+            <EmptyState
+              bare
+              size="compact"
+              icon={<RiCalendarCheckLine />}
+              title="No hours recorded yet"
+              description="Your months will add up here as shifts are logged."
+              className="border-t border-border"
+            />
           ) : (
             <BleedList>
               {data.byMonth.map((month) => (

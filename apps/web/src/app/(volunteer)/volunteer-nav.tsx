@@ -46,7 +46,7 @@ export function VolunteerNav({
           </Link>
 
           {/* Desktop nav links — text-only, active carries a red underline */}
-          <nav className="hidden items-center gap-5 sm:flex">
+          <nav aria-label="Main" className="hidden items-center gap-5 sm:flex">
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");
@@ -54,6 +54,7 @@ export function VolunteerNav({
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "relative py-1 text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-[calc(--spacing(1)+1px)] after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity",
                     isActive
@@ -83,7 +84,10 @@ export function VolunteerNav({
       </header>
 
       {/* Bottom tab bar (mobile) — the app's five tabs */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:hidden">
+      <nav
+        aria-label="Main"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] backdrop-blur-sm sm:hidden"
+      >
         <div className="flex items-stretch justify-around">
           {navItems.map((item) => {
             const isActive =

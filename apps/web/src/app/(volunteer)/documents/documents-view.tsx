@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import {
   RiLoader4Line,
 } from "@remixicon/react";
 import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import { SignaturePad } from "@/components/signature-pad";
 import {
   acknowledgeAgreement,
@@ -249,21 +250,11 @@ export function DocumentsView({
 
   if (agreements.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <IconChip size="lg">
-            <RiFileTextLine />
-          </IconChip>
-          <div>
-            <p className="font-serif text-lg font-medium tracking-tight">
-              No agreements yet
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Agreements you confirm will appear here.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<RiFileTextLine />}
+        title="No agreements yet"
+        description="Agreements you confirm will appear here."
+      />
     );
   }
 

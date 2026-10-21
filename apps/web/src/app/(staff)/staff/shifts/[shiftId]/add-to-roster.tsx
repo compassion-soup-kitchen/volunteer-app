@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { GroupBadges } from "@/components/brand/group-badge";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   addVolunteerToShift,
   type VolunteerOption,
@@ -134,11 +135,16 @@ export function AddToRoster({
         </div>
 
         {matches.length === 0 ? (
-          <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-            {available.length === 0
-              ? "Every active volunteer is already on this shift."
-              : "No one matches that search."}
-          </p>
+          <EmptyState
+            bare
+            size="compact"
+            icon={<RiSearchLine />}
+            title={
+              available.length === 0
+                ? "Every active volunteer is already on this shift"
+                : "No one matches that search"
+            }
+          />
         ) : (
           <ul className="max-h-72 overflow-y-auto p-1">
             {matches.map((volunteer) => {

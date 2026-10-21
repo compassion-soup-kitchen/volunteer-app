@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
@@ -18,6 +18,7 @@ import { StatusBadge } from "@/components/brand/status-badge";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { rowLinkVariants } from "@/components/brand/row-link";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/brand/empty-state";
 
 function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
   const retired = !!agreement.archivedAt;
@@ -107,22 +108,11 @@ export function DocumentsOverview({
 
   if (agreements.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <IconChip size="lg">
-            <RiFileTextLine />
-          </IconChip>
-          <div>
-            <p className="font-serif text-lg font-medium tracking-tight">
-              No agreements yet
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add your code of conduct, safeguarding policy, or anything else
-              volunteers need to read and confirm.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<RiFileTextLine />}
+        title="No agreements yet"
+        description="Add your code of conduct, safeguarding policy, or anything else volunteers need to read and confirm."
+      />
     );
   }
 
@@ -142,12 +132,11 @@ export function DocumentsOverview({
       )}
 
       {active.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            Every agreement is retired. Add one, or restore a retired agreement
-            below.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<RiFileTextLine />}
+          title="Every agreement is retired"
+          description="Add one, or restore a retired agreement below."
+        />
       )}
 
       {retired.length > 0 && (

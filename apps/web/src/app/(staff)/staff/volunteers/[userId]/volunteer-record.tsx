@@ -15,6 +15,7 @@ import {
   type DetailFact,
 } from "@/components/brand/detail-list";
 import { GroupBadges } from "@/components/brand/group-badge";
+import { EmptyState } from "@/components/brand/empty-state";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { StatusBadge } from "@/components/brand/status-badge";
@@ -297,7 +298,7 @@ export function VolunteerRecord({
               ))}
             </BleedList>
           ) : (
-            <EmptyRow>No availability set.</EmptyRow>
+            <EmptyRow icon={RiCalendarLine}>No availability set</EmptyRow>
           )}
         </Card>
 
@@ -324,7 +325,7 @@ export function VolunteerRecord({
               ))}
             </BleedList>
           ) : (
-            <EmptyRow>Not on the roster for anything coming up.</EmptyRow>
+            <EmptyRow icon={RiCalendarLine}>Not on the roster for anything coming up</EmptyRow>
           )}
         </Card>
 
@@ -345,7 +346,7 @@ export function VolunteerRecord({
               ))}
             </BleedList>
           ) : (
-            <EmptyRow>No shifts yet.</EmptyRow>
+            <EmptyRow icon={RiTimeLine}>No shifts yet</EmptyRow>
           )}
         </Card>
 
@@ -379,7 +380,7 @@ export function VolunteerRecord({
               ))}
             </BleedList>
           ) : (
-            <EmptyRow>No training sessions yet.</EmptyRow>
+            <EmptyRow icon={RiGraduationCapLine}>No training sessions yet</EmptyRow>
           )}
         </Card>
 
@@ -419,7 +420,7 @@ export function VolunteerRecord({
               ))}
             </BleedList>
           ) : (
-            <EmptyRow>No agreements signed yet.</EmptyRow>
+            <EmptyRow icon={RiShieldCheckLine}>No agreements signed yet</EmptyRow>
           )}
         </Card>
 
@@ -549,8 +550,11 @@ export function VolunteerRecord({
               )}
             </CardContent>
           ) : (
-            <EmptyRow>
-              No application on file - they were added directly.
+            <EmptyRow
+              icon={RiUserHeartLine}
+              description="They were added directly by the kitchen team."
+            >
+              No application on file
             </EmptyRow>
           )}
         </Card>
@@ -758,7 +762,7 @@ function LeaveCard({
           />
         </div>
       ) : (
-        <EmptyRow>No leave logged.</EmptyRow>
+        <EmptyRow icon={RiSuitcaseLine}>No leave logged</EmptyRow>
       )}
     </Card>
   );
@@ -829,10 +833,23 @@ function Stat({
   );
 }
 
-function EmptyRow({ children }: { children: React.ReactNode }) {
+function EmptyRow({
+  icon: Icon,
+  description,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <CardContent className="border-t border-border pt-4">
-      <p className="text-sm text-muted-foreground">{children}</p>
-    </CardContent>
+    <EmptyState
+      bare
+      size="compact"
+      icon={<Icon />}
+      title={children}
+      description={description}
+      className="border-t border-border"
+    />
   );
 }

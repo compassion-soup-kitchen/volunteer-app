@@ -47,7 +47,7 @@ function palette(variant: Variant, c: ColorTokens) {
   switch (variant) {
     case "primary":
       return {
-        bg: c.primary,
+        bg: c.primaryFill,
         pressedBg: c.primaryPressed,
         fg: c.primaryForeground,
         border: "transparent",
@@ -118,11 +118,15 @@ export function Button({
 
   // iOS 26: render the real SwiftUI Liquid Glass button.
   if (isLiquidGlassAvailable()) {
+    // Prominent glass sets a white label on its tint, so the primary button
+    // tints with the fill red; the borderless ghost draws its label in the tint.
     const tintColor =
       variant === "destructive"
         ? colors.destructive
         : variant === "secondary"
         ? undefined
+        : variant === "primary"
+        ? colors.primaryFill
         : colors.primary;
     const h = size === "lg" ? 54 : 44;
     const modifiers = [

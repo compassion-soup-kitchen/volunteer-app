@@ -8,8 +8,9 @@ import { PersonAvatar } from "@/components/brand/person-avatar";
 import { DeleteAccountCard } from "@/components/account/delete-account-card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList, DetailList } from "@/components/brand/detail-list";
-import { ListCard, ListCardBody, ListCardEmpty } from "@/components/brand/list-card";
+import { ListCard, ListCardBody } from "@/components/brand/list-card";
 import { PageHeader } from "@/components/brand/page-header";
+import { EmptyState } from "@/components/brand/empty-state";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +24,10 @@ import {
   RiArrowRightLine,
   RiGraduationCapLine,
   RiSuitcaseLine,
+  RiGroupLine,
+  RiCalendarLine,
+  RiHeartLine,
+  RiStarLine,
 } from "@remixicon/react";
 import { getVolunteerProfile } from "@/lib/application-actions";
 import { getMyGroups } from "@/lib/group-actions";
@@ -103,7 +108,6 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6 pb-24">
       <PageHeader
-        backHref="/dashboard"
         eyebrow="Tō kōtaha · Profile"
         title={
           <span className="flex items-center gap-3">
@@ -227,7 +231,14 @@ export default async function ProfilePage() {
                 ))}
               </BleedList>
             ) : (
-              <ListCardEmpty>No training sessions yet</ListCardEmpty>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiGraduationCapLine />}
+                title="No training sessions yet"
+                description="Sessions you register for will show up here."
+                className="border-t border-border"
+              />
             )}
           </ListCard>
 
@@ -263,7 +274,14 @@ export default async function ProfilePage() {
                 ))}
               </BleedList>
             ) : (
-              <ListCardEmpty>No agreements signed</ListCardEmpty>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiShieldCheckLine />}
+                title="No agreements signed"
+                description="Agreements you confirm will appear here."
+                className="border-t border-border"
+              />
             )}
           </ListCard>
         </div>
@@ -279,20 +297,24 @@ export default async function ProfilePage() {
             title="Ō rōpū · Your groups"
             action={{ label: "Our team", href: "/team" }}
           >
-            <ListCardBody>
-              {myGroups.length > 0 ? (
+            {myGroups.length > 0 ? (
+              <ListCardBody>
                 <div className="flex flex-wrap gap-2">
                   {myGroups.map((group) => (
                     <GroupBadge key={group.id} group={group} />
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  You&apos;re not in a group yet. Have a look at who&apos;s who
-                  on the team page.
-                </p>
-              )}
-            </ListCardBody>
+              </ListCardBody>
+            ) : (
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiGroupLine />}
+                title="Not in a group yet"
+                description="Have a look at who's who on the team page."
+                className="border-t border-border"
+              />
+            )}
           </ListCard>
 
           <ListCard title="Availability">
@@ -317,7 +339,14 @@ export default async function ProfilePage() {
                 ))}
               </BleedList>
             ) : (
-              <ListCardEmpty>No availability set</ListCardEmpty>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiCalendarLine />}
+                title="No availability set"
+                description="Add the days that suit you so coordinators know when to ask."
+                className="border-t border-border"
+              />
             )}
           </ListCard>
 
@@ -329,7 +358,14 @@ export default async function ProfilePage() {
                 ))}
               </ListCardBody>
             ) : (
-              <ListCardEmpty>No interests selected</ListCardEmpty>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiHeartLine />}
+                title="No interests chosen"
+                description="Pick the kinds of mahi you enjoy when you edit your profile."
+                className="border-t border-border"
+              />
             )}
           </ListCard>
 
@@ -346,7 +382,14 @@ export default async function ProfilePage() {
                 {profile.bio && <p className="text-sm">{profile.bio}</p>}
               </ListCardBody>
             ) : (
-              <ListCardEmpty>No details provided</ListCardEmpty>
+              <EmptyState
+                bare
+                size="compact"
+                icon={<RiStarLine />}
+                title="Nothing added yet"
+                description="Share your skills or a few words about yourself."
+                className="border-t border-border"
+              />
             )}
           </ListCard>
 
@@ -395,10 +438,12 @@ function LeaveSummaryCard({ leave }: { leave: LeaveOverview }) {
           ))}
         </BleedList>
       ) : (
-        <ListCardEmpty>
-          Going away? Log it here and we&apos;ll take you off the roster
-          while you&apos;re gone.
-        </ListCardEmpty>
+        <ListCardBody>
+          <p className="text-sm text-muted-foreground">
+            Going away? Log it here and we&apos;ll take you off the roster
+            while you&apos;re gone.
+          </p>
+        </ListCardBody>
       )}
     </ListCard>
   );

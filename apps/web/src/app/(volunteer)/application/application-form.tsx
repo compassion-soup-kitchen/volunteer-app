@@ -617,7 +617,7 @@ function StepInterests({
                 className={cn(
                   "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
                   isSelected
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-primary-fill bg-primary-fill text-primary-foreground"
                     : "border-input"
                 )}
               >

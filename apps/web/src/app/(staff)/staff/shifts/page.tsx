@@ -12,11 +12,10 @@ import { parseWeekParam, rosterWeekHref } from "@/lib/roster-week";
 import { getServiceAreas } from "@/lib/application-actions";
 import { StaffShiftWeek } from "./staff-shift-week";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { RiAddLine, RiRepeatLine } from "@remixicon/react";
 import Link from "next/link";
 import { PageHeader } from "@/components/brand/page-header";
+import { ShiftWeekSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Manage Shifts | Te Pūaroha",
@@ -55,28 +54,6 @@ async function ShiftWeekContent({ searchParams }: { searchParams: SearchParams }
       today={today}
       areaId={areaId}
     />
-  );
-}
-
-function ShiftWeekSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-9 w-80" />
-      </div>
-      <Card className="gap-0 py-0">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex gap-4 border-b border-border px-5 py-4 last:border-0">
-            <Skeleton className="h-14 w-11" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-5 w-1/3" />
-              <Skeleton className="h-4 w-1/2" />
-            </div>
-          </div>
-        ))}
-      </Card>
-    </div>
   );
 }
 

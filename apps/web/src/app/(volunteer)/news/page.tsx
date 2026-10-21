@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAnnouncements } from "@/lib/announcement-actions";
 import { auth } from "@/lib/auth";
 import { PageHeader } from "@/components/brand/page-header";
-import { Illustration } from "@/components/brand/illustration";
+import { EmptyState } from "@/components/brand/empty-state";
 import { AnnouncementAttachments } from "@/components/announcement-attachments";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimestampInAppZone, todayInAppZone } from "@/lib/date-only";
@@ -97,19 +97,11 @@ export default async function NewsPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Illustration name="korero" size={96} />
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No updates yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                When your coordinators post news, it&apos;ll show up here.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          illustration="korero"
+          title="No updates yet"
+          description="When your coordinators post news, it'll show up here."
+        />
       )}
     </div>
   );

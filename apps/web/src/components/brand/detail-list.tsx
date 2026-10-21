@@ -8,8 +8,8 @@ import { eyebrowVariants } from "@/components/brand/eyebrow";
  * padding - the rows already carry their own, so the card's full py-5 around
  * them reads as a dead gap: under a header only the bottom is trimmed, and a
  * list that is the whole card loses both. Marking the list means no call site
- * has to decide, and an empty state (a `CardContent` instead) keeps normal
- * padding without anyone thinking about it.
+ * has to decide. A bare `EmptyState` in its place is trimmed the same way,
+ * since it carries its own padding too.
  */
 const bleedListClass =
   "divide-y divide-border border-t border-border first:border-t-0";

@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
-import { Illustration } from "@/components/brand/illustration";
+import { EmptyState } from "@/components/brand/empty-state";
 import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { MissionRail } from "@/components/brand/mission-rail";
@@ -79,19 +79,11 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
 
   if (sessions.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-          <Illustration name="book" size={96} />
-          <div>
-            <p className="font-serif text-lg font-medium tracking-tight">
-              No training scheduled right now
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              New sessions are added regularly, check back soon.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        illustration="book"
+        title="No training scheduled right now"
+        description="New sessions are added regularly, check back soon."
+      />
     );
   }
 

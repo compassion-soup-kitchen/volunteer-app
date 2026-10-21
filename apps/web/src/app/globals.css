@@ -25,6 +25,7 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
@@ -43,6 +44,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-fill: var(--primary-fill);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -109,6 +111,11 @@
   --popover-foreground: #1c1815;
 
   --primary: #e4002b; /* Pūaroha red */
+  /* Solid red that carries --primary-foreground (buttons, selected states,
+     solid badges). Use `bg-primary-fill` for any red surface with text or an
+     icon on it, and `bg-primary` only for marks with nothing on them. Same as
+     --primary here; dark mode splits the two. White on it: 4.85:1. */
+  --primary-fill: #e4002b;
   --primary-foreground: #ffffff;
   --primary-tint: #fcebed;
   --primary-tint-foreground: #b80022;
@@ -160,8 +167,11 @@
   /* Staff sidebar — a deep "ink" panel against the cream canvas */
   --sidebar: #1c1815;
   --sidebar-foreground: rgb(251 247 242 / 0.72);
+  --sidebar-muted-foreground: rgb(251 247 242 / 0.55); /* 5.8:1 on ink, 5.1:1 on the accent wash */
   --sidebar-primary: #ff3355; /* brightened red reads on ink */
-  --sidebar-primary-foreground: #ffffff;
+  /* The sidebar's red is an accent mark (the active-item bar), never a fill
+     with white text (3.59:1). Anything set on it reads in ink (4.92:1). */
+  --sidebar-primary-foreground: #1c1815;
   --sidebar-accent: rgb(251 247 242 / 0.08);
   --sidebar-accent-foreground: #fbf7f2;
   --sidebar-border: rgb(251 247 242 / 0.1);
@@ -191,7 +201,12 @@
   --popover: #241f1a;
   --popover-foreground: #fbf7f2;
 
+  /* Brightened so red text and icons read on the dark ground (5.15:1 on
+     --background, 4.55:1 on --card). Too light to carry white text (3.59:1). */
   --primary: #ff3355;
+  /* The light-mode brand red: white on it is 4.85:1 (5.6:1 at the /90 hover),
+     and as a shape it still holds 3.81:1 against --background. */
+  --primary-fill: #e4002b;
   --primary-foreground: #ffffff;
   --primary-tint: rgb(255 51 85 / 0.18);
   --primary-tint-foreground: #ff94a4;
@@ -241,8 +256,9 @@
 
   --sidebar: #0f0c09;
   --sidebar-foreground: rgb(251 247 242 / 0.72);
+  --sidebar-muted-foreground: rgb(251 247 242 / 0.55); /* 5.9:1 on ink, 5.6:1 on the accent wash */
   --sidebar-primary: #ff3355;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary-foreground: #1c1815;
   --sidebar-accent: rgb(251 247 242 / 0.08);
   --sidebar-accent-foreground: #fbf7f2;
   --sidebar-border: rgb(251 247 242 / 0.1);
@@ -258,6 +274,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* viewport-fit=cover lets a landscape phone draw under its notch; keep the
+       page itself clear of it (the canvas colour still fills the edges). */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   /* Newsreader carries optical sizing — big headings get the high-contrast cut */
   .font-serif {
