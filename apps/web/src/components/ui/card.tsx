@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const cardVariants = cva(
-  "group/card relative flex flex-col gap-4 overflow-hidden rounded-xl text-sm/relaxed py-5 has-data-[slot=card-footer]:pb-0 has-[>[data-slot=bleed-list]:last-child]:pb-2 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0",
+  "group/card relative flex flex-col gap-4 overflow-hidden rounded-xl text-sm/relaxed py-5 has-data-[slot=card-footer]:pb-0 has-[>[data-slot=bleed-list]:last-child]:pb-2 has-[>[data-slot=bleed-list]:only-child]:py-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0 data-[size=sm]:has-[>[data-slot=bleed-list]:only-child]:py-0",
   {
     variants: {
       variant: {
@@ -14,6 +14,8 @@ const cardVariants = cva(
         muted: "bg-muted text-foreground",
         // Deep cocoa feature card with a faint red corner glow — the hero device.
         ink: "rounded-2xl bg-ink text-ink-foreground shadow-md before:pointer-events-none before:absolute before:-top-20 before:-right-16 before:size-56 before:rounded-full before:bg-primary/25 before:blur-3xl",
+        // White card ringed in red - the edge of an irreversible action.
+        danger: "bg-card text-card-foreground ring-1 ring-destructive/40",
         // Soft red wash callout for the one brand moment per page.
         tint: "bg-primary-tint text-foreground ring-1 ring-primary/15 dark:ring-primary/25",
       },

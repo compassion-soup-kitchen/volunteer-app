@@ -1,6 +1,5 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/lib/auth";
 import {
@@ -10,18 +9,15 @@ import {
 } from "@/lib/demo-accounts";
 import { getDb } from "@/lib/db";
 import {
+  RESET_NEUTRAL_MESSAGE,
+  sendPasswordResetLink,
+} from "@/lib/data/password-reset";
+import {
   createUserAccount,
   isUnverifiedCredentialsAccount,
   normalizeEmail,
 } from "@/lib/data/users";
-import {
-  buildBrandedEmailHtml,
-  buildBrandedEmailText,
-  getBaseUrl,
-  isEmailConfigured,
-  sendEmail,
-} from "@/lib/email";
-import { passwordResetEmail } from "@/lib/email-templates";
+import { isEmailConfigured } from "@/lib/email";
 import {
   consumeVerificationToken,
   sendVerificationEmail,
@@ -29,9 +25,7 @@ import {
 import { existingPasswordField, newPasswordField } from "@/lib/password-rules";
 import {
   PASSWORD_RESET_IDENTIFIER_PREFIX,
-  PASSWORD_RESET_TOKEN_TTL_MS,
   hashPasswordResetToken,
-  passwordResetIdentifier,
 } from "@/lib/password-reset";
 import { authRateLimits, checkRateLimit } from "@/lib/rate-limit";
 import { AuthError } from "next-auth";
@@ -87,13 +81,6 @@ const resetPasswordSchema = z.object({
   password: newPasswordField("Password must be at least 8 characters"),
   confirmPassword: z.string(),
 });
-
-/**
- * Sent whether or not the email exists — the response must not reveal which
- * addresses have accounts.
- */
-const RESET_NEUTRAL_MESSAGE =
-  "If an account exists for that email address, we've sent it a reset link. The link is valid for 60 minutes.";
 
 const RESET_INVALID_TOKEN_MESSAGE =
   "This reset link has expired or already been used. Please request a fresh one.";
@@ -354,45 +341,7 @@ export async function requestPasswordReset(
     return { error: parsed.error.issues[0].message };
   }
 
-  const email = normalizeEmail(parsed.data.email);
-
-  const throttle = checkRateLimit(
-    `password-reset:${email}`,
-    authRateLimits.passwordResetRequest
-  );
-  if (!throttle.allowed) {
-    return { success: RESET_NEUTRAL_MESSAGE };
-  }
-
-  const db = getDb();
-  const user = await db.user.findUnique({ where: { email } });
-  if (!user || user.status === "ARCHIVED") {
-    return { success: RESET_NEUTRAL_MESSAGE };
-  }
-
-  const rawToken = randomBytes(32).toString("hex");
-  const identifier = passwordResetIdentifier(email);
-
-  // One outstanding link per person — a new request replaces any older ones.
-  await db.verificationToken.deleteMany({ where: { identifier } });
-  await db.verificationToken.create({
-    data: {
-      identifier,
-      token: hashPasswordResetToken(rawToken),
-      expires: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
-    },
-  });
-
-  const resetUrl = `${getBaseUrl()}/reset-password?token=${rawToken}`;
-  const { subject, content } = passwordResetEmail(user.name, resetUrl);
-
-  // sendEmail never throws; a delivery failure must not leak into the flow.
-  await sendEmail({
-    to: email,
-    subject,
-    html: buildBrandedEmailHtml(content),
-    text: buildBrandedEmailText(content),
-  });
+  await sendPasswordResetLink(parsed.data.email);
 
   return { success: RESET_NEUTRAL_MESSAGE };
 }

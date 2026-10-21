@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   RiArrowRightSLine,
   RiCheckLine,
   RiCloseLine,
@@ -90,6 +100,8 @@ export function ShiftBrowser({
   const rootRef = useRef<HTMLDivElement>(null);
   const { isPending, go, refresh } = useRosterWeekNavigation(PATH, today);
   const [loadingShiftId, setLoadingShiftId] = useState<string | null>(null);
+  // The shift whose cancellation is waiting on the volunteer's confirmation.
+  const [cancelId, setCancelId] = useState<string | null>(null);
 
   const closedByDate = new Map(closures.map((closure) => [closure.date, closure.reason]));
   const week = groupByDay(shifts, weekDays(weekStart));
@@ -111,6 +123,7 @@ export function ShiftBrowser({
   }
 
   async function handleCancel(shiftId: string) {
+    setCancelId(null);
     setLoadingShiftId(shiftId);
     const result = await cancelShiftSignup(shiftId);
     if (result.error) {
@@ -305,7 +318,7 @@ export function ShiftBrowser({
                         canSignUp={canSignUp}
                         isLoading={loadingShiftId === shift.id}
                         onSignUp={() => handleSignUp(shift.id)}
-                        onCancel={() => handleCancel(shift.id)}
+                        onCancel={() => setCancelId(shift.id)}
                         onDecline={() => handleDeclineOffer(shift.id)}
                       />
                     ))}
@@ -316,6 +329,31 @@ export function ShiftBrowser({
           })}
         </div>
       )}
+
+      {/* Cancel confirmation - one tap shouldn't drop a shift by accident */}
+      <AlertDialog
+        open={cancelId !== null}
+        onOpenChange={(open) => !open && setCancelId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this shift?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your spot will open up for another volunteer. You can sign up
+              again later if it&apos;s still free.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep my spot</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => cancelId && handleCancel(cancelId)}
+              variant="destructive"
+            >
+              Cancel shift
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

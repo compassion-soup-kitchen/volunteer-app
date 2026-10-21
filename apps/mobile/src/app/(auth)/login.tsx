@@ -24,7 +24,7 @@ export default function LoginScreen() {
   const { width } = useWindowDimensions();
   const { signIn, signInWithGoogle, signInWithApple } = useAuth();
 
-  const [email, setEmail] = useState('aroha@compassion.org.nz');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -153,6 +153,15 @@ export default function LoginScreen() {
                   returnKeyType="go"
                   onSubmitEditing={onSubmit}
                 />
+                <Link
+                  href={{ pathname: '/forgot-password', params: email.trim() ? { email: email.trim() } : {} }}
+                  asChild>
+                  <Pressable hitSlop={12} accessibilityRole="link" style={{ alignSelf: 'flex-end', marginTop: -Spacing.xs }}>
+                    <Text variant="callout" color="accent" weight="semibold">
+                      Forgot password?
+                    </Text>
+                  </Pressable>
+                </Link>
 
                 {error ? (
                   <Text variant="caption" color="destructive" selectable>

@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, Share, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CapacityMeter, availability } from '@/components/capacity-meter';
-import { Badge, Button, Card, EmptyState, Icon, type IconName, Text } from '@/components/ui';
-import { FontFamily, Layout, Spacing } from '@/constants/theme';
+import { Badge, Button, Card, EmptyState, Icon, type IconName, SheetBody, Text } from '@/components/ui';
+import { FontFamily, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatLongDate, formatTimeRange } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
@@ -15,13 +14,6 @@ import type { ActionResult } from '@/types/models';
 
 /** The kitchen's single venue. */
 const VENUE = '132 Tory Street, Te Aro, Pōneke';
-
-/** What a volunteer can expect to do on a service shift. */
-const WHAT_YOULL_DO = [
-  'Serve hot kai to manuhiri with manaaki',
-  'Help plate & portion meals alongside the team',
-  'Tidy & reset the dining room afterwards',
-];
 
 function timeOfDay(start: string): string {
   const h = Number(start.split(':')[0]);
@@ -105,7 +97,6 @@ export default function ShiftDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const toast = useToast();
   const qc = useQueryClient();
 
@@ -179,120 +170,100 @@ export default function ShiftDetailScreen() {
     }
   }
 
+  const footer = isSignedUp ? (
+    <Button
+      title="Cancel my spot"
+      variant="secondary"
+      icon="close-circle-outline"
+      loading={cancel.isPending}
+      disabled={pending}
+      onPress={confirmCancel}
+    />
+  ) : onLeave ? (
+    <Button title="Change my leave" variant="secondary" icon="airplane-outline" onPress={() => router.push('/leave')} />
+  ) : isFull ? (
+    <Button title="This shift is full" variant="secondary" disabled onPress={() => {}} />
+  ) : (
+    <Button title="Book" icon="checkmark" loading={signUp.isPending} disabled={pending} onPress={() => signUp.mutate()} />
+  );
+
   return (
-    <View style={{ backgroundColor: colors.background }}>
-      {/* Content (the sheet sizes itself to this) */}
-      <View style={{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center', paddingHorizontal: Layout.screenPadding, paddingTop: Spacing.xxxl }}>
-        {/* Title + share */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.md }}>
-          <View style={{ flex: 1 }}>
-            <Text variant="display">{shift.serviceArea.name}</Text>
-            <Text variant="callout" color="textSecondary">
-              {timeOfDay(shift.startTime)}
-            </Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Share"
-            hitSlop={12}
-            onPress={share}
-            style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1, paddingTop: 4 })}>
-            <Icon name="share-outline" size={24} color="primary" />
-          </Pressable>
-        </View>
-
-        <View style={{ marginTop: Spacing.md }}>
-          {isSignedUp ? (
-            <Badge label="Booked" tone="success" icon="checkmark" />
-          ) : onLeave ? (
-            <Badge label="You're on leave" tone="warning" icon="airplane-outline" />
-          ) : isFull ? (
-            <Badge label="Full" tone="neutral" />
-          ) : (
-            <Badge
-              label={scarce ? `Only ${spotsLeft} left` : `${spotsLeft} spots left`}
-              tone="brand"
-            />
-          )}
-        </View>
-
-        {/* Facts */}
-        <View style={{ gap: 13, marginTop: Spacing.xl }}>
-          <FactRow icon="calendar-outline" value={`${formatLongDate(shift.date)} · ${formatTimeRange(shift.startTime, shift.endTime)}`} />
-          <FactRow icon="location-outline" value={VENUE} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-            <Icon name="people-outline" size={19} color="primary" />
-            <Text variant="callout" color="text" style={{ flex: 1 }}>
-              {`${shift.signupCount} of ${shift.capacity} ngā tūao signed up`}
-            </Text>
-            <CapacityMeter taken={shift.signupCount} capacity={shift.capacity} size={9} />
-          </View>
-        </View>
-
-        {/* What you'll do */}
-        <View style={{ marginTop: Spacing.xl, gap: Spacing.md }}>
-          <Text variant="overline" color="textSecondary">
-            What you&apos;ll do
+    <SheetBody footer={footer}>
+      {/* Title + share */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.md }}>
+        <View style={{ flex: 1 }}>
+          <Text variant="display">{shift.serviceArea.name}</Text>
+          <Text variant="callout" color="textSecondary">
+            {timeOfDay(shift.startTime)}
           </Text>
-          {WHAT_YOULL_DO.map((item) => (
-            <View key={item} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md }}>
-              <Icon name="checkmark" size={18} color="primary" />
-              <Text variant="callout" color="text" style={{ flex: 1 }}>
-                {item}
-              </Text>
-            </View>
-          ))}
         </View>
-
-        {/* Who's coming */}
-        {shift.signupCount > 0 ? (
-          <View style={{ marginTop: Spacing.xl }}>
-            <AvatarStack count={shift.signupCount} />
-          </View>
-        ) : null}
-
-        {shift.notes ? (
-          <Card muted style={{ gap: 6, marginTop: Spacing.xl }}>
-            <Text variant="label" color="textSecondary">
-              Notes from the team
-            </Text>
-            <Text variant="body" numberOfLines={5}>
-              {shift.notes}
-            </Text>
-          </Card>
-        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Share"
+          hitSlop={12}
+          onPress={share}
+          style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1, paddingTop: 4 })}>
+          <Icon name="share-outline" size={24} color="primary" />
+        </Pressable>
       </View>
 
-      {/* Footer — last element, so the fit-to-contents sheet ends flush at the bottom */}
-      <View
-        style={{
-          marginTop: Spacing.xl,
-          paddingHorizontal: Layout.screenPadding,
-          paddingTop: Spacing.md,
-          paddingBottom: insets.bottom + Spacing.md,
-          backgroundColor: colors.background,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-        }}>
-        <View style={{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center' }}>
-          {isSignedUp ? (
-            <Button
-              title="Cancel my spot"
-              variant="secondary"
-              icon="close-circle-outline"
-              loading={cancel.isPending}
-              disabled={pending}
-              onPress={confirmCancel}
-            />
-          ) : onLeave ? (
-            <Button title="Change my leave" variant="secondary" icon="airplane-outline" onPress={() => router.push('/leave')} />
-          ) : isFull ? (
-            <Button title="This shift is full" variant="secondary" disabled onPress={() => {}} />
-          ) : (
-            <Button title="Book" icon="checkmark" loading={signUp.isPending} disabled={pending} onPress={() => signUp.mutate()} />
-          )}
+      <View style={{ marginTop: Spacing.md }}>
+        {isSignedUp ? (
+          <Badge label="Booked" tone="success" icon="checkmark" />
+        ) : onLeave ? (
+          <Badge label="You're on leave" tone="warning" icon="airplane-outline" />
+        ) : isFull ? (
+          <Badge label="Full" tone="neutral" />
+        ) : (
+          <Badge
+            label={scarce ? `Only ${spotsLeft} left` : `${spotsLeft} spots left`}
+            tone="brand"
+          />
+        )}
+      </View>
+
+      {/* Facts */}
+      <View style={{ gap: 13, marginTop: Spacing.xl }}>
+        <FactRow icon="calendar-outline" value={`${formatLongDate(shift.date)} · ${formatTimeRange(shift.startTime, shift.endTime)}`} />
+        <FactRow icon="location-outline" value={VENUE} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+          <Icon name="people-outline" size={19} color="primary" />
+          <Text variant="callout" color="text" style={{ flex: 1 }}>
+            {`${shift.signupCount} of ${shift.capacity} ngā tūao signed up`}
+          </Text>
+          <CapacityMeter taken={shift.signupCount} capacity={shift.capacity} size={9} />
         </View>
       </View>
-    </View>
+
+      {/* What the mahi is - the area's own description, as staff wrote it */}
+      {shift.serviceArea.description ? (
+        <View style={{ marginTop: Spacing.xl, gap: Spacing.sm }}>
+          <Text variant="overline" color="textSecondary">
+            About this mahi
+          </Text>
+          <Text variant="callout" color="text">
+            {shift.serviceArea.description}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Who's coming */}
+      {shift.signupCount > 0 ? (
+        <View style={{ marginTop: Spacing.xl }}>
+          <AvatarStack count={shift.signupCount} />
+        </View>
+      ) : null}
+
+      {shift.notes ? (
+        <Card muted style={{ gap: 6, marginTop: Spacing.xl }}>
+          <Text variant="label" color="textSecondary">
+            Notes from the team
+          </Text>
+          <Text variant="body">
+            {shift.notes}
+          </Text>
+        </Card>
+      ) : null}
+    </SheetBody>
   );
 }

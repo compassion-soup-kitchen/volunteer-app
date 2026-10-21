@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RsvpControl } from '@/components/rsvp-control';
-import { Badge, EmptyState, Icon, type IconName, Text } from '@/components/ui';
-import { Layout, Spacing } from '@/constants/theme';
+import { Badge, EmptyState, Icon, type IconName, SheetBody, Text } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { canReply, formatRsvpTally, RSVP_CONFIRMATIONS, rsvpClosedMessage } from '@/lib/events';
 import { formatLongDate, formatTime, formatTimeRange } from '@/lib/format';
@@ -26,7 +25,6 @@ function FactRow({ icon, value }: { icon: IconName; value: string }) {
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const { data: event, isLoading } = useQuery({
     queryKey: qk.event(id),
@@ -70,14 +68,8 @@ export default function EventDetailScreen() {
   const closed = rsvpClosedMessage(event);
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.background,
-        paddingHorizontal: Layout.screenPadding,
-        paddingTop: Spacing.xxxl,
-        paddingBottom: insets.bottom + Spacing.xxl,
-      }}>
-      <View style={{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center', gap: Spacing.lg }}>
+    <SheetBody>
+      <View style={{ gap: Spacing.lg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' }}>
           {cancelled ? (
             <Badge label="Cancelled" tone="neutral" icon="close-circle-outline" />
@@ -135,6 +127,6 @@ export default function EventDetailScreen() {
           </Text>
         ) : null}
       </View>
-    </View>
+    </SheetBody>
   );
 }

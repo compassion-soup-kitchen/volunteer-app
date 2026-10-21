@@ -28,6 +28,7 @@ import {
   type VolunteerAgreementStatus,
 } from "@/lib/document-actions";
 import { agreementLabel } from "@/lib/agreement-labels";
+import { BleedList } from "@/components/brand/detail-list";
 
 function formatDate(value: Date | string) {
   return new Date(value).toLocaleDateString("en-NZ", {
@@ -267,7 +268,7 @@ export function DocumentsView({
   return (
     <>
       <Card>
-        <ul className="divide-y divide-border">
+        <BleedList>
           {agreements.map((agreement) => {
             const label = agreementLabel(
               agreement.agreementType,
@@ -314,7 +315,7 @@ export function DocumentsView({
               </li>
             );
           })}
-        </ul>
+        </BleedList>
       </Card>
 
       <AcknowledgeDialog

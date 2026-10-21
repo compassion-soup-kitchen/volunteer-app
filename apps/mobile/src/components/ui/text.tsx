@@ -3,7 +3,7 @@ import { Text as RNText, type TextProps } from 'react-native';
 import { FontFamily, type ThemeColor, Typography, type TypographyVariant } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-/** DM Sans weight families — used to add inline emphasis to text variants. */
+/** Hanken Grotesk weight families — used to add inline emphasis to text variants. */
 const weightFamily = {
   regular: FontFamily.text,
   medium: FontFamily.textMedium,
@@ -15,7 +15,7 @@ export type TextComponentProps = TextProps & {
   variant?: TypographyVariant;
   color?: ThemeColor;
   /**
-   * Override the DM Sans weight for emphasis (e.g. a bold word inside a
+   * Override the Hanken Grotesk weight for emphasis (e.g. a bold word inside a
    * caption). With custom fonts, `fontWeight` is not synthesised — always use
    * this instead of a raw `fontWeight` style.
    */

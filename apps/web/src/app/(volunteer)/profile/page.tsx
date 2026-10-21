@@ -428,7 +428,7 @@ export default async function ProfilePage() {
               the way irreversible things should be - but present, because
               erasure isn't a staff-only right and a volunteer who never
               installs the app would otherwise have nowhere to do it. */}
-          <Card className="gap-0 border-destructive/40 pb-2">
+          <Card variant="danger" className="gap-0 pb-2">
             <CardHeader className="pb-3">
               <CardTitle className="text-base text-destructive">
                 Delete account

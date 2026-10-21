@@ -39,6 +39,7 @@ import { getRecentAnnouncements } from "@/lib/announcement-actions";
 import { getUnansweredInvitations } from "@/lib/event-actions";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimeRange } from "@/lib/format";
+import { BleedList } from "@/components/brand/detail-list";
 import { volunteerShiftHref } from "@/lib/roster-week";
 
 export const metadata: Metadata = {
@@ -174,11 +175,13 @@ export default async function VolunteerDashboard() {
         </Card>
       )}
 
-      {/* Application approved */}
-      {appStatus?.applicationStatus === "APPROVED" && (
-        <Card>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
+      {/* Application approved - a welcome until their first shift is booked,
+          not a banner every active volunteer sees on every visit */}
+      {appStatus?.applicationStatus === "APPROVED" &&
+        !nextShift &&
+        !dashboardData?.totalShifts && (
+          <Card>
+            <CardContent className="flex items-start gap-3">
               <IconChip tone="success">
                 <RiCheckLine />
               </IconChip>
@@ -190,20 +193,13 @@ export default async function VolunteerDashboard() {
                   <Badge variant="success">Approved</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Your application has been approved. You can now sign up for
-                  shifts and start volunteering.
+                  Your application has been approved. Pick your first shift
+                  from the roster below and you&apos;re on your way.
                 </p>
               </div>
-            </div>
-            <Button asChild>
-              <Link href="/shifts">
-                Browse available shifts
-                <RiArrowRightLine className="size-3.5" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
       {/* More info requested */}
       {appStatus?.applicationStatus === "INFO_REQUESTED" && (
@@ -308,25 +304,23 @@ export default async function VolunteerDashboard() {
               </CardContent>
 
               {dashboardData.upcomingShifts.length > 1 && (
-                <div className="border-t border-border">
-                  <ul className="divide-y divide-border">
-                    {dashboardData.upcomingShifts.slice(1, 4).map((shift) => (
-                      <li
-                        key={shift.id}
-                        className="flex flex-col gap-0.5 px-5 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-                      >
-                        <span className="min-w-0 font-medium">
-                          {shift.serviceArea.name}
-                        </span>
-                        <span className="text-muted-foreground sm:shrink-0">
-                          {formatShiftDate(shift.date)}
-                          {" · "}
-                          {formatTimeRange(shift.startTime, shift.endTime)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <BleedList>
+                  {dashboardData.upcomingShifts.slice(1, 4).map((shift) => (
+                    <li
+                      key={shift.id}
+                      className="flex flex-col gap-0.5 px-5 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                    >
+                      <span className="min-w-0 font-medium">
+                        {shift.serviceArea.name}
+                      </span>
+                      <span className="text-muted-foreground sm:shrink-0">
+                        {formatShiftDate(shift.date)}
+                        {" · "}
+                        {formatTimeRange(shift.startTime, shift.endTime)}
+                      </span>
+                    </li>
+                  ))}
+                </BleedList>
               )}
             </Card>
           ) : (
@@ -365,7 +359,7 @@ export default async function VolunteerDashboard() {
             action={{ label: "Browse all", href: "/shifts" }}
           />
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {dashboardData.openShiftsForYou.slice(0, 3).map((shift) => (
                 <li key={shift.id}>
                   <Link
@@ -392,7 +386,7 @@ export default async function VolunteerDashboard() {
                   </Link>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </section>
       )}
@@ -522,7 +516,7 @@ export default async function VolunteerDashboard() {
             action={{ label: "All training", href: "/training" }}
           />
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {registeredTraining.slice(0, 3).map((ts) => (
                 <li key={ts.id} className="flex items-start gap-3 px-5 py-3">
                   <IconChip tone="info" size="sm" className="mt-0.5">
@@ -542,7 +536,7 @@ export default async function VolunteerDashboard() {
                   </Badge>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </section>
       )}

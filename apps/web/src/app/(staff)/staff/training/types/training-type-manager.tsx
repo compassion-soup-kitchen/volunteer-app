@@ -57,6 +57,7 @@ import {
   TRAINING_TYPE_DESCRIPTION_MAX,
   TRAINING_TYPE_NAME_MAX,
 } from "@/lib/training-types";
+import { BleedList } from "@/components/brand/detail-list";
 
 interface TrainingTypeManagerProps {
   initialTypes: TrainingTypeWithStats[];
@@ -179,7 +180,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
           </Card>
         ) : (
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {active.map((type) => (
                 <TypeRow
                   key={type.id}
@@ -189,7 +190,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
                   onDelete={() => setDeleteTarget(type)}
                 />
               ))}
-            </ul>
+            </BleedList>
           </Card>
         )}
       </section>
@@ -202,7 +203,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
             title={`Archived (${archived.length})`}
           />
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {archived.map((type) => (
                 <TypeRow
                   key={type.id}
@@ -212,7 +213,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
                   onDelete={() => setDeleteTarget(type)}
                 />
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </section>
       )}
