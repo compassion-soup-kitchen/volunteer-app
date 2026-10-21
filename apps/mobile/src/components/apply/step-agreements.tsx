@@ -29,7 +29,7 @@ const SAFEGUARDING = {
     'Acting in the best interests of all tamariki (children) and vulnerable people',
     'Never being alone with a child or vulnerable person in an unsupervised setting',
     'Reporting any concerns about abuse or neglect to a coordinator immediately',
-    'Completing a Ministry of Justice (MOJ) check if required',
+    'Completing a Ministry of Justice (MoJ) check if required',
     'Maintaining appropriate boundaries with all people we serve',
     'Not using personal devices to photograph or record people we serve',
     'Understanding that breaches of this policy may result in immediate removal',

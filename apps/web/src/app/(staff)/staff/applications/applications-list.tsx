@@ -88,7 +88,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
             aria-hidden
           />
           <Input
-            placeholder="Search by name or email..."
+            placeholder="Search by name or email…"
             aria-label="Search applications by name or email"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
@@ -118,7 +118,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
       {isPending && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <RiLoader4Line className="size-4 animate-spin" aria-hidden />
-          Loading...
+          Loading…
         </div>
       )}
 

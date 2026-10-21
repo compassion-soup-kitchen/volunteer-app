@@ -249,7 +249,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={TRAINING_TYPE_DESCRIPTION_MAX}
-                placeholder="What this training covers..."
+                placeholder="What this training covers…"
                 rows={3}
               />
             </div>

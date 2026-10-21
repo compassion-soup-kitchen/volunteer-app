@@ -581,7 +581,7 @@ export function ShiftForm({
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any details volunteers should know..."
+              placeholder="Any details volunteers should know…"
               rows={3}
             />
           </div>

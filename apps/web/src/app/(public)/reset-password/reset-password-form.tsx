@@ -106,7 +106,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         {pending ? (
           <>
             <RiLoader4Line className="size-4 animate-spin" />
-            Resetting...
+            Resetting…
           </>
         ) : (
           "Reset password"

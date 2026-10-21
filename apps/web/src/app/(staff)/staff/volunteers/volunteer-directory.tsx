@@ -422,8 +422,8 @@ export function VolunteerDirectory({
             aria-hidden
           />
           <Input
-            placeholder="Search by name, email or phone..."
-            aria-label="Search volunteers by name or email"
+            placeholder="Search by name, email or phone…"
+            aria-label="Search volunteers by name, email or phone"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-9"
@@ -483,7 +483,7 @@ export function VolunteerDirectory({
       {isPending && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <RiLoader4Line className="size-4 animate-spin" aria-hidden />
-          Loading...
+          Loading…
         </div>
       )}
 
@@ -782,7 +782,7 @@ export function VolunteerDirectory({
               {archiving ? (
                 <>
                   <RiLoader4Line className="mr-2 size-4 animate-spin" />
-                  Archiving...
+                  Archiving…
                 </>
               ) : (
                 "Archive account"
@@ -833,7 +833,7 @@ export function VolunteerDirectory({
               {changingRole ? (
                 <>
                   <RiLoader4Line className="mr-2 size-4 animate-spin" />
-                  Updating...
+                  Updating…
                 </>
               ) : (
                 roleTarget &&
@@ -878,7 +878,7 @@ export function VolunteerDirectory({
               {impersonating ? (
                 <>
                   <RiLoader4Line className="mr-2 size-4 animate-spin" />
-                  Starting...
+                  Starting…
                 </>
               ) : (
                 "View as this person"

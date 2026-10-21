@@ -245,7 +245,7 @@ export default async function VolunteerDashboard() {
               </h2>
               <p className="text-sm text-muted-foreground">
                 {pendingResigns} {pendingResigns === 1 ? "policy needs" : "policies need"}{" "}
-                your acknowledgment before your next shift.
+                your acknowledgement before your next shift.
               </p>
             </div>
             <Button asChild size="sm" variant="outline">

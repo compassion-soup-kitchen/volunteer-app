@@ -117,7 +117,7 @@ export function LoginForm({
           {pending ? (
             <>
               <RiLoader4Line className="size-4 animate-spin" />
-              Signing in...
+              Signing in…
             </>
           ) : (
             "Sign in"

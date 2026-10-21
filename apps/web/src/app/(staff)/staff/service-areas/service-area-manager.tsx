@@ -231,7 +231,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
                 id="area-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What volunteers do in this area..."
+                placeholder="What volunteers do in this area…"
                 rows={3}
               />
             </div>
