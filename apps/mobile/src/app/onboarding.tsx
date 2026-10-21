@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { Wordmark } from '@/components/brand';
-import { Button, Card, Icon, ProgressBar, Screen, SkeletonCard, Text } from '@/components/ui';
+import { Button, Card, EmptyState, Icon, ProgressBar, Screen, SkeletonCard, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { type OnboardingAction, type OnboardingStep, type OnboardingStepState, onboardingSteps } from '@/lib/onboarding';
@@ -111,6 +111,14 @@ export default function OnboardingScreen() {
   const done = steps?.filter((s) => s.state === 'done').length ?? 0;
   const total = steps?.length ?? 0;
   const next = steps?.find((s) => s.state === 'current')?.action;
+  // The steps need both reads: without the training one, a booked or finished
+  // induction would read as "Book a session". A failed read says so instead.
+  const failed = (profile.isError && !profile.data) || (training.isError && !training.data);
+
+  function retry() {
+    profile.refetch();
+    training.refetch();
+  }
 
   function act(action: OnboardingAction) {
     if (action.kind === 'book-induction') router.push('/training');
@@ -121,10 +129,7 @@ export default function OnboardingScreen() {
     <Screen
       insetTop={false}
       gap={Spacing.xl}
-      onRefresh={() => {
-        profile.refetch();
-        training.refetch();
-      }}
+      onRefresh={retry}
       refreshing={profile.isRefetching || training.isRefetching}>
       <Wordmark height={20} />
 
@@ -138,7 +143,15 @@ export default function OnboardingScreen() {
         </Text>
       </View>
 
-      {!steps || training.isLoading ? (
+      {failed ? (
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="We couldn't load your steps"
+          message="Check your connection and try again."
+          actionLabel="Try again"
+          onAction={retry}
+        />
+      ) : !steps || !training.data ? (
         <SkeletonCard />
       ) : (
         <>
