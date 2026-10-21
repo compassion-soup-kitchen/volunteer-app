@@ -242,6 +242,34 @@ export async function register(name: string, email: string, password: string): P
   }
 }
 
+/** What the reset request says either way - it never reveals who has an account. */
+const RESET_SENT_MESSAGE =
+  "If an account exists for that email address, we've sent it a reset link. The link is valid for 60 minutes.";
+
+/**
+ * Emails a password reset link. The link opens the web reset page; once the
+ * new password is set, the volunteer signs in here with it.
+ */
+export async function requestPasswordReset(email: string): Promise<{ message?: string; error?: string }> {
+  const e = email.trim().toLowerCase();
+  if (!e || !e.includes('@')) return { error: 'Please enter a valid email address.' };
+
+  if (USE_MOCK) {
+    await delay();
+    return { message: RESET_SENT_MESSAGE };
+  }
+
+  try {
+    const { message } = await apiFetch<{ message: string }>('/api/v1/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email: e }),
+    });
+    return { message };
+  } catch (err) {
+    return toActionError(err);
+  }
+}
+
 export async function logout(): Promise<void> {
   db.session = null;
   setAuthToken(null);
