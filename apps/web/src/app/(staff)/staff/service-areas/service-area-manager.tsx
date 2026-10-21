@@ -242,7 +242,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving && (
-                <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
               )}
               {editTarget ? "Save changes" : "Create"}
             </Button>
@@ -299,18 +299,18 @@ function AreaRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onEdit}>
-            <RiEditLine className="mr-2 size-4" />
+            <RiEditLine className="size-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onToggleArchive}>
             {area.isArchived ? (
               <>
-                <RiInboxUnarchiveLine className="mr-2 size-4" />
+                <RiInboxUnarchiveLine className="size-4" />
                 Restore
               </>
             ) : (
               <>
-                <RiArchiveLine className="mr-2 size-4" />
+                <RiArchiveLine className="size-4" />
                 Archive
               </>
             )}

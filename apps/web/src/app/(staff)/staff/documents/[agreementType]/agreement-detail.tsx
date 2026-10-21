@@ -47,17 +47,9 @@ import type { AgreementTemplateInput } from "@/lib/agreement-templates";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { formatTimestamp } from "@/lib/format";
 import { AgreementFields } from "../agreement-fields";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 
-function initials(name: string) {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]!.toUpperCase())
-      .join("") || "?"
-  );
-}
 
 export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
   const router = useRouter();
@@ -302,9 +294,9 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
         <CardContent>
           <div className="flex flex-wrap gap-x-8 gap-y-3">
             <div>
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 Confirmed
-              </p>
+              </Eyebrow>
               <StatFigure
                 size="md"
                 value={confirmed.length}
@@ -314,17 +306,17 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             </div>
             {awaiting.length > 0 && (
               <div>
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Still to confirm
-                </p>
+                </Eyebrow>
                 <StatFigure size="md" value={awaiting.length} className="mt-1" />
               </div>
             )}
             {signedOutdated.length > 0 && (
               <div>
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Older version
-                </p>
+                </Eyebrow>
                 <StatFigure
                   size="md"
                   value={signedOutdated.length}
@@ -334,9 +326,9 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             )}
             {unsigned.length > 0 && (
               <div>
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Never confirmed
-                </p>
+                </Eyebrow>
                 <StatFigure size="md" value={unsigned.length} className="mt-1" />
               </div>
             )}
@@ -347,12 +339,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
           <ul className="divide-y divide-border">
             {detail.volunteers.map((vol) => (
               <li key={vol.id} className="flex items-center gap-3 px-5 py-3">
-                <span
-                  aria-hidden
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground"
-                >
-                  {initials(vol.userName)}
-                </span>
+                <PersonAvatar name={vol.userName} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
                     {vol.userName}

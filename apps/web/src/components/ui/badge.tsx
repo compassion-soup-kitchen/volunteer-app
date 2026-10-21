@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-sm px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-all focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:pointer-events-none [&>svg]:size-3.5!",
+  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-sm px-2.5 py-0.5 font-sans text-xs font-semibold tracking-normal whitespace-nowrap transition-all focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:pointer-events-none [&>svg]:size-3.5!",
   {
     variants: {
       variant: {
@@ -23,7 +23,6 @@ const badgeVariants = cva(
         info: "bg-info-tint text-info-tint-foreground",
         success: "bg-success-tint text-success-tint-foreground",
         warning: "bg-warning-tint text-warning-tint-foreground",
-        amber: "bg-warning-tint text-warning-tint-foreground",
         neutral: "bg-neutral-tint text-neutral-tint-foreground",
       },
     },

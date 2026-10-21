@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import {
   deleteOwnAccount,
   getOwnAccountDeletionSummary,
@@ -137,7 +138,7 @@ export function DeleteAccountCard() {
       >
         <AlertDialogTrigger asChild>
           <Button variant="destructive">
-            <RiDeleteBin6Line className="mr-2 size-4" aria-hidden />
+            <RiDeleteBin6Line data-icon="inline-start" className="size-4" aria-hidden />
             Delete my account
           </Button>
         </AlertDialogTrigger>
@@ -222,7 +223,7 @@ export function DeleteAccountCard() {
                   "Deleting…"
                 ) : (
                   <>
-                    <RiDeleteBin6Line className="mr-2 size-4" aria-hidden />
+                    <RiDeleteBin6Line data-icon="inline-start" className="size-4" aria-hidden />
                     Delete permanently
                   </>
                 )}
@@ -254,7 +255,7 @@ function ErasureList({ summary }: { summary: OwnAccountDeletionSummary }) {
   return (
     <div className="space-y-3">
       <div className="rounded-lg bg-destructive-tint px-4 py-3 text-destructive-tint-foreground">
-        <p className="eyebrow text-[0.68rem]">Erased with you</p>
+        <Eyebrow size="sm" tone="inherit">Erased with you</Eyebrow>
         {rows.length === 0 ? (
           <p className="mt-2 text-sm">
             Your sign-in and profile only - nothing else is recorded against

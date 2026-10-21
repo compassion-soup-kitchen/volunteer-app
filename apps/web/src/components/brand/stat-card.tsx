@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatFigure } from "@/components/brand/stat-figure";
 
@@ -41,9 +42,9 @@ export function StatCard({
 }: StatCardProps) {
   const body = (
     <CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
-      <p className="eyebrow col-span-2 row-start-2 mt-1.5 text-[0.62rem] text-muted-foreground">
+      <Eyebrow size="sm" tone="muted" className="col-span-2 row-start-2 mt-1.5">
         {label}
-      </p>
+      </Eyebrow>
       <StatFigure value={value} unit={unit} className="row-start-1" />
       <IconChip tone={tone} size="sm" className="row-start-1">
         <Icon />

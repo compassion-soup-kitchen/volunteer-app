@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { BleedList } from "@/components/brand/detail-list";
 import { IconChip } from "@/components/brand/icon-chip";
+import { rowLinkVariants } from "@/components/brand/row-link";
 import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiDownloadLine,
@@ -66,7 +67,7 @@ export function VolunteerDocuments({
                 type="button"
                 onClick={() => handleDownload(doc.id, doc.fileName)}
                 disabled={downloading === doc.id}
-                className="group flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring disabled:opacity-60"
+                className={rowLinkVariants()}
               >
                 <span className="sr-only">Download </span>
                 <IconChip size="sm">

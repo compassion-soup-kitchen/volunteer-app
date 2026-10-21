@@ -30,6 +30,8 @@ import { SectionHeader } from "@/components/brand/section-header";
 import { StatCard } from "@/components/brand/stat-card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/brand/empty-state";
 import { StatsSkeleton, ActivitySkeleton, AwayTodaySkeleton } from "./skeleton";
 
@@ -190,7 +192,7 @@ async function AwayTodaySection() {
               <li key={leave.id}>
                 <Link
                   href={`/staff/volunteers/${leave.person.userId}`}
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                  className={cn(rowLinkVariants(), "px-4 py-2.5")}
                 >
                   <IconChip size="sm" tone="warning">
                     <RiSuitcaseLine />
@@ -235,7 +237,7 @@ function QuickActions() {
             <li key={action.href}>
               <Link
                 href={action.href}
-                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                className={cn(rowLinkVariants(), "px-4 py-2.5")}
               >
                 <IconChip size="sm">
                   <action.icon />

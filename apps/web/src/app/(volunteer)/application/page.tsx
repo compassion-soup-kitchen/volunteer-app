@@ -19,6 +19,7 @@ import {
 import { PageHeader } from "@/components/brand/page-header";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 export const metadata: Metadata = {
   title: "Volunteer application | Te Pūaroha",
@@ -99,9 +100,9 @@ export default async function ApplicationPage() {
           {appStatus.applicationNotes && (
             <CardContent>
               <div className="rounded-lg bg-muted p-4 text-left">
-                <p className="eyebrow text-muted-foreground">
+                <Eyebrow tone="muted">
                   Notes from our team
-                </p>
+                </Eyebrow>
                 <p className="mt-1.5 text-sm">{appStatus.applicationNotes}</p>
               </div>
             </CardContent>

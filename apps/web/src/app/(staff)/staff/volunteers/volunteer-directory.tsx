@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { PersonBadges } from "@/components/brand/person-badges";
 import { GroupBadges } from "@/components/brand/group-badge";
 import {
   RiSearchLine,
@@ -98,6 +99,8 @@ import {
   type Sort,
   type VolunteerSortKey,
 } from "@/lib/table-sort";
+import { eyebrowVariants } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 import { EmptyState } from "@/components/brand/empty-state";
 
 const STATUS_OPTIONS = [
@@ -132,20 +135,6 @@ const ROLE_ICON: Record<AssignableRole, typeof RiUserLine> = {
   ADMIN: RiShieldUserLine,
 };
 
-// Only elevated roles get a badge — VOLUNTEER is the default, badging everyone
-// would just add noise.
-const ROLE_BADGE_VARIANT: Partial<Record<string, "default" | "info">> = {
-  COORDINATOR: "info",
-  ADMIN: "default",
-};
-
-function initials(name: string | null | undefined) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 interface VolunteerDirectoryProps {
   initialVolunteers: VolunteerListItem[];
@@ -540,12 +529,7 @@ export function VolunteerDirectory({
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <span
-                            aria-hidden
-                            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
-                          >
-                            {initials(vol.user.name)}
-                          </span>
+                          <PersonAvatar name={vol.user.name} />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <Link
@@ -554,18 +538,11 @@ export function VolunteerDirectory({
                               >
                                 {vol.user.name || "Unnamed"}
                               </Link>
-                              {ROLE_BADGE_VARIANT[vol.user.role] && (
-                                <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
-                                  {ROLE_LABEL[vol.user.role as AssignableRole] ??
-                                    vol.user.role}
-                                </Badge>
-                              )}
-                              {vol.user.isOffline && (
-                                <Badge variant="neutral">Offline</Badge>
-                              )}
-                              {vol.user.status === "ARCHIVED" && (
-                                <StatusBadge status="ARCHIVED" />
-                              )}
+                              <PersonBadges
+                                role={vol.user.role}
+                                isOffline={vol.user.isOffline}
+                                status={vol.user.status}
+                              />
                             </div>
                             <div className="truncate text-xs text-muted-foreground">
                               {contactLine({ email: vol.user.email, phone: vol.phone })}
@@ -577,7 +554,7 @@ export function VolunteerDirectory({
                         {vol.hasProfile && vol.status ? (
                           <StatusBadge status={vol.status} />
                         ) : (
-                          <Badge variant="outline">No application yet</Badge>
+                          <StatusBadge status="NO_APPLICATION" />
                         )}
                       </TableCell>
                       <TableCell>
@@ -656,12 +633,7 @@ export function VolunteerDirectory({
                     vol.user.status === "ARCHIVED" && "opacity-60"
                   )}
                 >
-                  <span
-                    aria-hidden
-                    className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
-                  >
-                    {initials(vol.user.name)}
-                  </span>
+                  <PersonAvatar name={vol.user.name} className="mt-0.5" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Link
@@ -670,18 +642,11 @@ export function VolunteerDirectory({
                       >
                         {vol.user.name || "Unnamed"}
                       </Link>
-                      {ROLE_BADGE_VARIANT[vol.user.role] && (
-                        <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
-                          {ROLE_LABEL[vol.user.role as AssignableRole] ??
-                            vol.user.role}
-                        </Badge>
-                      )}
-                      {vol.user.isOffline && (
-                        <Badge variant="neutral">Offline</Badge>
-                      )}
-                      {vol.user.status === "ARCHIVED" && (
-                        <StatusBadge status="ARCHIVED" />
-                      )}
+                      <PersonBadges
+                        role={vol.user.role}
+                        isOffline={vol.user.isOffline}
+                        status={vol.user.status}
+                      />
                     </div>
                     <p className="truncate text-xs text-muted-foreground">
                       {contactLine({ email: vol.user.email, phone: vol.phone })}
@@ -693,7 +658,7 @@ export function VolunteerDirectory({
                           <StatusBadge status={vol.status} />
                           {vol.mojStatus && (
                             <span className="inline-flex items-center gap-1">
-                              <span className="eyebrow text-[0.62rem] text-muted-foreground">
+                              <span className={eyebrowVariants({ size: "sm", tone: "muted" })}>
                                 MoJ
                               </span>
                               <StatusBadge status={vol.mojStatus} />
@@ -701,7 +666,7 @@ export function VolunteerDirectory({
                           )}
                         </>
                       ) : (
-                        <Badge variant="outline">No application yet</Badge>
+                        <StatusBadge status="NO_APPLICATION" />
                       )}
                     </div>
 
@@ -967,13 +932,13 @@ function StatusMenu({
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
             <Link href={`/staff/volunteers/${volunteer.user.id}`}>
-              <RiFileUserLine className="mr-2 size-4" />
+              <RiFileUserLine className="size-4" />
               View full record
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onRestore(volunteer)}>
-            <RiArrowGoBackLine className="mr-2 size-4" />
+            <RiArrowGoBackLine className="size-4" />
             Restore account
           </DropdownMenuItem>
           {canDelete && (
@@ -981,9 +946,9 @@ function StatusMenu({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => onDelete(volunteer)}
-                className="text-destructive focus:text-destructive"
+                variant="destructive"
               >
-                <RiDeleteBin6Line className="mr-2 size-4" />
+                <RiDeleteBin6Line className="size-4" />
                 Delete permanently
               </DropdownMenuItem>
             </>
@@ -1035,7 +1000,7 @@ function StatusMenu({
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
           <Link href={`/staff/volunteers/${volunteer.user.id}`}>
-            <RiFileUserLine className="mr-2 size-4" />
+            <RiFileUserLine className="size-4" />
             View full record
           </Link>
         </DropdownMenuItem>
@@ -1054,7 +1019,7 @@ function StatusMenu({
               )
             }
           >
-            <s.icon className="mr-2 size-4" />
+            <s.icon className="size-4" />
             {s.label}
           </DropdownMenuItem>
         ))}
@@ -1063,7 +1028,7 @@ function StatusMenu({
             <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <RiGroupLine className="mr-2 size-4" />
+                <RiGroupLine data-icon="inline-start" className="size-4" />
                 Groups
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -1095,7 +1060,7 @@ function StatusMenu({
             <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <RiUserSettingsLine className="mr-2 size-4" />
+                <RiUserSettingsLine data-icon="inline-start" className="size-4" />
                 Change role
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -1106,7 +1071,7 @@ function StatusMenu({
                       key={role}
                       onClick={() => onChangeRole(volunteer, role)}
                     >
-                      <Icon className="mr-2 size-4" />
+                      <Icon className="size-4" />
                       Make {ROLE_LABEL[role].toLowerCase()}
                     </DropdownMenuItem>
                   );
@@ -1119,7 +1084,7 @@ function StatusMenu({
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onImpersonate(volunteer)}>
-              <RiEyeLine className="mr-2 size-4" />
+              <RiEyeLine className="size-4" />
               View as this person
             </DropdownMenuItem>
           </>
@@ -1127,17 +1092,17 @@ function StatusMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => onArchive(volunteer)}
-          className="text-destructive focus:text-destructive"
+          variant="destructive"
         >
-          <RiArchive2Line className="mr-2 size-4" />
+          <RiArchive2Line className="size-4" />
           Archive account
         </DropdownMenuItem>
         {canDelete && (
           <DropdownMenuItem
             onClick={() => onDelete(volunteer)}
-            className="text-destructive focus:text-destructive"
+            variant="destructive"
           >
-            <RiDeleteBin6Line className="mr-2 size-4" />
+            <RiDeleteBin6Line className="size-4" />
             Delete permanently
           </DropdownMenuItem>
         )}

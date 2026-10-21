@@ -11,6 +11,8 @@ import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveForm } from "@/components/leave/log-leave-card";
 import { getMyLeave } from "@/lib/leave-actions";
 import { describeLeaveStatus, formatLeaveRange } from "@/lib/leave";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { ListCard } from "@/components/brand/list-card";
 
 export const metadata: Metadata = {
   title: "My leave | Te Pūaroha",
@@ -42,7 +44,7 @@ export default async function MyLeavePage() {
               <RiSuitcaseLine />
             </IconChip>
             <div className="space-y-1">
-              <p className="eyebrow text-ink-muted-foreground">Kei te wehe koe · You&apos;re away</p>
+              <Eyebrow tone="ink">Kei te wehe koe · You&apos;re away</Eyebrow>
               <p className="font-serif text-2xl font-medium tracking-tight">
                 {describeLeaveStatus(current, today)}
               </p>
@@ -71,14 +73,9 @@ export default async function MyLeavePage() {
             </CardContent>
           </Card>
 
-          <Card className="gap-0 pb-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Coming up</CardTitle>
-            </CardHeader>
+          <ListCard title="Coming up">
             {ahead.length > 0 ? (
-              <div className="border-t border-border">
-                <LeaveEntries entries={ahead} audience="self" today={today} stageBadge="current" />
-              </div>
+              <LeaveEntries entries={ahead} audience="self" today={today} stageBadge="current" />
             ) : (
               <EmptyState
                 bare
@@ -89,17 +86,12 @@ export default async function MyLeavePage() {
                 className="border-t border-border"
               />
             )}
-          </Card>
+          </ListCard>
         </div>
 
-        <Card className="gap-0 pb-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Past leave</CardTitle>
-          </CardHeader>
+        <ListCard title="Past leave">
           {past.length > 0 ? (
-            <div className="border-t border-border">
-              <LeaveEntries entries={past} audience="self" today={today} stageBadge="none" />
-            </div>
+            <LeaveEntries entries={past} audience="self" today={today} stageBadge="none" />
           ) : (
             <EmptyState
               bare
@@ -110,7 +102,7 @@ export default async function MyLeavePage() {
               className="border-t border-border"
             />
           )}
-        </Card>
+        </ListCard>
       </div>
     </div>
   );

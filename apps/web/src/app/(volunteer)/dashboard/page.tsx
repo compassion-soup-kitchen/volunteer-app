@@ -4,7 +4,6 @@ import { APP_TIME_ZONE, formatDateOnly, todayInAppZone } from "@/lib/date-only";
 import { auth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { SectionHeader } from "@/components/brand/section-header";
@@ -41,6 +40,9 @@ import { getUnansweredInvitations } from "@/lib/event-actions";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimeRange } from "@/lib/format";
 import { BleedList } from "@/components/brand/detail-list";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { MissionRail } from "@/components/brand/mission-rail";
 import { volunteerShiftHref } from "@/lib/roster-week";
 
 export const metadata: Metadata = {
@@ -165,7 +167,7 @@ export default async function VolunteerDashboard() {
                 <h2 className="font-serif text-lg font-medium tracking-tight">
                   Application under review
                 </h2>
-                <Badge variant="warning">Pending</Badge>
+                <StatusBadge status="PENDING" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Ngā mihi for applying - our team is reviewing your application
@@ -191,7 +193,7 @@ export default async function VolunteerDashboard() {
                   <h2 className="font-serif text-lg font-medium tracking-tight">
                     Welcome to the whānau!
                   </h2>
-                  <Badge variant="success">Approved</Badge>
+                  <StatusBadge status="APPROVED" />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Your application has been approved. Pick your first shift
@@ -215,7 +217,7 @@ export default async function VolunteerDashboard() {
                   <h2 className="font-serif text-lg font-medium tracking-tight">
                     More information needed
                   </h2>
-                  <Badge variant="info">Action required</Badge>
+                  <StatusBadge status="INFO_REQUESTED" label="Action required" />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   We need a bit more info to process your application. Please
@@ -275,17 +277,20 @@ export default async function VolunteerDashboard() {
 
           {nextShift && nextShiftDate ? (
             <Card className="rounded-2xl">
-              {/* The red mission rail marks the volunteer's own commitment */}
-              <span
-                aria-hidden
-                className="absolute inset-y-0 left-0 w-1 bg-primary"
-              />
-              <CardContent className="flex items-center gap-4 sm:gap-5">
+              <MissionRail />
+              {/* The whole row is the link (the title stretches over it), so
+                  a phone - with no room for a button - can still open it. */}
+              <CardContent className="group/next relative flex items-center gap-4 sm:gap-5">
                 <DateBlock date={nextShiftDate} />
                 <span aria-hidden className="self-stretch border-l border-border" />
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="font-serif text-xl/tight font-medium tracking-tight">
-                    {nextShift.serviceArea.name}
+                    <Link
+                      href={volunteerShiftHref(nextShiftDate, todayInAppZone())}
+                      className="outline-none after:absolute after:inset-0 after:rounded-md group-hover/next:text-primary focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ring"
+                    >
+                      {nextShift.serviceArea.name}
+                    </Link>
                   </p>
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <RiTimeLine className="size-3.5 shrink-0" aria-hidden />
@@ -297,11 +302,13 @@ export default async function VolunteerDashboard() {
                     </p>
                   )}
                 </div>
-                <Button asChild size="sm" className="hidden sm:inline-flex">
-                  <Link href={volunteerShiftHref(nextShiftDate, todayInAppZone())}>
-                    View
-                  </Link>
-                </Button>
+                <span
+                  aria-hidden
+                  className="flex shrink-0 items-center gap-0.5 text-sm font-semibold text-primary"
+                >
+                  <span className="hidden sm:inline">View</span>
+                  <RiArrowRightSLine className="size-4 transition-transform group-hover/next:translate-x-0.5" />
+                </span>
               </CardContent>
 
               {dashboardData.upcomingShifts.length > 1 && (
@@ -358,7 +365,7 @@ export default async function VolunteerDashboard() {
                 <li key={shift.id}>
                   <Link
                     href={volunteerShiftHref(new Date(shift.date), todayInAppZone())}
-                    className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                    className={rowLinkVariants()}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">
@@ -430,7 +437,7 @@ export default async function VolunteerDashboard() {
                           : "flex-1"
                       }
                     >
-                      <p className="eyebrow text-ink-muted-foreground">{stat.label}</p>
+                      <Eyebrow tone="ink">{stat.label}</Eyebrow>
                       <StatFigure value={stat.value} className="mt-1.5" />
                       {stat.delta && (
                         <p className="mt-1 text-xs font-medium text-ink-muted-foreground">
@@ -519,9 +526,7 @@ export default async function VolunteerDashboard() {
                       {ts.location && ` · ${ts.location}`}
                     </p>
                   </div>
-                  <Badge variant="info" className="shrink-0">
-                    Booked
-                  </Badge>
+                  <StatusBadge status="REGISTERED" label="Booked" className="shrink-0" />
                 </li>
               ))}
             </BleedList>
@@ -574,7 +579,7 @@ export default async function VolunteerDashboard() {
               <Card key={a.id} size="sm">
                 <Link
                   href={`/news#${a.id}`}
-                  className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                  className={rowLinkVariants({ layout: "block" })}
                 >
                   <CardContent className="space-y-1.5 py-0.5">
                     <div className="space-y-0.5">
@@ -611,7 +616,7 @@ export default async function VolunteerDashboard() {
         <Card size="sm">
           <Link
             href="/events"
-            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            className={rowLinkVariants({ layout: "block" })}
           >
             <CardContent className="flex items-center gap-3">
               <IconChip size="sm">
@@ -631,7 +636,7 @@ export default async function VolunteerDashboard() {
         <Card size="sm">
           <Link
             href="/documents"
-            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            className={rowLinkVariants({ layout: "block" })}
           >
             <CardContent className="flex items-center gap-3">
               <IconChip size="sm">
@@ -651,7 +656,7 @@ export default async function VolunteerDashboard() {
         <Card size="sm">
           <Link
             href="/team"
-            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            className={rowLinkVariants({ layout: "block" })}
           >
             <CardContent className="flex items-center gap-3">
               <IconChip size="sm">
@@ -692,14 +697,14 @@ export default async function VolunteerDashboard() {
       {/* Kaupapa grace note — Suzanne Aubert's founding words */}
       <Card variant="ink">
         <CardContent className="space-y-3">
-          <p className="eyebrow text-ink-muted-foreground">Tō tātou kaupapa</p>
+          <Eyebrow tone="ink">Tō tātou kaupapa</Eyebrow>
           <blockquote className="font-serif text-lg/relaxed italic">
             &ldquo;Help one another and make use of the many little occasions to
             lighten the burden of others.&rdquo;
           </blockquote>
-          <p className="eyebrow text-ink-muted-foreground">
+          <Eyebrow tone="ink">
             Suzanne Aubert · Meri Hōhepa
-          </p>
+          </Eyebrow>
         </CardContent>
       </Card>
       </div>

@@ -9,6 +9,8 @@ import { EmptyState } from "@/components/brand/empty-state";
 import { AnnouncementAttachments } from "@/components/announcement-attachments";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimestampInAppZone, todayInAppZone } from "@/lib/date-only";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 
 export const metadata: Metadata = {
   title: "Notices | Te Pūaroha",
@@ -20,14 +22,6 @@ function formatNoticeDate(date: Date) {
   return formatTimestampInAppZone(date);
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
-}
 
 export default async function NewsPage() {
   await connection();
@@ -82,22 +76,17 @@ export default async function NewsPage() {
                 )}
                 {a.attachments.length > 0 && (
                   <div className="space-y-2 border-t border-border pt-3">
-                    <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                    <Eyebrow size="sm" tone="muted">
                       {a.attachments.length === 1
                         ? "Attachment"
                         : `${a.attachments.length} attachments`}
-                    </p>
+                    </Eyebrow>
                     <AnnouncementAttachments attachments={a.attachments} />
                   </div>
                 )}
                 {a.authorName && (
                   <div className="flex items-center gap-2 border-t border-border pt-3">
-                    <span
-                      aria-hidden
-                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-[10px] font-bold text-neutral-tint-foreground"
-                    >
-                      {initials(a.authorName)}
-                    </span>
+                    <PersonAvatar name={a.authorName} size="sm" />
                     <p className="min-w-0 truncate text-xs text-muted-foreground">
                       {a.authorName}
                     </p>

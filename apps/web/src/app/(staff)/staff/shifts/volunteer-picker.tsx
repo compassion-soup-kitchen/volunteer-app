@@ -18,6 +18,7 @@ import type { OfferStatus } from "@/lib/shift-offers";
 import type { VolunteerOption } from "@/lib/shift-actions";
 import { contactLine } from "@/lib/format";
 import { sortGroups, type GroupChip } from "@/lib/volunteer-groups";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 /** Volunteers matching a search by name, email, phone or group. */
 export function searchVolunteers(
@@ -120,7 +121,7 @@ export function VolunteerPicker({
                   {status && status !== "PENDING" && (
                     <StatusBadge
                       status={status}
-                      className="px-1.5 py-0 text-[0.65rem]"
+                      className="px-1.5 py-0 text-2xs"
                     />
                   )}
                   <button
@@ -165,9 +166,9 @@ export function VolunteerPicker({
 
           {groups.length > 0 && (
             <div className="border-b border-border px-2 py-2">
-              <p className="eyebrow mb-1.5 px-1 text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted" className="mb-1.5 px-1">
                 Whole group
-              </p>
+              </Eyebrow>
               <ul className="flex flex-wrap gap-1.5">
                 {groups.map((entry) => {
                   const allSelected = entry.memberIds.every((id) =>

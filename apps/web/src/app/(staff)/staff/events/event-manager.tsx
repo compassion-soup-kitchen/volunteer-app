@@ -58,21 +58,13 @@ import { EventFormDialog } from "./event-form-dialog";
 import { GuestListDialog } from "./guest-list-dialog";
 import { AnnounceEventDialog } from "./announce-event-dialog";
 import { BleedList } from "@/components/brand/detail-list";
+import { StatusBadge } from "@/components/brand/status-badge";
 import { EmptyState } from "@/components/brand/empty-state";
 
 const AUDIENCE_LABELS: Record<StaffEvent["audience"], string> = {
   ALL: "Everyone",
   VOLUNTEERS: "Volunteers",
   COORDINATORS: "Coordinators",
-};
-
-const STATUS_BADGES: Record<
-  StaffEvent["status"],
-  { label: string; variant: "success" | "neutral" | "destructive" }
-> = {
-  PUBLISHED: { label: "Shared", variant: "success" },
-  DRAFT: { label: "Draft", variant: "neutral" },
-  CANCELLED: { label: "Cancelled", variant: "destructive" },
 };
 
 interface EventManagerProps {
@@ -356,7 +348,6 @@ function EventRow({
   onCancel: () => void;
   onDelete: () => void;
 }) {
-  const status = STATUS_BADGES[event.status];
   const outstanding = awaitingReply(event.counts, event.inviteeCount);
   const collecting = event.rsvpEnabled && event.status !== "DRAFT";
   const rules: EventRules = event;
@@ -370,16 +361,19 @@ function EventRow({
           <h3 className="min-w-0 font-serif text-base font-medium tracking-tight">
             {event.title}
           </h3>
-          <Badge variant={status.variant}>{status.label}</Badge>
+          <StatusBadge status={`EVENT_${event.status}`} />
           <Badge variant="outline">{AUDIENCE_LABELS[event.audience]}</Badge>
           {event.myRsvp ? (
-            <Badge variant="info">
-              {event.myRsvp.response === "GOING"
-                ? "You're going"
-                : event.myRsvp.response === "MAYBE"
-                  ? "You're a maybe"
-                  : "You're out"}
-            </Badge>
+            <StatusBadge
+              status={`RSVP_${event.myRsvp.response}`}
+              label={
+                event.myRsvp.response === "GOING"
+                  ? "You're going"
+                  : event.myRsvp.response === "MAYBE"
+                    ? "You're a maybe"
+                    : "You're out"
+              }
+            />
           ) : null}
         </div>
 
@@ -452,42 +446,42 @@ function EventRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>
-              <RiEditLine className="mr-2 size-4" />
+              <RiEditLine className="size-4" />
               Edit
             </DropdownMenuItem>
             {collecting ? (
               <DropdownMenuItem onClick={onGuests}>
-                <RiGroupLine className="mr-2 size-4" />
+                <RiGroupLine className="size-4" />
                 Guest list
               </DropdownMenuItem>
             ) : null}
             {event.status === "PUBLISHED" ? (
               <>
                 <DropdownMenuItem onClick={onAnnounce}>
-                  <RiMegaphoneLine className="mr-2 size-4" />
+                  <RiMegaphoneLine className="size-4" />
                   Announce it
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onUnpublish}>
-                  <RiEyeOffLine className="mr-2 size-4" />
+                  <RiEyeOffLine className="size-4" />
                   Back to draft
                 </DropdownMenuItem>
               </>
             ) : null}
             {event.status === "DRAFT" ? (
               <DropdownMenuItem onClick={onPublish}>
-                <RiCalendarEventLine className="mr-2 size-4" />
+                <RiCalendarEventLine className="size-4" />
                 Share with {AUDIENCE_LABELS[event.audience].toLowerCase()}
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuSeparator />
             {event.status !== "CANCELLED" ? (
               <DropdownMenuItem variant="destructive" onClick={onCancel}>
-                <RiCloseCircleLine className="mr-2 size-4" />
+                <RiCloseCircleLine className="size-4" />
                 Call it off
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuItem variant="destructive" onClick={onDelete}>
-              <RiDeleteBinLine className="mr-2 size-4" />
+              <RiDeleteBinLine className="size-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

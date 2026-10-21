@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { EmptyState } from "@/components/brand/empty-state";
 import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
+import { StatusBadge } from "@/components/brand/status-badge";
+import { MissionRail } from "@/components/brand/mission-rail";
 import {
   registerForTraining,
   cancelTrainingRegistration,
@@ -94,11 +95,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
           return (
             <Card key={session.id}>
               {isRegistered && (
-                // The red mission rail marks the volunteer's own commitment
-                <span
-                  aria-hidden
-                  className="absolute inset-y-0 left-0 w-1 bg-primary"
-                />
+                <MissionRail />
               )}
               <CardContent className="flex flex-1 flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
@@ -115,15 +112,9 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       </p>
                     )}
                   </div>
-                  {isRegistered ? (
-                    <Badge variant="info" className="shrink-0">
-                      Booked
-                    </Badge>
-                  ) : isFull ? (
-                    <Badge variant="neutral" className="shrink-0">
-                      Full
-                    </Badge>
-                  ) : null}
+                  {isRegistered && (
+                    <StatusBadge status="REGISTERED" label="Booked" className="shrink-0" />
+                  )}
                 </div>
 
                 <div className="space-y-1.5 text-sm text-muted-foreground">
@@ -180,20 +171,23 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       onClick={() => setCancelId(session.id)}
                     >
                       {loading && (
-                        <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                        <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                       )}
                       Cancel
                     </Button>
-                  ) : (
+                  ) : isFull ? null : (
+                    // The capacity line already says when it's full - no
+                    // dead button repeating it.
                     <Button
+                      variant="secondary"
                       size="sm"
-                      disabled={loading || isFull}
+                      disabled={loading}
                       onClick={() => handleRegister(session.id)}
                     >
                       {loading && (
-                        <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                        <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                       )}
-                      {isFull ? "Session full" : "Register"}
+                      Register
                     </Button>
                   )}
                 </div>

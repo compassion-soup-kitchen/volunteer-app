@@ -15,6 +15,8 @@ import {
   type UploadedDocument,
 } from "@/lib/document-actions";
 import { BleedList } from "@/components/brand/detail-list";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 
 export function DownloadableFiles({
   documents,
@@ -58,7 +60,7 @@ export function DownloadableFiles({
               type="button"
               onClick={() => handleDownload(doc.id, doc.fileName)}
               disabled={downloading === doc.id}
-              className="group flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring disabled:opacity-60"
+              className={cn(rowLinkVariants(), "py-3.5")}
             >
               <span className="sr-only">Download </span>
               <IconChip size="sm">
