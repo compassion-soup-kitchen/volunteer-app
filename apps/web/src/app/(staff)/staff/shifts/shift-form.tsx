@@ -425,7 +425,7 @@ export function ShiftForm({
                           className={cn(
                             "min-w-12 rounded-md px-3 py-1.5 text-sm font-semibold ring-1 transition-colors",
                             selected
-                              ? "bg-primary text-primary-foreground ring-primary"
+                              ? "bg-primary-fill text-primary-foreground ring-primary-fill"
                               : "bg-card text-muted-foreground ring-border hover:text-foreground"
                           )}
                         >

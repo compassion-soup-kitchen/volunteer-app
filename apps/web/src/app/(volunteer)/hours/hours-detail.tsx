@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import { ShareBar } from "@/components/brand/share-bar";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { SectionHeader } from "@/components/brand/section-header";
@@ -112,14 +113,15 @@ export function HoursDetail({ data }: HoursDetailProps) {
         {/* Area ledger — where your time goes */}
         <section className="space-y-4">
           <SectionHeader eyebrow="Ngā wāhanga" title="Where your time goes" />
-          <Card>
-            {data.byServiceArea.length === 0 ? (
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  No hours recorded yet
-                </p>
-              </CardContent>
-            ) : (
+          {data.byServiceArea.length === 0 ? (
+            <EmptyState
+              size="compact"
+              icon={<RiTimeLine />}
+              title="No hours recorded yet"
+              description="Each area you help in will show up here after your first shift."
+            />
+          ) : (
+            <Card>
               <ul className="divide-y divide-border">
                 {data.byServiceArea.map((area, i) => {
                   const accent = AREA_ACCENTS[i % AREA_ACCENTS.length];
@@ -153,8 +155,8 @@ export function HoursDetail({ data }: HoursDetailProps) {
                   );
                 })}
               </ul>
-            )}
-          </Card>
+            </Card>
+          )}
         </section>
       </div>
 
@@ -225,11 +227,14 @@ export function HoursDetail({ data }: HoursDetailProps) {
             <CardTitle>Month by month</CardTitle>
           </CardHeader>
           {data.byMonth.length === 0 ? (
-            <CardContent className="border-t border-border pt-3 pb-2">
-              <p className="text-sm text-muted-foreground">
-                No hours recorded yet
-              </p>
-            </CardContent>
+            <EmptyState
+              bare
+              size="compact"
+              icon={<RiCalendarCheckLine />}
+              title="No hours recorded yet"
+              description="Your months will add up here as shifts are logged."
+              className="border-t border-border"
+            />
           ) : (
             <ul className="divide-y divide-border border-t border-border">
               {data.byMonth.map((month) => (
@@ -258,7 +263,7 @@ export function HoursDetail({ data }: HoursDetailProps) {
         </Card>
 
         {/* Gratitude banner */}
-        <Card className="bg-primary text-primary-foreground ring-0">
+        <Card className="bg-primary-fill text-primary-foreground ring-0">
           <CardContent className="flex items-center gap-3">
             <RiHeartFill className="size-5 shrink-0" aria-hidden />
             <p className="font-serif text-lg/snug font-medium tracking-tight">

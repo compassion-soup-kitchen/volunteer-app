@@ -7,7 +7,6 @@ import {
   getRecentActivity,
 } from "@/lib/staff-actions";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   RiTeamLine,
   RiFileListLine,
@@ -31,6 +30,8 @@ import { SectionHeader } from "@/components/brand/section-header";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
+import { StatsSkeleton, ActivitySkeleton, AwayTodaySkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Staff dashboard | Te Pūaroha",
@@ -59,7 +60,7 @@ export default async function StaffDashboard() {
         </Suspense>
 
         <div className="min-w-0 space-y-8">
-          <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+          <Suspense fallback={<AwayTodaySkeleton />}>
             <AwayTodaySection />
           </Suspense>
           <QuickActions />
@@ -148,8 +149,6 @@ async function StatsCards() {
 async function RecentActivitySection() {
   const activities = await getRecentActivity();
 
-  if (activities.length === 0) return null;
-
   const iconMap = {
     application: RiFileListLine,
     signup: RiCheckLine,
@@ -163,29 +162,38 @@ async function RecentActivitySection() {
         eyebrow="Ngā mahi hou"
         title="Recent activity"
       />
-      <Card>
-        <BleedList>
-          {activities.map((activity, i) => {
-            const Icon = iconMap[activity.type] || RiUserLine;
-            return (
-              <li key={i} className="flex items-start gap-3 px-5 py-3">
-                <IconChip size="sm" className="mt-0.5">
-                  <Icon />
-                </IconChip>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm">
-                    <span className="font-semibold">{activity.label}</span>{" "}
-                    <span className="text-muted-foreground">{activity.detail}</span>
-                  </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {formatDistanceToNow(activity.time, { addSuffix: true })}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </BleedList>
-      </Card>
+      {activities.length === 0 ? (
+        <EmptyState
+          size="compact"
+          icon={<RiTimeLine />}
+          title="All quiet so far"
+          description="New applications, shift sign-ups and leave will show up here as they happen."
+        />
+      ) : (
+        <Card>
+          <BleedList>
+            {activities.map((activity, i) => {
+              const Icon = iconMap[activity.type] || RiUserLine;
+              return (
+                <li key={i} className="flex items-start gap-3 px-5 py-3">
+                  <IconChip size="sm" className="mt-0.5">
+                    <Icon />
+                  </IconChip>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm">
+                      <span className="font-semibold">{activity.label}</span>{" "}
+                      <span className="text-muted-foreground">{activity.detail}</span>
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {formatDistanceToNow(activity.time, { addSuffix: true })}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </BleedList>
+        </Card>
+      )}
     </section>
   );
 }
@@ -203,17 +211,16 @@ async function AwayTodaySection() {
         title="Away today"
         action={{ label: "All leave", href: "/staff/leave" }}
       />
-      <Card size="sm">
-        {away.length === 0 ? (
-          <CardContent className="flex items-center gap-3">
-            <IconChip size="sm" tone="success">
-              <RiSuitcaseLine />
-            </IconChip>
-            <p className="text-sm text-muted-foreground">
-              Nobody is on leave today.
-            </p>
-          </CardContent>
-        ) : (
+      {away.length === 0 ? (
+        <EmptyState
+          size="compact"
+          icon={<RiSuitcaseLine />}
+          tone="success"
+          title="Everyone's around"
+          description="Nobody is on leave today."
+        />
+      ) : (
+        <Card size="sm">
           <ul className="divide-y divide-border">
             {shown.map((leave) => (
               <li key={leave.id}>
@@ -241,8 +248,8 @@ async function AwayTodaySection() {
               </li>
             )}
           </ul>
-        )}
-      </Card>
+        </Card>
+      )}
     </section>
   );
 }
@@ -283,42 +290,3 @@ function QuickActions() {
   );
 }
 
-function StatsSkeleton() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {[...Array(4)].map((_, i) => (
-        <Card key={i}>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-8 w-14" />
-            <Skeleton className="h-3 w-20" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function ActivitySkeleton() {
-  return (
-    <div className="min-w-0 space-y-4">
-      <div className="space-y-1.5">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-6 w-40" />
-      </div>
-      <Card>
-        <div className="space-y-3 px-5">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <Skeleton className="size-8 rounded-md" />
-              <div className="flex-1 space-y-1.5">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-}

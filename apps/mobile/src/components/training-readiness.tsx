@@ -1,8 +1,9 @@
 import { format, parseISO } from 'date-fns';
 import { View } from 'react-native';
 
-import { Card, Icon, Text } from '@/components/ui';
-import { FontFamily, Radius, Spacing } from '@/constants/theme';
+import { HeroFigure, InkHero } from '@/components/ink-hero';
+import { Icon, Text } from '@/components/ui';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { relativeDay } from '@/lib/format';
 import type { TrainingModule, TrainingReadiness as Readiness } from '@/types/models';
@@ -21,37 +22,10 @@ export function TrainingReadiness({ readiness }: { readiness: Readiness }) {
   const { complete, total, fullyTrained, modules } = readiness;
 
   return (
-    <Card tone="ink" elevated padding={Spacing.xl} style={{ gap: Spacing.lg, overflow: 'hidden' }}>
-      {/* Warm brand glow, echoing the Hours hero */}
-      <View
-        style={{
-          position: 'absolute',
-          right: -34,
-          top: -34,
-          width: 140,
-          height: 140,
-          borderRadius: 70,
-          backgroundColor: 'rgba(228,0,43,0.20)',
-        }}
-      />
-
-      <Text variant="overline" style={{ color: colors.onInkMuted, letterSpacing: 1.4 }}>
-        Tō takatūtanga · Your readiness
-      </Text>
-
+    <InkHero overline="Tō takatūtanga · Your readiness" gap={Spacing.lg}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: Spacing.md }}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            style={{
-              fontFamily: FontFamily.serif,
-              fontSize: 46,
-              lineHeight: 50,
-              letterSpacing: -0.6,
-              color: colors.onInk,
-            }}>
-            {complete}
-            <Text style={{ fontFamily: FontFamily.serif, fontSize: 24, color: colors.onInkMuted }}>{` / ${total}`}</Text>
-          </Text>
+          <HeroFigure value={complete} unit={`/ ${total}`} />
           <Text variant="callout" style={{ color: colors.onInkMuted }}>
             {fullyTrained ? 'Every core module complete - ka rawe.' : 'core modules complete'}
           </Text>
@@ -63,7 +37,7 @@ export function TrainingReadiness({ readiness }: { readiness: Readiness }) {
               width: 46,
               height: 46,
               borderRadius: 23,
-              backgroundColor: colors.primary,
+              backgroundColor: colors.primaryFill,
               alignItems: 'center',
               justifyContent: 'center',
             }}>
@@ -79,7 +53,7 @@ export function TrainingReadiness({ readiness }: { readiness: Readiness }) {
         ))}
       </View>
 
-      <View style={{ height: 1, backgroundColor: colors.onInk, opacity: 0.12 }} />
+      <View style={{ height: 1, backgroundColor: colors.onInkHairline }} />
 
       {/* Per-module checklist */}
       <View style={{ gap: Spacing.md }}>
@@ -87,7 +61,7 @@ export function TrainingReadiness({ readiness }: { readiness: Readiness }) {
           <ModuleRow key={m.type} module={m} />
         ))}
       </View>
-    </Card>
+    </InkHero>
   );
 }
 
@@ -117,7 +91,7 @@ function StatusDot({ state }: { state: TrainingModule['state'] }) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: colors.primary,
+          backgroundColor: colors.primaryFill,
           alignItems: 'center',
           justifyContent: 'center',
         }}>

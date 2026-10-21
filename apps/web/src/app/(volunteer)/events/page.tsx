@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/brand/page-header";
 import { SectionHeader } from "@/components/brand/section-header";
-import { Illustration } from "@/components/brand/illustration";
+import { EmptyState } from "@/components/brand/empty-state";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { auth } from "@/lib/auth";
 import { todayInAppZone } from "@/lib/date-only";
@@ -47,19 +47,11 @@ export default async function EventsPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Illustration name="korero" size={96} />
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                Nothing in the diary
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                When the team plans a gathering, your invitation will show up here.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          illustration="korero"
+          title="Nothing in the diary"
+          description="When the team plans a gathering, your invitation will show up here."
+        />
       )}
 
       {past.length > 0 ? (

@@ -1,23 +1,20 @@
 import { Link, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable } from 'react-native';
 
-import { AuthHero } from '@/components/auth-hero';
+import { AuthScreen, AuthSwitch } from '@/components/auth/auth-screen';
 import { Button, Card, Text, TextField } from '@/components/ui';
-import { Layout, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Shadows, Spacing } from '@/constants/theme';
+import { useAnnounce } from '@/hooks/use-announce';
 import { requestPasswordReset } from '@/services/auth-service';
 
 export default function ForgotPasswordScreen() {
-  const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   // Carried over from the sign-in screen, so nobody types their address twice.
   const params = useLocalSearchParams<{ email?: string }>();
 
   const [email, setEmail] = useState(params.email ?? '');
   const [error, setError] = useState<string | null>(null);
+  useAnnounce(error);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
 
@@ -31,80 +28,55 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Sign-in's ink masthead sets a light status bar and stays mounted
-          underneath; this screen is paper, so it follows the theme again. */}
-      <StatusBar style="auto" />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'center',
-            gap: Spacing.xl,
-            paddingHorizontal: Layout.screenPadding,
-            paddingTop: insets.top + Spacing.xl,
-            paddingBottom: insets.bottom + Spacing.xl,
-          }}>
-          <View style={{ width: '100%', maxWidth: Layout.maxContentWidth, alignSelf: 'center', gap: Spacing.xl }}>
-            <AuthHero
-              overline="Kia ora anō"
-              title="Forgotten your password?"
-              subtitle="Tell us your email and we'll send you a link to choose a new one."
-            />
+    <AuthScreen
+      overline="Kia ora anō"
+      title="Forgotten your password?"
+      subtitle="Tell us your email and we'll send you a link to choose a new one.">
+      {sent ? (
+        <Card elevated padding={Spacing.xl} style={{ gap: Spacing.md, boxShadow: Shadows.lg }}>
+          <Text variant="heading">Check your inbox</Text>
+          <Text variant="body" color="textSecondary">
+            {sent}
+          </Text>
+          <Text variant="callout" color="textSecondary">
+            Open the link, choose a new password, then come back here and sign in with it. Nothing after a few
+            minutes? Have a look in your spam folder.
+          </Text>
+        </Card>
+      ) : (
+        <Card elevated padding={Spacing.xl} style={{ gap: Spacing.lg, boxShadow: Shadows.lg }}>
+          <TextField
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@email.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="send"
+            onSubmitEditing={onSubmit}
+          />
 
-            {sent ? (
-              <Card style={{ gap: Spacing.md }}>
-                <Text variant="heading">Check your inbox</Text>
-                <Text variant="body" color="textSecondary">
-                  {sent}
-                </Text>
-                <Text variant="callout" color="textSecondary">
-                  Open the link, choose a new password, then come back here and sign in with it.
-                  Nothing after a few minutes? Have a look in your spam folder.
-                </Text>
-              </Card>
-            ) : (
-              <Card style={{ gap: Spacing.lg }}>
-                <TextField
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@email.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  textContentType="emailAddress"
-                  returnKeyType="send"
-                  onSubmitEditing={onSubmit}
-                />
+          {error ? (
+            <Text variant="caption" color="destructive" selectable>
+              {error}
+            </Text>
+          ) : null}
 
-                {error ? (
-                  <Text variant="caption" color="destructive">
-                    {error}
-                  </Text>
-                ) : null}
+          <Button title="Send reset link" icon="mail-outline" loading={loading} onPress={onSubmit} />
+        </Card>
+      )}
 
-                <Button title="Send reset link" icon="mail-outline" loading={loading} onPress={onSubmit} />
-              </Card>
-            )}
-
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
-              <Text variant="callout" color="textSecondary">
-                Remembered it?
-              </Text>
-              <Link href="/login" dismissTo asChild>
-                <Pressable hitSlop={8}>
-                  <Text variant="callout" color="accent" weight="bold">
-                    Sign in
-                  </Text>
-                </Pressable>
-              </Link>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+      <AuthSwitch prompt="Remembered it?">
+        <Link href="/login" dismissTo asChild>
+          <Pressable hitSlop={8}>
+            <Text variant="callout" color="accent" weight="bold">
+              Sign in
+            </Text>
+          </Pressable>
+        </Link>
+      </AuthSwitch>
+    </AuthScreen>
   );
 }

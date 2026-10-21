@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Fragment } from 'react';
-import { Linking, Platform, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AnnouncementCard } from '@/components/announcement-card';
 import { EventCard } from '@/components/event-card';
@@ -14,7 +14,6 @@ import { NextShiftHero } from '@/components/next-shift-hero';
 import { ShiftCard } from '@/components/shift-card';
 import { StatStrip } from '@/components/stat-strip';
 import {
-  Badge,
   Card,
   Divider,
   EmptyState,
@@ -23,12 +22,16 @@ import {
   Screen,
   SectionHeader,
   SkeletonCard,
+  StatusBadge,
   Text,
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useNoticesSeen } from '@/hooks/use-notices-seen';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange, relativeDay } from '@/lib/format';
+import { countUnread, noticesBellLabel } from '@/lib/notices';
 import { qk } from '@/lib/query-keys';
+import { openVenueDirections, VENUE } from '@/lib/venue';
 import { useAuth } from '@/providers/auth-provider';
 import { getAnnouncements } from '@/services/announcements-service';
 import { getUpcomingEvents } from '@/services/events-service';
@@ -36,17 +39,13 @@ import { canReply, todayISO } from '@/lib/events';
 import { getDashboardData } from '@/services/dashboard-service';
 import { getAvailableTraining } from '@/services/training-service';
 
-/** Where shifts happen — used for the hero location line and the directions link. */
-const VENUE = 'Compassion Soup Kitchen · Tory St, Te Aro';
-const VENUE_QUERY = 'Compassion Soup Kitchen, Tory Street, Wellington';
-
 /**
  * Soft drop shadow so light greeting text stays legible over the moving footage.
  * iOS clips a text shadow to the glyph box, so the padding gives the 12px blur
  * room to render and the matching negative margin keeps the text in place.
+ * The colour comes from the `mediaTextShadow` token.
  */
 const HERO_SHADOW = {
-  textShadowColor: 'rgba(0,0,0,0.5)',
   textShadowOffset: { width: 0, height: 1 },
   textShadowRadius: 12,
   paddingHorizontal: 14,
@@ -54,8 +53,6 @@ const HERO_SHADOW = {
   paddingVertical: 14,
   marginVertical: -10,
 } as const;
-const ON_VIDEO = '#FFFFFF';
-const ON_VIDEO_DIM = 'rgba(255,255,255,0.82)';
 
 /** Time-of-day Te Reo greeting — kept distinct from the "Kia ora, {name}" headline. */
 function greeting(): string {
@@ -65,22 +62,14 @@ function greeting(): string {
   return 'Ahiahi mārie'; // good afternoon, good evening
 }
 
-function openDirections() {
-  const q = encodeURIComponent(VENUE_QUERY);
-  const url = Platform.select({
-    ios: `http://maps.apple.com/?q=${q}`,
-    default: `https://www.google.com/maps/search/?api=1&query=${q}`,
-  });
-  if (url) void Linking.openURL(url);
-}
-
 /** Compact brand lockup with a notification bell that opens the notices feed. */
 function UtilityBar({
-  hasUnread,
+  unread,
   onNotices,
   onVideo = false,
 }: {
-  hasUnread: boolean;
+  /** Notices published since the feed was last opened */
+  unread: number;
   onNotices: () => void;
   /** Light treatment for sitting over the video header */
   onVideo?: boolean;
@@ -91,7 +80,7 @@ function UtilityBar({
       <Wordmark height={24} color={onVideo ? 'primaryForeground' : 'text'} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Notices"
+        accessibilityLabel={noticesBellLabel(unread)}
         onPress={onNotices}
         hitSlop={10}
         style={({ pressed }) => ({ opacity: pressed ? 0.55 : 1, padding: 2 })}>
@@ -99,9 +88,9 @@ function UtilityBar({
           name="notifications-outline"
           size={23}
           color={onVideo ? undefined : 'textSecondary'}
-          raw={onVideo ? ON_VIDEO_DIM : undefined}
+          raw={onVideo ? colors.onMediaMuted : undefined}
         />
-        {hasUnread ? (
+        {unread > 0 ? (
           <View
             style={{
               position: 'absolute',
@@ -123,6 +112,8 @@ function UtilityBar({
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const heroText = { ...HERO_SHADOW, textShadowColor: colors.mediaTextShadow };
   const { user } = useAuth();
   const firstName = (user?.name ?? 'there').split(' ')[0];
 
@@ -138,6 +129,13 @@ export default function DashboardScreen() {
   const rosterOverflow = data ? Math.max(0, data.upcomingShifts.length - 1) : 0;
   const notices = announcements ?? [];
   const topNotices = notices.slice(0, 2);
+  const noticesSeen = useNoticesSeen();
+  const unreadNotices = noticesSeen.loaded ? countUnread(notices, noticesSeen.lastSeenAt) : 0;
+  // Opening the feed is what reads them; a single notice opened from here doesn't.
+  const openNotices = () => {
+    noticesSeen.markSeen(notices);
+    router.push('/news');
+  };
   const unanswered = (events ?? [])
     .filter((event) => event.myResponse === null && canReply(event))
     .slice(0, 2);
@@ -148,14 +146,14 @@ export default function DashboardScreen() {
       refreshing={isRefetching}
       header={
         <HomeVideoHeader>
-          <UtilityBar onVideo hasUnread={notices.length > 0} onNotices={() => router.push('/news')} />
+          <UtilityBar onVideo unread={unreadNotices} onNotices={openNotices} />
 
           {/* Greeting — personal, floating on the footage */}
           <View>
-            <Text variant="overline" style={{ color: ON_VIDEO_DIM, ...HERO_SHADOW }}>
+            <Text variant="overline" style={{ color: colors.onMediaMuted, ...heroText }}>
               {greeting()}
             </Text>
-            <Text variant="display" style={{ color: ON_VIDEO, ...HERO_SHADOW }}>
+            <Text variant="display" style={{ color: colors.onMedia, ...heroText }}>
               Kia ora, {firstName}
             </Text>
           </View>
@@ -177,10 +175,10 @@ export default function DashboardScreen() {
           {data.nextShift ? (
             <NextShiftHero
               shift={data.nextShift}
-              location={VENUE}
+              location={VENUE.address}
               extraCount={rosterOverflow}
               onDetails={() => router.push({ pathname: '/shift/[id]', params: { id: data.nextShift!.id } })}
-              onDirections={openDirections}
+              onDirections={openVenueDirections}
               onMore={() => router.push('/schedule')}
             />
           ) : (
@@ -222,7 +220,7 @@ export default function DashboardScreen() {
                     {relativeDay(nextTraining.date)} · {formatTimeRange(nextTraining.startTime, nextTraining.endTime)}
                   </Text>
                 </View>
-                <Badge label="Booked" tone="navy" icon="checkmark" />
+                <StatusBadge status="REGISTERED" />
               </Card>
             </View>
           ) : null}
@@ -256,7 +254,7 @@ export default function DashboardScreen() {
                 title="Notices"
                 divider
                 actionLabel={notices.length > topNotices.length ? 'All notices' : undefined}
-                onAction={notices.length > topNotices.length ? () => router.push('/news') : undefined}
+                onAction={notices.length > topNotices.length ? openNotices : undefined}
               />
               {topNotices.map((item) => (
                 <AnnouncementCard

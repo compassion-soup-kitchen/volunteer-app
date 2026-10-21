@@ -2,23 +2,14 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getAgreementDetail } from "@/lib/document-actions";
 import { AgreementDetailView } from "./agreement-detail";
 import { PageHeader } from "@/components/brand/page-header";
+import { DetailSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Agreement details | Te Pūaroha",
 };
-
-function DetailSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-48 w-full" />
-      <Skeleton className="h-64 w-full" />
-    </div>
-  );
-}
 
 async function DetailContent({
   agreementType,

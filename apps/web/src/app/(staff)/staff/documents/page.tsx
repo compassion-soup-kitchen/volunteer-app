@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   getAgreementOverview,
   getUploadedDocuments,
@@ -10,20 +9,11 @@ import { FileManager } from "./file-manager";
 import { PageHeader } from "@/components/brand/page-header";
 import { SectionHeader } from "@/components/brand/section-header";
 import { NewAgreementDialog } from "./new-agreement-dialog";
+import { DocumentsSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "Documents | Te Pūaroha",
 };
-
-function DocumentsSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 2 }).map((_, i) => (
-        <Skeleton key={i} className="h-32 w-full" />
-      ))}
-    </div>
-  );
-}
 
 async function AgreementsContent() {
   const overview = await getAgreementOverview();

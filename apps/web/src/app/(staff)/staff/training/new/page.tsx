@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getActiveTrainingTypes } from "@/lib/training-type-actions";
 import { TrainingForm } from "./training-form";
 import { PageHeader } from "@/components/brand/page-header";
+import { TrainingFormSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
   title: "New training session | Te Pūaroha",
@@ -22,7 +22,7 @@ export default function NewTrainingPage() {
         eyebrow="Hanga · New session"
         title="New training session"
       />
-      <Suspense fallback={<Skeleton className="h-[40rem] max-w-xl rounded-xl" />}>
+      <Suspense fallback={<TrainingFormSkeleton />}>
         <TrainingFormLoader />
       </Suspense>
     </div>

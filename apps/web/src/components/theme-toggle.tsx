@@ -14,12 +14,12 @@ const subscribe = () => () => {};
 const getSnapshot = () => true;
 const getServerSnapshot = () => false;
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (!mounted) {
-    return <Button variant="ghost" size="icon-sm" aria-label="Toggle theme" />;
+    return <Button variant="ghost" size="icon-sm" className={className} aria-label="Toggle theme" />;
   }
 
   const next =
@@ -38,6 +38,7 @@ export function ThemeToggle() {
         <Button
           variant="ghost"
           size="icon-sm"
+          className={className}
           onClick={() => setTheme(next)}
           aria-label={label}
         >

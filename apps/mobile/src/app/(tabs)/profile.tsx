@@ -9,6 +9,7 @@ import { ProfileIdentity } from '@/components/profile-identity';
 import { TrainingRecord } from '@/components/training-record';
 import {
   Badge,
+  Button,
   Card,
   Divider,
   Icon,
@@ -26,18 +27,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
 import { describeLeaveStatus, formatLeaveRange, offersLeave } from '@/lib/leave';
+import { isOnboarding } from '@/lib/onboarding';
 import { getMyLeave } from '@/services/leave-service';
 import { getVolunteerProfile } from '@/services/profile-service';
-import type { ServiceArea, VolunteerStatus } from '@/types/models';
-
-/** A volunteer who hasn't reached ACTIVE/INACTIVE is still working through onboarding. */
-function isOnboarding(status: VolunteerStatus): boolean {
-  return (
-    status === 'APPLICATION_SUBMITTED' ||
-    status === 'AWAITING_VETTING' ||
-    status === 'APPROVED_FOR_INDUCTION'
-  );
-}
+import type { ServiceArea } from '@/types/models';
 
 /** A labelled detail line. When `href` is set the whole row taps through (e.g. to dial). */
 function DetailRow({
@@ -329,29 +322,7 @@ export default function ProfileScreen() {
 
           {/* Account — sign out kept subtle and apart, then a finished brand sign-off */}
           <View style={{ gap: Spacing.xl, marginTop: Spacing.xs }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Sign out"
-              onPress={confirmSignOut}
-              style={({ pressed }) => [
-                {
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: Spacing.sm,
-                  height: 52,
-                  borderRadius: Radius.button,
-                  borderCurve: 'continuous',
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  backgroundColor: pressed ? colors.surfacePressed : colors.surface,
-                },
-              ]}>
-              <Icon name="log-out-outline" size={18} raw={colors.destructive} />
-              <Text variant="bodyStrong" style={{ color: colors.destructive }}>
-                Sign out
-              </Text>
-            </Pressable>
+            <Button title="Sign out" variant="secondary" icon="log-out-outline" onPress={confirmSignOut} />
 
             {/* Deleting the account is deliberately quieter than signing out —
                 the safe, everyday action stays the prominent one — but it is

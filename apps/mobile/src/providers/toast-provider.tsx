@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { Layout, Radius, Shadows, Spacing } from '@/constants/theme';
+import { announce } from '@/hooks/use-announce';
 import { useTheme } from '@/hooks/use-theme';
 
 type ToastTone = 'success' | 'error' | 'info';
@@ -32,6 +33,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const show = useCallback((message: string, tone: ToastTone = 'info') => {
     if (timer.current) clearTimeout(timer.current);
     setToast({ id: Date.now(), message, tone });
+    // The toast never takes focus, and iOS ignores the `alert` role below.
+    announce(message);
     if (process.env.EXPO_OS === 'ios') {
       Haptics.notificationAsync(
         tone === 'error'

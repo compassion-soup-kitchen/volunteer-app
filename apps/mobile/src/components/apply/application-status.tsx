@@ -55,7 +55,7 @@ function TimelineMarker({ index, state }: { index: number; state: 'done' | 'curr
           width: 30,
           height: 30,
           borderRadius: 15,
-          backgroundColor: colors.primary,
+          backgroundColor: colors.primaryFill,
           alignItems: 'center',
           justifyContent: 'center',
         }}>

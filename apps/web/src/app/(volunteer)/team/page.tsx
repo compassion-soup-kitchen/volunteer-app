@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import { PageHeader } from "@/components/brand/page-header";
 import { GroupBadge } from "@/components/brand/group-badge";
 import { RiGroupLine } from "@remixicon/react";
@@ -34,22 +34,11 @@ export default async function TeamPage() {
       />
 
       {groups.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <IconChip tone="brand" size="lg">
-              <RiGroupLine />
-            </IconChip>
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                Nothing to show just yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Once the team is set up here, you&apos;ll see who leads each part
-                of the mahi. In the meantime, ask any coordinator on shift.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<RiGroupLine />}
+          title="Nothing to show just yet"
+          description="Once the team is set up here, you'll see who leads each part of the mahi. In the meantime, ask any coordinator on shift."
+        />
       ) : (
         <div className="space-y-5">
           {groups.map((group) => (
@@ -67,8 +56,8 @@ export default async function TeamPage() {
                   </p>
                 )}
               </CardHeader>
-              <CardContent className="border-t border-border pt-4 pb-2">
-                {group.members.length > 0 ? (
+              {group.members.length > 0 ? (
+                <CardContent className="border-t border-border pt-4 pb-2">
                   <ul className="grid gap-3 sm:grid-cols-2">
                     {group.members.map((member) => (
                       <li key={member.id} className="flex items-center gap-3">
@@ -84,12 +73,16 @@ export default async function TeamPage() {
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No one in this group yet.
-                  </p>
-                )}
-              </CardContent>
+                </CardContent>
+              ) : (
+                <EmptyState
+                  bare
+                  size="compact"
+                  icon={<RiGroupLine />}
+                  title="No one in this group yet"
+                  className="border-t border-border"
+                />
+              )}
             </Card>
           ))}
         </div>

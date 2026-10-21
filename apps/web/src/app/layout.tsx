@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk, Newsreader, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
@@ -42,6 +42,17 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  // Lets the page run under the home indicator so the bottom tab bar's
+  // env(safe-area-inset-bottom) padding has something to measure.
+  viewportFit: "cover",
+  // Browser chrome tinted to the canvas: cream paper, or cocoa in dark mode.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf7f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#171310" },
+  ],
 };
 
 export default function RootLayout({

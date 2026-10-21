@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { IconChip } from "@/components/brand/icon-chip";
 import { SectionHeader } from "@/components/brand/section-header";
 import {
@@ -42,6 +42,7 @@ import {
   type ServiceAreaWithStats,
 } from "@/lib/service-area-actions";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 
 interface ServiceAreaManagerProps {
   initialAreas: ServiceAreaWithStats[];
@@ -151,21 +152,11 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
         <SectionHeader title={`Active (${active.length})`} />
 
         {active.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-              <IconChip tone="brand" size="lg">
-                <RiMapPinLine />
-              </IconChip>
-              <div>
-                <p className="font-serif text-lg font-medium tracking-tight">
-                  No service areas yet
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Create one to get started.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={<RiMapPinLine />}
+            title="No service areas yet"
+            description="Create one to get started."
+          />
         ) : (
           <Card>
             <BleedList>

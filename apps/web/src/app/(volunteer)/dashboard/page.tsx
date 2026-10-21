@@ -11,6 +11,7 @@ import { SectionHeader } from "@/components/brand/section-header";
 import { LeaveNotice } from "@/components/leave/leave-notice";
 import { DateBlock } from "@/components/brand/date-block";
 import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { Kowhaiwhai } from "@/components/brand/kowhaiwhai";
 import {
@@ -324,27 +325,20 @@ export default async function VolunteerDashboard() {
               )}
             </Card>
           ) : (
-            <Card className="rounded-2xl">
-              <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
-                <IconChip tone="brand" size="lg">
-                  <RiCalendarLine />
-                </IconChip>
-                <div>
-                  <p className="font-serif text-lg font-medium tracking-tight">
-                    No shift on the horizon yet
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Ready when you are - pick your next mahi from the roster.
-                  </p>
-                </div>
+            <EmptyState
+              icon={<RiCalendarLine />}
+              tone="brand"
+              title="No shift on the horizon yet"
+              description="Ready when you are. Pick your next mahi from the roster."
+              action={
                 <Button asChild size="sm">
                   <Link href="/shifts">
                     Browse the roster
                     <RiArrowRightLine className="size-3.5" />
                   </Link>
                 </Button>
-              </CardContent>
-            </Card>
+              }
+            />
           )}
         </section>
       )}
@@ -491,17 +485,11 @@ export default async function VolunteerDashboard() {
               )}
             </div>
           ) : (
-            <Card>
-              <CardContent className="py-6 text-center">
-                <p className="font-serif text-lg font-medium tracking-tight">
-                  Your story starts soon
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Hours and meals shared will appear here once your first shift
-                  is logged.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={<RiHandHeartLine />}
+              title="Your story starts soon"
+              description="Hours and meals shared will appear here once your first shift is logged."
+            />
           )}
         </section>
       )}
@@ -607,19 +595,12 @@ export default async function VolunteerDashboard() {
             ))}
           </div>
         ) : (
-          <Card size="sm">
-            <CardContent className="flex items-center gap-3">
-              <IconChip size="sm">
-                <RiMegaphoneLine />
-              </IconChip>
-              <div>
-                <p className="text-sm font-semibold">Nothing new just yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Kitchen news and updates will land here.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyState
+            size="compact"
+            icon={<RiMegaphoneLine />}
+            title="Nothing new just yet"
+            description="Kitchen news and updates will land here."
+          />
         )}
       </section>
 
