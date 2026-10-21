@@ -28,6 +28,9 @@ import {
   type ApplicationListItem,
 } from "@/lib/staff-actions";
 import { BleedList } from "@/components/brand/detail-list";
+import { PersonAvatar } from "@/components/brand/person-avatar";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All" },
@@ -37,13 +40,6 @@ const STATUS_OPTIONS = [
   { value: "INFO_REQUESTED", label: "Info requested" },
 ];
 
-function initials(name: string | null | undefined) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 interface ApplicationsListProps {
   initialApplications: ApplicationListItem[];
@@ -163,12 +159,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
                           href={`/staff/applications/${app.id}`}
                           className="flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                         >
-                          <span
-                            aria-hidden
-                            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
-                          >
-                            {initials(app.volunteer.user.name)}
-                          </span>
+                          <PersonAvatar name={app.volunteer.user.name} />
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold">
                               {app.volunteer.user.name || "Unnamed"}
@@ -224,14 +215,9 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
                 <li key={app.id}>
                   <Link
                     href={`/staff/applications/${app.id}`}
-                    className="flex items-start gap-3 px-5 py-3 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                    className={cn(rowLinkVariants(), "items-start")}
                   >
-                    <span
-                      aria-hidden
-                      className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
-                    >
-                      {initials(app.volunteer.user.name)}
-                    </span>
+                    <PersonAvatar name={app.volunteer.user.name} className="mt-0.5" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
                         <span className="truncate text-sm font-semibold">

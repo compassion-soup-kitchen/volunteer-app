@@ -18,6 +18,8 @@ import { formatTimeRange } from "@/lib/format";
 import { isPastInAppZone, isTodayInAppZone } from "@/lib/date-only";
 import { BleedList } from "@/components/brand/detail-list";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 
 interface TrainingListProps {
   sessions: StaffTrainingSession[];
@@ -99,7 +101,7 @@ function SessionRow({
     <li>
       <Link
         href={`/staff/training/${session.id}`}
-        className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+        className={cn(rowLinkVariants(), "gap-4 py-3.5")}
       >
         <DateBlock
           date={session.date}

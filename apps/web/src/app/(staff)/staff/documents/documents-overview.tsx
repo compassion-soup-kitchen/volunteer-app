@@ -16,6 +16,8 @@ import { agreementLabel } from "@/lib/agreement-labels";
 import { BleedList } from "@/components/brand/detail-list";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 
 function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
   const retired = !!agreement.archivedAt;
@@ -25,7 +27,7 @@ function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
     <li>
       <Link
         href={`/staff/documents/${agreement.agreementType}`}
-        className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+        className={cn(rowLinkVariants(), "py-3.5")}
       >
         <IconChip tone={retired ? "neutral" : "brand"}>
           {retired ? <RiArchiveLine /> : <RiFileTextLine />}

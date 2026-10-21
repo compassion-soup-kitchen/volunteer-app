@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contactLine, formatTime, formatTimeRange, personName } from "./format";
+import { contactLine, formatTime, formatTimeRange, initials, personName } from "./format";
 
 describe("formatTime", () => {
   it("renders morning times without a redundant :00", () => {
@@ -37,6 +37,18 @@ describe("personName", () => {
 
   it("never renders blank for a record with neither", () => {
     expect(personName({ name: null, email: null })).toBe("Unnamed volunteer");
+  });
+});
+
+describe("initials", () => {
+  it("takes the first and last name", () => {
+    expect(initials("Mere Te Rangi")).toBe("MR");
+    expect(initials("  aroha  ")).toBe("A");
+  });
+
+  it("shows a question mark when there's no name", () => {
+    expect(initials(null)).toBe("?");
+    expect(initials("   ")).toBe("?");
   });
 });
 

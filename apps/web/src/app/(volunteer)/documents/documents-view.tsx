@@ -29,6 +29,8 @@ import {
 import { agreementLabel } from "@/lib/agreement-labels";
 import { BleedList } from "@/components/brand/detail-list";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { cn } from "@/lib/utils";
 
 function formatDate(value: Date | string) {
   return new Date(value).toLocaleDateString("en-NZ", {
@@ -298,7 +300,7 @@ export function DocumentsView({
                 <button
                   type="button"
                   onClick={() => setOpenType(agreement.agreementType)}
-                  className="group flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                  className={cn(rowLinkVariants(), "items-start py-4")}
                 >
                   <IconChip
                     tone={agreement.needsResign ? "warning" : "neutral"}

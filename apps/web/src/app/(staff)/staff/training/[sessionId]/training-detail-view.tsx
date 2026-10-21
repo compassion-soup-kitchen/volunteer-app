@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +47,7 @@ import {
 } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 import {
   formatDateOnly,
   isPastInAppZone,
@@ -69,13 +69,6 @@ function formatDate(date: Date): string {
   return formatDateOnly(date, LONG_DATE);
 }
 
-function initials(name: string | null): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 export function TrainingDetailView({ session }: TrainingDetailViewProps) {
   const router = useRouter();
@@ -289,11 +282,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
                 key={attendance.id}
                 className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3"
               >
-                <Avatar>
-                  <AvatarFallback>
-                    {initials(attendance.volunteer.user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <PersonAvatar name={attendance.volunteer.user.name} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
                     {attendance.volunteer.user.name || "—"}

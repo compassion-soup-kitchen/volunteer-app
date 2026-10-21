@@ -45,17 +45,8 @@ import type { AgreementTemplateInput } from "@/lib/agreement-templates";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { AgreementFields } from "../agreement-fields";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 
-function initials(name: string) {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]!.toUpperCase())
-      .join("") || "?"
-  );
-}
 
 function formatDate(value: Date | string) {
   return new Date(value).toLocaleDateString("en-NZ", {
@@ -351,12 +342,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
           <ul className="divide-y divide-border">
             {detail.volunteers.map((vol) => (
               <li key={vol.id} className="flex items-center gap-3 px-5 py-3">
-                <span
-                  aria-hidden
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground"
-                >
-                  {initials(vol.userName)}
-                </span>
+                <PersonAvatar name={vol.userName} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
                     {vol.userName}

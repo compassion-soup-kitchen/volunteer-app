@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { IconChip } from "@/components/brand/icon-chip";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { BleedList } from "@/components/brand/detail-list";
 import {
   endLeaveNow,
   removeLeave,
@@ -146,7 +147,7 @@ export function LeaveEntries({
 
   return (
     <>
-      <ul className="divide-y divide-border">
+      <BleedList>
         {entries.map((entry) => {
           const stage = leaveStage(entry, today);
           const canEdit = stage !== "past";
@@ -231,7 +232,7 @@ export function LeaveEntries({
             </li>
           );
         })}
-      </ul>
+      </BleedList>
 
       <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="sm:max-w-lg">

@@ -24,6 +24,7 @@ import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
 import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { MissionRail } from "@/components/brand/mission-rail";
 import {
   registerForTraining,
   cancelTrainingRegistration,
@@ -106,11 +107,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
           return (
             <Card key={session.id}>
               {isRegistered && (
-                // The red mission rail marks the volunteer's own commitment
-                <span
-                  aria-hidden
-                  className="absolute inset-y-0 left-0 w-1 bg-primary"
-                />
+                <MissionRail />
               )}
               <CardContent className="flex flex-1 flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">

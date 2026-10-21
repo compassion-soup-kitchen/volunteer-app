@@ -40,6 +40,8 @@ import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimeRange } from "@/lib/format";
 import { BleedList } from "@/components/brand/detail-list";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { rowLinkVariants } from "@/components/brand/row-link";
+import { MissionRail } from "@/components/brand/mission-rail";
 import { volunteerShiftHref } from "@/lib/roster-week";
 
 export const metadata: Metadata = {
@@ -274,11 +276,7 @@ export default async function VolunteerDashboard() {
 
           {nextShift && nextShiftDate ? (
             <Card className="rounded-2xl">
-              {/* The red mission rail marks the volunteer's own commitment */}
-              <span
-                aria-hidden
-                className="absolute inset-y-0 left-0 w-1 bg-primary"
-              />
+              <MissionRail />
               {/* The whole row is the link (the title stretches over it), so
                   a phone - with no room for a button - can still open it. */}
               <CardContent className="group/next relative flex items-center gap-4 sm:gap-5">
@@ -373,7 +371,7 @@ export default async function VolunteerDashboard() {
                 <li key={shift.id}>
                   <Link
                     href={volunteerShiftHref(new Date(shift.date), todayInAppZone())}
-                    className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                    className={rowLinkVariants()}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">
@@ -593,7 +591,7 @@ export default async function VolunteerDashboard() {
               <Card key={a.id} size="sm">
                 <Link
                   href={`/news#${a.id}`}
-                  className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                  className={rowLinkVariants({ layout: "block" })}
                 >
                   <CardContent className="space-y-1.5 py-0.5">
                     <div className="space-y-0.5">
@@ -637,7 +635,7 @@ export default async function VolunteerDashboard() {
         <Card size="sm">
           <Link
             href="/events"
-            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            className={rowLinkVariants({ layout: "block" })}
           >
             <CardContent className="flex items-center gap-3">
               <IconChip size="sm">
@@ -657,7 +655,7 @@ export default async function VolunteerDashboard() {
         <Card size="sm">
           <Link
             href="/documents"
-            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            className={rowLinkVariants({ layout: "block" })}
           >
             <CardContent className="flex items-center gap-3">
               <IconChip size="sm">
@@ -677,7 +675,7 @@ export default async function VolunteerDashboard() {
         <Card size="sm">
           <Link
             href="/team"
-            className="block transition-colors hover:bg-secondary/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            className={rowLinkVariants({ layout: "block" })}
           >
             <CardContent className="flex items-center gap-3">
               <IconChip size="sm">

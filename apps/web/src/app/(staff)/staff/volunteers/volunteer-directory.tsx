@@ -94,6 +94,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { BleedList } from "@/components/brand/detail-list";
 import { eyebrowVariants } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All statuses" },
@@ -127,13 +128,6 @@ const ROLE_ICON: Record<AssignableRole, typeof RiUserLine> = {
   ADMIN: RiShieldUserLine,
 };
 
-function initials(name: string | null | undefined) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 interface VolunteerDirectoryProps {
   initialVolunteers: VolunteerListItem[];
@@ -531,12 +525,7 @@ export function VolunteerDirectory({
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <span
-                            aria-hidden
-                            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
-                          >
-                            {initials(vol.user.name)}
-                          </span>
+                          <PersonAvatar name={vol.user.name} />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <Link
@@ -633,12 +622,7 @@ export function VolunteerDirectory({
                     vol.user.status === "ARCHIVED" && "opacity-60"
                   )}
                 >
-                  <span
-                    aria-hidden
-                    className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-tint text-xs font-bold text-neutral-tint-foreground"
-                  >
-                    {initials(vol.user.name)}
-                  </span>
+                  <PersonAvatar name={vol.user.name} className="mt-0.5" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Link

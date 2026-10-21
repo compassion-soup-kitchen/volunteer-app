@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getVolunteerDetail } from "@/lib/staff-actions";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 import { PageHeader } from "@/components/brand/page-header";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { PersonBadges, hasRoleBadge } from "@/components/brand/person-badges";
@@ -19,13 +19,6 @@ export const metadata: Metadata = {
   title: "Volunteer record | Te Pūaroha",
 };
 
-function initials(name: string | null) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 export default async function VolunteerDetailPage({
   params,
@@ -52,14 +45,12 @@ export default async function VolunteerDetailPage({
         eyebrow="Te tangata · Volunteer record"
         title={
           <span className="flex items-center gap-3">
-            <span aria-hidden>
-              <Avatar className="size-11">
-                <AvatarImage src={user.image ?? undefined} alt="" />
-                <AvatarFallback className="font-serif text-base font-medium">
-                  {initials(user.name)}
-                </AvatarFallback>
-              </Avatar>
-            </span>
+            <PersonAvatar
+              name={user.name}
+              image={user.image}
+              className="size-11"
+              fallbackClassName="font-serif text-base font-medium"
+            />
             {user.name || "Unnamed volunteer"}
           </span>
         }

@@ -2,17 +2,13 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 import { DeleteAccountCard } from "@/components/account/delete-account-card";
 import { IconChip } from "@/components/brand/icon-chip";
+import { BleedList, DetailList } from "@/components/brand/detail-list";
+import { ListCard, ListCardBody, ListCardEmpty } from "@/components/brand/list-card";
 import { PageHeader } from "@/components/brand/page-header";
 import { StatusBadge } from "@/components/brand/status-badge";
 import { cn } from "@/lib/utils";
@@ -65,13 +61,6 @@ export default async function ProfilePage() {
   ]);
 
   const firstName = session?.user?.name?.split(" ")[0] || "there";
-  const initials =
-    session?.user?.name
-      ?.split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("") || "TP";
 
   // No profile yet — prompt to apply
   if (!profile) {
@@ -118,14 +107,12 @@ export default async function ProfilePage() {
         eyebrow="Tō kōtaha · Profile"
         title={
           <span className="flex items-center gap-3">
-            <span aria-hidden>
-              <Avatar className="size-12">
-                <AvatarImage src={session?.user?.image ?? undefined} alt="" />
-                <AvatarFallback className="font-serif text-base font-medium">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </span>
+            <PersonAvatar
+              name={session?.user?.name}
+              image={session?.user?.image}
+              className="size-12"
+              fallbackClassName="font-serif text-base font-medium"
+            />
             My profile
           </span>
         }
@@ -146,76 +133,64 @@ export default async function ProfilePage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-10">
         {/* Main column — who you are and your record with us */}
         <div className="min-w-0 space-y-6">
-          {/* Contact details */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Contact details</CardTitle>
-            </CardHeader>
-            <ul className="divide-y divide-border border-t border-border">
-              <DetailRow
-                icon={RiUserLine}
-                label="Name"
-                value={session?.user?.name || "Not provided"}
-              />
-              <DetailRow
-                icon={RiPhoneLine}
-                label="Phone"
-                value={profile.phone || "Not provided"}
-              />
-              <DetailRow
-                icon={RiMapPinLine}
-                label="Address"
-                value={profile.address || "Not provided"}
-              />
-              <DetailRow
-                icon={RiCakeLine}
-                label="Date of birth"
-                value={
-                  profile.dateOfBirth
+          <ListCard title="Contact details">
+            <DetailList
+              facts={[
+                {
+                  icon: RiUserLine,
+                  label: "Name",
+                  value: session?.user?.name || "Not provided",
+                },
+                {
+                  icon: RiPhoneLine,
+                  label: "Phone",
+                  value: profile.phone || "Not provided",
+                },
+                {
+                  icon: RiMapPinLine,
+                  label: "Address",
+                  value: profile.address || "Not provided",
+                },
+                {
+                  icon: RiCakeLine,
+                  label: "Date of birth",
+                  value: profile.dateOfBirth
                     ? formatTimestampInAppZone(profile.dateOfBirth, {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
                       })
-                    : "Not provided"
-                }
-              />
-            </ul>
-          </Card>
+                    : "Not provided",
+                },
+              ]}
+            />
+          </ListCard>
 
-          {/* Emergency contact */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Emergency contact</CardTitle>
-            </CardHeader>
-            <ul className="divide-y divide-border border-t border-border">
-              <DetailRow
-                icon={RiUserLine}
-                label="Name"
-                value={profile.emergencyContactName || "Not provided"}
-              />
-              <DetailRow
-                icon={RiPhoneLine}
-                label="Phone"
-                value={profile.emergencyContactPhone || "Not provided"}
-              />
-              <DetailRow
-                icon={RiUserHeartLine}
-                label="Relationship"
-                value={profile.emergencyContactRelationship || "Not provided"}
-              />
-            </ul>
-          </Card>
+          <ListCard title="Emergency contact">
+            <DetailList
+              facts={[
+                {
+                  icon: RiUserLine,
+                  label: "Name",
+                  value: profile.emergencyContactName || "Not provided",
+                },
+                {
+                  icon: RiPhoneLine,
+                  label: "Phone",
+                  value: profile.emergencyContactPhone || "Not provided",
+                },
+                {
+                  icon: RiUserHeartLine,
+                  label: "Relationship",
+                  value: profile.emergencyContactRelationship || "Not provided",
+                },
+              ]}
+            />
+          </ListCard>
 
-          {/* Training history */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
-                Whakangungu · Training
-              </CardTitle>
-            </CardHeader>
+          <ListCard title="Whakangungu · Training">
             {trainingHistory.length > 0 ? (
-              <ul className="divide-y divide-border border-t border-border">
+              <BleedList>
                 {trainingHistory.map((item) => (
                   <li key={item.id} className="flex items-center gap-3 px-5 py-3">
                     <IconChip size="sm">
@@ -250,31 +225,18 @@ export default async function ProfilePage() {
                     />
                   </li>
                 ))}
-              </ul>
+              </BleedList>
             ) : (
-              <CardContent className="border-t border-border pt-3 pb-2">
-                <p className="text-sm text-muted-foreground">
-                  No training sessions yet
-                </p>
-              </CardContent>
+              <ListCardEmpty>No training sessions yet</ListCardEmpty>
             )}
-          </Card>
+          </ListCard>
 
-          {/* Signed agreements */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Signed agreements</CardTitle>
-              <CardAction>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/documents">
-                    View all
-                    <RiArrowRightLine className="size-3.5" />
-                  </Link>
-                </Button>
-              </CardAction>
-            </CardHeader>
+          <ListCard
+            title="Signed agreements"
+            action={{ label: "View all", href: "/documents" }}
+          >
             {profile.signedAgreements.length > 0 ? (
-              <ul className="divide-y divide-border border-t border-border">
+              <BleedList>
                 {profile.signedAgreements.map((agreement) => (
                   <li
                     key={agreement.id}
@@ -299,15 +261,11 @@ export default async function ProfilePage() {
                     <StatusBadge status="SIGNED" className="shrink-0" />
                   </li>
                 ))}
-              </ul>
+              </BleedList>
             ) : (
-              <CardContent className="border-t border-border pt-3 pb-2">
-                <p className="text-sm text-muted-foreground">
-                  No agreements signed
-                </p>
-              </CardContent>
+              <ListCardEmpty>No agreements signed</ListCardEmpty>
             )}
-          </Card>
+          </ListCard>
         </div>
 
         {/* Quiet rail — when you can help and what you bring */}
@@ -317,19 +275,11 @@ export default async function ProfilePage() {
           {leave && <LeaveSummaryCard leave={leave} />}
 
           {/* Groups - where you sit in the wider crew */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Ō rōpū · Your groups</CardTitle>
-              <CardAction>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/team">
-                    Our team
-                    <RiArrowRightLine className="size-3.5" />
-                  </Link>
-                </Button>
-              </CardAction>
-            </CardHeader>
-            <CardContent className="border-t border-border pt-3 pb-2">
+          <ListCard
+            title="Ō rōpū · Your groups"
+            action={{ label: "Our team", href: "/team" }}
+          >
+            <ListCardBody>
               {myGroups.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {myGroups.map((group) => (
@@ -342,16 +292,12 @@ export default async function ProfilePage() {
                   on the team page.
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </ListCardBody>
+          </ListCard>
 
-          {/* Availability */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Availability</CardTitle>
-            </CardHeader>
+          <ListCard title="Availability">
             {availableDays.length > 0 ? (
-              <ul className="divide-y divide-border border-t border-border">
+              <BleedList>
                 {availableDays.map(([day, slots]) => (
                   <li
                     key={day}
@@ -369,72 +315,50 @@ export default async function ProfilePage() {
                     </span>
                   </li>
                 ))}
-              </ul>
+              </BleedList>
             ) : (
-              <CardContent className="border-t border-border pt-3 pb-2">
-                <p className="text-sm text-muted-foreground">
-                  No availability set
-                </p>
-              </CardContent>
+              <ListCardEmpty>No availability set</ListCardEmpty>
             )}
-          </Card>
+          </ListCard>
 
-          {/* Areas of interest */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Areas of interest</CardTitle>
-            </CardHeader>
-            <CardContent className="border-t border-border pt-3 pb-2">
-              {profile.interests.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {profile.interests.map((area) => (
-                    <Pill key={area.id}>{area.name}</Pill>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No interests selected
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <ListCard title="Areas of interest">
+            {profile.interests.length > 0 ? (
+              <ListCardBody className="flex flex-wrap gap-2">
+                {profile.interests.map((area) => (
+                  <Pill key={area.id}>{area.name}</Pill>
+                ))}
+              </ListCardBody>
+            ) : (
+              <ListCardEmpty>No interests selected</ListCardEmpty>
+            )}
+          </ListCard>
 
-          {/* Skills & about */}
-          <Card className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Skills &amp; about</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 border-t border-border pt-3 pb-2">
-              {profile.skills.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.skills.map((skill) => (
-                    <Pill key={skill}>{skill}</Pill>
-                  ))}
-                </div>
-              )}
-              {profile.bio && <p className="text-sm">{profile.bio}</p>}
-              {profile.skills.length === 0 && !profile.bio && (
-                <p className="text-sm text-muted-foreground">
-                  No details provided
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <ListCard title="Skills & about">
+            {profile.skills.length > 0 || profile.bio ? (
+              <ListCardBody className="space-y-3">
+                {profile.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.skills.map((skill) => (
+                      <Pill key={skill}>{skill}</Pill>
+                    ))}
+                  </div>
+                )}
+                {profile.bio && <p className="text-sm">{profile.bio}</p>}
+              </ListCardBody>
+            ) : (
+              <ListCardEmpty>No details provided</ListCardEmpty>
+            )}
+          </ListCard>
 
           {/* Deleting your own account. Last in the rail and visually apart,
               the way irreversible things should be - but present, because
               erasure isn't a staff-only right and a volunteer who never
               installs the app would otherwise have nowhere to do it. */}
-          <Card variant="danger" className="gap-0 pb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-destructive">
-                Delete account
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="border-t border-border pt-4 pb-2">
+          <ListCard variant="danger" title="Delete account">
+            <ListCardBody className="pt-4">
               <DeleteAccountCard />
-            </CardContent>
-          </Card>
+            </ListCardBody>
+          </ListCard>
         </div>
       </div>
     </div>
@@ -445,20 +369,15 @@ function LeaveSummaryCard({ leave }: { leave: LeaveOverview }) {
   const ahead = [...(leave.current ? [leave.current] : []), ...leave.upcoming];
 
   return (
-    <Card className="gap-0 pb-2">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Wā okioki · Leave</CardTitle>
-        <CardAction>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/profile/leave">
-              {ahead.length > 0 ? "Manage" : "Log leave"}
-              <RiArrowRightLine className="size-3.5" />
-            </Link>
-          </Button>
-        </CardAction>
-      </CardHeader>
+    <ListCard
+      title="Wā okioki · Leave"
+      action={{
+        label: ahead.length > 0 ? "Manage" : "Log leave",
+        href: "/profile/leave",
+      }}
+    >
       {ahead.length > 0 ? (
-        <ul className="divide-y divide-border border-t border-border">
+        <BleedList>
           {ahead.slice(0, 3).map((item) => (
             <li key={item.id} className="flex items-center gap-3 px-5 py-3">
               <IconChip size="sm" tone={item === leave.current ? "warning" : "info"}>
@@ -474,38 +393,14 @@ function LeaveSummaryCard({ leave }: { leave: LeaveOverview }) {
               </div>
             </li>
           ))}
-        </ul>
+        </BleedList>
       ) : (
-        <CardContent className="border-t border-border pt-3 pb-2">
-          <p className="text-sm text-muted-foreground">
-            Going away? Log it here and we&apos;ll take you off the roster
-            while you&apos;re gone.
-          </p>
-        </CardContent>
+        <ListCardEmpty>
+          Going away? Log it here and we&apos;ll take you off the roster
+          while you&apos;re gone.
+        </ListCardEmpty>
       )}
-    </Card>
-  );
-}
-
-function DetailRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <li className="flex items-center gap-3 px-5 py-3">
-      <IconChip size="sm">
-        <Icon />
-      </IconChip>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold">{value}</p>
-      </div>
-    </li>
+    </ListCard>
   );
 }
 

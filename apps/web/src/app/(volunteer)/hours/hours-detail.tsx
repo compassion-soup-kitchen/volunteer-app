@@ -23,6 +23,8 @@ import {
 } from "@remixicon/react";
 import type { VolunteerHoursData } from "@/lib/dashboard-actions";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { BleedList } from "@/components/brand/detail-list";
+import { ListCard, ListCardEmpty } from "@/components/brand/list-card";
 
 interface HoursDetailProps {
   data: VolunteerHoursData;
@@ -221,18 +223,11 @@ export function HoursDetail({ data }: HoursDetailProps) {
         </Card>
 
         {/* Monthly breakdown */}
-        <Card className="gap-0 pb-2">
-          <CardHeader className="pb-3">
-            <CardTitle>Month by month</CardTitle>
-          </CardHeader>
+        <ListCard title="Month by month">
           {data.byMonth.length === 0 ? (
-            <CardContent className="border-t border-border pt-3 pb-2">
-              <p className="text-sm text-muted-foreground">
-                No hours recorded yet
-              </p>
-            </CardContent>
+            <ListCardEmpty>No hours recorded yet</ListCardEmpty>
           ) : (
-            <ul className="divide-y divide-border border-t border-border">
+            <BleedList>
               {data.byMonth.map((month) => (
                 <li
                   key={month.month}
@@ -254,9 +249,9 @@ export function HoursDetail({ data }: HoursDetailProps) {
                   />
                 </li>
               ))}
-            </ul>
+            </BleedList>
           )}
-        </Card>
+        </ListCard>
 
         {/* Gratitude banner */}
         <Card variant="tint">

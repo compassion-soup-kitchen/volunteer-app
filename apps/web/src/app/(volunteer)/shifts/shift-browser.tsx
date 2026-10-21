@@ -31,6 +31,7 @@ import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { MissionRail } from "@/components/brand/mission-rail";
 import {
   signUpForShift,
   cancelShiftSignup,
@@ -381,8 +382,7 @@ function ShiftRow({
   return (
     <li className="relative flex gap-4 px-4 py-4 sm:px-5">
       {(isSignedUp || offeredToMe) && (
-        // The red mission rail marks the volunteer's own commitment
-        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-primary" />
+        <MissionRail />
       )}
 
       {/* Start over finish, so a day reads down like a timetable */}

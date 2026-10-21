@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +63,7 @@ import {
 } from "@/lib/date-only";
 import { formatHoldUntil, isHeldForOffers } from "@/lib/shift-offers";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { PersonAvatar } from "@/components/brand/person-avatar";
 
 interface ShiftDetailViewProps {
   shift: StaffShift;
@@ -92,13 +92,6 @@ const LONG_DATE: Intl.DateTimeFormatOptions = {
   year: "numeric",
 };
 
-function initials(name: string | null): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase() || "?";
-}
 
 export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProps) {
   const router = useRouter();
@@ -422,11 +415,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                 key={signup.id}
                 className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3"
               >
-                <Avatar>
-                  <AvatarFallback>
-                    {initials(signup.volunteer.user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <PersonAvatar name={signup.volunteer.user.name} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <p className="truncate text-sm font-semibold">

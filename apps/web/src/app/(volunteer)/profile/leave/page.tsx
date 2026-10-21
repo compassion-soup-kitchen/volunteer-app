@@ -11,6 +11,7 @@ import { LogLeaveForm } from "@/components/leave/log-leave-card";
 import { getMyLeave } from "@/lib/leave-actions";
 import { describeLeaveStatus, formatLeaveRange } from "@/lib/leave";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { ListCard, ListCardEmpty } from "@/components/brand/list-card";
 
 export const metadata: Metadata = {
   title: "My leave | Te Pūaroha",
@@ -71,38 +72,22 @@ export default async function MyLeavePage() {
             </CardContent>
           </Card>
 
-          <Card className="gap-0 pb-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Coming up</CardTitle>
-            </CardHeader>
+          <ListCard title="Coming up">
             {ahead.length > 0 ? (
-              <div className="border-t border-border">
-                <LeaveEntries entries={ahead} audience="self" today={today} stageBadge="current" />
-              </div>
+              <LeaveEntries entries={ahead} audience="self" today={today} stageBadge="current" />
             ) : (
-              <CardContent className="border-t border-border pt-3 pb-5">
-                <p className="text-sm text-muted-foreground">
-                  No leave logged. We&apos;ll see you on the roster.
-                </p>
-              </CardContent>
+              <ListCardEmpty>No leave logged. We&apos;ll see you on the roster.</ListCardEmpty>
             )}
-          </Card>
+          </ListCard>
         </div>
 
-        <Card className="gap-0 pb-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Past leave</CardTitle>
-          </CardHeader>
+        <ListCard title="Past leave">
           {past.length > 0 ? (
-            <div className="border-t border-border">
-              <LeaveEntries entries={past} audience="self" today={today} stageBadge="none" />
-            </div>
+            <LeaveEntries entries={past} audience="self" today={today} stageBadge="none" />
           ) : (
-            <CardContent className="border-t border-border pt-3 pb-5">
-              <p className="text-sm text-muted-foreground">Nothing yet.</p>
-            </CardContent>
+            <ListCardEmpty>Nothing yet.</ListCardEmpty>
           )}
-        </Card>
+        </ListCard>
       </div>
     </div>
   );
