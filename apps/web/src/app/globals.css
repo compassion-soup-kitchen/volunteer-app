@@ -20,6 +20,7 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
@@ -153,6 +154,7 @@
   /* Staff sidebar — a deep "ink" panel against the cream canvas */
   --sidebar: #1c1815;
   --sidebar-foreground: rgb(251 247 242 / 0.72);
+  --sidebar-muted-foreground: rgb(251 247 242 / 0.55); /* 5.8:1 on ink, 5.1:1 on the accent wash */
   --sidebar-primary: #ff3355; /* brightened red reads on ink */
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgb(251 247 242 / 0.08);
@@ -233,6 +235,7 @@
 
   --sidebar: #0f0c09;
   --sidebar-foreground: rgb(251 247 242 / 0.72);
+  --sidebar-muted-foreground: rgb(251 247 242 / 0.55); /* 5.9:1 on ink, 5.6:1 on the accent wash */
   --sidebar-primary: #ff3355;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgb(251 247 242 / 0.08);
