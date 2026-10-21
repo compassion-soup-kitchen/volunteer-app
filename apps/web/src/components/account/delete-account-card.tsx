@@ -6,7 +6,6 @@ import {
   RiAlertLine,
   RiDeleteBin6Line,
   RiInformationLine,
-  RiLoader4Line,
 } from "@remixicon/react";
 import {
   AlertDialog,
@@ -85,19 +84,30 @@ export function DeleteAccountCard() {
     blocker === null &&
     matchesDeletionConfirmation(confirmation, summary.email);
 
-  async function handleConfirm() {
-    if (!canDelete) return;
+  async function handleConfirm(): Promise<boolean> {
+    if (!canDelete) return false;
     setDeleting(true);
     setDeleteError(null);
     const result = await deleteOwnAccount(confirmation);
     if (result.error) {
       setDeleting(false);
       setDeleteError(result.error);
-      return;
+      return false;
     }
     // The row is gone but the session cookie isn't, so sign out explicitly -
     // otherwise every page would bounce off a session naming nobody.
-    await signOut({ redirectTo: "/" });
+    try {
+      await signOut({ redirectTo: "/" });
+    } catch {
+      // The account is already erased, so there's nothing to retry and the
+      // dialog must not stay locked. The session-ended route clears the
+      // cookie for an account that no longer exists - a route handler, so it
+      // needs a full page load rather than a client-side router push.
+      window.location.assign(
+        new URL("/api/auth/session-ended", window.location.origin).href
+      );
+    }
+    return true;
   }
 
   return (
@@ -113,6 +123,8 @@ export function DeleteAccountCard() {
       <AlertDialog
         open={open}
         onOpenChange={(next) => {
+          // `deleting` stays set once the account is gone, so the dialog holds
+          // until the sign-out redirect lands.
           if (deleting) return;
           setOpen(next);
           if (!next) {
@@ -202,23 +214,12 @@ export function DeleteAccountCard() {
             </AlertDialogCancel>
             {!blocker && !loadError && (
               <AlertDialogAction
-                onClick={(e) => {
-                  // Keep the dialog open while the delete runs so the spinner
-                  // and any error land somewhere they're still looking.
-                  e.preventDefault();
-                  void handleConfirm();
-                }}
+                onConfirm={handleConfirm}
                 disabled={!canDelete || deleting}
                 variant="destructive"
               >
                 {deleting ? (
-                  <>
-                    <RiLoader4Line
-                      className="mr-2 size-4 animate-spin"
-                      aria-hidden
-                    />
-                    Deleting…
-                  </>
+                  "Deleting…"
                 ) : (
                   <>
                     <RiDeleteBin6Line className="mr-2 size-4" aria-hidden />

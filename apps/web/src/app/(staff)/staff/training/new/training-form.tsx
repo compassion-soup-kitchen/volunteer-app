@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -60,7 +66,8 @@ export function TrainingForm({
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit() {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!validate()) return;
 
     startTransition(async () => {
@@ -90,178 +97,179 @@ export function TrainingForm({
 
   return (
     <Card className="max-w-xl">
-      <CardContent className="space-y-6">
-        <section className="space-y-5">
-          <h2 className="font-serif text-lg font-medium tracking-tight">
-            About the session
-          </h2>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          <section className="space-y-5">
+            <h2 className="font-serif text-lg font-medium tracking-tight">
+              About the session
+            </h2>
 
-          {/* Type */}
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <Label htmlFor="type">Training type</Label>
-              <Link
-                href="/staff/training/types"
-                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                Manage types
-              </Link>
-            </div>
-            <Select
-              value={typeId}
-              onValueChange={setTypeId}
-              disabled={trainingTypes.length === 0}
-            >
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {trainingTypes.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {trainingTypes.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No training types yet -{" "}
+            {/* Type */}
+            <Field id="type" error={errors.type}>
+              <div className="flex items-baseline justify-between gap-3">
+                <FieldLabel>Training type</FieldLabel>
                 <Link
                   href="/staff/training/types"
-                  className="font-medium text-foreground underline underline-offset-4"
+                  className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                 >
-                  add one first
+                  Manage types
                 </Link>
-                .
-              </p>
-            )}
-            {errors.type && (
-              <p className="text-sm text-destructive">{errors.type}</p>
-            )}
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. New Volunteer Induction"
-            />
-            {errors.title && (
-              <p className="text-sm text-destructive">{errors.title}</p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (optional)</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What will be covered in this session…"
-              rows={3}
-            />
-          </div>
-        </section>
-
-        <section className="space-y-5 border-t border-border pt-5">
-          <h2 className="font-serif text-lg font-medium tracking-tight">
-            When and where
-          </h2>
-
-          {/* Date */}
-          <div className="space-y-2">
-            <Label>Date</Label>
-            <DatePicker
-              value={date}
-              onChange={setDate}
-              placeholder="Select a date"
-              fromDate={tomorrow}
-            />
-            {errors.date && (
-              <p className="text-sm text-destructive">{errors.date}</p>
-            )}
-          </div>
-
-          {/* Times */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start time</Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-              {errors.startTime && (
-                <p className="text-sm text-destructive">{errors.startTime}</p>
+              </div>
+              <Select
+                value={typeId}
+                onValueChange={setTypeId}
+                disabled={trainingTypes.length === 0}
+              >
+                <FieldControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                </FieldControl>
+                <SelectContent>
+                  {trainingTypes.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {trainingTypes.length === 0 && (
+                <FieldDescription className="text-sm">
+                  No training types yet -{" "}
+                  <Link
+                    href="/staff/training/types"
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    add one first
+                  </Link>
+                  .
+                </FieldDescription>
               )}
+              <FieldError />
+            </Field>
+
+            {/* Title */}
+            <Field id="title" error={errors.title}>
+              <FieldLabel>Title</FieldLabel>
+              <FieldControl>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. New Volunteer Induction"
+                />
+              </FieldControl>
+              <FieldError />
+            </Field>
+
+            {/* Description */}
+            <Field id="description">
+              <FieldLabel>Description (optional)</FieldLabel>
+              <FieldControl>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What will be covered in this session…"
+                  rows={3}
+                />
+              </FieldControl>
+            </Field>
+          </section>
+
+          <section className="space-y-5 border-t border-border pt-5">
+            <h2 className="font-serif text-lg font-medium tracking-tight">
+              When and where
+            </h2>
+
+            {/* Date */}
+            <Field id="date" error={errors.date}>
+              <FieldLabel>Date</FieldLabel>
+              <FieldControl>
+                <DatePicker
+                  value={date}
+                  onChange={setDate}
+                  placeholder="Select a date"
+                  fromDate={tomorrow}
+                />
+              </FieldControl>
+              <FieldError />
+            </Field>
+
+            {/* Times */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field id="startTime" error={errors.startTime}>
+                <FieldLabel>Start time</FieldLabel>
+                <FieldControl>
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </FieldControl>
+                <FieldError />
+              </Field>
+              <Field id="endTime" error={errors.endTime}>
+                <FieldLabel>End time</FieldLabel>
+                <FieldControl>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </FieldControl>
+                <FieldError />
+              </Field>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End time</Label>
-              <Input
-                id="endTime"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
-              {errors.endTime && (
-                <p className="text-sm text-destructive">{errors.endTime}</p>
+
+            {/* Capacity */}
+            <Field id="capacity" error={errors.capacity}>
+              <FieldLabel>Capacity</FieldLabel>
+              <FieldControl>
+                <Input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  className="w-24"
+                />
+              </FieldControl>
+              <FieldError />
+              <FieldDescription>
+                Maximum number of volunteers for this session
+              </FieldDescription>
+            </Field>
+
+            {/* Location */}
+            <Field id="location">
+              <FieldLabel>Location (optional)</FieldLabel>
+              <FieldControl>
+                <Input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Community Hall, Level 1"
+                />
+              </FieldControl>
+            </Field>
+          </section>
+
+          {/* Submit */}
+          <div className="flex gap-3 border-t border-border pt-5">
+            <Button type="submit" disabled={isPending}>
+              {isPending && (
+                <RiLoader4Line className="size-4 animate-spin" />
               )}
-            </div>
+              Create session
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/staff/training")}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
           </div>
-
-          {/* Capacity */}
-          <div className="space-y-2">
-            <Label htmlFor="capacity">Capacity</Label>
-            <Input
-              id="capacity"
-              type="number"
-              min="1"
-              max="100"
-              value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
-              className="w-24"
-            />
-            {errors.capacity && (
-              <p className="text-sm text-destructive">{errors.capacity}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Maximum number of volunteers for this session
-            </p>
-          </div>
-
-          {/* Location */}
-          <div className="space-y-2">
-            <Label htmlFor="location">Location (optional)</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Community Hall, Level 1"
-            />
-          </div>
-        </section>
-
-        {/* Submit */}
-        <div className="flex gap-3 border-t border-border pt-5">
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending && (
-              <RiLoader4Line className="size-4 animate-spin" />
-            )}
-            Create session
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/staff/training")}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FormAlert } from "@/components/form-alert";
 import { createAnnouncement } from "@/lib/announcement-actions";
 import {
   ANNOUNCEMENT_BODY_MAX,
@@ -169,7 +170,7 @@ export function AnnounceEventDialog({
               </p>
             </div>
 
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {error ? <FormAlert>{error}</FormAlert> : null}
           </div>
         )}
 

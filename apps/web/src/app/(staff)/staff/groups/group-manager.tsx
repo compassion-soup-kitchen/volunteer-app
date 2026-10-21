@@ -40,6 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FormAlert } from "@/components/form-alert";
 import { SectionHeader } from "@/components/brand/section-header";
 import { GroupBadge } from "@/components/brand/group-badge";
 import { EmptyState } from "@/components/brand/empty-state";
@@ -107,7 +108,6 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
 
   const [deleteTarget, setDeleteTarget] =
     useState<VolunteerGroupWithCount | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   function refresh() {
     startTransition(async () => {
@@ -199,18 +199,15 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
     refresh();
   }
 
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    const result = await deleteVolunteerGroup(deleteTarget.id);
-    setIsDeleting(false);
+  async function handleDelete(group: VolunteerGroupWithCount): Promise<boolean> {
+    const result = await deleteVolunteerGroup(group.id);
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
-    toast.success(`${deleteTarget.name} deleted.`);
-    setDeleteTarget(null);
+    toast.success(`${group.name} deleted.`);
     refresh();
+    return true;
   }
 
   const active = groups.filter((group) => !group.isArchived);
@@ -385,7 +382,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
               </span>
             </label>
 
-            {formError && <p className="text-sm text-destructive">{formError}</p>}
+            {formError && <FormAlert>{formError}</FormAlert>}
           </div>
 
           <DialogFooter>
@@ -512,7 +509,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
       <AlertDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
-          if (!open && !isDeleting) setDeleteTarget(null);
+          if (!open) setDeleteTarget(null);
         }}
       >
         <AlertDialogContent>
@@ -529,16 +526,11 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(event) => {
-                event.preventDefault();
-                void handleDelete();
-              }}
-              disabled={isDeleting}
+              onConfirm={() => (deleteTarget ? handleDelete(deleteTarget) : false)}
               variant="destructive"
             >
-              {isDeleting && <RiLoader4Line className="mr-2 size-4 animate-spin" />}
               Delete group
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldControl,
+  FieldControlGroup,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -250,7 +257,8 @@ export function ShiftForm({
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit() {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!validate()) return;
 
     if (repeats && !isEdit) {
@@ -315,352 +323,352 @@ export function ShiftForm({
 
   return (
     <Card className="max-w-xl">
-      <CardContent className="space-y-6">
-        <section className="space-y-5">
-          <h2 className="font-serif text-lg font-medium tracking-tight">
-            When and where
-          </h2>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          <section className="space-y-5">
+            <h2 className="font-serif text-lg font-medium tracking-tight">
+              When and where
+            </h2>
 
-          {/* Service area */}
-          <div className="space-y-2">
-            <Label htmlFor="serviceArea">Service area</Label>
-            <Select value={serviceAreaId} onValueChange={setServiceAreaId}>
-              <SelectTrigger id="serviceArea">
-                <SelectValue placeholder="Select a service area" />
-              </SelectTrigger>
-              <SelectContent>
-                {serviceAreas.map((area) => (
-                  <SelectItem key={area.id} value={area.id}>
-                    {area.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.serviceAreaId && (
-              <p className="text-sm text-destructive">{errors.serviceAreaId}</p>
-            )}
-          </div>
+            {/* Service area */}
+            <Field id="serviceArea" error={errors.serviceAreaId}>
+              <FieldLabel>Service area</FieldLabel>
+              <Select value={serviceAreaId} onValueChange={setServiceAreaId}>
+                <FieldControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a service area" />
+                  </SelectTrigger>
+                </FieldControl>
+                <SelectContent>
+                  {serviceAreas.map((area) => (
+                    <SelectItem key={area.id} value={area.id}>
+                      {area.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError />
+            </Field>
 
-          {/* Date */}
-          <div className="space-y-2">
-            <Label htmlFor="shiftDate">{repeats ? "First day" : "Date"}</Label>
-            <DatePicker
-              id="shiftDate"
-              value={date}
-              onChange={setDate}
-              placeholder="Select a date"
-              fromDate={earliestDate}
-            />
-            {errors.date && (
-              <p className="text-sm text-destructive">{errors.date}</p>
-            )}
-          </div>
+            {/* Date */}
+            <Field id="shiftDate" error={errors.date}>
+              <FieldLabel>{repeats ? "First day" : "Date"}</FieldLabel>
+              <FieldControl>
+                <DatePicker
+                  value={date}
+                  onChange={setDate}
+                  placeholder="Select a date"
+                  fromDate={earliestDate}
+                />
+              </FieldControl>
+              <FieldError />
+            </Field>
 
-          {/* Times */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start time</Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-              {errors.startTime && (
-                <p className="text-sm text-destructive">{errors.startTime}</p>
-              )}
+            {/* Times */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field id="startTime" error={errors.startTime}>
+                <FieldLabel>Start time</FieldLabel>
+                <FieldControl>
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </FieldControl>
+                <FieldError />
+              </Field>
+              <Field id="endTime" error={errors.endTime}>
+                <FieldLabel>End time</FieldLabel>
+                <FieldControl>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </FieldControl>
+                <FieldError />
+              </Field>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End time</Label>
-              <Input
-                id="endTime"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
-              {errors.endTime && (
-                <p className="text-sm text-destructive">{errors.endTime}</p>
-              )}
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {!isEdit && (
-          <section className="space-y-5 border-t border-border pt-5">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="repeats"
-                checked={repeats}
-                onCheckedChange={(checked) =>
-                  handleRepeatsChange(checked === true)
-                }
-                disabled={isPending}
-              />
-              <div className="space-y-1">
-                <Label htmlFor="repeats" className="font-serif text-lg tracking-tight">
-                  Repeat this shift
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Breakfast every Monday, say - for a season, or for as long
-                  as it runs.
-                </p>
-              </div>
-            </div>
-
-            {repeats && (
-              <div className="space-y-5 border-l-2 border-border pl-4">
-                <div className="space-y-2">
-                  <Label>On these days</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {WEEKDAYS_FROM_MONDAY.map((day) => {
-                      const selected = weekdays.includes(day.value);
-                      return (
-                        <button
-                          key={day.value}
-                          type="button"
-                          onClick={() => toggleWeekday(day.value)}
-                          disabled={isPending}
-                          aria-pressed={selected}
-                          aria-label={day.label}
-                          className={cn(
-                            "min-w-12 rounded-md px-3 py-1.5 text-sm font-semibold ring-1 transition-colors",
-                            selected
-                              ? "bg-primary-fill text-primary-foreground ring-primary-fill"
-                              : "bg-card text-muted-foreground ring-border hover:text-foreground"
-                          )}
-                        >
-                          {day.short}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {errors.weekdays && (
-                    <p className="text-sm text-destructive">{errors.weekdays}</p>
-                  )}
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="repeatInterval">How often</Label>
-                    <Select
-                      value={interval}
-                      onValueChange={setInterval}
-                      disabled={isPending}
-                    >
-                      <SelectTrigger id="repeatInterval">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Every week</SelectItem>
-                        <SelectItem value="2">Every 2 weeks</SelectItem>
-                        <SelectItem value="3">Every 3 weeks</SelectItem>
-                        <SelectItem value="4">Every 4 weeks</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="repeatEnd">Ends</Label>
-                    <Select
-                      value={repeatEnd}
-                      onValueChange={(value) => setRepeatEnd(value as "never" | "on")}
-                      disabled={isPending}
-                    >
-                      <SelectTrigger id="repeatEnd">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="never">Keeps going</SelectItem>
-                        <SelectItem value="on">On a set day</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {repeatEnd === "on" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="repeatUntil">Last day</Label>
-                    <DatePicker
-                      id="repeatUntil"
-                      value={repeatUntil}
-                      onChange={setRepeatUntil}
-                      placeholder="Select the last day"
-                      fromDate={date ?? earliestDate}
-                    />
-                    {errors.repeatUntil && (
-                      <p className="text-sm text-destructive">
-                        {errors.repeatUntil}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Regulars (optional)</Label>
-                  <p className="text-sm text-muted-foreground">
-                    The whānau who always work this shift. They&apos;re put on
-                    every one automatically, and can still cancel a week they
-                    can&apos;t make.
-                  </p>
-                  <VolunteerPicker
-                    volunteers={volunteers}
-                    selectedIds={regularIds}
-                    onChange={setRegularIds}
+          {!isEdit && (
+            <section className="space-y-5 border-t border-border pt-5">
+              <Field id="repeats" className="flex items-start gap-3 space-y-0">
+                <FieldControl>
+                  <Checkbox
+                    checked={repeats}
+                    onCheckedChange={(checked) =>
+                      handleRepeatsChange(checked === true)
+                    }
                     disabled={isPending}
                   />
-                  {errors.regulars && (
-                    <p className="text-sm text-destructive">{errors.regulars}</p>
+                </FieldControl>
+                <div className="space-y-1">
+                  <FieldLabel className="font-serif text-lg tracking-tight">
+                    Repeat this shift
+                  </FieldLabel>
+                  <FieldDescription className="text-sm">
+                    Breakfast every Monday, say - for a season, or for as long
+                    as it runs.
+                  </FieldDescription>
+                </div>
+              </Field>
+
+              {repeats && (
+                <div className="space-y-5 border-l-2 border-border pl-4">
+                  <Field error={errors.weekdays}>
+                    <FieldLabel>On these days</FieldLabel>
+                    <FieldControlGroup className="flex flex-wrap gap-2">
+                      {WEEKDAYS_FROM_MONDAY.map((day) => {
+                        const selected = weekdays.includes(day.value);
+                        return (
+                          <button
+                            key={day.value}
+                            type="button"
+                            onClick={() => toggleWeekday(day.value)}
+                            disabled={isPending}
+                            aria-pressed={selected}
+                            aria-label={day.label}
+                            className={cn(
+                              "min-w-12 rounded-md px-3 py-1.5 text-sm font-semibold ring-1 transition-colors",
+                              selected
+                                ? "bg-primary-fill text-primary-foreground ring-primary-fill"
+                                : "bg-card text-muted-foreground ring-border hover:text-foreground"
+                            )}
+                          >
+                            {day.short}
+                          </button>
+                        );
+                      })}
+                    </FieldControlGroup>
+                    <FieldError />
+                  </Field>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field id="repeatInterval">
+                      <FieldLabel>How often</FieldLabel>
+                      <Select
+                        value={interval}
+                        onValueChange={setInterval}
+                        disabled={isPending}
+                      >
+                        <FieldControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FieldControl>
+                        <SelectContent>
+                          <SelectItem value="1">Every week</SelectItem>
+                          <SelectItem value="2">Every 2 weeks</SelectItem>
+                          <SelectItem value="3">Every 3 weeks</SelectItem>
+                          <SelectItem value="4">Every 4 weeks</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field id="repeatEnd">
+                      <FieldLabel>Ends</FieldLabel>
+                      <Select
+                        value={repeatEnd}
+                        onValueChange={(value) => setRepeatEnd(value as "never" | "on")}
+                        disabled={isPending}
+                      >
+                        <FieldControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FieldControl>
+                        <SelectContent>
+                          <SelectItem value="never">Keeps going</SelectItem>
+                          <SelectItem value="on">On a set day</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </div>
+
+                  {repeatEnd === "on" && (
+                    <Field id="repeatUntil" error={errors.repeatUntil}>
+                      <FieldLabel>Last day</FieldLabel>
+                      <FieldControl>
+                        <DatePicker
+                          value={repeatUntil}
+                          onChange={setRepeatUntil}
+                          placeholder="Select the last day"
+                          fromDate={date ?? earliestDate}
+                        />
+                      </FieldControl>
+                      <FieldError />
+                    </Field>
+                  )}
+
+                  <Field error={errors.regulars}>
+                    <FieldLabel>Regulars (optional)</FieldLabel>
+                    <FieldDescription className="text-sm">
+                      The whānau who always work this shift. They&apos;re put on
+                      every one automatically, and can still cancel a week they
+                      can&apos;t make.
+                    </FieldDescription>
+                    <FieldControlGroup>
+                      <VolunteerPicker
+                        volunteers={volunteers}
+                        selectedIds={regularIds}
+                        onChange={setRegularIds}
+                        disabled={isPending}
+                      />
+                    </FieldControlGroup>
+                    <FieldError />
+                  </Field>
+
+                  {preview && (
+                    <div className="rounded-lg bg-muted p-3">
+                      {preview.length === 0 ? (
+                        <p className="text-sm font-semibold">
+                          No days match yet. Check the days of the week and the
+                          dates.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold">
+                            {rollsOn
+                              ? `The first ${preview.length} ${preview.length === 1 ? "shift goes" : "shifts go"} on the roster now`
+                              : `${preview.length} ${preview.length === 1 ? "shift" : "shifts"} will go on the roster`}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {formatPreviewDates(preview)}
+                          </p>
+                          <p className="mt-1.5 text-xs text-muted-foreground">
+                            {rollsOn
+                              ? "More are added by themselves as the weeks go by, always twelve weeks ahead. "
+                              : ""}
+                            Days the kitchen is closed are skipped, and a
+                            matching shift already rostered is kept rather than
+                            doubled.
+                          </p>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
+              )}
+            </section>
+          )}
 
-                {preview && (
-                  <div className="rounded-lg bg-muted p-3">
-                    {preview.length === 0 ? (
-                      <p className="text-sm font-semibold">
-                        No days match yet. Check the days of the week and the
-                        dates.
-                      </p>
-                    ) : (
-                      <>
-                        <p className="text-sm font-semibold">
-                          {rollsOn
-                            ? `The first ${preview.length} ${preview.length === 1 ? "shift goes" : "shifts go"} on the roster now`
-                            : `${preview.length} ${preview.length === 1 ? "shift" : "shifts"} will go on the roster`}
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {formatPreviewDates(preview)}
-                        </p>
-                        <p className="mt-1.5 text-xs text-muted-foreground">
-                          {rollsOn
-                            ? "More are added by themselves as the weeks go by, always twelve weeks ahead. "
-                            : ""}
-                          Days the kitchen is closed are skipped, and a
-                          matching shift already rostered is kept rather than
-                          doubled.
-                        </p>
-                      </>
-                    )}
-                  </div>
+          <section className="space-y-5 border-t border-border pt-5">
+            <h2 className="font-serif text-lg font-medium tracking-tight">
+              Capacity and notes
+            </h2>
+
+            {/* Capacity */}
+            <Field id="capacity" error={errors.capacity}>
+              <FieldLabel>Capacity</FieldLabel>
+              <FieldControl>
+                <Input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  className="w-24"
+                />
+              </FieldControl>
+              <FieldError />
+              <FieldDescription>
+                Maximum number of volunteers for this shift
+                {shift && shift.signupCount > 0
+                  ? ` - ${shift.signupCount} signed up so far`
+                  : ""}
+              </FieldDescription>
+            </Field>
+
+            {/* Notes */}
+            <Field id="notes">
+              <FieldLabel>Notes (optional)</FieldLabel>
+              <FieldControl>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any details volunteers should know…"
+                  rows={3}
+                />
+              </FieldControl>
+            </Field>
+          </section>
+
+          {/* Holding a shift for named regulars is a per-shift call, so it isn't
+              offered while creating a whole series. */}
+          <section
+            className={cn(
+              "space-y-5 border-t border-border pt-5",
+              repeats && "hidden"
+            )}
+          >
+            <div className="space-y-1">
+              <h2 className="font-serif text-lg font-medium tracking-tight">
+                First refusal (optional)
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Hold this shift for the whānau who usually work it. Only they can
+                take it until the day you choose - then it opens to everyone.
+              </p>
+            </div>
+
+            <Field>
+              <FieldLabel>Offer first to</FieldLabel>
+              <FieldControlGroup>
+                <VolunteerPicker
+                  volunteers={volunteers}
+                  selectedIds={offeredIds}
+                  onChange={handleOfferedChange}
+                  statuses={offerStatuses}
+                  disabled={isPending}
+                />
+              </FieldControlGroup>
+            </Field>
+
+            {offeredIds.length > 0 && (
+              <Field id="offersCloseOn" error={errors.offersCloseOn}>
+                <FieldLabel>Held for them until</FieldLabel>
+                <FieldControl>
+                  <DatePicker
+                    value={offersCloseOn}
+                    onChange={setOffersCloseOn}
+                    placeholder="Select the last day"
+                    fromDate={today}
+                    toDate={date}
+                  />
+                </FieldControl>
+                <FieldError />
+                {!errors.offersCloseOn && (
+                  <FieldDescription>
+                    Opens to all volunteers the day after - or sooner, once
+                    everyone offered has answered.
+                  </FieldDescription>
                 )}
-              </div>
+              </Field>
             )}
           </section>
-        )}
 
-        <section className="space-y-5 border-t border-border pt-5">
-          <h2 className="font-serif text-lg font-medium tracking-tight">
-            Capacity and notes
-          </h2>
-
-          {/* Capacity */}
-          <div className="space-y-2">
-            <Label htmlFor="capacity">Capacity</Label>
-            <Input
-              id="capacity"
-              type="number"
-              min="1"
-              max="50"
-              value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
-              className="w-24"
-            />
-            {errors.capacity && (
-              <p className="text-sm text-destructive">{errors.capacity}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Maximum number of volunteers for this shift
-              {shift && shift.signupCount > 0
-                ? ` - ${shift.signupCount} signed up so far`
-                : ""}
-            </p>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any details volunteers should know…"
-              rows={3}
-            />
-          </div>
-        </section>
-
-        {/* Holding a shift for named regulars is a per-shift call, so it isn't
-            offered while creating a whole series. */}
-        <section
-          className={cn(
-            "space-y-5 border-t border-border pt-5",
-            repeats && "hidden"
-          )}
-        >
-          <div className="space-y-1">
-            <h2 className="font-serif text-lg font-medium tracking-tight">
-              First refusal (optional)
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Hold this shift for the whānau who usually work it. Only they can
-              take it until the day you choose - then it opens to everyone.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Offer first to</Label>
-            <VolunteerPicker
-              volunteers={volunteers}
-              selectedIds={offeredIds}
-              onChange={handleOfferedChange}
-              statuses={offerStatuses}
+          {/* Submit */}
+          <div className="flex gap-3 border-t border-border pt-5">
+            <Button type="submit" disabled={isPending}>
+              {isPending && <RiLoader4Line className="size-4 animate-spin" />}
+              {isEdit
+                ? "Save changes"
+                : repeats
+                  ? "Set up repeating shift"
+                  : "Create shift"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                router.push(shift ? `/staff/shifts/${shift.id}` : "/staff/shifts")
+              }
               disabled={isPending}
-            />
+            >
+              Cancel
+            </Button>
           </div>
-
-          {offeredIds.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="offersCloseOn">Held for them until</Label>
-              <DatePicker
-                id="offersCloseOn"
-                value={offersCloseOn}
-                onChange={setOffersCloseOn}
-                placeholder="Select the last day"
-                fromDate={today}
-                toDate={date}
-              />
-              {errors.offersCloseOn ? (
-                <p className="text-sm text-destructive">
-                  {errors.offersCloseOn}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Opens to all volunteers the day after - or sooner, once
-                  everyone offered has answered.
-                </p>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* Submit */}
-        <div className="flex gap-3 border-t border-border pt-5">
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending && <RiLoader4Line className="size-4 animate-spin" />}
-            {isEdit
-              ? "Save changes"
-              : repeats
-                ? "Set up repeating shift"
-                : "Create shift"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() =>
-              router.push(shift ? `/staff/shifts/${shift.id}` : "/staff/shifts")
-            }
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );

@@ -34,6 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FormAlert } from "@/components/form-alert";
 import {
   RiAddLine,
   RiArchiveLine,
@@ -136,14 +137,15 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
     refresh();
   }
 
-  async function handleDelete(type: TrainingTypeWithStats) {
+  async function handleDelete(type: TrainingTypeWithStats): Promise<boolean> {
     const result = await deleteTrainingType(type.id);
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
     toast.success(`${type.name} deleted.`);
     refresh();
+    return true;
   }
 
   const active = types.filter((t) => !t.isArchived);
@@ -244,9 +246,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
                 rows={3}
               />
             </div>
-            {dialogError && (
-              <p className="text-sm text-destructive">{dialogError}</p>
-            )}
+            {dialogError && <FormAlert>{dialogError}</FormAlert>}
           </div>
 
           <DialogFooter>
@@ -280,10 +280,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => {
-                if (deleteTarget) handleDelete(deleteTarget);
-                setDeleteTarget(null);
-              }}
+              onConfirm={() => (deleteTarget ? handleDelete(deleteTarget) : false)}
             >
               Delete
             </AlertDialogAction>
