@@ -25,7 +25,15 @@ export function LandingNav() {
   };
 
   return (
-    <nav aria-label="Main" className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md">
+    <nav
+      aria-label="Main"
+      className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md"
+      // On the whole nav, not the menu: right after opening, focus is still on
+      // the toggle, which sits outside the menu.
+      onKeyDown={(e) => {
+        if (menuOpen && e.key === "Escape") closeMenu();
+      }}
+    >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" aria-label="Te Pūaroha home" className="shrink-0">
           <Wordmark className="h-6 sm:h-7" />
@@ -79,9 +87,6 @@ export function LandingNav() {
         <div
           id="landing-menu"
           className="border-t border-border/60 bg-background px-6 py-4 xl:hidden"
-          onKeyDown={(e) => {
-            if (e.key === "Escape") closeMenu();
-          }}
         >
           <div className="flex flex-col gap-3">
             {links.map((l) => (
