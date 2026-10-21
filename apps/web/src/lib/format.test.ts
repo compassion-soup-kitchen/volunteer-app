@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { contactLine, formatTime, formatTimeRange, initials, personName } from "./format";
+import {
+  contactLine,
+  formatDateOfBirth,
+  formatTime,
+  formatTimeRange,
+  formatTimestamp,
+  formatTimestampWithTime,
+  initials,
+  personName,
+} from "./format";
 
 describe("formatTime", () => {
   it("renders morning times without a redundant :00", () => {
@@ -23,6 +32,66 @@ describe("formatTime", () => {
 describe("formatTimeRange", () => {
   it("joins both ends with an en dash", () => {
     expect(formatTimeRange("09:00", "13:00")).toBe("9am – 1pm");
+  });
+});
+
+// Pinned instants, so these hold whatever TZ the suite runs under: the
+// assertions are about Wellington, never the machine's clock.
+// 2026-10-20T20:15Z is 9:15am on Wednesday 21 October in Wellington (NZDT,
+// UTC+13), while UTC and Los Angeles are both still on the 20th.
+const NZ_MORNING = new Date("2026-10-20T20:15:00.000Z");
+
+describe("formatTimestamp", () => {
+  it("names the NZ day, not the server's or the browser's", () => {
+    expect(formatTimestamp(NZ_MORNING)).toBe("21 Oct 2026");
+  });
+
+  it("accepts the ISO string a timestamp arrives as over the wire", () => {
+    expect(formatTimestamp(NZ_MORNING.toISOString())).toBe("21 Oct 2026");
+  });
+
+  it("follows the winter offset as well as daylight saving", () => {
+    // 21:00Z on 30 June is 9am on 1 July in Wellington (NZST, UTC+12).
+    expect(formatTimestamp(new Date("2026-06-30T21:00:00.000Z"))).toBe(
+      "1 Jul 2026"
+    );
+  });
+});
+
+describe("formatTimestampWithTime", () => {
+  it("adds the NZ time in the same style as shift times", () => {
+    expect(formatTimestampWithTime(NZ_MORNING)).toBe("21 Oct 2026 at 9:15am");
+  });
+
+  it("drops the minutes on the hour", () => {
+    expect(
+      formatTimestampWithTime(new Date("2026-10-21T01:00:00.000Z"))
+    ).toBe("21 Oct 2026 at 2pm");
+  });
+
+  it("reads NZ midnight as 12am on the new day", () => {
+    expect(
+      formatTimestampWithTime(new Date("2026-10-20T11:00:00.000Z"))
+    ).toBe("21 Oct 2026 at 12am");
+  });
+});
+
+describe("formatDateOfBirth", () => {
+  it("reads a day stored at midnight UTC (offline volunteers)", () => {
+    expect(formatDateOfBirth(new Date("1990-07-01T00:00:00.000Z"))).toBe(
+      "1 July 1990"
+    );
+  });
+
+  it("reads a day picked at NZ midnight (the web application form)", () => {
+    // 1 July picked in Wellington in winter (UTC+12) is 30 June 12:00Z.
+    expect(formatDateOfBirth(new Date("1990-06-30T12:00:00.000Z"))).toBe(
+      "1 July 1990"
+    );
+    // 1990 was NZDT (UTC+13) at the start of the year: 1 Jan is 31 Dec 11:00Z.
+    expect(formatDateOfBirth(new Date("1989-12-31T11:00:00.000Z"))).toBe(
+      "1 January 1990"
+    );
   });
 });
 

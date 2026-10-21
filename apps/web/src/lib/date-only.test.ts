@@ -22,6 +22,7 @@ import {
   startOfTodayInAppZone,
   startOfWeekInAppZone,
   startOfWeekOf,
+  timeOfDayInAppZone,
   timestampToDateOnly,
   toDateOnly,
   toPickerDate,
@@ -345,6 +346,28 @@ describe("app-zone week and month", () => {
     const at = new Date("2026-08-05T03:00:00.000Z");
     expect(startOfWeekInAppZone(at)).toBe("2026-08-03");
     expect(endOfWeekInAppZone(at)).toBe("2026-08-09");
+  });
+});
+
+describe("timeOfDayInAppZone", () => {
+  it("reads the Wellington clock under daylight saving", () => {
+    // 20:15Z on 20 October is 9:15am on the 21st in Wellington (UTC+13).
+    expect(timeOfDayInAppZone(new Date("2026-10-20T20:15:00.000Z"))).toBe(
+      "09:15"
+    );
+  });
+
+  it("reads the Wellington clock in winter", () => {
+    // 21:00Z on 30 June is 9am on 1 July in Wellington (UTC+12).
+    expect(timeOfDayInAppZone(new Date("2026-06-30T21:00:00.000Z"))).toBe(
+      "09:00"
+    );
+  });
+
+  it("reads midnight as 00, not 24", () => {
+    expect(timeOfDayInAppZone(new Date("2026-10-20T11:00:00.000Z"))).toBe(
+      "00:00"
+    );
   });
 });
 

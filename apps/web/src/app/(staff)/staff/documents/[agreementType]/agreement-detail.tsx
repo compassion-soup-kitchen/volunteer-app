@@ -45,18 +45,11 @@ import {
 } from "@/lib/document-actions";
 import type { AgreementTemplateInput } from "@/lib/agreement-templates";
 import { agreementLabel } from "@/lib/agreement-labels";
+import { formatTimestamp } from "@/lib/format";
 import { AgreementFields } from "../agreement-fields";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { PersonAvatar } from "@/components/brand/person-avatar";
 
-
-function formatDate(value: Date | string) {
-  return new Date(value).toLocaleDateString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
   const router = useRouter();
@@ -123,7 +116,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             )}
           </CardTitle>
           <CardDescription>
-            Version {detail.version} · Updated {formatDate(detail.updatedAt)} ·{" "}
+            Version {detail.version} · Updated {formatTimestamp(detail.updatedAt)} ·{" "}
             {detail.requiresSignature
               ? "Tick and signature"
               : "Tick to confirm"}
@@ -211,7 +204,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             <CardTitle>Managing this agreement</CardTitle>
             <CardDescription>
               {detail.requiresReAck && detail.reAckSetAt
-                ? `Everyone was asked to confirm again on ${formatDate(detail.reAckSetAt)}. ${awaiting.length} still to do.`
+                ? `Everyone was asked to confirm again on ${formatTimestamp(detail.reAckSetAt)}. ${awaiting.length} still to do.`
                 : "Volunteers confirm an agreement once. Ask again when the wording changes in a way they need to see."}
             </CardDescription>
           </CardHeader>
@@ -351,7 +344,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {vol.signedAt
-                      ? `Confirmed ${formatDate(vol.signedAt)}`
+                      ? `Confirmed ${formatTimestamp(vol.signedAt)}`
                       : vol.userEmail}
                   </p>
                 </div>

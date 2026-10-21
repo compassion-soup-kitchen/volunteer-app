@@ -40,10 +40,10 @@ import {
 import { agreementLabel } from "@/lib/agreement-labels";
 import {
   formatDateOnly,
-  formatTimestampInAppZone,
   timestampToDateOnly,
   todayInAppZone,
 } from "@/lib/date-only";
+import { formatDateOfBirth, formatTimestamp } from "@/lib/format";
 import { ageInYears, summariseAvailability } from "@/lib/volunteer-detail";
 import type {
   VolunteerDetail,
@@ -132,11 +132,7 @@ export function VolunteerRecord({
       icon: RiCakeLine,
       value: profile.dateOfBirth ? (
         <>
-          {formatTimestampInAppZone(profile.dateOfBirth, {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
+          {formatDateOfBirth(profile.dateOfBirth)}
           {age !== null && (
             <span className="ml-1.5 font-normal text-muted-foreground">
               ({age})
@@ -406,11 +402,7 @@ export function VolunteerRecord({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Signed{" "}
-                      {formatTimestampInAppZone(agreement.signedAt, {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
+                      {formatTimestamp(agreement.signedAt)}
                       {agreement.documentVersion &&
                         ` · version ${agreement.documentVersion}`}
                     </p>
@@ -522,15 +514,9 @@ export function VolunteerRecord({
               <StatusBadge status={latestApplication.status} />
               <p className="text-xs text-muted-foreground">
                 Submitted{" "}
-                {formatTimestampInAppZone(latestApplication.submittedAt, {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {formatTimestamp(latestApplication.submittedAt)}
                 {latestApplication.reviewedAt &&
-                  ` · reviewed ${formatTimestampInAppZone(
-                    latestApplication.reviewedAt
-                  )}`}
+                  ` · reviewed ${formatTimestamp(latestApplication.reviewedAt)}`}
                 {latestApplication.reviewedByName &&
                   ` by ${latestApplication.reviewedByName}`}
               </p>
@@ -630,11 +616,7 @@ function AccountCard({ detail }: { detail: VolunteerDetail }) {
   const facts: DetailFact[] = [
     {
       label: "Joined",
-      value: formatTimestampInAppZone(user.createdAt, {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
+      value: formatTimestamp(user.createdAt),
     },
     user.isOffline
       ? {
@@ -648,7 +630,7 @@ function AccountCard({ detail }: { detail: VolunteerDetail }) {
       : {
           label: "Email verified",
           value: user.emailVerified ? (
-            formatTimestampInAppZone(user.emailVerified)
+            formatTimestamp(user.emailVerified)
           ) : (
             <span className="font-normal text-muted-foreground">Not verified</span>
           ),
@@ -664,7 +646,7 @@ function AccountCard({ detail }: { detail: VolunteerDetail }) {
       label: "Archived",
       value: (
         <>
-          {formatTimestampInAppZone(user.archivedAt)}
+          {formatTimestamp(user.archivedAt)}
           {user.archivedByName && ` by ${user.archivedByName}`}
           {user.archivedReason && (
             <span className="block font-normal text-muted-foreground">
