@@ -115,7 +115,6 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6 pb-24">
       <PageHeader
-        backHref="/dashboard"
         eyebrow="Tō kōtaha · Profile"
         title={
           <span className="flex items-center gap-3">
