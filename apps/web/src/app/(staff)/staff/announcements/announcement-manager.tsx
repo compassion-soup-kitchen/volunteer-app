@@ -83,6 +83,7 @@ import {
   MAX_ANNOUNCEMENT_ATTACHMENTS,
   type AnnouncementAudience,
 } from "@/lib/announcement-schema";
+import { BleedList } from "@/components/brand/detail-list";
 
 const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
   ALL: "Everyone",
@@ -367,7 +368,7 @@ export function AnnouncementManager({
                 title={`Drafts (${drafts.length})`}
               />
               <Card>
-                <ul className="divide-y divide-border">
+                <BleedList>
                   {drafts.map((a) => (
                     <AnnouncementRow
                       key={a.id}
@@ -378,7 +379,7 @@ export function AnnouncementManager({
                       onDelete={() => setDeleteTarget(a)}
                     />
                   ))}
-                </ul>
+                </BleedList>
               </Card>
             </section>
           )}
@@ -391,7 +392,7 @@ export function AnnouncementManager({
                 title={`Published (${published.length})`}
               />
               <Card>
-                <ul className="divide-y divide-border">
+                <BleedList>
                   {published.map((a) => (
                     <AnnouncementRow
                       key={a.id}
@@ -402,7 +403,7 @@ export function AnnouncementManager({
                       onDelete={() => setDeleteTarget(a)}
                     />
                   ))}
-                </ul>
+                </BleedList>
               </Card>
             </section>
           )}

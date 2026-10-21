@@ -16,6 +16,7 @@ import {
 import type { StaffTrainingSession } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
 import { isPastInAppZone, isTodayInAppZone } from "@/lib/date-only";
+import { BleedList } from "@/components/brand/detail-list";
 
 interface TrainingListProps {
   sessions: StaffTrainingSession[];
@@ -52,11 +53,11 @@ export function TrainingList({ sessions }: TrainingListProps) {
             title={`Upcoming (${upcoming.length})`}
           />
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {upcoming.map((session) => (
                 <SessionRow key={session.id} session={session} />
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </section>
       )}
@@ -69,11 +70,11 @@ export function TrainingList({ sessions }: TrainingListProps) {
             title={`Past (${past.length})`}
           />
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {past.map((session) => (
                 <SessionRow key={session.id} session={session} isPast />
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </section>
       )}

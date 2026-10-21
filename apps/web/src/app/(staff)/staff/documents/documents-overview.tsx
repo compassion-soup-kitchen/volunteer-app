@@ -13,6 +13,7 @@ import {
 } from "@remixicon/react";
 import type { AgreementOverview } from "@/lib/document-actions";
 import { agreementLabel } from "@/lib/agreement-labels";
+import { BleedList } from "@/components/brand/detail-list";
 
 function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
   const retired = !!agreement.archivedAt;
@@ -117,14 +118,14 @@ export function DocumentsOverview({
     <div className="space-y-4">
       {active.length > 0 && (
         <Card>
-          <ul className="divide-y divide-border">
+          <BleedList>
             {active.map((agreement) => (
               <AgreementRow
                 key={agreement.agreementType}
                 agreement={agreement}
               />
             ))}
-          </ul>
+          </BleedList>
         </Card>
       )}
 
@@ -143,14 +144,14 @@ export function DocumentsOverview({
             Retired
           </p>
           <Card className="opacity-80">
-            <ul className="divide-y divide-border">
+            <BleedList>
               {retired.map((agreement) => (
                 <AgreementRow
                   key={agreement.agreementType}
                   agreement={agreement}
                 />
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </div>
       )}

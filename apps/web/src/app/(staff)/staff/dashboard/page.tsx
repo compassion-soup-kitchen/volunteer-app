@@ -30,6 +30,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { SectionHeader } from "@/components/brand/section-header";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { IconChip } from "@/components/brand/icon-chip";
+import { BleedList } from "@/components/brand/detail-list";
 
 export const metadata: Metadata = {
   title: "Staff Dashboard | Te Pūaroha",
@@ -163,7 +164,7 @@ async function RecentActivitySection() {
         title="Recent activity"
       />
       <Card>
-        <ul className="divide-y divide-border">
+        <BleedList>
           {activities.map((activity, i) => {
             const Icon = iconMap[activity.type] || RiUserLine;
             return (
@@ -183,7 +184,7 @@ async function RecentActivitySection() {
               </li>
             );
           })}
-        </ul>
+        </BleedList>
       </Card>
     </section>
   );
@@ -258,7 +259,7 @@ function QuickActions() {
     <section className="min-w-0 space-y-4">
       <SectionHeader eyebrow="Mahi tere" title="Quick actions" />
       <Card size="sm">
-        <ul className="divide-y divide-border">
+        <BleedList>
           {actions.map((action) => (
             <li key={action.href}>
               <Link
@@ -276,7 +277,7 @@ function QuickActions() {
               </Link>
             </li>
           ))}
-        </ul>
+        </BleedList>
       </Card>
     </section>
   );

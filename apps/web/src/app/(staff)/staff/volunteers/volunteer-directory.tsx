@@ -91,6 +91,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { DeleteUserDialog } from "./delete-user-dialog";
+import { BleedList } from "@/components/brand/detail-list";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All statuses" },
@@ -631,7 +632,7 @@ export function VolunteerDirectory({
 
           {/* Mobile hairline list */}
           <Card className="sm:hidden">
-            <ul className="divide-y divide-border">
+            <BleedList>
               {volunteers.map((vol) => (
                 <li
                   key={vol.id}
@@ -730,7 +731,7 @@ export function VolunteerDirectory({
                   />
                 </li>
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </>
       )}

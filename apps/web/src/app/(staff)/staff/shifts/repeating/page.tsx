@@ -20,6 +20,7 @@ import {
 import { formatTimeRange, personName } from "@/lib/format";
 import { formatDateOnly, parseDateOnly, todayInAppZone } from "@/lib/date-only";
 import { cn } from "@/lib/utils";
+import { BleedList } from "@/components/brand/detail-list";
 
 export const metadata: Metadata = {
   title: "Repeating shifts | Te Pūaroha",
@@ -122,12 +123,12 @@ export default async function RepeatingShiftsPage() {
       ) : (
         <>
           {running.length > 0 && (
-            <Card className="py-0">
-              <ul className="divide-y divide-border">
+            <Card>
+              <BleedList>
                 {running.map((pattern) => (
                   <PatternRow key={pattern.id} pattern={pattern} today={today} />
                 ))}
-              </ul>
+              </BleedList>
             </Card>
           )}
 
@@ -136,12 +137,12 @@ export default async function RepeatingShiftsPage() {
               <h2 className="font-serif text-lg font-medium tracking-tight text-muted-foreground">
                 Finished
               </h2>
-              <Card className="py-0">
-                <ul className="divide-y divide-border">
+              <Card>
+                <BleedList>
                   {finished.map((pattern) => (
                     <PatternRow key={pattern.id} pattern={pattern} today={today} />
                   ))}
-                </ul>
+                </BleedList>
               </Card>
             </section>
           )}

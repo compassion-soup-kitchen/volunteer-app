@@ -13,6 +13,7 @@ import {
   getDocumentDownloadUrl,
   type UploadedDocument,
 } from "@/lib/document-actions";
+import { BleedList } from "@/components/brand/detail-list";
 
 export function DownloadableFiles({
   documents,
@@ -59,7 +60,7 @@ export function DownloadableFiles({
 
   return (
     <Card>
-      <ul className="divide-y divide-border">
+      <BleedList>
         {documents.map((doc) => (
           <li key={doc.id}>
             <button
@@ -100,7 +101,7 @@ export function DownloadableFiles({
             </button>
           </li>
         ))}
-      </ul>
+      </BleedList>
     </Card>
   );
 }

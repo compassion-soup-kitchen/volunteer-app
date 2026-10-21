@@ -41,6 +41,7 @@ import {
   getServiceAreasWithStats,
   type ServiceAreaWithStats,
 } from "@/lib/service-area-actions";
+import { BleedList } from "@/components/brand/detail-list";
 
 interface ServiceAreaManagerProps {
   initialAreas: ServiceAreaWithStats[];
@@ -167,7 +168,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
           </Card>
         ) : (
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {active.map((area) => (
                 <AreaRow
                   key={area.id}
@@ -176,7 +177,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
                   onToggleArchive={() => handleToggleArchive(area)}
                 />
               ))}
-            </ul>
+            </BleedList>
           </Card>
         )}
       </section>
@@ -186,7 +187,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
         <section className="space-y-4">
           <SectionHeader divider title={`Archived (${archived.length})`} />
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {archived.map((area) => (
                 <AreaRow
                   key={area.id}
@@ -195,7 +196,7 @@ export function ServiceAreaManager({ initialAreas }: ServiceAreaManagerProps) {
                   onToggleArchive={() => handleToggleArchive(area)}
                 />
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </section>
       )}

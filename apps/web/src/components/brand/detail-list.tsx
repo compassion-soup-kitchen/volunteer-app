@@ -4,12 +4,14 @@ import { cn } from "@/lib/utils";
 /**
  * The hairline-divided body shared by every card whose rows run to the card's
  * edges. `data-slot="bleed-list"` is what `Card` looks for to trim its own
- * bottom padding - the rows already carry their own, so the card's full pb-5
- * underneath reads as a dead gap. Marking the list means no call site has to
- * decide, and an empty state (a `CardContent` instead) keeps normal padding
- * without anyone thinking about it.
+ * padding - the rows already carry their own, so the card's full py-5 around
+ * them reads as a dead gap: under a header only the bottom is trimmed, and a
+ * list that is the whole card loses both. Marking the list means no call site
+ * has to decide, and an empty state (a `CardContent` instead) keeps normal
+ * padding without anyone thinking about it.
  */
-const bleedListClass = "divide-y divide-border border-t border-border";
+const bleedListClass =
+  "divide-y divide-border border-t border-border first:border-t-0";
 
 /** A card body of full-bleed rows. */
 export function BleedList({ className, ...props }: React.ComponentProps<"ul">) {

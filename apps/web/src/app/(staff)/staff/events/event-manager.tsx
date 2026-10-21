@@ -58,6 +58,7 @@ import {
 import { EventFormDialog } from "./event-form-dialog";
 import { GuestListDialog } from "./guest-list-dialog";
 import { AnnounceEventDialog } from "./announce-event-dialog";
+import { BleedList } from "@/components/brand/detail-list";
 
 const AUDIENCE_LABELS: Record<StaffEvent["audience"], string> = {
   ALL: "Everyone",
@@ -184,7 +185,7 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
                 title={`${section.title} (${section.items.length})`}
               />
               <Card>
-                <ul className="divide-y divide-border">
+                <BleedList>
                   {section.items.map((event) => (
                     <EventRow
                       key={event.id}
@@ -201,7 +202,7 @@ export function EventManager({ initialEvents, viewerRole }: EventManagerProps) {
                       onDelete={() => setDeleteTarget(event)}
                     />
                   ))}
-                </ul>
+                </BleedList>
               </Card>
             </section>
           ))

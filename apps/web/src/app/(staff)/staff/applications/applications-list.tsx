@@ -27,6 +27,7 @@ import {
   getApplicationsList,
   type ApplicationListItem,
 } from "@/lib/staff-actions";
+import { BleedList } from "@/components/brand/detail-list";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All" },
@@ -218,7 +219,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
 
           {/* Mobile hairline list */}
           <Card className="sm:hidden">
-            <ul className="divide-y divide-border">
+            <BleedList>
               {sorted.map((app) => (
                 <li key={app.id}>
                   <Link
@@ -258,7 +259,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
                   </Link>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </>
       )}

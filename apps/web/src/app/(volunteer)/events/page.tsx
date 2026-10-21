@@ -9,6 +9,7 @@ import { EventInvitation } from "@/components/event/event-invitation";
 import { auth } from "@/lib/auth";
 import { todayInAppZone } from "@/lib/date-only";
 import { getPastEvents, getUpcomingEvents } from "@/lib/event-actions";
+import { BleedList } from "@/components/brand/detail-list";
 
 export const metadata: Metadata = {
   title: "Events | Te Pūaroha",
@@ -65,7 +66,7 @@ export default async function EventsPage() {
         <section className="space-y-4">
           <SectionHeader divider eyebrow="Kua oti" title="Been and gone" />
           <Card>
-            <ul className="divide-y divide-border">
+            <BleedList>
               {past.map((event) => (
                 <li
                   key={event.id}
@@ -83,7 +84,7 @@ export default async function EventsPage() {
                   </span>
                 </li>
               ))}
-            </ul>
+            </BleedList>
           </Card>
         </section>
       ) : null}

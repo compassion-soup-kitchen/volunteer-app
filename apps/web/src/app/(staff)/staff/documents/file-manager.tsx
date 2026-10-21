@@ -47,6 +47,7 @@ import {
   MAX_UPLOAD_BYTES,
   UPLOAD_ACCEPT_ATTR,
 } from "@/lib/uploads";
+import { BleedList } from "@/components/brand/detail-list";
 
 const TYPE_VARIANTS: Record<
   string,
@@ -218,7 +219,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
       {/* Document List */}
       {documents.length > 0 ? (
         <Card>
-          <ul className="divide-y divide-border">
+          <BleedList>
             {documents.map((doc) => (
               <FileRow
                 key={doc.id}
@@ -294,7 +295,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
               />
 
             ))}
-          </ul>
+          </BleedList>
         </Card>
       ) : (
         <Card>

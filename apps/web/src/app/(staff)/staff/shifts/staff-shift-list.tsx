@@ -58,6 +58,7 @@ import {
   todayInAppZone,
 } from "@/lib/date-only";
 import { isHeldForOffers } from "@/lib/shift-offers";
+import { BleedList } from "@/components/brand/detail-list";
 
 interface StaffShiftListProps {
   initialShifts: StaffShift[];
@@ -170,7 +171,7 @@ export function StaffShiftList({
         </Card>
       ) : (
         <Card>
-          <ul className="divide-y divide-border">
+          <BleedList>
             {shifts.map((shift) => {
               const past = isPastInAppZone(shift.date);
               const today = isTodayInAppZone(shift.date);
@@ -280,7 +281,7 @@ export function StaffShiftList({
                 </li>
               );
             })}
-          </ul>
+          </BleedList>
         </Card>
       )}
 
