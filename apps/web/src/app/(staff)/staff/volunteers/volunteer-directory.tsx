@@ -746,7 +746,7 @@ export function VolunteerDirectory({
             >
               {archiving ? (
                 <>
-                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                   Archiving...
                 </>
               ) : (
@@ -797,7 +797,7 @@ export function VolunteerDirectory({
             >
               {changingRole ? (
                 <>
-                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                   Updating...
                 </>
               ) : (
@@ -842,7 +842,7 @@ export function VolunteerDirectory({
             >
               {impersonating ? (
                 <>
-                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                   Starting...
                 </>
               ) : (
@@ -958,13 +958,13 @@ function StatusMenu({
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
             <Link href={`/staff/volunteers/${volunteer.user.id}`}>
-              <RiFileUserLine className="mr-2 size-4" />
+              <RiFileUserLine className="size-4" />
               View full record
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onRestore(volunteer)}>
-            <RiArrowGoBackLine className="mr-2 size-4" />
+            <RiArrowGoBackLine className="size-4" />
             Restore account
           </DropdownMenuItem>
           {canDelete && (
@@ -972,9 +972,9 @@ function StatusMenu({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => onDelete(volunteer)}
-                className="text-destructive focus:text-destructive"
+                variant="destructive"
               >
-                <RiDeleteBin6Line className="mr-2 size-4" />
+                <RiDeleteBin6Line className="size-4" />
                 Delete permanently
               </DropdownMenuItem>
             </>
@@ -1026,7 +1026,7 @@ function StatusMenu({
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
           <Link href={`/staff/volunteers/${volunteer.user.id}`}>
-            <RiFileUserLine className="mr-2 size-4" />
+            <RiFileUserLine className="size-4" />
             View full record
           </Link>
         </DropdownMenuItem>
@@ -1045,7 +1045,7 @@ function StatusMenu({
               )
             }
           >
-            <s.icon className="mr-2 size-4" />
+            <s.icon className="size-4" />
             {s.label}
           </DropdownMenuItem>
         ))}
@@ -1054,7 +1054,7 @@ function StatusMenu({
             <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <RiGroupLine className="mr-2 size-4" />
+                <RiGroupLine data-icon="inline-start" className="size-4" />
                 Groups
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -1086,7 +1086,7 @@ function StatusMenu({
             <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <RiUserSettingsLine className="mr-2 size-4" />
+                <RiUserSettingsLine data-icon="inline-start" className="size-4" />
                 Change role
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -1097,7 +1097,7 @@ function StatusMenu({
                       key={role}
                       onClick={() => onChangeRole(volunteer, role)}
                     >
-                      <Icon className="mr-2 size-4" />
+                      <Icon className="size-4" />
                       Make {ROLE_LABEL[role].toLowerCase()}
                     </DropdownMenuItem>
                   );
@@ -1110,7 +1110,7 @@ function StatusMenu({
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onImpersonate(volunteer)}>
-              <RiEyeLine className="mr-2 size-4" />
+              <RiEyeLine className="size-4" />
               View as this person
             </DropdownMenuItem>
           </>
@@ -1118,17 +1118,17 @@ function StatusMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => onArchive(volunteer)}
-          className="text-destructive focus:text-destructive"
+          variant="destructive"
         >
-          <RiArchive2Line className="mr-2 size-4" />
+          <RiArchive2Line className="size-4" />
           Archive account
         </DropdownMenuItem>
         {canDelete && (
           <DropdownMenuItem
             onClick={() => onDelete(volunteer)}
-            className="text-destructive focus:text-destructive"
+            variant="destructive"
           >
-            <RiDeleteBin6Line className="mr-2 size-4" />
+            <RiDeleteBin6Line className="size-4" />
             Delete permanently
           </DropdownMenuItem>
         )}

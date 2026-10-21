@@ -477,9 +477,9 @@ function ShiftRow({
               ) : isSignedUp ? (
                 <Button variant="outline" size="sm" onClick={onCancel} disabled={isLoading}>
                   {isLoading ? (
-                    <RiLoader4Line className="mr-1 size-3.5 animate-spin" />
+                    <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                   ) : (
-                    <RiCloseLine className="mr-1 size-3.5" />
+                    <RiCloseLine data-icon="inline-start" className="size-3.5" />
                   )}
                   Cancel
                 </Button>
@@ -502,9 +502,9 @@ function ShiftRow({
                     disabled={isFull || isLoading || heldForOthers}
                   >
                     {isLoading ? (
-                      <RiLoader4Line className="mr-1 size-3.5 animate-spin" />
+                      <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                     ) : (
-                      <RiCheckLine className="mr-1 size-3.5" />
+                      <RiCheckLine data-icon="inline-start" className="size-3.5" />
                     )}
                     {offeredToMe ? "Take it" : "Sign up"}
                   </Button>

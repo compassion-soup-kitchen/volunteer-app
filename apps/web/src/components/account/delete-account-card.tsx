@@ -126,7 +126,7 @@ export function DeleteAccountCard() {
       >
         <AlertDialogTrigger asChild>
           <Button variant="destructive">
-            <RiDeleteBin6Line className="mr-2 size-4" aria-hidden />
+            <RiDeleteBin6Line data-icon="inline-start" className="size-4" aria-hidden />
             Delete my account
           </Button>
         </AlertDialogTrigger>
@@ -215,14 +215,13 @@ export function DeleteAccountCard() {
                 {deleting ? (
                   <>
                     <RiLoader4Line
-                      className="mr-2 size-4 animate-spin"
-                      aria-hidden
-                    />
+                       data-icon="inline-start" className="size-4 animate-spin"
+                      aria-hidden />
                     Deleting...
                   </>
                 ) : (
                   <>
-                    <RiDeleteBin6Line className="mr-2 size-4" aria-hidden />
+                    <RiDeleteBin6Line data-icon="inline-start" className="size-4" aria-hidden />
                     Delete permanently
                   </>
                 )}

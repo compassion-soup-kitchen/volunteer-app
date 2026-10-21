@@ -266,9 +266,9 @@ export function StaffShiftWeek({
               variant="destructive"
             >
               {isDeleting ? (
-                <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
               ) : (
-                <RiDeleteBinLine className="mr-2 size-4" />
+                <RiDeleteBinLine data-icon="inline-start" className="size-4" />
               )}
               Delete
             </AlertDialogAction>
@@ -471,18 +471,18 @@ function ShiftRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => router.push(href)}>
-            <RiEyeLine className="mr-2 size-4" />
+            <RiEyeLine className="size-4" />
             View details
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push(`${href}/edit`)}>
-            <RiPencilLine className="mr-2 size-4" />
+            <RiPencilLine className="size-4" />
             Edit shift
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
+            variant="destructive"
             onClick={onDelete}
           >
-            <RiDeleteBinLine className="mr-2 size-4" />
+            <RiDeleteBinLine className="size-4" />
             Delete shift
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -393,7 +393,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                       onClick={() => handleDecision("APPROVED")}
                     >
                       {isSaving && (
-                        <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                        <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                       )}
                       Confirm approval
                     </AlertDialogAction>
@@ -437,7 +437,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                       variant="destructive"
                     >
                       {isSaving && (
-                        <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                        <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                       )}
                       Confirm decline
                     </AlertDialogAction>

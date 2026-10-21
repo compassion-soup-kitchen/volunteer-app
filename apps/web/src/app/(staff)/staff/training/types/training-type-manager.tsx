@@ -267,7 +267,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving && <RiLoader4Line className="mr-2 size-4 animate-spin" />}
+              {isSaving && <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />}
               {editTarget ? "Save changes" : "Create"}
             </Button>
           </DialogFooter>
@@ -356,25 +356,25 @@ function TypeRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onEdit}>
-            <RiEditLine className="mr-2 size-4" />
+            <RiEditLine className="size-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onToggleArchive}>
             {type.isArchived ? (
               <>
-                <RiInboxUnarchiveLine className="mr-2 size-4" />
+                <RiInboxUnarchiveLine className="size-4" />
                 Restore
               </>
             ) : (
               <>
-                <RiArchiveLine className="mr-2 size-4" />
+                <RiArchiveLine className="size-4" />
                 Archive
               </>
             )}
           </DropdownMenuItem>
           {canDelete && (
             <DropdownMenuItem variant="destructive" onClick={onDelete}>
-              <RiDeleteBinLine className="mr-2 size-4" />
+              <RiDeleteBinLine className="size-4" />
               Delete
             </DropdownMenuItem>
           )}

@@ -264,9 +264,9 @@ export function ReportDashboard({
                 size="sm"
               >
                 {isPending ? (
-                  <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                  <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                 ) : (
-                  <RiFilterLine className="mr-1.5 size-3.5" />
+                  <RiFilterLine data-icon="inline-start" className="size-3.5" />
                 )}
                 Apply
               </Button>
@@ -506,9 +506,9 @@ export function ReportDashboard({
               disabled={exporting !== null}
             >
               {exporting === "summary" ? (
-                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
               ) : (
-                <RiFileChartLine className="mr-1.5 size-3.5" />
+                <RiFileChartLine data-icon="inline-start" className="size-3.5" />
               )}
               Monthly summary
             </Button>
@@ -519,9 +519,9 @@ export function ReportDashboard({
               disabled={exporting !== null}
             >
               {exporting === "shifts" ? (
-                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
               ) : (
-                <RiDownloadLine className="mr-1.5 size-3.5" />
+                <RiDownloadLine data-icon="inline-start" className="size-3.5" />
               )}
               Shifts CSV
             </Button>
@@ -532,9 +532,9 @@ export function ReportDashboard({
               disabled={exporting !== null}
             >
               {exporting === "volunteers" ? (
-                <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
               ) : (
-                <RiDownloadLine className="mr-1.5 size-3.5" />
+                <RiDownloadLine data-icon="inline-start" className="size-3.5" />
               )}
               Volunteers CSV
             </Button>

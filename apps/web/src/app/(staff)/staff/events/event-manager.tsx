@@ -464,42 +464,42 @@ function EventRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>
-              <RiEditLine className="mr-2 size-4" />
+              <RiEditLine className="size-4" />
               Edit
             </DropdownMenuItem>
             {collecting ? (
               <DropdownMenuItem onClick={onGuests}>
-                <RiGroupLine className="mr-2 size-4" />
+                <RiGroupLine className="size-4" />
                 Guest list
               </DropdownMenuItem>
             ) : null}
             {event.status === "PUBLISHED" ? (
               <>
                 <DropdownMenuItem onClick={onAnnounce}>
-                  <RiMegaphoneLine className="mr-2 size-4" />
+                  <RiMegaphoneLine className="size-4" />
                   Announce it
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onUnpublish}>
-                  <RiEyeOffLine className="mr-2 size-4" />
+                  <RiEyeOffLine className="size-4" />
                   Back to draft
                 </DropdownMenuItem>
               </>
             ) : null}
             {event.status === "DRAFT" ? (
               <DropdownMenuItem onClick={onPublish}>
-                <RiCalendarEventLine className="mr-2 size-4" />
+                <RiCalendarEventLine className="size-4" />
                 Share with {AUDIENCE_LABELS[event.audience].toLowerCase()}
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuSeparator />
             {event.status !== "CANCELLED" ? (
               <DropdownMenuItem variant="destructive" onClick={onCancel}>
-                <RiCloseCircleLine className="mr-2 size-4" />
+                <RiCloseCircleLine className="size-4" />
                 Call it off
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuItem variant="destructive" onClick={onDelete}>
-              <RiDeleteBinLine className="mr-2 size-4" />
+              <RiDeleteBinLine className="size-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

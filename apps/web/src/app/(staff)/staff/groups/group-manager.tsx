@@ -406,7 +406,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving && <RiLoader4Line className="mr-2 size-4 animate-spin" />}
+              {isSaving && <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />}
               {editTarget ? "Save changes" : "Create group"}
             </Button>
           </DialogFooter>
@@ -503,7 +503,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
               </Button>
               <Button onClick={handleSaveMembers} disabled={isSavingMembers}>
                 {isSavingMembers && (
-                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
                 )}
                 Save members
               </Button>
@@ -541,7 +541,7 @@ export function GroupManager({ initialGroups, candidates }: GroupManagerProps) {
               disabled={isDeleting}
               variant="destructive"
             >
-              {isDeleting && <RiLoader4Line className="mr-2 size-4 animate-spin" />}
+              {isDeleting && <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />}
               Delete group
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -589,22 +589,22 @@ function GroupCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onEdit}>
-                <RiEditLine className="mr-2 size-4" />
+                <RiEditLine className="size-4" />
                 Edit details
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onManageMembers}>
-                <RiUserAddLine className="mr-2 size-4" />
+                <RiUserAddLine className="size-4" />
                 Manage members
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onToggleArchive}>
                 {group.isArchived ? (
                   <>
-                    <RiInboxUnarchiveLine className="mr-2 size-4" />
+                    <RiInboxUnarchiveLine className="size-4" />
                     Restore
                   </>
                 ) : (
                   <>
-                    <RiArchiveLine className="mr-2 size-4" />
+                    <RiArchiveLine className="size-4" />
                     Archive
                   </>
                 )}
@@ -612,9 +612,9 @@ function GroupCard({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={onDelete}
-                className="text-destructive focus:text-destructive"
+                variant="destructive"
               >
-                <RiDeleteBin6Line className="mr-2 size-4" />
+                <RiDeleteBin6Line className="size-4" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

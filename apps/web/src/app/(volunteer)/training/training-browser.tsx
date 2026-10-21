@@ -183,7 +183,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       onClick={() => setCancelId(session.id)}
                     >
                       {loading && (
-                        <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                        <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                       )}
                       Cancel
                     </Button>
@@ -197,7 +197,7 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       onClick={() => handleRegister(session.id)}
                     >
                       {loading && (
-                        <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
+                        <RiLoader4Line data-icon="inline-start" className="size-3.5 animate-spin" />
                       )}
                       Register
                     </Button>

@@ -203,12 +203,12 @@ export function DeleteUserDialog({
             >
               {deleting ? (
                 <>
-                  <RiLoader4Line className="mr-2 size-4 animate-spin" aria-hidden />
+                  <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" aria-hidden />
                   Deleting...
                 </>
               ) : (
                 <>
-                  <RiDeleteBin6Line className="mr-2 size-4" aria-hidden />
+                  <RiDeleteBin6Line data-icon="inline-start" className="size-4" aria-hidden />
                   Delete permanently
                 </>
               )}

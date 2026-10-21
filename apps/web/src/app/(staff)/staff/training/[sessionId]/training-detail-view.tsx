@@ -360,7 +360,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
               variant="destructive"
             >
               {isDeleting && (
-                <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" />
               )}
               Delete
             </AlertDialogAction>
