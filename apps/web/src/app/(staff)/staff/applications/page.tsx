@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function ApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string }>;
+  searchParams: Promise<{ sort?: string | string[] }>;
 }) {
   await connection();
   const { sort } = await searchParams;

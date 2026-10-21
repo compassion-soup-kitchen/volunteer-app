@@ -83,6 +83,15 @@ describe("parseSort / formatSort", () => {
     });
   });
 
+  it("takes the first of a repeated ?sort=, which Next hands over as an array", () => {
+    expect(parseSort(["-name", "joined"], VOLUNTEER_SORT_KEYS)).toEqual({
+      key: "name",
+      direction: "desc",
+    });
+    expect(parseSort(["email", "name"], VOLUNTEER_SORT_KEYS)).toBeNull();
+    expect(parseSort([], VOLUNTEER_SORT_KEYS)).toBeNull();
+  });
+
   it("ignores anything that isn't one of the table's columns", () => {
     expect(parseSort(undefined, VOLUNTEER_SORT_KEYS)).toBeNull();
     expect(parseSort("", VOLUNTEER_SORT_KEYS)).toBeNull();

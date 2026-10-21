@@ -25,11 +25,16 @@ interface Column<T> {
   firstDirection: SortDirection;
 }
 
-/** `"name"` → name ascending, `"-joined"` → joined descending, else null. */
+/**
+ * `"name"` → name ascending, `"-joined"` → joined descending, else null. A
+ * repeated `?sort=` reaches a page as an array; the first one wins, so a
+ * hand-edited link sorts by something rather than failing.
+ */
 export function parseSort<K extends string>(
-  value: string | null | undefined,
+  param: string | string[] | null | undefined,
   keys: readonly K[]
 ): Sort<K> | null {
+  const value = Array.isArray(param) ? param[0] : param;
   if (!value) return null;
   const direction = value.startsWith("-") ? "desc" : "asc";
   const key = value.replace(/^-/, "");
@@ -143,7 +148,6 @@ export const VOLUNTEER_COLUMNS: Record<VolunteerSortKey, Column<VolunteerListIte
   },
 };
 
-/** No sort leaves the directory in the server's order. Ties fall back to name. */
 /** Every column both ways round, each column's natural direction first. */
 export const VOLUNTEER_SORT_OPTIONS: SortOption<VolunteerSortKey>[] = [
   { sort: { key: "name", direction: "asc" }, label: "Name, A to Z" },
@@ -156,6 +160,7 @@ export const VOLUNTEER_SORT_OPTIONS: SortOption<VolunteerSortKey>[] = [
   { sort: { key: "joined", direction: "asc" }, label: "Joined longest ago" },
 ];
 
+/** No sort leaves the directory in the server's order. Ties fall back to name. */
 export function sortVolunteers(
   rows: readonly VolunteerListItem[],
   sort: Sort<VolunteerSortKey> | null
