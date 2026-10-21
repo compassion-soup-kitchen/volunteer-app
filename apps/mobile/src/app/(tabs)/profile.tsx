@@ -26,18 +26,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { qk } from '@/lib/query-keys';
 import { useAuth } from '@/providers/auth-provider';
 import { describeLeaveStatus, formatLeaveRange, offersLeave } from '@/lib/leave';
+import { isOnboarding } from '@/lib/onboarding';
 import { getMyLeave } from '@/services/leave-service';
 import { getVolunteerProfile } from '@/services/profile-service';
-import type { ServiceArea, VolunteerStatus } from '@/types/models';
-
-/** A volunteer who hasn't reached ACTIVE/INACTIVE is still working through onboarding. */
-function isOnboarding(status: VolunteerStatus): boolean {
-  return (
-    status === 'APPLICATION_SUBMITTED' ||
-    status === 'AWAITING_VETTING' ||
-    status === 'APPROVED_FOR_INDUCTION'
-  );
-}
+import type { ServiceArea } from '@/types/models';
 
 /** A labelled detail line. When `href` is set the whole row taps through (e.g. to dial). */
 function DetailRow({
