@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   RiDownloadLine,
   RiLoader4Line,
   RiFileTextLine,
 } from "@remixicon/react";
 import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import { documentTypeLabel } from "@/lib/document-labels";
 import {
   getDocumentDownloadUrl,
@@ -40,21 +41,11 @@ export function DownloadableFiles({
 
   if (documents.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <IconChip size="lg">
-            <RiFileTextLine />
-          </IconChip>
-          <div>
-            <p className="font-serif text-lg font-medium tracking-tight">
-              No resources yet
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Policies and resources will appear here once uploaded.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<RiFileTextLine />}
+        title="No resources yet"
+        description="Policies and resources will appear here once uploaded."
+      />
     );
   }
 

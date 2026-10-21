@@ -31,8 +31,8 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: 1,
-          backgroundColor: selected ? colors.primary : colors.surface,
-          borderColor: selected ? colors.primary : colors.border,
+          backgroundColor: selected ? colors.primaryFill : colors.surface,
+          borderColor: selected ? colors.primaryFill : colors.border,
           opacity: pressed ? 0.85 : 1,
         },
       ]}>

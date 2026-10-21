@@ -3,11 +3,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, View } from 'react-native';
 
 import { trainingTypeMeta } from '@/components/meta';
-import { Badge, Button, Card, EmptyState, Icon, type IconName, SheetBody, Text } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Icon, type IconName, SheetBody, StatusBadge, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatLongDate, formatTimeRange } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
+import { VENUE } from '@/lib/venue';
 import { useToast } from '@/providers/toast-provider';
 import {
   cancelTrainingRegistration,
@@ -15,9 +16,6 @@ import {
   registerForTraining,
 } from '@/services/training-service';
 import type { ActionResult } from '@/types/models';
-
-/** The kitchen's single venue — the default when a session has no location set. */
-const VENUE = '132 Tory Street, Te Aro, Pōneke';
 
 function FactRow({ icon, value }: { icon: IconName; value: string }) {
   return (
@@ -125,7 +123,7 @@ export default function TrainingDetailScreen() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' }}>
         <Badge label={meta.label} tone={meta.tone} icon={meta.icon} />
         {isRegistered ? (
-          <Badge label="Registered" tone="success" icon="checkmark-circle" />
+          <StatusBadge status="REGISTERED" />
         ) : isFull ? (
           <Badge label="Full" tone="neutral" />
         ) : null}
@@ -140,7 +138,7 @@ export default function TrainingDetailScreen() {
           icon="calendar-outline"
           value={`${formatLongDate(session.date)} · ${formatTimeRange(session.startTime, session.endTime)}`}
         />
-        <FactRow icon="location-outline" value={session.location ?? VENUE} />
+        <FactRow icon="location-outline" value={session.location ?? VENUE.address} />
         <FactRow icon="people-outline" value={`${session.registeredCount} of ${session.capacity} registered`} />
       </View>
 

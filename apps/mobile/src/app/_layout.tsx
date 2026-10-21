@@ -103,15 +103,18 @@ function RootNavigator() {
           sheetAllowedDetents: 'fitToContents',
         }}
       />
-      <Stack.Screen name="schedule" options={{ title: 'My schedule' }} />
-      <Stack.Screen name="news" options={{ title: 'Notices' }} />
-      <Stack.Screen name="events" options={{ title: 'Events' }} />
-      <Stack.Screen name="onboarding" options={{ title: 'Welcome' }} />
+      {/* These pages open with their own serif PageHeader, so the native bar
+          keeps only the back chevron. `title` still names the screen for
+          VoiceOver and the back button's long-press menu. */}
+      <Stack.Screen name="schedule" options={{ title: 'My schedule', headerTitle: '' }} />
+      <Stack.Screen name="news" options={{ title: 'Notices', headerTitle: '' }} />
+      <Stack.Screen name="events" options={{ title: 'Events', headerTitle: '' }} />
+      <Stack.Screen name="onboarding" options={{ title: 'Welcome', headerTitle: '' }} />
       <Stack.Screen name="profile/edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
       {/* Pushed rather than presented as a modal: a modal invites a dismissive
           swipe, and this is a screen to read before acting on. */}
       <Stack.Screen name="profile/delete-account" options={{ title: 'Delete account' }} />
-      <Stack.Screen name="leave/index" options={{ title: 'My leave' }} />
+      <Stack.Screen name="leave/index" options={{ title: 'My leave', headerTitle: '' }} />
       <Stack.Screen name="leave/edit" options={{ title: 'Log leave', presentation: 'modal' }} />
     </Stack>
   );

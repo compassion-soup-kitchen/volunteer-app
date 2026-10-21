@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { View } from 'react-native';
 
 import { AnnouncementCard } from '@/components/announcement-card';
-import { EmptyState, Screen, SkeletonCard, Text } from '@/components/ui';
+import { EmptyState, PageHeader, Screen, SkeletonCard } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { qk } from '@/lib/query-keys';
 import { getAnnouncements } from '@/services/announcements-service';
@@ -17,15 +17,7 @@ export default function NewsScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
-      <View style={{ gap: 4 }}>
-        <Text variant="overline" color="primary">
-          Ngā pānui
-        </Text>
-        <Text variant="display">Notices</Text>
-        <Text variant="body" color="textSecondary">
-          The latest from the team.
-        </Text>
-      </View>
+      <PageHeader overline="Ngā pānui" title="Notices" subtitle="The latest from the team." />
 
       {isLoading ? (
         <View style={{ gap: Spacing.md }}>

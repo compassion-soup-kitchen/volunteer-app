@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Fragment } from 'react';
-import { Linking, Platform, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AnnouncementCard } from '@/components/announcement-card';
 import { EventCard } from '@/components/event-card';
@@ -14,7 +14,6 @@ import { NextShiftHero } from '@/components/next-shift-hero';
 import { ShiftCard } from '@/components/shift-card';
 import { StatStrip } from '@/components/stat-strip';
 import {
-  Badge,
   Card,
   Divider,
   EmptyState,
@@ -23,6 +22,7 @@ import {
   Screen,
   SectionHeader,
   SkeletonCard,
+  StatusBadge,
   Text,
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -31,6 +31,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange, relativeDay } from '@/lib/format';
 import { countUnread, noticesBellLabel } from '@/lib/notices';
 import { qk } from '@/lib/query-keys';
+import { openVenueDirections, VENUE } from '@/lib/venue';
 import { useAuth } from '@/providers/auth-provider';
 import { getAnnouncements } from '@/services/announcements-service';
 import { getUpcomingEvents } from '@/services/events-service';
@@ -38,17 +39,13 @@ import { canReply, todayISO } from '@/lib/events';
 import { getDashboardData } from '@/services/dashboard-service';
 import { getAvailableTraining } from '@/services/training-service';
 
-/** Where shifts happen — used for the hero location line and the directions link. */
-const VENUE = 'Compassion Soup Kitchen · Tory St, Te Aro';
-const VENUE_QUERY = 'Compassion Soup Kitchen, Tory Street, Wellington';
-
 /**
  * Soft drop shadow so light greeting text stays legible over the moving footage.
  * iOS clips a text shadow to the glyph box, so the padding gives the 12px blur
  * room to render and the matching negative margin keeps the text in place.
+ * The colour comes from the `mediaTextShadow` token.
  */
 const HERO_SHADOW = {
-  textShadowColor: 'rgba(0,0,0,0.5)',
   textShadowOffset: { width: 0, height: 1 },
   textShadowRadius: 12,
   paddingHorizontal: 14,
@@ -56,8 +53,6 @@ const HERO_SHADOW = {
   paddingVertical: 14,
   marginVertical: -10,
 } as const;
-const ON_VIDEO = '#FFFFFF';
-const ON_VIDEO_DIM = 'rgba(255,255,255,0.82)';
 
 /** Time-of-day Te Reo greeting — kept distinct from the "Kia ora, {name}" headline. */
 function greeting(): string {
@@ -65,15 +60,6 @@ function greeting(): string {
   if (h < 12) return 'Mōrena'; // good morning
   if (h < 18) return 'Ahiahi mārie'; // good afternoon
   return 'Pō mārie'; // good evening
-}
-
-function openDirections() {
-  const q = encodeURIComponent(VENUE_QUERY);
-  const url = Platform.select({
-    ios: `http://maps.apple.com/?q=${q}`,
-    default: `https://www.google.com/maps/search/?api=1&query=${q}`,
-  });
-  if (url) void Linking.openURL(url);
 }
 
 /** Compact brand lockup with a notification bell that opens the notices feed. */
@@ -102,7 +88,7 @@ function UtilityBar({
           name="notifications-outline"
           size={23}
           color={onVideo ? undefined : 'textSecondary'}
-          raw={onVideo ? ON_VIDEO_DIM : undefined}
+          raw={onVideo ? colors.onMediaMuted : undefined}
         />
         {unread > 0 ? (
           <View
@@ -126,6 +112,8 @@ function UtilityBar({
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const heroText = { ...HERO_SHADOW, textShadowColor: colors.mediaTextShadow };
   const { user } = useAuth();
   const firstName = (user?.name ?? 'there').split(' ')[0];
 
@@ -162,10 +150,10 @@ export default function DashboardScreen() {
 
           {/* Greeting — personal, floating on the footage */}
           <View>
-            <Text variant="overline" style={{ color: ON_VIDEO_DIM, ...HERO_SHADOW }}>
+            <Text variant="overline" style={{ color: colors.onMediaMuted, ...heroText }}>
               {greeting()}
             </Text>
-            <Text variant="display" style={{ color: ON_VIDEO, ...HERO_SHADOW }}>
+            <Text variant="display" style={{ color: colors.onMedia, ...heroText }}>
               Kia ora, {firstName}
             </Text>
           </View>
@@ -187,10 +175,10 @@ export default function DashboardScreen() {
           {data.nextShift ? (
             <NextShiftHero
               shift={data.nextShift}
-              location={VENUE}
+              location={VENUE.address}
               extraCount={rosterOverflow}
               onDetails={() => router.push({ pathname: '/shift/[id]', params: { id: data.nextShift!.id } })}
-              onDirections={openDirections}
+              onDirections={openVenueDirections}
               onMore={() => router.push('/schedule')}
             />
           ) : (
@@ -232,7 +220,7 @@ export default function DashboardScreen() {
                     {relativeDay(nextTraining.date)} · {formatTimeRange(nextTraining.startTime, nextTraining.endTime)}
                   </Text>
                 </View>
-                <Badge label="Booked" tone="navy" icon="checkmark" />
+                <StatusBadge status="REGISTERED" />
               </Card>
             </View>
           ) : null}

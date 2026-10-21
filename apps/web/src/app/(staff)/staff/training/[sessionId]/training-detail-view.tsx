@@ -26,7 +26,7 @@ import {
 import { StatusBadge } from "@/components/brand/status-badge";
 import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
-import { IconChip } from "@/components/brand/icon-chip";
+import { EmptyState } from "@/components/brand/empty-state";
 import {
   RiTimeLine,
   RiTeamLine,
@@ -268,19 +268,12 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
           )}
         </CardHeader>
         {session.attendances.length === 0 ? (
-          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-            <IconChip size="lg">
-              <RiUserLine />
-            </IconChip>
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No one registered yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Volunteers will appear here as they book this session.
-              </p>
-            </div>
-          </CardContent>
+          <EmptyState
+            bare
+            icon={<RiUserLine />}
+            title="No one registered yet"
+            description="Volunteers will appear here as they book this session."
+          />
         ) : (
           <ul className="divide-y divide-border">
             {session.attendances.map((attendance) => (

@@ -17,6 +17,7 @@ export { SectionHeader } from './section-header';
 export { SheetBody } from './sheet-body';
 export { Skeleton, SkeletonCard } from './skeleton';
 export { Stat } from './stat';
+export { type CommitmentStatus, StatusBadge } from './status-badge';
 export { Text } from './text';
 export { TextField } from './text-field';
 export { type Tone, toneColors } from './tones';

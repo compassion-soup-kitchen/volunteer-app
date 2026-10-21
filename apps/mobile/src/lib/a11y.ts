@@ -7,7 +7,7 @@
 import { formatLongDate, formatTimeRange } from '@/lib/format';
 
 /**
- * `Kitchen, Sunday 28 June, 9:00 am – 1:00 pm, 3 spots left` - everything the
+ * `Kitchen, Sunday 28 June, 9am – 1pm, 3 spots left` - everything the
  * shift card shows, in reading order. The date is spelled out: VoiceOver reads
  * an abbreviated "Sun" as the star.
  */

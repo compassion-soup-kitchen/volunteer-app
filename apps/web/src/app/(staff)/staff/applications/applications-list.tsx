@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -15,7 +15,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/brand/status-badge";
-import { IconChip } from "@/components/brand/icon-chip";
 import {
   RiSearchLine,
   RiArrowRightSLine,
@@ -28,6 +27,7 @@ import {
   type ApplicationListItem,
 } from "@/lib/staff-actions";
 import { BleedList } from "@/components/brand/detail-list";
+import { EmptyState } from "@/components/brand/empty-state";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All" },
@@ -123,21 +123,11 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
       )}
 
       {sorted.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <IconChip size="lg">
-              <RiFileListLine />
-            </IconChip>
-            <div>
-              <p className="font-serif text-lg font-medium tracking-tight">
-                No applications found
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Try a different search or status filter.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<RiFileListLine />}
+          title="No applications found"
+          description="Try a different search or status filter."
+        />
       ) : (
         <>
           {/* Desktop table */}
