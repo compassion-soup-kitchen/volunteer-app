@@ -39,7 +39,7 @@ export default function StaffEventsPage() {
       <PageHeader
         eyebrow="Ngā hui · Gatherings"
         title="Events"
-        description="Parties, hui and working bees — invite the whānau and see who's coming."
+        description="Parties, hui and working bees - invite the whānau and see who's coming."
       />
       <Suspense fallback={<EventsSkeleton />}>
         <EventsContent />

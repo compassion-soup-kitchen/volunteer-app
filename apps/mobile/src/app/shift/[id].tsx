@@ -115,7 +115,7 @@ export default function ShiftDetailScreen() {
 
   const signUp = useMutation({
     mutationFn: () => signUpForShift(id),
-    onSuccess: (res) => afterMutation(res, "You're on the roster — ka pai!"),
+    onSuccess: (res) => afterMutation(res, "You're on the roster - ka pai!"),
   });
 
   const cancel = useMutation({

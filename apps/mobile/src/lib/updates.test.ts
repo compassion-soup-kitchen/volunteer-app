@@ -82,6 +82,6 @@ describe('versionLabel', () => {
   });
 
   it('falls back to a dash when the app config has no version', () => {
-    expect(versionLabel(undefined, embedded, true)).toBe('Version —');
+    expect(versionLabel(undefined, embedded, true)).toBe('Version -');
   });
 });

@@ -13,7 +13,7 @@ import { ReportDashboard } from "./report-dashboard";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Pūrongo — Reports | Te Pūaroha Staff",
+  title: "Pūrongo - Reports | Te Pūaroha Staff",
 };
 
 function ReportsSkeleton() {

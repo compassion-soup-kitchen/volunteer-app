@@ -100,7 +100,7 @@ function formatPeriod(from: string | null, to: string | null): string {
 export function buildMonthlySummaryCsv(summary: MonthlySummary): string {
   const lines: string[] = [];
 
-  lines.push(csvRow(["Te Pūaroha — Volunteer summary"]));
+  lines.push(csvRow(["Te Pūaroha - Volunteer summary"]));
   lines.push(csvRow(["Period", formatPeriod(summary.fromDate, summary.toDate)]));
   lines.push(
     csvRow(["Service area", summary.serviceAreaName ?? "All service areas"])

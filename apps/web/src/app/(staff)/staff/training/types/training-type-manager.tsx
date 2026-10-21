@@ -227,7 +227,7 @@ export function TrainingTypeManager({ initialTypes }: TrainingTypeManagerProps) 
             <DialogDescription>
               {editTarget
                 ? "Renaming updates this type everywhere it appears, including on sessions already run."
-                : "Training types group your sessions — induction, food safety, whatever your kaupapa needs."}
+                : "Training types group your sessions - induction, food safety, whatever your kaupapa needs."}
             </DialogDescription>
           </DialogHeader>
 

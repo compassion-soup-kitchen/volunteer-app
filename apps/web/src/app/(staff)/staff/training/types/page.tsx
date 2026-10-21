@@ -20,7 +20,7 @@ export default async function TrainingTypesPage() {
         backHref="/staff/training"
         eyebrow="Ngā momo · Training types"
         title="Training types"
-        description="The kinds of training you run — rename them, add your own, or retire the ones you've moved on from"
+        description="The kinds of training you run - rename them, add your own, or retire the ones you've moved on from"
       />
       <TrainingTypeManager initialTypes={trainingTypes} />
     </div>

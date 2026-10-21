@@ -123,7 +123,7 @@ export default function ShiftsScreen() {
         toast.error(res.error);
         return;
       }
-      toast.success("You're on the roster — ka pai!");
+      toast.success("You're on the roster - ka pai!");
       qc.invalidateQueries({ queryKey: qk.shiftsAll });
       qc.invalidateQueries({ queryKey: qk.schedule });
       qc.invalidateQueries({ queryKey: qk.dashboard });
@@ -215,7 +215,7 @@ export default function ShiftsScreen() {
             message={
               areaFilter
                 ? 'Try another area, or check back soon.'
-                : 'New shifts are added each week — check back soon.'
+                : 'New shifts are added each week - check back soon.'
             }
             actionLabel={areaFilter ? 'Show all areas' : undefined}
             onAction={areaFilter ? () => setAreaFilter(null) : undefined}

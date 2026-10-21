@@ -276,7 +276,7 @@ export function AnnouncementManager({
       editTarget
         ? "Pānui updated."
         : publish
-          ? "Pānui published — it's live now."
+          ? "Pānui published - it's live now."
           : "Draft saved."
     );
 
@@ -287,7 +287,7 @@ export function AnnouncementManager({
     // the dialog closes and the files are added by editing the saved one.
     if (failed.length > 0 && editTarget) {
       setPendingFiles(failed);
-      setDialogError("Some files couldn't be attached — try those again.");
+      setDialogError("Some files couldn't be attached - try those again.");
       refresh();
       return;
     }
@@ -513,7 +513,7 @@ export function AnnouncementManager({
                 maxFilesMessage={`A pānui can carry ${MAX_ANNOUNCEMENT_ATTACHMENTS} files at most.`}
                 hint={
                   canAttachMore
-                    ? `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)} each`
+                    ? `PDF, Word, or image - up to ${formatFileSize(MAX_UPLOAD_BYTES)} each`
                     : "Remove a file before adding another."
                 }
                 onFilesAccepted={handleFilesChosen}

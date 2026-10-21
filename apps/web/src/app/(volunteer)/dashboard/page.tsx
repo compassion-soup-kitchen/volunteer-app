@@ -167,7 +167,7 @@ export default async function VolunteerDashboard() {
                 <Badge variant="warning">Pending</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Ngā mihi for applying — our team is reviewing your application
+                Ngā mihi for applying - our team is reviewing your application
                 and will be in touch soon.
               </p>
             </div>
@@ -334,7 +334,7 @@ export default async function VolunteerDashboard() {
                     No shift on the horizon yet
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Ready when you are — pick your next mahi from the roster.
+                    Ready when you are - pick your next mahi from the roster.
                   </p>
                 </div>
                 <Button asChild size="sm">
@@ -599,7 +599,7 @@ export default async function VolunteerDashboard() {
                     </div>
                     <p className="line-clamp-2 text-sm text-muted-foreground">{a.body}</p>
                     {a.authorName && (
-                      <p className="text-xs text-muted-foreground">— {a.authorName}</p>
+                      <p className="text-xs text-muted-foreground">- {a.authorName}</p>
                     )}
                   </CardContent>
                 </Link>

@@ -29,7 +29,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
               This link doesn&apos;t look quite right
             </p>
             <p className="leading-relaxed text-muted-foreground">
-              The reset link is missing its token — it may have been trimmed by
+              The reset link is missing its token - it may have been trimmed by
               your email app. Request a fresh one and we&apos;ll email it right
               over.
             </p>

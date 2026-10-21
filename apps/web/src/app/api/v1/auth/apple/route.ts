@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Apple didn't share your email address, so we can't set up an account. In Settings › your name › Sign in with Apple, remove Compassion, then try again — or sign up with your email address.",
+            "Apple didn't share your email address, so we can't set up an account. In Settings › your name › Sign in with Apple, remove Compassion, then try again - or sign up with your email address.",
           code: "APPLE_NO_EMAIL",
         },
         { status: 409 }

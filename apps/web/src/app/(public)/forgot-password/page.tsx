@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
     <AuthShell
       eyebrow="Kia ora · It happens"
       title="Forgot your password?"
-      subtitle="No worries — tell us your email and we'll send you a link to choose a new one."
+      subtitle="No worries - tell us your email and we'll send you a link to choose a new one."
       footer={
         <>
           Remembered it?{" "}

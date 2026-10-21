@@ -222,7 +222,7 @@ export function ShiftForm({
     if (isNaN(cap) || cap < 1) {
       newErrors.capacity = "Capacity must be at least 1.";
     } else if (shift && cap < shift.signupCount) {
-      newErrors.capacity = `${shift.signupCount} already signed up — capacity can't go below that.`;
+      newErrors.capacity = `${shift.signupCount} already signed up - capacity can't go below that.`;
     }
     if (offeredIds.length > 0 && !offersCloseOn) {
       newErrors.offersCloseOn = "Choose the day the offer is held until.";
@@ -569,7 +569,7 @@ export function ShiftForm({
             <p className="text-xs text-muted-foreground">
               Maximum number of volunteers for this shift
               {shift && shift.signupCount > 0
-                ? ` — ${shift.signupCount} signed up so far`
+                ? ` - ${shift.signupCount} signed up so far`
                 : ""}
             </p>
           </div>
@@ -601,7 +601,7 @@ export function ShiftForm({
             </h2>
             <p className="text-sm text-muted-foreground">
               Hold this shift for the whānau who usually work it. Only they can
-              take it until the day you choose — then it opens to everyone.
+              take it until the day you choose - then it opens to everyone.
             </p>
           </div>
 
@@ -633,7 +633,7 @@ export function ShiftForm({
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Opens to all volunteers the day after — or sooner, once
+                  Opens to all volunteers the day after - or sooner, once
                   everyone offered has answered.
                 </p>
               )}

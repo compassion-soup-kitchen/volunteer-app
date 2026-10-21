@@ -190,7 +190,7 @@ export default function DashboardScreen() {
                 illustration="give"
                 tone="brand"
                 title="No shift on the horizon"
-                message="Browse the roster and find a time that suits you — every hand makes a difference."
+                message="Browse the roster and find a time that suits you - every hand makes a difference."
                 actionLabel="Browse shifts"
                 onAction={() => router.push('/shifts')}
               />

@@ -295,7 +295,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
-                    {attendance.volunteer.user.name || "—"}
+                    {attendance.volunteer.user.name || "-"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {attendance.volunteer.user.email}

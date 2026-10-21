@@ -55,7 +55,7 @@ export default function TrainingDetailScreen() {
 
   const register = useMutation({
     mutationFn: () => registerForTraining(id),
-    onSuccess: (res) => afterMutation(res, "You're registered — see you there!"),
+    onSuccess: (res) => afterMutation(res, "You're registered - see you there!"),
   });
 
   const cancel = useMutation({
@@ -161,7 +161,7 @@ export default function TrainingDetailScreen() {
           <Text variant="label" color="textSecondary">
             You&apos;re booked in
           </Text>
-          <Text variant="body">Kia kaha — we&apos;ll see you there.</Text>
+          <Text variant="body">Kia kaha - we&apos;ll see you there.</Text>
         </Card>
       ) : null}
     </SheetBody>

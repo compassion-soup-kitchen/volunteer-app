@@ -125,7 +125,7 @@ export function TrainingForm({
             </Select>
             {trainingTypes.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No training types yet —{" "}
+                No training types yet -{" "}
                 <Link
                   href="/staff/training/types"
                   className="font-medium text-foreground underline underline-offset-4"

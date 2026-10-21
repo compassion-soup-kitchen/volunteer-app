@@ -53,7 +53,7 @@ export function TrainingReadiness({ readiness }: { readiness: Readiness }) {
             <Text style={{ fontFamily: FontFamily.serif, fontSize: 24, color: colors.onInkMuted }}>{` / ${total}`}</Text>
           </Text>
           <Text variant="callout" style={{ color: colors.onInkMuted }}>
-            {fullyTrained ? 'Every core module complete — ka rawe.' : 'core modules complete'}
+            {fullyTrained ? 'Every core module complete - ka rawe.' : 'core modules complete'}
           </Text>
         </View>
 

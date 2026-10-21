@@ -163,7 +163,7 @@ export default function StyleguidePage() {
               <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="font-serif text-4xl font-light">Display</span><span className="text-xs text-muted-foreground">Newsreader · 300</span></div>
               <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="font-serif text-3xl font-normal">Heading 1</span><span className="text-xs text-muted-foreground">Newsreader · 400</span></div>
               <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="text-xl font-semibold">Heading · Hanken</span><span className="text-xs text-muted-foreground">Hanken · 600</span></div>
-              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="text-base">Body — the workhorse</span><span className="text-xs text-muted-foreground">Hanken · 400</span></div>
+              <div className="flex items-baseline justify-between border-b border-border pb-3"><span className="text-base">Body - the workhorse</span><span className="text-xs text-muted-foreground">Hanken · 400</span></div>
               <div className="flex items-baseline justify-between"><Eyebrow>Eyebrow label</Eyebrow><span className="text-xs text-muted-foreground">Hanken · 600 · .14em</span></div>
             </div>
           </div>

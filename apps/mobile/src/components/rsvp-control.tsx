@@ -35,7 +35,7 @@ const OPTION_ICON: Record<RsvpResponse, IconName> = {
 };
 
 const CONFIRMATIONS: Record<RsvpResponse, string> = {
-  GOING: "Lovely — you're on the list.",
+  GOING: "Lovely - you're on the list.",
   MAYBE: 'Noted as a maybe.',
   NOT_GOING: 'Thanks for letting us know.',
 };

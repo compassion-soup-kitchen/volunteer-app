@@ -96,7 +96,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     }
 
     const labels = {
-      APPROVED: "Application approved — the volunteer can now sign up for shifts.",
+      APPROVED: "Application approved - the volunteer can now sign up for shifts.",
       DECLINED: "Application declined.",
       INFO_REQUESTED: "More information requested from applicant.",
     };
