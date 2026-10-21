@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { RiLoader4Line, RiSearchLine, RiUserAddLine } from "@remixicon/react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { GroupBadges } from "@/components/brand/group-badge";
+import { StatusBadge } from "@/components/brand/status-badge";
 import {
   addVolunteerToShift,
   type VolunteerOption,
@@ -154,8 +154,8 @@ export function AddToRoster({
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="truncate text-sm font-medium">{volunteer.name}</span>
-                        {volunteer.isOffline && <Badge variant="neutral">Offline</Badge>}
-                        {leave && <Badge variant="warning">On leave</Badge>}
+                        {volunteer.isOffline && <StatusBadge status="OFFLINE" />}
+                        {leave && <StatusBadge status="ON_LEAVE" />}
                       </span>
                       {leave ? (
                         <span className="block truncate text-xs text-muted-foreground">

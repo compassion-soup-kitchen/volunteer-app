@@ -14,6 +14,7 @@ import {
 import type { AgreementOverview } from "@/lib/document-actions";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { BleedList } from "@/components/brand/detail-list";
+import { StatusBadge } from "@/components/brand/status-badge";
 
 function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
   const retired = !!agreement.archivedAt;
@@ -47,24 +48,32 @@ function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
             </Badge>
           )}
           {!retired && agreement.pendingReAckCount > 0 && (
-            <Badge variant="warning">
-              {agreement.pendingReAckCount} to confirm
-            </Badge>
+            <StatusBadge
+              status="NEEDS_CONFIRMING"
+              label={`${agreement.pendingReAckCount} to confirm`}
+            />
           )}
           {!retired &&
             agreement.pendingReAckCount === 0 &&
             agreement.signedOutdatedCount > 0 && (
-              <Badge variant="neutral">
-                {agreement.signedOutdatedCount} on an older version
-              </Badge>
+              <StatusBadge
+                status="OUTDATED"
+                label={`${agreement.signedOutdatedCount} on an older version`}
+              />
             )}
         </div>
 
         {retired ? (
-          <Badge variant="neutral" className="shrink-0">
-            <RiArchiveLine />
-            Retired
-          </Badge>
+          <StatusBadge
+            status="RETIRED"
+            className="shrink-0"
+            label={
+              <>
+                <RiArchiveLine />
+                Retired
+              </>
+            }
+          />
         ) : (
           <div className="shrink-0 text-right">
             <StatFigure

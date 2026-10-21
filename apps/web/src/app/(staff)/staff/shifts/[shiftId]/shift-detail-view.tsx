@@ -76,7 +76,7 @@ interface ShiftDetailViewProps {
 function VolunteerContact({ volunteer }: { volunteer: RosterVolunteer }) {
   return (
     <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-      {volunteer.user.isOffline && <Badge variant="neutral">Offline</Badge>}
+      {volunteer.user.isOffline && <StatusBadge status="OFFLINE" />}
       <span className="truncate">
         {contactLine({ email: volunteer.user.email, phone: volunteer.phone })}
       </span>
@@ -90,13 +90,6 @@ const LONG_DATE: Intl.DateTimeFormatOptions = {
   month: "long",
   year: "numeric",
 };
-
-/** How each answer to an offer reads: passing on a shift is not a failure. */
-const OFFER_BADGES = {
-  PENDING: { label: "Yet to answer", variant: "warning" },
-  ACCEPTED: { label: "Taking it", variant: "success" },
-  DECLINED: { label: "Passed", variant: "neutral" },
-} as const;
 
 function initials(name: string | null): string {
   if (!name) return "?";
@@ -197,7 +190,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                 {today ? (
                   <Badge>Today</Badge>
                 ) : (
-                  <Badge variant="neutral">Past</Badge>
+                  <StatusBadge status="PAST" />
                 )}
               </CardAction>
             )}
@@ -310,15 +303,25 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
               </CardDescription>
               <CardAction>
                 {held ? (
-                  <Badge variant="warning" className="gap-1">
-                    <RiLockLine aria-hidden className="size-3" />
-                    Held
-                  </Badge>
+                  <StatusBadge
+                    status="HELD"
+                    label={
+                      <>
+                        <RiLockLine aria-hidden />
+                        Held
+                      </>
+                    }
+                  />
                 ) : (
-                  <Badge variant="neutral" className="gap-1">
-                    <RiLockUnlockLine aria-hidden className="size-3" />
-                    Open
-                  </Badge>
+                  <StatusBadge
+                    status="OPEN"
+                    label={
+                      <>
+                        <RiLockUnlockLine aria-hidden />
+                        Open
+                      </>
+                    }
+                  />
                 )}
               </CardAction>
             </CardHeader>
@@ -339,12 +342,8 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                       className="mt-1"
                     />
                   </div>
-                  <Badge
-                    variant={OFFER_BADGES[offer.status].variant}
-                    className="shrink-0"
-                  >
-                    {OFFER_BADGES[offer.status].label}
-                  </Badge>
+                  {/* Passing on a shift is not a failure, so DECLINED reads neutral */}
+                  <StatusBadge status={`OFFER_${offer.status}`} className="shrink-0" />
                 </li>
               ))}
             </ul>

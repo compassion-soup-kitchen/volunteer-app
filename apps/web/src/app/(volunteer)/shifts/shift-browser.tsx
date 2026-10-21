@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -30,6 +29,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
+import { StatusBadge } from "@/components/brand/status-badge";
 import {
   signUpForShift,
   cancelShiftSignup,
@@ -408,21 +408,31 @@ function ShiftRow({
               {shift.serviceArea.name}
             </h3>
             {isSignedUp ? (
-              <Badge className="shrink-0">Signed up</Badge>
+              <StatusBadge status="SIGNED_UP" className="shrink-0" />
             ) : onLeave ? (
-              <Badge variant="warning" className="shrink-0 gap-1">
-                <RiSuitcaseLine aria-hidden className="size-3" />
-                On leave
-              </Badge>
+              <StatusBadge
+                status="ON_LEAVE"
+                className="shrink-0"
+                label={
+                  <>
+                    <RiSuitcaseLine aria-hidden />
+                    On leave
+                  </>
+                }
+              />
             ) : offeredToMe ? (
-              <Badge variant="warning" className="shrink-0">
-                Yours first
-              </Badge>
+              <StatusBadge status="OFFER_PENDING" label="Yours first" className="shrink-0" />
             ) : heldForOthers ? (
-              <Badge variant="neutral" className="shrink-0 gap-1">
-                <RiLockLine aria-hidden className="size-3" />
-                Held
-              </Badge>
+              <StatusBadge
+                status="HELD_FOR_OTHERS"
+                className="shrink-0"
+                label={
+                  <>
+                    <RiLockLine aria-hidden />
+                    Held
+                  </>
+                }
+              />
             ) : null}
           </div>
 

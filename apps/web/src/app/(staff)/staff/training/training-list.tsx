@@ -17,6 +17,7 @@ import type { StaffTrainingSession } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
 import { isPastInAppZone, isTodayInAppZone } from "@/lib/date-only";
 import { BleedList } from "@/components/brand/detail-list";
+import { StatusBadge } from "@/components/brand/status-badge";
 
 interface TrainingListProps {
   sessions: StaffTrainingSession[];
@@ -112,7 +113,7 @@ function SessionRow({
             </p>
             <TrainingTypeBadge type={session.type} />
             {today && <Badge>Today</Badge>}
-            {past && <Badge variant="neutral">Past</Badge>}
+            {past && <StatusBadge status="PAST" />}
           </div>
           <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">

@@ -149,7 +149,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
               {today ? (
                 <Badge>Today</Badge>
               ) : (
-                <Badge variant="neutral">Past</Badge>
+                <StatusBadge status="PAST" />
               )}
             </CardAction>
           )}

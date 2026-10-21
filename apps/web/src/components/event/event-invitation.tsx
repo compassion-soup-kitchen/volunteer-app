@@ -4,6 +4,7 @@ import { RiCalendarEventLine } from "@remixicon/react";
 import { Badge } from "@/components/ui/badge";
 import { EventFacts } from "@/components/event/event-facts";
 import { RsvpControl } from "@/components/event/rsvp-control";
+import { StatusBadge } from "@/components/brand/status-badge";
 import { formatDateOnly } from "@/lib/date-only";
 import {
   canRespondToEvent,
@@ -26,10 +27,10 @@ export type InvitationEvent = EventRules & {
   myRsvp: { response: RsvpResponse; note: string | null } | null;
 };
 
-const REPLY_BADGES: Record<RsvpResponse, { label: string; variant: "success" | "warning" | "neutral" }> = {
-  GOING: { label: "You're going", variant: "success" },
-  MAYBE: { label: "You said maybe", variant: "warning" },
-  NOT_GOING: { label: "You can't make it", variant: "neutral" },
+const REPLY_LABELS: Record<RsvpResponse, string> = {
+  GOING: "You're going",
+  MAYBE: "You said maybe",
+  NOT_GOING: "You can't make it",
 };
 
 interface EventInvitationProps {
@@ -58,18 +59,30 @@ export function EventInvitation({
 }: EventInvitationProps) {
   const eligibility = canRespondToEvent(event, role, today);
   const closed = rsvpClosedMessage(event, today);
-  const reply = event.myRsvp ? REPLY_BADGES[event.myRsvp.response] : null;
+  const reply = event.myRsvp?.response ?? null;
   const cancelled = event.status === "CANCELLED";
 
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={cancelled ? "destructive" : "default"}>
-          <RiCalendarEventLine aria-hidden />
-          {cancelled ? "Cancelled" : "You're invited"}
-        </Badge>
+        {cancelled ? (
+          <StatusBadge
+            status="EVENT_CANCELLED"
+            label={
+              <>
+                <RiCalendarEventLine aria-hidden />
+                Cancelled
+              </>
+            }
+          />
+        ) : (
+          <Badge>
+            <RiCalendarEventLine aria-hidden />
+            You&apos;re invited
+          </Badge>
+        )}
         {reply && !cancelled ? (
-          <Badge variant={reply.variant}>{reply.label}</Badge>
+          <StatusBadge status={`RSVP_${reply}`} label={REPLY_LABELS[reply]} />
         ) : null}
       </div>
 

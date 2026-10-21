@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/brand/wordmark";
+import { StatusBadge } from "@/components/brand/status-badge";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { SectionHeading } from "@/components/brand/section-heading";
 import { Kowhaiwhai } from "@/components/brand/kowhaiwhai";
 import { Illustration, ILLUSTRATIONS, type IllustrationName } from "@/components/brand/illustration";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -242,12 +242,12 @@ export default function StyleguidePage() {
             <Card><CardContent className="space-y-4 py-6">
               <Eyebrow>Status badges</Eyebrow>
               <div className="flex flex-wrap gap-2.5">
-                <Badge variant="success">Active</Badge>
-                <Badge variant="warning">Awaiting vetting</Badge>
-                <Badge variant="secondary">Application submitted</Badge>
-                <Badge>Action needed</Badge>
-                <Badge variant="outline">No-show</Badge>
-                <Badge variant="destructive">Declined</Badge>
+                <StatusBadge status="ACTIVE" />
+                <StatusBadge status="AWAITING_VETTING" />
+                <StatusBadge status="APPLICATION_SUBMITTED" />
+                <StatusBadge status="INACTIVE" />
+                <StatusBadge status="NO_SHOW" />
+                <StatusBadge status="DECLINED" />
               </div>
             </CardContent></Card>
 

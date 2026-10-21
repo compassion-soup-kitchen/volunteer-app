@@ -4,7 +4,6 @@ import { APP_TIME_ZONE, formatDateOnly, todayInAppZone } from "@/lib/date-only";
 import { auth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { SectionHeader } from "@/components/brand/section-header";
@@ -40,6 +39,7 @@ import { getUnansweredInvitations } from "@/lib/event-actions";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimeRange } from "@/lib/format";
 import { BleedList } from "@/components/brand/detail-list";
+import { StatusBadge } from "@/components/brand/status-badge";
 import { volunteerShiftHref } from "@/lib/roster-week";
 
 export const metadata: Metadata = {
@@ -164,7 +164,7 @@ export default async function VolunteerDashboard() {
                 <h2 className="font-serif text-lg font-medium tracking-tight">
                   Application under review
                 </h2>
-                <Badge variant="warning">Pending</Badge>
+                <StatusBadge status="PENDING" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Ngā mihi for applying — our team is reviewing your application
@@ -190,7 +190,7 @@ export default async function VolunteerDashboard() {
                   <h2 className="font-serif text-lg font-medium tracking-tight">
                     Welcome to the whānau!
                   </h2>
-                  <Badge variant="success">Approved</Badge>
+                  <StatusBadge status="APPROVED" />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Your application has been approved. Pick your first shift
@@ -214,7 +214,7 @@ export default async function VolunteerDashboard() {
                   <h2 className="font-serif text-lg font-medium tracking-tight">
                     More information needed
                   </h2>
-                  <Badge variant="info">Action required</Badge>
+                  <StatusBadge status="INFO_REQUESTED" label="Action required" />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   We need a bit more info to process your application. Please
@@ -531,9 +531,7 @@ export default async function VolunteerDashboard() {
                       {ts.location && ` · ${ts.location}`}
                     </p>
                   </div>
-                  <Badge variant="info" className="shrink-0">
-                    Booked
-                  </Badge>
+                  <StatusBadge status="REGISTERED" label="Booked" className="shrink-0" />
                 </li>
               ))}
             </BleedList>

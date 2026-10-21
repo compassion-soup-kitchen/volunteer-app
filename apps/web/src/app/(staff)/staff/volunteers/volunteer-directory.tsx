@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { PersonBadges } from "@/components/brand/person-badges";
 import { GroupBadges } from "@/components/brand/group-badge";
 import { IconChip } from "@/components/brand/icon-chip";
 import {
@@ -123,13 +124,6 @@ const ROLE_ICON: Record<AssignableRole, typeof RiUserLine> = {
   VOLUNTEER: RiUserLine,
   COORDINATOR: RiUserStarLine,
   ADMIN: RiShieldUserLine,
-};
-
-// Only elevated roles get a badge — VOLUNTEER is the default, badging everyone
-// would just add noise.
-const ROLE_BADGE_VARIANT: Partial<Record<string, "default" | "info">> = {
-  COORDINATOR: "info",
-  ADMIN: "default",
 };
 
 function initials(name: string | null | undefined) {
@@ -550,18 +544,11 @@ export function VolunteerDirectory({
                               >
                                 {vol.user.name || "Unnamed"}
                               </Link>
-                              {ROLE_BADGE_VARIANT[vol.user.role] && (
-                                <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
-                                  {ROLE_LABEL[vol.user.role as AssignableRole] ??
-                                    vol.user.role}
-                                </Badge>
-                              )}
-                              {vol.user.isOffline && (
-                                <Badge variant="neutral">Offline</Badge>
-                              )}
-                              {vol.user.status === "ARCHIVED" && (
-                                <StatusBadge status="ARCHIVED" />
-                              )}
+                              <PersonBadges
+                                role={vol.user.role}
+                                isOffline={vol.user.isOffline}
+                                status={vol.user.status}
+                              />
                             </div>
                             <div className="truncate text-xs text-muted-foreground">
                               {contactLine({ email: vol.user.email, phone: vol.phone })}
@@ -573,7 +560,7 @@ export function VolunteerDirectory({
                         {vol.hasProfile && vol.status ? (
                           <StatusBadge status={vol.status} />
                         ) : (
-                          <Badge variant="outline">No application yet</Badge>
+                          <StatusBadge status="NO_APPLICATION" />
                         )}
                       </TableCell>
                       <TableCell>
@@ -659,18 +646,11 @@ export function VolunteerDirectory({
                       >
                         {vol.user.name || "Unnamed"}
                       </Link>
-                      {ROLE_BADGE_VARIANT[vol.user.role] && (
-                        <Badge variant={ROLE_BADGE_VARIANT[vol.user.role]}>
-                          {ROLE_LABEL[vol.user.role as AssignableRole] ??
-                            vol.user.role}
-                        </Badge>
-                      )}
-                      {vol.user.isOffline && (
-                        <Badge variant="neutral">Offline</Badge>
-                      )}
-                      {vol.user.status === "ARCHIVED" && (
-                        <StatusBadge status="ARCHIVED" />
-                      )}
+                      <PersonBadges
+                        role={vol.user.role}
+                        isOffline={vol.user.isOffline}
+                        status={vol.user.status}
+                      />
                     </div>
                     <p className="truncate text-xs text-muted-foreground">
                       {contactLine({ email: vol.user.email, phone: vol.phone })}
@@ -690,7 +670,7 @@ export function VolunteerDirectory({
                           )}
                         </>
                       ) : (
-                        <Badge variant="outline">No application yet</Badge>
+                        <StatusBadge status="NO_APPLICATION" />
                       )}
                     </div>
 

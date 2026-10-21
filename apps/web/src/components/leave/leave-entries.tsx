@@ -173,8 +173,8 @@ export function LeaveEntries({
                         {entry.person.name}
                       </Link>
                       {own && <Badge variant="outline">You</Badge>}
-                      {entry.person.isStaff && !own && <Badge variant="info">Staff</Badge>}
-                      {entry.person.isOffline && <Badge variant="neutral">Offline</Badge>}
+                      {entry.person.isStaff && !own && <StatusBadge status="STAFF" />}
+                      {entry.person.isOffline && <StatusBadge status="OFFLINE" />}
                     </p>
                   )}
                   <p

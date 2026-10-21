@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getVolunteerDetail } from "@/lib/staff-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/brand/page-header";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { PersonBadges, hasRoleBadge } from "@/components/brand/person-badges";
 import { Button } from "@/components/ui/button";
 import { contactLine } from "@/lib/format";
 import Link from "next/link";
@@ -17,19 +17,6 @@ import { VolunteerRecord } from "./volunteer-record";
 
 export const metadata: Metadata = {
   title: "Volunteer record | Te Pūaroha",
-};
-
-const ROLE_LABEL: Record<string, string> = {
-  VOLUNTEER: "Volunteer",
-  COORDINATOR: "Coordinator",
-  ADMIN: "Admin",
-};
-
-// Only elevated roles get a badge here, same as the directory - badging every
-// volunteer as "Volunteer" on their own record is noise.
-const ROLE_BADGE_VARIANT: Record<string, "default" | "info"> = {
-  COORDINATOR: "info",
-  ADMIN: "default",
 };
 
 function initials(name: string | null) {
@@ -79,24 +66,23 @@ export default async function VolunteerDetailPage({
         description={contactLine({ email: user.email, phone: profile?.phone })}
         actions={
           <>
-            {ROLE_BADGE_VARIANT[user.role] && (
-              <Badge variant={ROLE_BADGE_VARIANT[user.role]}>
-                {ROLE_LABEL[user.role] ?? user.role}
-              </Badge>
-            )}
-            {user.isOffline && <Badge variant="neutral">Offline</Badge>}
+            <PersonBadges role={user.role} isOffline={user.isOffline} status={user.status} />
             {leave?.current && (
-              <Badge variant="warning" className="gap-1">
-                <RiSuitcaseLine aria-hidden />
-                {describeLeaveStatus(leave.current, leave.today)}
-              </Badge>
+              <StatusBadge
+                status="LEAVE_CURRENT"
+                label={
+                  <>
+                    <RiSuitcaseLine aria-hidden />
+                    {describeLeaveStatus(leave.current, leave.today)}
+                  </>
+                }
+              />
             )}
-            {user.status === "ARCHIVED" && <StatusBadge status="ARCHIVED" />}
             {profile ? (
               <StatusBadge status={profile.status} className="text-sm" />
             ) : (
               // The kitchen team needn't apply; their role badge says who they are.
-              !ROLE_BADGE_VARIANT[user.role] && <Badge variant="outline">No application yet</Badge>
+              !hasRoleBadge(user.role) && <StatusBadge status="NO_APPLICATION" />
             )}
             {user.isOffline && profile && (
               <Button asChild variant="outline" size="sm">

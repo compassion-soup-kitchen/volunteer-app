@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
 import { TrainingTypeBadge } from "@/components/brand/training-type-badge";
+import { StatusBadge } from "@/components/brand/status-badge";
 import {
   registerForTraining,
   cancelTrainingRegistration,
@@ -127,15 +127,9 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       </p>
                     )}
                   </div>
-                  {isRegistered ? (
-                    <Badge variant="info" className="shrink-0">
-                      Booked
-                    </Badge>
-                  ) : isFull ? (
-                    <Badge variant="neutral" className="shrink-0">
-                      Full
-                    </Badge>
-                  ) : null}
+                  {isRegistered && (
+                    <StatusBadge status="REGISTERED" label="Booked" className="shrink-0" />
+                  )}
                 </div>
 
                 <div className="space-y-1.5 text-sm text-muted-foreground">
@@ -196,16 +190,18 @@ export function TrainingBrowser({ sessions }: TrainingBrowserProps) {
                       )}
                       Cancel
                     </Button>
-                  ) : (
+                  ) : isFull ? null : (
+                    // The capacity line already says when it's full - no
+                    // dead button repeating it.
                     <Button
                       size="sm"
-                      disabled={loading || isFull}
+                      disabled={loading}
                       onClick={() => handleRegister(session.id)}
                     >
                       {loading && (
                         <RiLoader4Line className="mr-1.5 size-3.5 animate-spin" />
                       )}
-                      {isFull ? "Session full" : "Register"}
+                      Register
                     </Button>
                   )}
                 </div>

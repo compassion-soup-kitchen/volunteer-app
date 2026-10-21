@@ -23,7 +23,6 @@ const badgeVariants = cva(
         info: "bg-info-tint text-info-tint-foreground",
         success: "bg-success-tint text-success-tint-foreground",
         warning: "bg-warning-tint text-warning-tint-foreground",
-        amber: "bg-warning-tint text-warning-tint-foreground",
         neutral: "bg-neutral-tint text-neutral-tint-foreground",
       },
     },

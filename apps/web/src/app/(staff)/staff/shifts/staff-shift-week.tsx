@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -33,6 +32,7 @@ import { DateBlock } from "@/components/brand/date-block";
 import { CapacityMeter } from "@/components/brand/capacity-meter";
 import { Illustration } from "@/components/brand/illustration";
 import { WeekPager, useRosterWeekNavigation } from "@/components/brand/week-pager";
+import { StatusBadge } from "@/components/brand/status-badge";
 import {
   RiAddLine,
   RiCheckboxCircleLine,
@@ -404,16 +404,26 @@ function ShiftRow({
             />
           )}
           {held && (
-            <Badge variant="warning" className="gap-1">
-              <RiLockLine aria-hidden className="size-3" />
-              First refusal
-            </Badge>
+            <StatusBadge
+              status="HELD"
+              label={
+                <>
+                  <RiLockLine aria-hidden />
+                  First refusal
+                </>
+              }
+            />
           )}
           {markAttendance && (
-            <Badge variant="warning" className="gap-1">
-              <RiCheckboxCircleLine aria-hidden className="size-3" />
-              Mark attendance
-            </Badge>
+            <StatusBadge
+              status="ATTENDANCE_DUE"
+              label={
+                <>
+                  <RiCheckboxCircleLine aria-hidden />
+                  Mark attendance
+                </>
+              }
+            />
           )}
         </div>
         <p className="truncate text-sm text-muted-foreground">

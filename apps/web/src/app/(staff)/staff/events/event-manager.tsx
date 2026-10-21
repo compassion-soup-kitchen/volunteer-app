@@ -59,20 +59,12 @@ import { EventFormDialog } from "./event-form-dialog";
 import { GuestListDialog } from "./guest-list-dialog";
 import { AnnounceEventDialog } from "./announce-event-dialog";
 import { BleedList } from "@/components/brand/detail-list";
+import { StatusBadge } from "@/components/brand/status-badge";
 
 const AUDIENCE_LABELS: Record<StaffEvent["audience"], string> = {
   ALL: "Everyone",
   VOLUNTEERS: "Volunteers",
   COORDINATORS: "Coordinators",
-};
-
-const STATUS_BADGES: Record<
-  StaffEvent["status"],
-  { label: string; variant: "success" | "neutral" | "destructive" }
-> = {
-  PUBLISHED: { label: "Shared", variant: "success" },
-  DRAFT: { label: "Draft", variant: "neutral" },
-  CANCELLED: { label: "Cancelled", variant: "destructive" },
 };
 
 interface EventManagerProps {
@@ -374,7 +366,6 @@ function EventRow({
   onCancel: () => void;
   onDelete: () => void;
 }) {
-  const status = STATUS_BADGES[event.status];
   const outstanding = awaitingReply(event.counts, event.inviteeCount);
   const collecting = event.rsvpEnabled && event.status !== "DRAFT";
   const rules: EventRules = event;
@@ -388,16 +379,19 @@ function EventRow({
           <h3 className="min-w-0 font-serif text-base font-medium tracking-tight">
             {event.title}
           </h3>
-          <Badge variant={status.variant}>{status.label}</Badge>
+          <StatusBadge status={`EVENT_${event.status}`} />
           <Badge variant="outline">{AUDIENCE_LABELS[event.audience]}</Badge>
           {event.myRsvp ? (
-            <Badge variant="info">
-              {event.myRsvp.response === "GOING"
-                ? "You're going"
-                : event.myRsvp.response === "MAYBE"
-                  ? "You're a maybe"
-                  : "You're out"}
-            </Badge>
+            <StatusBadge
+              status={`RSVP_${event.myRsvp.response}`}
+              label={
+                event.myRsvp.response === "GOING"
+                  ? "You're going"
+                  : event.myRsvp.response === "MAYBE"
+                    ? "You're a maybe"
+                    : "You're out"
+              }
+            />
           ) : null}
         </div>
 

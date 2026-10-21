@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DeleteAccountCard } from "@/components/account/delete-account-card";
@@ -297,9 +296,7 @@ export default async function ProfilePage() {
                         })}
                       </p>
                     </div>
-                    <Badge variant="success" className="shrink-0">
-                      Signed
-                    </Badge>
+                    <StatusBadge status="SIGNED" className="shrink-0" />
                   </li>
                 ))}
               </ul>

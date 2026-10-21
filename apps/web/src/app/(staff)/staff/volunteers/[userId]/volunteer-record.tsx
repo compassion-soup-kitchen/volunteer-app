@@ -413,9 +413,7 @@ export function VolunteerRecord({
                         ` · version ${agreement.documentVersion}`}
                     </p>
                   </div>
-                  <Badge variant="success" className="shrink-0">
-                    Signed
-                  </Badge>
+                  <StatusBadge status="SIGNED" className="shrink-0" />
                 </li>
               ))}
             </BleedList>
