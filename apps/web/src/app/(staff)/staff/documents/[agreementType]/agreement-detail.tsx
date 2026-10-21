@@ -44,6 +44,7 @@ import {
 import type { AgreementTemplateInput } from "@/lib/agreement-templates";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { AgreementFields } from "../agreement-fields";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 function initials(name: string) {
   return (
@@ -305,9 +306,9 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
         <CardContent>
           <div className="flex flex-wrap gap-x-8 gap-y-3">
             <div>
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 Confirmed
-              </p>
+              </Eyebrow>
               <StatFigure
                 size="md"
                 value={confirmed.length}
@@ -317,17 +318,17 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             </div>
             {awaiting.length > 0 && (
               <div>
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Still to confirm
-                </p>
+                </Eyebrow>
                 <StatFigure size="md" value={awaiting.length} className="mt-1" />
               </div>
             )}
             {signedOutdated.length > 0 && (
               <div>
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Older version
-                </p>
+                </Eyebrow>
                 <StatFigure
                   size="md"
                   value={signedOutdated.length}
@@ -337,9 +338,9 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             )}
             {unsigned.length > 0 && (
               <div>
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Never confirmed
-                </p>
+                </Eyebrow>
                 <StatFigure size="md" value={unsigned.length} className="mt-1" />
               </div>
             )}

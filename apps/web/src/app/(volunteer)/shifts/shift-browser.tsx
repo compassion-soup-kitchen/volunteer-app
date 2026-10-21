@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -200,7 +201,7 @@ export function ShiftBrowser({
               >
                 <span
                   className={cn(
-                    "text-[11px] font-semibold",
+                    "text-2xs font-semibold",
                     day.date === today ? "text-primary" : "text-muted-foreground"
                   )}
                 >
@@ -235,20 +236,13 @@ export function ShiftBrowser({
           {filterOptions.map((area) => {
             const selected = areaId === area.id;
             return (
-              <button
+              <ToggleChip
                 key={area.id ?? "all"}
-                type="button"
-                aria-pressed={selected}
+                pressed={selected}
                 onClick={() => go(weekStart, area.id)}
-                className={cn(
-                  "inline-flex h-9 shrink-0 items-center rounded-md px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-                  selected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card text-muted-foreground ring-1 ring-border hover:text-foreground"
-                )}
               >
                 {area.name}
-              </button>
+              </ToggleChip>
             );
           })}
         </div>

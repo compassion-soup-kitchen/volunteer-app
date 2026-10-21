@@ -52,6 +52,7 @@ import type { LeaveOverview } from "@/lib/leave-actions";
 import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveDialog } from "@/components/leave/log-leave-dialog";
 import { VolunteerDocuments } from "./volunteer-documents";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 const ROLE_LABEL: Record<string, string> = {
   PUBLIC: "No role yet",
@@ -223,9 +224,9 @@ export function VolunteerRecord({
           </CardHeader>
           <CardContent className="space-y-4 border-t border-border pt-4">
             <div>
-              <p className="eyebrow mb-1.5 text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted" className="mb-1.5">
                 Service area interests
-              </p>
+              </Eyebrow>
               <div className="flex flex-wrap gap-1.5">
                 {profile.interests.length > 0 ? (
                   profile.interests.map((area) => (
@@ -241,9 +242,9 @@ export function VolunteerRecord({
               </div>
             </div>
             <div>
-              <p className="eyebrow mb-1.5 text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted" className="mb-1.5">
                 Skills
-              </p>
+              </Eyebrow>
               <div className="flex flex-wrap gap-1.5">
                 {profile.skills.length > 0 ? (
                   profile.skills.map((skill) => (
@@ -259,9 +260,9 @@ export function VolunteerRecord({
               </div>
             </div>
             <div>
-              <p className="eyebrow mb-1 text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted" className="mb-1">
                 {user.isOffline ? "Notes" : "About themselves"}
-              </p>
+              </Eyebrow>
               {profile.bio ? (
                 <p className="text-sm">{profile.bio}</p>
               ) : (
@@ -534,9 +535,9 @@ export function VolunteerRecord({
               </p>
               {latestApplication.notes && (
                 <div className="rounded-md bg-secondary/50 px-3 py-2">
-                  <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted">
                     Review notes · internal
-                  </p>
+                  </Eyebrow>
                   <p className="mt-0.5 text-sm">{latestApplication.notes}</p>
                 </div>
               )}
@@ -823,7 +824,7 @@ function Stat({
         <Icon />
       </IconChip>
       <StatFigure size="md" value={value} unit={unit} />
-      <p className="eyebrow text-[0.62rem] text-muted-foreground">{label}</p>
+      <Eyebrow size="sm" tone="muted">{label}</Eyebrow>
     </div>
   );
 }

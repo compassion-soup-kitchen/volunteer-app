@@ -47,6 +47,7 @@ import {
   type StaffTrainingSession,
 } from "@/lib/training-actions";
 import { formatTimeRange } from "@/lib/format";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import {
   formatDateOnly,
   isPastInAppZone,
@@ -186,9 +187,9 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
 
           {session.description && (
             <div className="rounded-lg bg-muted p-3">
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 Description
-              </p>
+              </Eyebrow>
               <p className="mt-1 text-sm">{session.description}</p>
             </div>
           )}
@@ -196,9 +197,9 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
           {/* Attendance summary */}
           {canMarkAttendance && session.attendances.length > 0 && (
             <div className="rounded-lg bg-muted p-3">
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 Attendance summary
-              </p>
+              </Eyebrow>
               <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="font-semibold text-success tnum">

@@ -13,6 +13,7 @@ import { OrDivider } from "../_components/or-divider";
 import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
 import { FormAlert } from "@/components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 /**
  * Labels only. The credentials live server-side in `demoLogin` so they never
@@ -52,9 +53,9 @@ export function LoginForm({
     <>
       {showDemoAccounts && (
         <div className="mb-6 rounded-xl bg-secondary/60 p-4 ring-1 ring-border">
-          <p className="eyebrow mb-2.5 text-muted-foreground">
+          <Eyebrow tone="muted" className="mb-2.5">
             Demo accounts
-          </p>
+          </Eyebrow>
           <div className="flex flex-wrap gap-2">
             {DEMO_ACCOUNTS.map((account) => (
               <form key={account.role} action={demoAction}>

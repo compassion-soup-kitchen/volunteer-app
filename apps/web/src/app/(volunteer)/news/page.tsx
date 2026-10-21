@@ -9,6 +9,7 @@ import { Illustration } from "@/components/brand/illustration";
 import { AnnouncementAttachments } from "@/components/announcement-attachments";
 import { EventInvitation } from "@/components/event/event-invitation";
 import { formatTimestampInAppZone, todayInAppZone } from "@/lib/date-only";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 export const metadata: Metadata = {
   title: "News & Updates | Te Pūaroha",
@@ -82,11 +83,11 @@ export default async function NewsPage() {
                 )}
                 {a.attachments.length > 0 && (
                   <div className="space-y-2 border-t border-border pt-3">
-                    <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                    <Eyebrow size="sm" tone="muted">
                       {a.attachments.length === 1
                         ? "Attachment"
                         : `${a.attachments.length} attachments`}
-                    </p>
+                    </Eyebrow>
                     <AnnouncementAttachments attachments={a.attachments} />
                   </div>
                 )}

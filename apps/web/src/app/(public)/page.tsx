@@ -33,7 +33,6 @@ const fadeUp = {
   transition: { duration: 0.5, ease },
 };
 
-const eyebrowOnDark = "text-xs font-semibold uppercase tracking-[0.16em]";
 
 const features = [
   {
@@ -204,9 +203,9 @@ export default function Home() {
                   <br />
                   It is people, it is people, it is people.
                 </p>
-                <p className={`relative mt-4 ${eyebrowOnDark} text-primary-foreground/60`}>
+                <Eyebrow tone="onPrimary" className="relative mt-4">
                   Māori whakataukī
-                </p>
+                </Eyebrow>
               </div>
             </motion.div>
           </div>
@@ -220,7 +219,7 @@ export default function Home() {
           <div className="relative overflow-hidden rounded-[1.75rem] bg-ink px-8 py-16 text-paper sm:px-12 sm:py-20">
             <Kowhaiwhai tone="light" className="pointer-events-none absolute -right-28 -top-24 w-[480px] opacity-[0.06]" />
             <div className="relative mx-auto max-w-xl text-center">
-              <p className={`${eyebrowOnDark} text-paper/55`}>Kuhu mai · Join us</p>
+              <Eyebrow tone="ink">Kuhu mai · Join us</Eyebrow>
               <h2 className="mt-3 font-serif text-3xl font-light tracking-tight sm:text-4xl">
                 There&apos;s a place here for you
               </h2>
@@ -376,7 +375,7 @@ function FeatureRow({
         {...fadeUp}
         className={flip ? "lg:order-2" : ""}
       >
-        <Eyebrow className="text-primary">{eyebrow}</Eyebrow>
+        <Eyebrow>{eyebrow}</Eyebrow>
         <h3 className="mt-3 font-serif text-3xl font-light leading-[1.08] tracking-tight text-balance sm:text-4xl">
           {title.split("\n").map((line, i) => (
             <span key={i} className="block">

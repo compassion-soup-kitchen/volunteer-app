@@ -93,6 +93,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { BleedList } from "@/components/brand/detail-list";
+import { eyebrowVariants } from "@/components/brand/eyebrow";
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All statuses" },
@@ -662,7 +663,7 @@ export function VolunteerDirectory({
                           <StatusBadge status={vol.status} />
                           {vol.mojStatus && (
                             <span className="inline-flex items-center gap-1">
-                              <span className="eyebrow text-[0.62rem] text-muted-foreground">
+                              <span className={eyebrowVariants({ size: "sm", tone: "muted" })}>
                                 MoJ
                               </span>
                               <StatusBadge status={vol.mojStatus} />

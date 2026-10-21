@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 import { IconChip } from "@/components/brand/icon-chip";
 import { SignaturePad } from "@/components/signature-pad";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
@@ -29,6 +30,8 @@ import {
   RiFileListLine,
 } from "@remixicon/react";
 import { submitApplication, type ApplicationFormData } from "@/lib/application-actions";
+import { cn } from "@/lib/utils";
+import { eyebrowVariants } from "@/components/brand/eyebrow";
 
 type ServiceArea = { id: string; name: string; description: string | null };
 
@@ -229,7 +232,7 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
                   }`}
                 >
                   <span
-                    className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold tnum transition-colors ${
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-2xs font-semibold tnum transition-colors ${
                       isActive
                         ? "border-primary text-primary"
                         : isDone
@@ -240,13 +243,11 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
                     {isDone ? <RiCheckLine className="size-3.5" /> : i + 1}
                   </span>
                   <span
-                    className={`eyebrow hidden whitespace-nowrap sm:inline ${
-                      isActive
-                        ? "text-primary"
-                        : isDone
-                          ? "text-success"
-                          : "text-muted-foreground"
-                    }`}
+                    className={cn(
+                      eyebrowVariants({ tone: isActive ? "brand" : isDone ? "inherit" : "muted" }),
+                      "hidden whitespace-nowrap sm:inline",
+                      isDone && "text-success"
+                    )}
                   >
                     {step.shortLabel}
                   </span>
@@ -548,20 +549,15 @@ function StepAvailability({
             {TIME_SLOTS.map((slot) => {
               const isSelected = (availability[day] || []).includes(slot);
               return (
-                <button
+                <ToggleChip
                   key={slot}
-                  type="button"
+                  size="cell"
+                  pressed={isSelected}
                   onClick={() => toggleAvailability(day, slot)}
-                  className={`flex h-10 items-center justify-center rounded-md border text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                    isSelected
-                      ? "border-primary/40 bg-primary-tint text-primary-tint-foreground"
-                      : "border-input bg-card text-muted-foreground hover:bg-muted"
-                  }`}
                   aria-label={`${day} ${slot}`}
-                  aria-pressed={isSelected}
                 >
-                  {isSelected ? <RiCheckLine className="size-4" aria-hidden /> : null}
-                </button>
+                  {isSelected ? <RiCheckLine aria-hidden /> : null}
+                </ToggleChip>
               );
             })}
           </div>
@@ -590,37 +586,31 @@ function StepInterests({
         {serviceAreas.map((area) => {
           const isSelected = selected.includes(area.id);
           return (
-            <button
+            <ToggleChip
               key={area.id}
-              type="button"
+              size="card"
+              pressed={isSelected}
               onClick={() => toggle(area.id)}
-              aria-pressed={isSelected}
-              className={`rounded-lg border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                isSelected
-                  ? "border-primary/40 bg-primary-tint"
-                  : "border-border bg-card hover:bg-muted/50"
-              }`}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-semibold">{area.name}</p>
-                  {area.description && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {area.description}
-                    </p>
-                  )}
-                </div>
-                <div
-                  className={`flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                    isSelected
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input"
-                  }`}
-                >
-                  {isSelected && <RiCheckLine className="size-3" aria-hidden />}
-                </div>
+              <div>
+                <p className="text-sm font-semibold">{area.name}</p>
+                {area.description && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {area.description}
+                  </p>
+                )}
               </div>
-            </button>
+              <div
+                className={cn(
+                  "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                  isSelected
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input"
+                )}
+              >
+                {isSelected && <RiCheckLine className="size-3" aria-hidden />}
+              </div>
+            </ToggleChip>
           );
         })}
       </div>
@@ -647,21 +637,15 @@ function StepSkills({
           {SKILL_OPTIONS.map((skill) => {
             const isSelected = selectedSkills.includes(skill);
             return (
-              <button
+              <ToggleChip
                 key={skill}
-                type="button"
+                size="sm"
+                pressed={isSelected}
                 onClick={() => toggleSkill(skill)}
-                aria-pressed={isSelected}
-                className="group rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
-                <Badge
-                  variant={isSelected ? "default" : "outline"}
-                  className="cursor-pointer transition-colors group-hover:text-primary"
-                >
-                  {isSelected && <RiCheckLine className="mr-1 size-3" aria-hidden />}
-                  {skill}
-                </Badge>
-              </button>
+                {isSelected && <RiCheckLine aria-hidden />}
+                {skill}
+              </ToggleChip>
             );
           })}
         </div>
@@ -895,7 +879,7 @@ function StepReview({
 function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg bg-muted p-4">
-      <h3 className="eyebrow mb-3 text-muted-foreground">{title}</h3>
+      <h3 className={cn(eyebrowVariants({ tone: "muted" }), "mb-3")}>{title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
   );

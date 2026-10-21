@@ -445,7 +445,7 @@ export default async function VolunteerDashboard() {
                           : "flex-1"
                       }
                     >
-                      <p className="eyebrow text-ink-muted-foreground">{stat.label}</p>
+                      <Eyebrow tone="ink">{stat.label}</Eyebrow>
                       <StatFigure value={stat.value} className="mt-1.5" />
                       {stat.delta && (
                         <p className="mt-1 text-xs font-medium text-ink-muted-foreground">
@@ -718,14 +718,14 @@ export default async function VolunteerDashboard() {
       {/* Kaupapa grace note — Suzanne Aubert's founding words */}
       <Card variant="ink">
         <CardContent className="space-y-3">
-          <p className="eyebrow text-ink-muted-foreground">Tō tātou kaupapa</p>
+          <Eyebrow tone="ink">Tō tātou kaupapa</Eyebrow>
           <blockquote className="font-serif text-lg/relaxed italic">
             &ldquo;Help one another and make use of the many little occasions to
             lighten the burden of others.&rdquo;
           </blockquote>
-          <p className="eyebrow text-ink-muted-foreground">
+          <Eyebrow tone="ink">
             Suzanne Aubert · Meri Hōhepa
-          </p>
+          </Eyebrow>
         </CardContent>
       </Card>
       </div>

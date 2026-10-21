@@ -325,9 +325,9 @@ export function ReportDashboard({
             <Card key={stat.label}>
               <CardContent className="flex items-start justify-between gap-3">
                 <div className="space-y-1.5">
-                  <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted">
                     {stat.label}
-                  </p>
+                  </Eyebrow>
                   <StatFigure value={stat.value} unit={stat.unit} />
                   <p className="text-xs text-muted-foreground">
                     {stat.sublabel}
@@ -436,15 +436,15 @@ export function ReportDashboard({
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-muted p-4 text-center">
                   <StatFigure value={onboarding.totalApplications} />
-                  <p className="eyebrow mt-1.5 text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted" className="mt-1.5">
                     Total applications
-                  </p>
+                  </Eyebrow>
                 </div>
                 <div className="rounded-lg bg-muted p-4 text-center">
                   <StatFigure value={onboarding.activeVolunteers} />
-                  <p className="eyebrow mt-1.5 text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted" className="mt-1.5">
                     Active volunteers
-                  </p>
+                  </Eyebrow>
                 </div>
               </div>
               <ul className="divide-y divide-border">

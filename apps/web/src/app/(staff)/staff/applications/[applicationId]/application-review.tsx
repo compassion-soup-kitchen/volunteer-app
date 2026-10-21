@@ -53,6 +53,7 @@ import {
 import { format } from "date-fns";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { toast } from "sonner";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import {
   reviewApplication,
   updateMojStatus,
@@ -186,9 +187,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
           </CardHeader>
           <CardContent className="space-y-4 border-t border-border pt-4">
             <div>
-              <p className="eyebrow mb-1.5 text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted" className="mb-1.5">
                 Service area interests
-              </p>
+              </Eyebrow>
               <div className="flex flex-wrap gap-1.5">
                 {vol.interests.length > 0 ? (
                   vol.interests.map((i) => (
@@ -202,9 +203,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
               </div>
             </div>
             <div>
-              <p className="eyebrow mb-1.5 text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted" className="mb-1.5">
                 Skills
-              </p>
+              </Eyebrow>
               <div className="flex flex-wrap gap-1.5">
                 {vol.skills.length > 0 ? (
                   vol.skills.map((s) => (
@@ -219,9 +220,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             </div>
             {vol.bio && (
               <div>
-                <p className="eyebrow mb-1 text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted" className="mb-1">
                   About themselves
-                </p>
+                </Eyebrow>
                 <p className="text-sm">{vol.bio}</p>
               </div>
             )}
@@ -246,9 +247,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                   if (!times || times.length === 0) return null;
                   return (
                     <div key={key}>
-                      <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                      <Eyebrow size="sm" tone="muted">
                         {label}
-                      </p>
+                      </Eyebrow>
                       <p className="text-sm font-medium capitalize">
                         {times.join(", ")}
                       </p>

@@ -1,5 +1,6 @@
 import { IconChip } from "./icon-chip";
 import { cn } from "@/lib/utils";
+import { eyebrowVariants } from "@/components/brand/eyebrow";
 
 /**
  * The hairline-divided body shared by every card whose rows run to the card's
@@ -58,7 +59,7 @@ export function DetailList({ facts, className }: DetailListProps) {
             </IconChip>
           ) : null}
           <div className="min-w-0">
-            <dt className="eyebrow text-[0.62rem] text-muted-foreground">
+            <dt className={eyebrowVariants({ size: "sm", tone: "muted" })}>
               {fact.label}
             </dt>
             <dd className="text-sm font-medium break-words">{fact.value}</dd>

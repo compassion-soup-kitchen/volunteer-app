@@ -22,6 +22,7 @@ import {
   RiHeartFill,
 } from "@remixicon/react";
 import type { VolunteerHoursData } from "@/lib/dashboard-actions";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 interface HoursDetailProps {
   data: VolunteerHoursData;
@@ -72,9 +73,9 @@ export function HoursDetail({ data }: HoursDetailProps) {
         <Card variant="ink">
           <CardContent className="space-y-4">
             <div className="flex items-start justify-between gap-3">
-              <p className="eyebrow text-ink-muted-foreground">
+              <Eyebrow tone="ink">
                 Tō wā · Time given
-              </p>
+              </Eyebrow>
               {data.hoursThisMonth > 0 && (
                 <span className="shrink-0 rounded-sm bg-ink-foreground/15 px-2.5 py-1 text-xs font-semibold text-ink-foreground">
                   +{data.hoursThisMonth}h this month
@@ -95,9 +96,9 @@ export function HoursDetail({ data }: HoursDetailProps) {
             <Card key={tile.label}>
               <CardContent className="flex items-start justify-between gap-3">
                 <div className="space-y-1.5">
-                  <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                  <Eyebrow size="sm" tone="muted">
                     {tile.label}
-                  </p>
+                  </Eyebrow>
                   <StatFigure value={tile.value} unit={tile.unit} />
                   <p className="text-xs text-muted-foreground">{tile.sublabel}</p>
                 </div>

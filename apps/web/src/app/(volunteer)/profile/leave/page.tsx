@@ -10,6 +10,7 @@ import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveForm } from "@/components/leave/log-leave-card";
 import { getMyLeave } from "@/lib/leave-actions";
 import { describeLeaveStatus, formatLeaveRange } from "@/lib/leave";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 export const metadata: Metadata = {
   title: "My leave | Te Pūaroha",
@@ -41,7 +42,7 @@ export default async function MyLeavePage() {
               <RiSuitcaseLine />
             </IconChip>
             <div className="space-y-1">
-              <p className="eyebrow text-ink-muted-foreground">Kei te wehe koe · You&apos;re away</p>
+              <Eyebrow tone="ink">Kei te wehe koe · You&apos;re away</Eyebrow>
               <p className="font-serif text-2xl font-medium tracking-tight">
                 {describeLeaveStatus(current, today)}
               </p>

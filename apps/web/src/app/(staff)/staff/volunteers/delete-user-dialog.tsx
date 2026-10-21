@@ -26,6 +26,7 @@ import {
   type UserDeletionSummary,
 } from "@/lib/staff-actions";
 import { matchesDeletionConfirmation } from "@/lib/user-deletion";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 type Target = { userId: string; name: string | null; email: string | null };
 
@@ -232,7 +233,7 @@ function ErasureList({ summary }: { summary: UserDeletionSummary }) {
 
   return (
     <div className="rounded-lg bg-destructive-tint px-4 py-3 text-destructive-tint-foreground">
-      <p className="eyebrow text-[0.68rem]">Erased with them</p>
+      <Eyebrow size="sm" tone="inherit">Erased with them</Eyebrow>
       {rows.length === 0 ? (
         <p className="mt-2 text-sm">
           Their sign-in and profile only - nothing else is recorded against this

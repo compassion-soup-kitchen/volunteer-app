@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import {
   deleteOwnAccount,
   getOwnAccountDeletionSummary,
@@ -253,7 +254,7 @@ function ErasureList({ summary }: { summary: OwnAccountDeletionSummary }) {
   return (
     <div className="space-y-3">
       <div className="rounded-lg bg-destructive-tint px-4 py-3 text-destructive-tint-foreground">
-        <p className="eyebrow text-[0.68rem]">Erased with you</p>
+        <Eyebrow size="sm" tone="inherit">Erased with you</Eyebrow>
         {rows.length === 0 ? (
           <p className="mt-2 text-sm">
             Your sign-in and profile only - nothing else is recorded against

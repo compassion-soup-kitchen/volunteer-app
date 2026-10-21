@@ -31,6 +31,7 @@ import { SectionHeader } from "@/components/brand/section-header";
 import { StatFigure } from "@/components/brand/stat-figure";
 import { IconChip } from "@/components/brand/icon-chip";
 import { BleedList } from "@/components/brand/detail-list";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 export const metadata: Metadata = {
   title: "Staff Dashboard | Te Pūaroha",
@@ -117,9 +118,9 @@ async function StatsCards() {
         const body = (
           <CardContent className="flex items-start justify-between gap-3">
             <div className="space-y-1.5">
-              <p className="eyebrow text-[0.62rem] text-muted-foreground">
+              <Eyebrow size="sm" tone="muted">
                 {card.label}
-              </p>
+              </Eyebrow>
               <StatFigure value={card.value} unit={card.unit} />
               <p className="text-xs text-muted-foreground">{card.sublabel}</p>
             </div>

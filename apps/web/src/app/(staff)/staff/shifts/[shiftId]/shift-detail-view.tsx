@@ -63,6 +63,7 @@ import {
   isTodayInAppZone,
 } from "@/lib/date-only";
 import { formatHoldUntil, isHeldForOffers } from "@/lib/shift-offers";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 interface ShiftDetailViewProps {
   shift: StaffShift;
@@ -228,9 +229,9 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
 
             {shift.notes && (
               <div className="rounded-lg bg-muted p-3">
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Notes
-                </p>
+                </Eyebrow>
                 <p className="mt-1 text-sm">{shift.notes}</p>
               </div>
             )}
@@ -238,9 +239,9 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
             {/* Attendance summary for past/today shifts */}
             {canMarkAttendance && shift.signups.length > 0 && (
               <div className="rounded-lg bg-muted p-3">
-                <p className="eyebrow text-[0.62rem] text-muted-foreground">
+                <Eyebrow size="sm" tone="muted">
                   Attendance summary
-                </p>
+                </Eyebrow>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="font-semibold text-success tnum">

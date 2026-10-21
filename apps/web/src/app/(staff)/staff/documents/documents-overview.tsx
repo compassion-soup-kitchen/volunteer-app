@@ -15,6 +15,7 @@ import type { AgreementOverview } from "@/lib/document-actions";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { BleedList } from "@/components/brand/detail-list";
 import { StatusBadge } from "@/components/brand/status-badge";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
   const retired = !!agreement.archivedAt;
@@ -81,7 +82,7 @@ function AgreementRow({ agreement }: { agreement: AgreementOverview }) {
               value={agreement.confirmedCount}
               unit={`/${agreement.totalVolunteers}`}
             />
-            <p className="text-[0.68rem] text-muted-foreground">confirmed</p>
+            <p className="text-2xs text-muted-foreground">confirmed</p>
           </div>
         )}
 
@@ -149,9 +150,9 @@ export function DocumentsOverview({
 
       {retired.length > 0 && (
         <div className="space-y-2">
-          <p className="eyebrow text-[0.62rem] text-muted-foreground">
+          <Eyebrow size="sm" tone="muted">
             Retired
-          </p>
+          </Eyebrow>
           <Card className="opacity-80">
             <BleedList>
               {retired.map((agreement) => (

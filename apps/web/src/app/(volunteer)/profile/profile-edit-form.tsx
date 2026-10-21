@@ -20,6 +20,7 @@ import {
 } from "@remixicon/react";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { updateVolunteerProfile } from "@/lib/application-actions";
+import { eyebrowVariants } from "@/components/brand/eyebrow";
 
 interface ProfileEditFormProps {
   profile: {
@@ -86,7 +87,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
       <CardContent className="space-y-6">
         {/* Contact */}
         <div className="space-y-4">
-          <h3 className="eyebrow text-muted-foreground">Contact</h3>
+          <h3 className={eyebrowVariants({ tone: "muted" })}>Contact</h3>
           <div className="space-y-2">
             <Label htmlFor="edit-phone">Phone</Label>
             <Input
@@ -108,7 +109,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
 
         {/* Emergency Contact */}
         <div className="space-y-4 border-t border-border pt-6">
-          <h3 className="eyebrow text-muted-foreground">Emergency contact</h3>
+          <h3 className={eyebrowVariants({ tone: "muted" })}>Emergency contact</h3>
           <div className="space-y-2">
             <Label htmlFor="edit-ec-name">Name</Label>
             <Input
@@ -138,7 +139,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
 
         {/* About */}
         <div className="space-y-4 border-t border-border pt-6">
-          <h3 className="eyebrow text-muted-foreground">About you</h3>
+          <h3 className={eyebrowVariants({ tone: "muted" })}>About you</h3>
           <div className="space-y-2">
             <Label htmlFor="edit-bio">Bio</Label>
             <Textarea
