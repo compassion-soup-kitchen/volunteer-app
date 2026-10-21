@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Kowhaiwhai, Wordmark } from '@/components/brand';
 import { AppleButton, Button, Card, GoogleButton, Text, TextField } from '@/components/ui';
 import { Duration, Layout, Shadows, Spacing } from '@/constants/theme';
+import { useAnnounce } from '@/hooks/use-announce';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/providers/auth-provider';
 import { GOOGLE_SIGN_IN_AVAILABLE, isAppleSignInOffered } from '@/services/auth-service';
@@ -27,6 +28,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  useAnnounce(error);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);

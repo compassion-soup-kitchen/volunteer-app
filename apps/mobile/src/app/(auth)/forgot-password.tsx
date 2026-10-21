@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthHero } from '@/components/auth-hero';
 import { Button, Card, Text, TextField } from '@/components/ui';
 import { Layout, Spacing } from '@/constants/theme';
+import { useAnnounce } from '@/hooks/use-announce';
 import { useTheme } from '@/hooks/use-theme';
 import { requestPasswordReset } from '@/services/auth-service';
 
@@ -18,6 +19,7 @@ export default function ForgotPasswordScreen() {
 
   const [email, setEmail] = useState(params.email ?? '');
   const [error, setError] = useState<string | null>(null);
+  useAnnounce(error);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
 

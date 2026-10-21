@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, DateField, Divider, Icon, Skeleton, Text, TextField } from '@/components/ui';
 import { Layout, Spacing } from '@/constants/theme';
+import { useAnnounce } from '@/hooks/use-announce';
 import { formatShiftDate, formatTimeRange } from '@/lib/format';
 import {
   LEAVE_REASON_MAX,
@@ -104,6 +105,10 @@ function LeaveForm({ id, existing, today }: { id: string | null; existing: Leave
     },
   });
 
+  // The warning card below appears as dates change, without moving focus.
+  const inlineProblem = startsOn && endsOn ? (problem ?? blocker) : null;
+  useAnnounce(inlineProblem);
+
   const canSave = ready && !preview.isFetching && !blocker && !save.isPending;
   const minEnd = started ? today : startsOn || today;
 
@@ -179,11 +184,11 @@ function LeaveForm({ id, existing, today }: { id: string | null; existing: Leave
                 <Text variant="callout" color="textSecondary">
                   Choose your dates to see which shifts this affects.
                 </Text>
-              ) : problem || blocker ? (
+              ) : inlineProblem ? (
                 <Card tone="warning" style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-start' }}>
                   <Icon name="alert-circle" size={18} color="warning" />
                   <Text variant="callout" style={{ flex: 1 }}>
-                    {problem ?? blocker}
+                    {inlineProblem}
                   </Text>
                 </Card>
               ) : preview.isFetching || !result ? (
