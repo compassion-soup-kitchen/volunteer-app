@@ -171,7 +171,7 @@ function EventForm({
       return;
     }
     toast.success(
-      publish ? "Event shared — now tell people about it." : "Draft saved."
+      publish ? "Event shared - now tell people about it." : "Draft saved."
     );
     onOpenChange(false);
     onSaved(
@@ -210,7 +210,7 @@ function EventForm({
               onChange={(e) => set("description", e.target.value)}
               maxLength={EVENT_DESCRIPTION_MAX}
               rows={3}
-              placeholder="Kai, waiata and a Secret Santa — bring a plate if you can."
+              placeholder="Kai, waiata and a Secret Santa - bring a plate if you can."
             />
           </div>
 
@@ -268,7 +268,7 @@ function EventForm({
                 <SelectValue placeholder="Choose who's invited" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Everyone — volunteers and staff</SelectItem>
+                <SelectItem value="ALL">Everyone - volunteers and staff</SelectItem>
                 <SelectItem value="VOLUNTEERS">Volunteers only</SelectItem>
                 <SelectItem value="COORDINATORS">Coordinators and admins</SelectItem>
               </SelectContent>

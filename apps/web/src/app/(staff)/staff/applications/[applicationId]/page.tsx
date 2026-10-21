@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { StatusBadge } from "@/components/brand/status-badge";
 
 export const metadata: Metadata = {
-  title: "Review Application | Te Pūaroha",
+  title: "Review application | Te Pūaroha",
 };
 
 export default async function ApplicationDetailPage({

@@ -74,7 +74,7 @@ export function AnnounceEventDialog({
         // The event's title is already in hand, so the coordinator can still
         // write the pānui themselves rather than staring at a spinner.
         console.error("Could not draft the event announcement:", err);
-        if (current) toast.error("Couldn't write a draft — please write your own.");
+        if (current) toast.error("Couldn't write a draft - please write your own.");
       })
       .finally(() => {
         if (current) setLoading(false);
@@ -102,7 +102,7 @@ export function AnnounceEventDialog({
       return;
     }
     toast.success(
-      publish ? "Pānui sent — everyone will hear about it." : "Draft pānui saved."
+      publish ? "Pānui sent - everyone will hear about it." : "Draft pānui saved."
     );
     onOpenChange(false);
     onSent();

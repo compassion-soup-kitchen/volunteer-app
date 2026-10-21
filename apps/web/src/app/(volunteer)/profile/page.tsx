@@ -47,7 +47,7 @@ import {
 } from "@/lib/leave";
 
 export const metadata: Metadata = {
-  title: "My Profile | Te Pūaroha",
+  title: "My profile | Te Pūaroha",
 };
 
 const DAYS_LONG: Record<string, string> = {

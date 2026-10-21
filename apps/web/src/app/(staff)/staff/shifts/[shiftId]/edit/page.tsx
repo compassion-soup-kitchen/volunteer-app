@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { formatDateOnly } from "@/lib/date-only";
 
 export const metadata: Metadata = {
-  title: "Edit Shift | Te Pūaroha",
+  title: "Edit shift | Te Pūaroha",
 };
 
 export default async function EditShiftPage({

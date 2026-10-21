@@ -27,7 +27,7 @@ export function TrainingReadiness({ readiness }: { readiness: Readiness }) {
         <View style={{ flex: 1, gap: 2 }}>
           <HeroFigure value={complete} unit={`/ ${total}`} />
           <Text variant="callout" style={{ color: colors.onInkMuted }}>
-            {fullyTrained ? 'Every core module complete — ka rawe.' : 'core modules complete'}
+            {fullyTrained ? 'Every core module complete - ka rawe.' : 'core modules complete'}
           </Text>
         </View>
 

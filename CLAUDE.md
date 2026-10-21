@@ -59,8 +59,8 @@ Other useful skills in this repo:
 apps/web/
 src/
 ├── app/
-│   ├── layout.tsx                    # Root: Mona Sans/Fraunces/Geist Mono fonts, ThemeProvider, SessionProvider, TooltipProvider, Toaster
-│   ├── globals.css                   # Tailwind v4 + shadcn tokens (oklch), 18px root, brand red primary
+│   ├── layout.tsx                    # Root: Hanken Grotesk/Newsreader/Geist Mono fonts, ThemeProvider, SessionProvider, TooltipProvider, Toaster
+│   ├── globals.css                   # Tailwind v4 + shadcn tokens (hex), 18px root, brand red primary
 │   ├── (public)/                     # Unauthenticated routes
 │   │   ├── page.tsx                  # Landing page
 │   │   ├── landing-nav.tsx
@@ -223,11 +223,11 @@ Route protection lives in **two places**:
 Always check role in Server Actions too — never trust the client.
 
 ### Design
-- **Brand primary**: `#DC0831` → `oklch(0.52 0.22 18)` (red). Used as `--primary` in light mode; slightly muted in dark mode.
+- **Brand primary**: `#e4002b` (Pūaroha red) as `--primary` in light mode; a brighter `#ff3355` in dark mode.
 - **Root font size**: 18px (`html { @apply font-sans text-[18px]; }`).
-- **Fonts**: Mona Sans (self-hosted, body/UI) + Fraunces (display serif) + Geist Mono, wired in `src/app/layout.tsx`.
+- **Fonts**: Hanken Grotesk (body/UI, shared with the mobile app) + Newsreader (display serif for titles, headings and figures) + Geist Mono, loaded with `next/font/google` in `src/app/layout.tsx`.
 - **Theme tokens**: All colors via shadcn semantic CSS variables (`bg-primary`, `text-muted-foreground`, `bg-card`, `bg-sidebar`, etc.). Never hardcode hex values in components.
-- **Charts**: Use `--chart-1` … `--chart-5` (red ramp).
+- **Charts**: Use `--chart-1` … `--chart-5` (red → ochre → taupe → green → stone).
 - **Te Reo Māori** woven naturally — section labels, greetings, terms like *whānau*, *mahi*, *kai*, *aroha*, *nau mai haere mai*. Not tokenistic; warm and accurate.
 - **Tone**: Warm and compassionate. Not clinical, not corporate. Address volunteers as people, not "users".
 - **Layouts**: Volunteer = mobile-first (max-w-6xl, bottom footer nav on mobile). Staff = desktop-first sidebar (`lg:pl-64`, max-w-7xl).

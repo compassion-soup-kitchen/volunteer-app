@@ -125,7 +125,7 @@ export function TrainingForm({
             </Select>
             {trainingTypes.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No training types yet —{" "}
+                No training types yet -{" "}
                 <Link
                   href="/staff/training/types"
                   className="font-medium text-foreground underline underline-offset-4"
@@ -161,7 +161,7 @@ export function TrainingForm({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What will be covered in this session..."
+              placeholder="What will be covered in this session…"
               rows={3}
             />
           </div>

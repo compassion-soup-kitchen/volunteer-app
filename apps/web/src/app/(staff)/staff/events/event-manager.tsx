@@ -429,7 +429,7 @@ function EventRow({
           ) : (
             <span>
               {event.rsvpEnabled
-                ? "Not shared yet — nobody can reply"
+                ? "Not shared yet - nobody can reply"
                 : "Replies aren't being collected"}
             </span>
           )}

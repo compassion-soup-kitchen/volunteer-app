@@ -210,7 +210,7 @@ export async function deleteTrainingSession(
 
   if (activeRegistrations > 0) {
     return {
-      error: `Cannot delete — ${activeRegistrations} volunteer${activeRegistrations > 1 ? "s" : ""} still registered. Cancel their registrations first.`,
+      error: `Cannot delete - ${activeRegistrations} volunteer${activeRegistrations > 1 ? "s" : ""} still registered. Cancel their registrations first.`,
     };
   }
 

@@ -410,6 +410,6 @@ export async function resetPassword(
   });
 
   return {
-    success: "All done — your password has been reset. Sign in with your new password whenever you're ready.",
+    success: "All done - your password has been reset. Sign in with your new password whenever you're ready.",
   };
 }

@@ -51,10 +51,10 @@ export function checkUploadFile(file: {
     return "That file is empty.";
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return `That file is ${formatFileSize(file.size)} — the limit is ${formatFileSize(MAX_UPLOAD_BYTES)}.`;
+    return `That file is ${formatFileSize(file.size)} - the limit is ${formatFileSize(MAX_UPLOAD_BYTES)}.`;
   }
   if (!ALLOWED_UPLOAD_TYPES[file.type]) {
-    return "That file type isn't supported — upload a PDF, Word document, or image.";
+    return "That file type isn't supported - upload a PDF, Word document, or image.";
   }
   return null;
 }

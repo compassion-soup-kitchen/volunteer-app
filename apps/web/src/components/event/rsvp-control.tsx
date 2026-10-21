@@ -140,7 +140,7 @@ export function RsvpControl({
     if (ok) {
       toast.success(
         next === "GOING"
-          ? "Lovely — you're on the list."
+          ? "Lovely - you're on the list."
           : next === "MAYBE"
             ? "Noted as a maybe."
             : "Thanks for letting us know."

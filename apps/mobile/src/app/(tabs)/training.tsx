@@ -44,7 +44,7 @@ export default function TrainingScreen() {
 
   const register = useMutation({
     mutationFn: (id: string) => registerForTraining(id),
-    onSuccess: (res) => afterMutation(res, "You're registered — see you there!"),
+    onSuccess: (res) => afterMutation(res, "You're registered - see you there!"),
   });
 
   const cancel = useMutation({
@@ -83,12 +83,12 @@ export default function TrainingScreen() {
   const subtitle = isLoading
     ? 'Building your learning plan.'
     : data?.readiness.fullyTrained
-      ? "You're fully trained — ngā mihi nui."
+      ? "You're fully trained - ngā mihi nui."
       : 'Grow your skills and confidence.';
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
-      <PageHeader overline="Ako · Learning" title="Training" subtitle={subtitle} illustration="korero" />
+      <PageHeader overline="Whakangungu" title="Training" subtitle={subtitle} illustration="korero" />
 
       {isLoading || !data ? (
         <View style={{ gap: Spacing.lg }}>
@@ -145,7 +145,7 @@ export default function TrainingScreen() {
                 illustration="book"
                 tone="navy"
                 title="No sessions scheduled"
-                message="New training is added regularly — nau mai, check back soon."
+                message="New training is added regularly - nau mai, check back soon."
               />
             </View>
           ) : browseAll.length > 0 ? (

@@ -218,7 +218,7 @@ export async function changeMyPassword(
 
   return {
     success:
-      "Ka pai — your password has been updated. You'll stay signed in here.",
+      "Ka pai - your password has been updated. You'll stay signed in here.",
   };
 }
 

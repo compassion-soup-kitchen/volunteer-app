@@ -63,8 +63,8 @@ function nzHour() {
 function greeting() {
   const h = nzHour();
   if (h < 12) return "Mōrena"; // good morning
-  if (h < 18) return "Ahiahi mārie"; // good afternoon
-  return "Pō mārie"; // good evening
+  // Ahiahi spans afternoon and evening; "Pō mārie" is goodnight, a farewell.
+  return "Ahiahi mārie"; // good afternoon, good evening
 }
 
 function formatToday() {
@@ -168,7 +168,7 @@ export default async function VolunteerDashboard() {
                 <Badge variant="warning">Pending</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Ngā mihi for applying — our team is reviewing your application
+                Ngā mihi for applying - our team is reviewing your application
                 and will be in touch soon.
               </p>
             </div>
@@ -246,7 +246,7 @@ export default async function VolunteerDashboard() {
               </h2>
               <p className="text-sm text-muted-foreground">
                 {pendingResigns} {pendingResigns === 1 ? "policy needs" : "policies need"}{" "}
-                your acknowledgment before your next shift.
+                your acknowledgement before your next shift.
               </p>
             </div>
             <Button asChild size="sm" variant="outline">
@@ -564,7 +564,7 @@ export default async function VolunteerDashboard() {
         <SectionHeader
           divider
           className="lg:border-t-0 lg:pt-0"
-          eyebrow="Pānui"
+          eyebrow="Ngā pānui"
           title="Notices"
           action={announcements.length > 0 ? { label: "All notices", href: "/news" } : undefined}
         />
@@ -587,7 +587,7 @@ export default async function VolunteerDashboard() {
                     </div>
                     <p className="line-clamp-2 text-sm text-muted-foreground">{a.body}</p>
                     {a.authorName && (
-                      <p className="text-xs text-muted-foreground">— {a.authorName}</p>
+                      <p className="text-xs text-muted-foreground">- {a.authorName}</p>
                     )}
                   </CardContent>
                 </Link>

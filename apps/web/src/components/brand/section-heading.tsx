@@ -8,7 +8,7 @@ const sizeClasses = {
 } as const;
 
 interface SectionHeadingProps extends Omit<React.ComponentProps<"div">, "title"> {
-  /** Optional eyebrow label above the heading (bilingual, e.g. "Ngā wāhi mahi · Shifts"). */
+  /** Optional eyebrow label above the heading (bilingual, e.g. "Te rārangi mahi · Shifts"). */
   eyebrow?: React.ReactNode;
   /** Heading element to render — defaults to h2. */
   as?: "h1" | "h2" | "h3";
@@ -19,7 +19,7 @@ interface SectionHeadingProps extends Omit<React.ComponentProps<"div">, "title">
 }
 
 /**
- * SectionHeading — Fraunces display heading with the signature red underline rule,
+ * SectionHeading — Newsreader display heading with the signature red underline rule,
  * optionally preceded by an eyebrow label. The brand's recurring heading gesture.
  */
 export function SectionHeading({

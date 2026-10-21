@@ -60,7 +60,7 @@ export function NextTrainingCard({ session, pending, onCancel }: NextTrainingCar
 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
           <Text variant="caption" color="textTertiary" style={{ flex: 1 }}>
-            {"Kia kaha — we'll see you there."}
+            {"Kia kaha - we'll see you there."}
           </Text>
           <Button title="Cancel" variant="ghost" size="md" fullWidth={false} loading={pending} onPress={onCancel} />
         </View>

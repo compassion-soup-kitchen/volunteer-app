@@ -19,7 +19,7 @@ import {
 } from "@/lib/email-templates";
 
 export const metadata: Metadata = {
-  title: "Email Previews | Te Pūaroha",
+  title: "Email previews | Te Pūaroha",
   description:
     "Live previews of every transactional email the volunteer app sends.",
 };

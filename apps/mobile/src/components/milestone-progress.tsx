@@ -42,7 +42,7 @@ export function MilestoneProgress({ milestones, totalHours }: { milestones: Mile
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
           <Illustration name="rata" height={30} color="success" />
           <Text variant="caption" color="success" weight="bold" style={{ flex: 1 }}>
-            Every milestone reached — tino pai!
+            Every milestone reached - tino pai!
           </Text>
         </View>
       )}

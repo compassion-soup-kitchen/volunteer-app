@@ -83,7 +83,7 @@ export function MilestoneJourney({ milestones, totalHours }: { milestones: Miles
               {current?.term ?? ''}
             </Text>
             <Text variant="caption" color="success" weight="bold">
-              Every honorific earned — tino pai!
+              Every honorific earned - tino pai!
             </Text>
           </View>
         </View>

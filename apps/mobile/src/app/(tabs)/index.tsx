@@ -58,8 +58,8 @@ const HERO_SHADOW = {
 function greeting(): string {
   const h = new Date().getHours();
   if (h < 12) return 'Mōrena'; // good morning
-  if (h < 18) return 'Ahiahi mārie'; // good afternoon
-  return 'Pō mārie'; // good evening
+  // Ahiahi spans afternoon and evening; "Pō mārie" is goodnight, a farewell.
+  return 'Ahiahi mārie'; // good afternoon, good evening
 }
 
 /** Compact brand lockup with a notification bell that opens the notices feed. */
@@ -188,7 +188,7 @@ export default function DashboardScreen() {
                 illustration="give"
                 tone="brand"
                 title="No shift on the horizon"
-                message="Browse the roster and find a time that suits you — every hand makes a difference."
+                message="Browse the roster and find a time that suits you - every hand makes a difference."
                 actionLabel="Browse shifts"
                 onAction={() => router.push('/shifts')}
               />
@@ -250,7 +250,7 @@ export default function DashboardScreen() {
           {topNotices.length > 0 ? (
             <View style={{ gap: Spacing.md }}>
               <SectionHeader
-                overline="Pānui"
+                overline="Ngā pānui"
                 title="Notices"
                 divider
                 actionLabel={notices.length > topNotices.length ? 'All notices' : undefined}

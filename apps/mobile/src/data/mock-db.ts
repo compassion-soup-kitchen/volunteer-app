@@ -172,7 +172,7 @@ const attended: ShiftRecord[] = [
 
 // Upcoming shifts the volunteer has signed up for — their roster.
 const roster: ShiftRecord[] = [
-  { id: 'sh-r1', serviceAreaId: 'sa-dining', date: isoDate(2), startTime: '11:30', endTime: '14:00', capacity: 8, notes: 'Sunday lunch service — extra hands always welcome.', mealsServed: 0, otherSignups: 4 },
+  { id: 'sh-r1', serviceAreaId: 'sa-dining', date: isoDate(2), startTime: '11:30', endTime: '14:00', capacity: 8, notes: 'Sunday lunch service - extra hands always welcome.', mealsServed: 0, otherSignups: 4 },
   { id: 'sh-r2', serviceAreaId: 'sa-kitchen', date: isoDate(6), startTime: '09:00', endTime: '13:00', capacity: 8, notes: 'Prep and cook ahead for the week.', mealsServed: 0, otherSignups: 5 },
 ];
 
@@ -180,7 +180,7 @@ const roster: ShiftRecord[] = [
 const upcoming: ShiftRecord[] = [
   { id: 'sh-u1', serviceAreaId: 'sa-rescue', date: isoDate(3), startTime: '08:00', endTime: '11:00', capacity: 6, notes: 'Early pick-up run from local supermarkets.', mealsServed: 0, otherSignups: 2 },
   { id: 'sh-u2', serviceAreaId: 'sa-kitchen', date: isoDate(4), startTime: '17:00', endTime: '20:00', capacity: 8, mealsServed: 0, otherSignups: 3 },
-  { id: 'sh-u3', serviceAreaId: 'sa-garden', date: isoDate(5), startTime: '10:00', endTime: '13:00', capacity: 6, notes: 'Winter planting — bring a warm jacket.', mealsServed: 0, otherSignups: 6 },
+  { id: 'sh-u3', serviceAreaId: 'sa-garden', date: isoDate(5), startTime: '10:00', endTime: '13:00', capacity: 6, notes: 'Winter planting - bring a warm jacket.', mealsServed: 0, otherSignups: 6 },
   { id: 'sh-u4', serviceAreaId: 'sa-welcome', date: isoDate(7), startTime: '11:00', endTime: '14:00', capacity: 4, mealsServed: 0, otherSignups: 1 },
   { id: 'sh-u5', serviceAreaId: 'sa-dining', date: isoDate(9), startTime: '17:00', endTime: '20:00', capacity: 8, mealsServed: 0, otherSignups: 6 },
   { id: 'sh-u6', serviceAreaId: 'sa-kitchen', date: isoDate(11), startTime: '09:00', endTime: '13:00', capacity: 8, mealsServed: 0, otherSignups: 7 },
@@ -281,7 +281,7 @@ const events: VolunteerEvent[] = [
   },
   {
     id: 'ev-hui',
-    title: 'Volunteer hui — how did the year go?',
+    title: 'Volunteer hui - how did the year go?',
     description:
       'A cuppa and an honest kōrero about what worked this year and what we should change. Everyone welcome.',
     date: isoDate(9),
@@ -303,8 +303,8 @@ const events: VolunteerEvent[] = [
 const announcements: Announcement[] = [
   {
     id: 'an-1',
-    title: 'Kia ora — we need two more for Friday dinner',
-    body: "We're a little short for this Friday's dinner service (5–8pm). If you can lend a hand, please pick up a spot from the roster — ngā mihi nui to those who already have.",
+    title: 'Kia ora - we need two more for Friday dinner',
+    body: "We're a little short for this Friday's dinner service (5–8pm). If you can lend a hand, please pick up a spot from the roster - ngā mihi nui to those who already have.",
     audience: 'VOLUNTEERS',
     authorName: 'Hana Wīremu',
     publishedAt: isoTimeAgo(3),
@@ -325,7 +325,7 @@ const announcements: Announcement[] = [
   {
     id: 'an-2',
     title: 'New winter menu starts Monday',
-    body: 'The kitchen has refreshed the menu for the colder months — heartier soups through the week and a roast on Sundays. Come hungry; there may be taste-testing.',
+    body: 'The kitchen has refreshed the menu for the colder months - heartier soups through the week and a roast on Sundays. Come hungry; there may be taste-testing.',
     audience: 'ALL',
     authorName: 'Te Pūaroha kitchen',
     publishedAt: isoTimeAgo(27),
@@ -334,7 +334,7 @@ const announcements: Announcement[] = [
   },
   {
     id: 'an-3',
-    title: 'A record month — thank you, whānau',
+    title: 'A record month - thank you, whānau',
     body: 'Together we served more than 3,000 meals last month. Every hour you give keeps the kitchen warm and our manuhiri cared for. Mauri ora!',
     audience: 'ALL',
     authorName: 'Wikitōria Grace',
