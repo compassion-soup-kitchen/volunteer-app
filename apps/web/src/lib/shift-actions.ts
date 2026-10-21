@@ -46,17 +46,6 @@ export type { ShiftFormData } from "@/lib/shift-form";
 
 // ─── Types ──────────────────────────────────────────────
 
-/** Hard ceiling on one staff roster read, however many pages are asked for. */
-const STAFF_SHIFTS_MAX = 500;
-
-export type StaffShiftFilters = ShiftFilters & {
-  /**
-   * How many shifts to return, nearest first. Repeating shifts are generated
-   * twelve weeks ahead, so an unbounded "Upcoming" is hundreds of rows.
-   */
-  limit?: number;
-};
-
 export type StaffShift = {
   id: string;
   date: Date;
@@ -175,7 +164,7 @@ export async function respondToShiftOffer(
 // ─── Staff Actions ──────────────────────────────────────
 
 export async function getStaffShifts(
-  filters?: StaffShiftFilters
+  filters?: ShiftFilters
 ): Promise<StaffShift[]> {
   await connection();
   const session = await requireActiveSession();
@@ -233,10 +222,6 @@ export async function getStaffShifts(
     },
     // Upcoming reads forward from today; past reads back from the most recent.
     orderBy: [{ date: fromDate ? "asc" : "desc" }, { startTime: "asc" }],
-    take: Math.min(
-      Math.max(1, Math.floor(filters?.limit ?? STAFF_SHIFTS_MAX)),
-      STAFF_SHIFTS_MAX
-    ),
   });
 
   return shifts;

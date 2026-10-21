@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import { getAvailableShifts } from "@/lib/shift-actions";
+import { getWeekClosures } from "@/lib/closed-day-actions";
+import {
+  addDaysToDateOnly,
+  startOfWeekOf,
+  todayInAppZone,
+} from "@/lib/date-only";
+import {
+  parseDayParam,
+  parseWeekParam,
+  rosterWeekHref,
+} from "@/lib/roster-week";
 import { getServiceAreas } from "@/lib/application-actions";
 import { getUserApplicationStatus } from "@/lib/application-actions";
 import { ShiftBrowser } from "./shift-browser";
@@ -15,13 +27,34 @@ export const metadata: Metadata = {
   title: "Browse Shifts | Te Pūaroha",
 };
 
-export default async function ShiftsPage() {
+type SearchParams = Promise<{ [key: string]: string | undefined }>;
+
+export default async function ShiftsPage(props: { searchParams: SearchParams }) {
   await connection();
-  const [shifts, serviceAreas, appStatus] = await Promise.all([
-    getAvailableShifts(),
+  const params = await props.searchParams;
+  const today = todayInAppZone();
+  const thisWeek = startOfWeekOf(today);
+  // Weeks gone by hold nothing a volunteer can take, so the earliest is this one.
+  const requested = parseWeekParam(params.week);
+  const weekStart = requested && requested > thisWeek ? requested : thisWeek;
+  const areaId = params.area || null;
+
+  const [shifts, closures, serviceAreas, appStatus] = await Promise.all([
+    getAvailableShifts({
+      fromDate: weekStart,
+      toDate: addDaysToDateOnly(weekStart, 6),
+      ...(areaId ? { serviceAreaId: areaId } : {}),
+    }),
+    getWeekClosures(weekStart),
     getServiceAreas(),
     getUserApplicationStatus(),
   ]);
+
+  // A link to an area that has since gone would read as "nothing on" - drop
+  // the filter instead.
+  if (areaId && !serviceAreas.some((area) => area.id === areaId)) {
+    redirect(rosterWeekHref("/shifts", weekStart, today));
+  }
 
   const isApproved = appStatus?.applicationStatus === "APPROVED";
 
@@ -64,9 +97,14 @@ export default async function ShiftsPage() {
       )}
 
       <ShiftBrowser
-        initialShifts={shifts}
+        shifts={shifts}
+        closures={closures}
         serviceAreas={serviceAreas}
         canSignUp={isApproved}
+        weekStart={weekStart}
+        today={today}
+        areaId={areaId}
+        focusDay={parseDayParam(params.day, weekStart)}
       />
     </div>
   );

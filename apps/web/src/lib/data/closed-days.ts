@@ -6,7 +6,12 @@
 
 import type { Prisma, PrismaClient } from "@prisma/client";
 
-import { dateOnlyOf, formatDateOnly, type DateOnly } from "@/lib/date-only";
+import {
+  dateOnlyOf,
+  formatDateOnly,
+  parseDateOnly,
+  type DateOnly,
+} from "@/lib/date-only";
 
 type Reader = PrismaClient | Prisma.TransactionClient;
 
@@ -42,4 +47,18 @@ export function closedDayMessage(closure: { date: Date; reason: string }): strin
     month: "short",
   });
   return `The kitchen is closed on ${day} (${closure.reason}).`;
+}
+
+/** Every closure in a range, inclusive, with the reason staff gave for it. */
+export async function closuresBetween(
+  db: Reader,
+  from: DateOnly,
+  to: DateOnly
+): Promise<{ date: DateOnly; reason: string }[]> {
+  const rows = await db.closedDay.findMany({
+    where: { date: { gte: parseDateOnly(from), lte: parseDateOnly(to) } },
+    select: { date: true, reason: true },
+    orderBy: { date: "asc" },
+  });
+  return rows.map((row) => ({ date: dateOnlyOf(row.date), reason: row.reason }));
 }

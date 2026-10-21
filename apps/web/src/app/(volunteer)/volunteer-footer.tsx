@@ -20,14 +20,13 @@ export function VolunteerFooter() {
         />
 
         {/* Values — the visual hero */}
-        {/* Each value carries its own separator, so on a narrow phone the line
-            wraps between words instead of running off the edge as one run. */}
-        <p className="flex flex-wrap items-baseline justify-center gap-x-2 font-serif text-xl font-normal tracking-tight sm:gap-x-3 sm:text-3xl">
+        {/* Sized to sit on one line on a phone, and free to wrap on a narrower one */}
+        <p className="flex flex-wrap items-baseline justify-center font-serif text-lg font-normal tracking-tight sm:text-3xl">
           {values.map((v, i) => (
-            <span key={v.maori} className="flex items-baseline gap-x-2 sm:gap-x-3">
-              {v.maori}
+            <span key={v.maori}>
+              <span>{v.maori}</span>
               {i < values.length - 1 && (
-                <span className="text-primary/60" aria-hidden>
+                <span className="mx-1.5 text-primary/60 sm:mx-3" aria-hidden>
                   ·
                 </span>
               )}
