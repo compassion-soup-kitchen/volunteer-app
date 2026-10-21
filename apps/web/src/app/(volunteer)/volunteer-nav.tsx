@@ -86,7 +86,7 @@ export function VolunteerNav({
       {/* Bottom tab bar (mobile) — the app's five tabs */}
       <nav
         aria-label="Main"
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] backdrop-blur-sm sm:hidden"
       >
         <div className="flex items-stretch justify-around">
           {navItems.map((item) => {
