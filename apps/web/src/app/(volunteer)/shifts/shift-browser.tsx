@@ -122,17 +122,17 @@ export function ShiftBrowser({
     setLoadingShiftId(null);
   }
 
-  async function handleCancel(shiftId: string) {
-    setCancelId(null);
+  async function handleCancel(shiftId: string): Promise<boolean> {
     setLoadingShiftId(shiftId);
     const result = await cancelShiftSignup(shiftId);
+    setLoadingShiftId(null);
     if (result.error) {
       toast.error(result.error);
-    } else {
-      toast.success("Signup cancelled.");
-      refresh();
+      return false;
     }
-    setLoadingShiftId(null);
+    toast.success("Signup cancelled.");
+    refresh();
+    return true;
   }
 
   /** Passing on an offer hands the shift to whoever wants it next. */
@@ -142,7 +142,7 @@ export function ShiftBrowser({
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success("No worries — we've passed it on.");
+      toast.success("No worries - we've passed it on.");
       refresh();
     }
     setLoadingShiftId(null);
@@ -342,7 +342,7 @@ export function ShiftBrowser({
           <AlertDialogFooter>
             <AlertDialogCancel>Keep my spot</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => cancelId && handleCancel(cancelId)}
+              onConfirm={() => (cancelId ? handleCancel(cancelId) : false)}
               variant="destructive"
             >
               Cancel shift
@@ -435,7 +435,7 @@ function ShiftRow({
 
           {heldForOthers && shift.offersCloseOn && (
             <p className="text-sm text-muted-foreground">
-              Offered to the regular crew until {formatHoldUntil(shift.offersCloseOn)} —
+              Offered to the regular crew until {formatHoldUntil(shift.offersCloseOn)} -
               open to everyone after that.
             </p>
           )}

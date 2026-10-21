@@ -12,7 +12,7 @@ import { NewAgreementDialog } from "./new-agreement-dialog";
 import { DocumentsSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
-  title: "Documents | Te Pūaroha Staff",
+  title: "Documents | Te Pūaroha",
 };
 
 async function AgreementsContent() {

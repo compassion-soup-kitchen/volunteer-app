@@ -170,7 +170,7 @@ export default function HoursScreen() {
             style={{ backgroundColor: colors.primaryFill, flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
             <Icon name="heart" size={22} raw={colors.primaryForeground} />
             <Text variant="callout" style={{ flex: 1, color: colors.primaryForeground }}>
-              Thank you, {firstName} — your time keeps the kitchen warm.
+              Thank you, {firstName} - your time keeps the kitchen warm.
             </Text>
           </Card>
         </>

@@ -31,7 +31,7 @@ export default async function EventsPage() {
     <div className="space-y-6">
       <PageHeader
         backHref="/dashboard"
-        eyebrow="Ngā hui · Gatherings"
+        eyebrow="Ngā hui · Events"
         title="Come along"
         description="Parties, hui and get-togethers for the whānau. Let us know if you can make it."
       />

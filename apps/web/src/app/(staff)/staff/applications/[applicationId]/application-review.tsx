@@ -42,7 +42,6 @@ import {
   RiCheckLine,
   RiCloseLine,
   RiQuestionLine,
-  RiLoader4Line,
   RiMailLine,
   RiPhoneLine,
   RiMapPinLine,
@@ -51,7 +50,11 @@ import {
   RiUserLine,
   RiHeartLine,
 } from "@remixicon/react";
-import { format } from "date-fns";
+import {
+  formatDateOfBirth,
+  formatTimestamp,
+  formatTimestampWithTime,
+} from "@/lib/format";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { toast } from "sonner";
 import {
@@ -86,18 +89,18 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
 
   async function handleDecision(
     decision: "APPROVED" | "DECLINED" | "INFO_REQUESTED"
-  ) {
+  ): Promise<boolean> {
     setIsSaving(true);
     const result = await reviewApplication(application.id, decision, notes);
     setIsSaving(false);
 
     if (result.error) {
       toast.error(result.error);
-      return;
+      return false;
     }
 
     const labels = {
-      APPROVED: "Application approved — the volunteer can now sign up for shifts.",
+      APPROVED: "Application approved - the volunteer can now sign up for shifts.",
       DECLINED: "Application declined.",
       INFO_REQUESTED: "More information requested from applicant.",
     };
@@ -105,6 +108,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     toast.success(labels[decision]);
     router.push("/staff/applications");
     router.refresh();
+    return true;
   }
 
   async function handleMojUpdate(newStatus: string) {
@@ -118,7 +122,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         toast.error(result.error);
         setMojStatus(application.volunteer.mojStatus);
       } else {
-        toast.success("MOJ status updated.");
+        toast.success("MoJ status updated.");
       }
     });
   }
@@ -130,7 +134,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     {
       label: "Date of birth",
       value: vol.dateOfBirth
-        ? format(vol.dateOfBirth, "d MMMM yyyy")
+        ? formatDateOfBirth(vol.dateOfBirth)
         : "Not provided",
       icon: RiCalendarLine,
     },
@@ -282,7 +286,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                     {agreementLabel(a.agreementType)}
                   </span>
                   <span className="tnum shrink-0 text-xs text-muted-foreground">
-                    {format(a.signedAt, "d MMM yyyy")}
+                    {formatTimestamp(a.signedAt)}
                   </span>
                 </li>
               ))}
@@ -307,7 +311,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             <CardTitle>Application status</CardTitle>
             <CardDescription>
               Submitted{" "}
-              {format(application.submittedAt, "d MMM yyyy 'at' h:mm a")}
+              {formatTimestampWithTime(application.submittedAt)}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -316,7 +320,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             {application.reviewedAt && application.reviewedBy && (
               <p className="text-xs text-muted-foreground">
                 Reviewed by {application.reviewedBy.name} on{" "}
-                {format(application.reviewedAt, "d MMM yyyy")}
+                {formatTimestamp(application.reviewedAt)}
               </p>
             )}
           </CardContent>
@@ -357,7 +361,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add notes about this application..."
+              placeholder="Add notes about this application…"
               rows={4}
             />
           </CardContent>
@@ -392,11 +396,8 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleDecision("APPROVED")}
+                      onConfirm={() => handleDecision("APPROVED")}
                     >
-                      {isSaving && (
-                        <RiLoader4Line className="mr-2 size-4 animate-spin" />
-                      )}
                       Confirm approval
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -435,12 +436,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleDecision("DECLINED")}
+                      onConfirm={() => handleDecision("DECLINED")}
                       variant="destructive"
                     >
-                      {isSaving && (
-                        <RiLoader4Line className="mr-2 size-4 animate-spin" />
-                      )}
                       Confirm decline
                     </AlertDialogAction>
                   </AlertDialogFooter>

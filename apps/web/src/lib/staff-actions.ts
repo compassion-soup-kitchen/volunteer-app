@@ -420,7 +420,7 @@ export async function reviewApplication(
       after(() =>
         sendPushToUsers([application.volunteer.userId], {
           title: "Your application is approved 🎉",
-          body: "Nau mai, haere mai! We'd love to have you on the team — your induction details are on the way.",
+          body: "Nau mai, haere mai! We'd love to have you on the team - your induction details are on the way.",
           data: { url: "/onboarding" },
         })
       );

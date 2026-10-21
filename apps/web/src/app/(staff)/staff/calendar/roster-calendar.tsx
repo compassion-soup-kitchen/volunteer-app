@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition, type KeyboardEvent } from "react";
+import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,7 +9,6 @@ import {
   RiArrowRightSLine,
   RiDoorClosedLine,
   RiDoorOpenLine,
-  RiLoader4Line,
   RiRepeatLine,
   RiSuitcaseLine,
 } from "@remixicon/react";
@@ -512,26 +511,23 @@ function DayPanel({
   onReopened,
 }: DayPanelProps) {
   const [confirmReopen, setConfirmReopen] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const isPast = date < today;
 
-  function handleReopen() {
-    if (!closure) return;
-    startTransition(async () => {
-      const result = await reopenClosedDay(closure.id);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      const restored = result.restoredShifts ?? 0;
-      toast.success(
-        restored > 0
-          ? `Open again. ${restored} repeating ${restored === 1 ? "shift is" : "shifts are"} back on the roster.`
-          : "Open again."
-      );
-      setConfirmReopen(false);
-      onReopened();
-    });
+  async function handleReopen(): Promise<boolean> {
+    if (!closure) return false;
+    const result = await reopenClosedDay(closure.id);
+    if (result.error) {
+      toast.error(result.error);
+      return false;
+    }
+    const restored = result.restoredShifts ?? 0;
+    toast.success(
+      restored > 0
+        ? `Open again. ${restored} repeating ${restored === 1 ? "shift is" : "shifts are"} back on the roster.`
+        : "Open again."
+    );
+    onReopened();
+    return true;
   }
 
   return (
@@ -662,10 +658,7 @@ function DayPanel({
         </>
       )}
 
-      <AlertDialog
-        open={confirmReopen}
-        onOpenChange={(open) => !isPending && setConfirmReopen(open)}
-      >
+      <AlertDialog open={confirmReopen} onOpenChange={setConfirmReopen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Open {longDay(date)} again?</AlertDialogTitle>
@@ -676,17 +669,8 @@ function DayPanel({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Keep it closed</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleReopen();
-              }}
-              disabled={isPending}
-            >
-              {isPending && <RiLoader4Line className="size-4 animate-spin" />}
-              Open it again
-            </AlertDialogAction>
+            <AlertDialogCancel>Keep it closed</AlertDialogCancel>
+            <AlertDialogAction onConfirm={handleReopen}>Open it again</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -705,25 +689,22 @@ interface HolidaySuggestionsProps {
 function HolidaySuggestions({ suggestions, onCloseOne, onClosedAll }: HolidaySuggestionsProps) {
   const [confirmAll, setConfirmAll] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const hidden = suggestions.length - HOLIDAYS_SHOWN;
   const shown = showAll ? suggestions : suggestions.slice(0, HOLIDAYS_SHOWN);
 
-  function handleCloseAll() {
-    startTransition(async () => {
-      const result = await closeDays(
-        suggestions.map((holiday) => ({ date: holiday.date, reason: holiday.name }))
-      );
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success(
-        `${result.closed} public ${result.closed === 1 ? "holiday" : "holidays"} closed. ${describeClosureOutcome(result)}`
-      );
-      setConfirmAll(false);
-      onClosedAll();
-    });
+  async function handleCloseAll(): Promise<boolean> {
+    const result = await closeDays(
+      suggestions.map((holiday) => ({ date: holiday.date, reason: holiday.name }))
+    );
+    if (result.error) {
+      toast.error(result.error);
+      return false;
+    }
+    toast.success(
+      `${result.closed} public ${result.closed === 1 ? "holiday" : "holidays"} closed. ${describeClosureOutcome(result)}`
+    );
+    onClosedAll();
+    return true;
   }
 
   return (
@@ -784,10 +765,7 @@ function HolidaySuggestions({ suggestions, onCloseOne, onClosedAll }: HolidaySug
         </>
       )}
 
-      <AlertDialog
-        open={confirmAll}
-        onOpenChange={(open) => !isPending && setConfirmAll(open)}
-      >
+      <AlertDialog open={confirmAll} onOpenChange={setConfirmAll}>
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -813,16 +791,8 @@ function HolidaySuggestions({ suggestions, onCloseOne, onClosedAll }: HolidaySug
             ))}
           </ul>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={(e) => {
-                e.preventDefault();
-                handleCloseAll();
-              }}
-              disabled={isPending}
-            >
-              {isPending && <RiLoader4Line className="size-4 animate-spin" />}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onConfirm={handleCloseAll}>
               Close all {suggestions.length}
             </AlertDialogAction>
           </AlertDialogFooter>

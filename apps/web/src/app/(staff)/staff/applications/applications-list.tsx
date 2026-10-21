@@ -21,7 +21,8 @@ import {
   RiFileListLine,
   RiLoader4Line,
 } from "@remixicon/react";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
+import { formatTimestamp } from "@/lib/format";
 import {
   getApplicationsList,
   type ApplicationListItem,
@@ -107,7 +108,7 @@ export function ApplicationsList({ initialApplications, initialSort }: Applicati
             aria-hidden
           />
           <Input
-            placeholder="Search by name or email..."
+            placeholder="Search by name or email…"
             aria-label="Search applications by name or email"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
@@ -137,7 +138,7 @@ export function ApplicationsList({ initialApplications, initialSort }: Applicati
       {isPending && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <RiLoader4Line className="size-4 animate-spin" aria-hidden />
-          Loading...
+          Loading…
         </div>
       )}
 
@@ -208,7 +209,7 @@ export function ApplicationsList({ initialApplications, initialSort }: Applicati
                         <StatusBadge status={app.status} />
                       </TableCell>
                       <TableCell className="tnum text-right text-muted-foreground">
-                        {format(app.submittedAt, "d MMM yyyy")}
+                        {formatTimestamp(app.submittedAt)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Link

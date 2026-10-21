@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldControl, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -135,23 +136,18 @@ export function OfflineVolunteerForm({ serviceAreas, values }: OfflineVolunteerF
               Who they are
             </h2>
 
-            <div className="space-y-2">
-              <Label htmlFor="ov-name">Full name</Label>
-              <Input
-                id="ov-name"
-                value={fields.name}
-                onChange={set("name")}
-                autoComplete="off"
-                aria-invalid={nameError ? true : undefined}
-                aria-describedby={nameError ? "ov-name-error" : undefined}
-                disabled={isPending}
-              />
-              {nameError && (
-                <p id="ov-name-error" className="text-sm text-destructive">
-                  {nameError}
-                </p>
-              )}
-            </div>
+            <Field id="ov-name" error={nameError}>
+              <FieldLabel>Full name</FieldLabel>
+              <FieldControl>
+                <Input
+                  value={fields.name}
+                  onChange={set("name")}
+                  autoComplete="off"
+                  disabled={isPending}
+                />
+              </FieldControl>
+              <FieldError />
+            </Field>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -178,23 +174,23 @@ export function OfflineVolunteerForm({ serviceAreas, values }: OfflineVolunteerF
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="ov-email">Email (optional)</Label>
-              <Input
-                id="ov-email"
-                type="email"
-                value={fields.email}
-                onChange={set("email")}
-                autoComplete="off"
-                aria-describedby="ov-email-hint"
-                disabled={isPending}
-              />
-              <p id="ov-email-hint" className="text-xs text-muted-foreground">
+            <Field id="ov-email">
+              <FieldLabel>Email (optional)</FieldLabel>
+              <FieldControl>
+                <Input
+                  type="email"
+                  value={fields.email}
+                  onChange={set("email")}
+                  autoComplete="off"
+                  disabled={isPending}
+                />
+              </FieldControl>
+              <FieldDescription>
                 Only if they have one. With an email on file they can start
                 using the app later, by choosing &ldquo;Forgot password&rdquo;
                 on the sign-in page.
-              </p>
-            </div>
+              </FieldDescription>
+            </Field>
 
             <div className="space-y-2">
               <Label htmlFor="ov-address">Address (optional)</Label>
@@ -241,7 +237,7 @@ export function OfflineVolunteerForm({ serviceAreas, values }: OfflineVolunteerF
                 id="ov-ec-rel"
                 value={fields.emergencyContactRelationship}
                 onChange={set("emergencyContactRelationship")}
-                placeholder="Daughter, neighbour..."
+                placeholder="Daughter, neighbour…"
                 autoComplete="off"
                 disabled={isPending}
               />
@@ -335,7 +331,7 @@ export function OfflineVolunteerForm({ serviceAreas, values }: OfflineVolunteerF
               value={fields.bio}
               onChange={set("bio")}
               rows={3}
-              placeholder="Best way to reach them, the shift they always do..."
+              placeholder="Best way to reach them, the shift they always do…"
               disabled={isPending}
             />
             <p className="text-xs text-muted-foreground">

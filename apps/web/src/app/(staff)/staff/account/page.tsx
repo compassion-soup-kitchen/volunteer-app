@@ -13,7 +13,7 @@ import { AccountDetailsForm } from "./account-details-form";
 import { ChangePasswordForm } from "./change-password-form";
 
 export const metadata: Metadata = {
-  title: "My Account | Te Pūaroha",
+  title: "My account | Te Pūaroha",
 };
 
 const ROLE_LABELS: Record<string, string> = {

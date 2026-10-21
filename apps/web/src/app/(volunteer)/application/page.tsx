@@ -21,7 +21,7 @@ import { IconChip } from "@/components/brand/icon-chip";
 import { StatusBadge } from "@/components/brand/status-badge";
 
 export const metadata: Metadata = {
-  title: "Volunteer Application | Te Pūaroha",
+  title: "Volunteer application | Te Pūaroha",
 };
 
 const STATUS_CONFIG = {

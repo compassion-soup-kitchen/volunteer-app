@@ -39,7 +39,6 @@ import {
   RiDeleteBinLine,
   RiDoorClosedLine,
   RiEyeLine,
-  RiLoader4Line,
   RiLockLine,
   RiMoreLine,
   RiPencilLine,
@@ -110,18 +109,17 @@ export function StaffShiftWeek({
     (day) => !gapsOnly || day.shifts.length > 0
   );
 
-  async function handleDelete() {
-    if (!deleteTarget) return;
+  async function handleDelete(target: StaffShift): Promise<boolean> {
     setIsDeleting(true);
-    const result = await deleteShift(deleteTarget.id);
+    const result = await deleteShift(target.id);
+    setIsDeleting(false);
     if (result.error) {
       toast.error(result.error);
-    } else {
-      toast.success("Shift deleted.");
-      refresh();
+      return false;
     }
-    setIsDeleting(false);
-    setDeleteTarget(null);
+    toast.success("Shift deleted.");
+    refresh();
+    return true;
   }
 
   return (
@@ -251,17 +249,13 @@ export function StaffShiftWeek({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
+              onConfirm={() => (deleteTarget ? handleDelete(deleteTarget) : false)}
               variant="destructive"
             >
-              {isDeleting ? (
-                <RiLoader4Line className="mr-2 size-4 animate-spin" />
-              ) : (
-                <RiDeleteBinLine className="mr-2 size-4" />
-              )}
+              {/* The action shows its own spinner while the delete runs. */}
+              {!isDeleting && <RiDeleteBinLine className="mr-2 size-4" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

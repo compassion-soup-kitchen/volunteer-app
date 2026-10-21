@@ -35,6 +35,7 @@ import {
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { documentTypeLabel } from "@/lib/document-labels";
+import { formatTimestamp } from "@/lib/format";
 import {
   uploadDocument,
   deleteDocument,
@@ -62,7 +63,6 @@ const TYPE_VARIANTS: Record<
 
 export function FileManager({ documents }: { documents: UploadedDocument[] }) {
   const [uploading, startUpload] = useTransition();
-  const [, startDelete] = useTransition();
   const [downloading, setDownloading] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [docType, setDocType] = useState("POLICY");
@@ -100,21 +100,15 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
     });
   }
 
-  function handleDelete(id: string, fileName: string) {
-    setDeletingId(null);
-    startDelete(async () => {
-      try {
-        const result = await deleteDocument(id);
-        if (result?.error) {
-          toast.error(result.error);
-          return;
-        }
-        toast.success(`"${fileName}" deleted.`);
-      } catch (err) {
-        console.error("Document delete failed:", err);
-        toast.error("Something went wrong. Please try again.");
-      }
-    });
+  // A throw is logged and toasted by the confirm dialog itself.
+  async function handleDelete(id: string, fileName: string): Promise<boolean> {
+    const result = await deleteDocument(id);
+    if (result?.error) {
+      toast.error(result.error);
+      return false;
+    }
+    toast.success(`"${fileName}" deleted.`);
+    return true;
   }
 
   async function handleDownload(id: string, fileName: string) {
@@ -194,7 +188,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                 hint={
                   pendingFile
                     ? "Drop another to replace it"
-                    : `PDF, Word, or image — up to ${formatFileSize(MAX_UPLOAD_BYTES)}`
+                    : `PDF, Word, or image - up to ${formatFileSize(MAX_UPLOAD_BYTES)}`
                 }
                 onFilesAccepted={([file]) => setPendingFile(file)}
               />
@@ -227,11 +221,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                 fileName={doc.fileName}
                 meta={
                   <>
-                    {new Date(doc.uploadedAt).toLocaleDateString("en-NZ", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {formatTimestamp(doc.uploadedAt)}
                     {doc.uploadedByName && ` · ${doc.uploadedByName}`}
                   </>
                 }
@@ -283,7 +273,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             variant="destructive"
-                            onClick={() => handleDelete(doc.id, doc.fileName)}
+                            onConfirm={() => handleDelete(doc.id, doc.fileName)}
                           >
                             Delete
                           </AlertDialogAction>

@@ -5,7 +5,7 @@ import { TrainingTypeManager } from "./training-type-manager";
 import { PageHeader } from "@/components/brand/page-header";
 
 export const metadata: Metadata = {
-  title: "Training Types | Te Pūaroha Staff",
+  title: "Training types | Te Pūaroha",
 };
 
 // Coordinators schedule the training, so unlike service areas (admin-only) they
@@ -20,7 +20,7 @@ export default async function TrainingTypesPage() {
         backHref="/staff/training"
         eyebrow="Ngā momo · Training types"
         title="Training types"
-        description="The kinds of training you run — rename them, add your own, or retire the ones you've moved on from"
+        description="The kinds of training you run - rename them, add your own, or retire the ones you've moved on from"
       />
       <TrainingTypeManager initialTypes={trainingTypes} />
     </div>

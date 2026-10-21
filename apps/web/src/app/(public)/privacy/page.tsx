@@ -18,7 +18,7 @@ import { SectionHeading } from "@/components/brand/section-heading";
 import { Wordmark } from "@/components/brand/wordmark";
 
 export const metadata: Metadata = {
-  title: "Privacy Statement | Te Pūaroha",
+  title: "Privacy statement | Te Pūaroha",
   description:
     "How Compassion Soup Kitchen (Te Pūaroha) collects, uses, and looks after volunteers' personal information under the NZ Privacy Act 2020.",
 };
@@ -117,7 +117,7 @@ export default function PrivacyPage() {
         <div className="mt-14 space-y-12">
           <Section title="Who we are">
             <P>
-              Compassion Soup Kitchen — Te Pūaroha — is a registered charity
+              Compassion Soup Kitchen - Te Pūaroha - is a registered charity
               (CC 10246) that has served the Wellington community since 1901.
               The volunteer app is how our whānau of volunteers applies, signs
               up for shifts, completes training, and stays connected with the
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
                 <>
                   <strong className="font-medium text-foreground">Your account.</strong>{" "}
                   Your name and email address, and a password if you create one
-                  (we store it securely hashed — we can never read it). If you
+                  (we store it securely hashed - we can never read it). If you
                   sign in with Google, we receive your name and email address
                   from Google, and nothing more.
                 </>,
@@ -148,8 +148,8 @@ export default function PrivacyPage() {
                   <strong className="font-medium text-foreground">Police vetting status.</strong>{" "}
                   Because our volunteers work alongside people who may be
                   vulnerable, volunteering involves Ministry of Justice vetting.
-                  We record only the status of your vetting — for example
-                  submitted or cleared — not the underlying records.
+                  We record only the status of your vetting - for example
+                  submitted or cleared - not the underlying records.
                 </>,
                 <>
                   <strong className="font-medium text-foreground">Your mahi.</strong>{" "}
@@ -176,10 +176,10 @@ export default function PrivacyPage() {
             <P>Everything we collect has a practical purpose:</P>
             <List
               items={[
-                "To run the volunteer programme — reviewing applications, rostering shifts, and recording training.",
-                "To keep everyone safe — police vetting, and knowing who to call if something happens while you're on shift.",
-                "To recognise your contribution — tracking the hours and aroha you give.",
-                "To stay in touch — announcements, shift reminders, and updates from the kitchen.",
+                "To run the volunteer programme - reviewing applications, rostering shifts, and recording training.",
+                "To keep everyone safe - police vetting, and knowing who to call if something happens while you're on shift.",
+                "To recognise your contribution - tracking the hours and aroha you give.",
+                "To stay in touch - announcements, shift reminders, and updates from the kitchen.",
                 "To meet our legal obligations as a charity working with vulnerable people.",
               ]}
             />
@@ -209,7 +209,7 @@ export default function PrivacyPage() {
           <Section title="Where it lives">
             <P>
               Your information is stored on the organisation&apos;s own
-              self-hosted infrastructure — not scattered across third-party
+              self-hosted infrastructure - not scattered across third-party
               marketing or analytics platforms. Access is restricted to
               authorised staff accounts, passwords are stored hashed, and
               uploaded documents are held in private storage that isn&apos;t
@@ -235,7 +235,7 @@ export default function PrivacyPage() {
               Under the Privacy Act 2020 you have the right to ask us for a
               copy of the personal information we hold about you, and to ask us
               to correct anything that&apos;s wrong. You can see and update
-              most of your details yourself on your profile in the app — and
+              most of your details yourself on your profile in the app - and
               for anything else, just ask and we&apos;ll help.
             </P>
             <P>
@@ -260,7 +260,7 @@ export default function PrivacyPage() {
               general email so it reads complete. */}
           <Section title="Questions?">
             <P>
-              Kōrero mai — talk to us. If you have any questions about your
+              Kōrero mai - talk to us. If you have any questions about your
               information, or want to see or correct what we hold, contact the
               coordinator team at the kitchen or email{" "}
               <a

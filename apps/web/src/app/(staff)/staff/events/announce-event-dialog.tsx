@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FormAlert } from "@/components/form-alert";
 import { createAnnouncement } from "@/lib/announcement-actions";
 import {
   ANNOUNCEMENT_BODY_MAX,
@@ -74,7 +75,7 @@ export function AnnounceEventDialog({
         // The event's title is already in hand, so the coordinator can still
         // write the pānui themselves rather than staring at a spinner.
         console.error("Could not draft the event announcement:", err);
-        if (current) toast.error("Couldn't write a draft — please write your own.");
+        if (current) toast.error("Couldn't write a draft - please write your own.");
       })
       .finally(() => {
         if (current) setLoading(false);
@@ -102,7 +103,7 @@ export function AnnounceEventDialog({
       return;
     }
     toast.success(
-      publish ? "Pānui sent — everyone will hear about it." : "Draft pānui saved."
+      publish ? "Pānui sent - everyone will hear about it." : "Draft pānui saved."
     );
     onOpenChange(false);
     onSent();
@@ -169,7 +170,7 @@ export function AnnounceEventDialog({
               </p>
             </div>
 
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {error ? <FormAlert>{error}</FormAlert> : null}
           </div>
         )}
 

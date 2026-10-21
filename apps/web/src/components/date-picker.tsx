@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -8,10 +9,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useFieldLabelId } from "@/components/ui/field";
 import { RiCalendarLine } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 
-interface DatePickerProps {
+interface DatePickerProps
+  extends Pick<
+    ComponentProps<"button">,
+    "aria-invalid" | "aria-describedby" | "aria-required"
+  > {
   value: Date | undefined;
   onChange: (date: Date | undefined) => void;
   id?: string;
@@ -31,7 +37,15 @@ export function DatePicker({
   disabled,
   fromDate,
   toDate,
+  // Not "aria-required": a button can't take it, so the field's label says so.
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
 }: DatePickerProps) {
+  // Inside a Field, name the button by its label *and* the chosen day, which
+  // a `<label for>` alone would replace.
+  const labelId = useFieldLabelId();
+  const valueId = id ? `${id}-value` : undefined;
+
   // react-day-picker v10 removed `fromDate`/`toDate`. Translate our range into
   // navigation/dropdown bounds (`startMonth`/`endMonth`) plus `disabled`
   // matchers so out-of-range days stay visible but unselectable.
@@ -45,15 +59,21 @@ export function DatePicker({
       <PopoverTrigger asChild>
         <Button
           id={id}
+          type="button"
           variant="outline"
           disabled={disabled}
+          aria-labelledby={labelId && valueId ? `${labelId} ${valueId}` : undefined}
+          aria-invalid={ariaInvalid}
+          aria-describedby={ariaDescribedBy}
           className={cn(
             "w-full justify-start text-left font-normal",
             !value && "text-muted-foreground"
           )}
         >
           <RiCalendarLine className="size-4 text-muted-foreground" />
-          {value ? format(value, "d MMMM yyyy") : placeholder}
+          <span id={valueId}>
+            {value ? format(value, "d MMMM yyyy") : placeholder}
+          </span>
         </Button>
       </PopoverTrigger>
       {/*

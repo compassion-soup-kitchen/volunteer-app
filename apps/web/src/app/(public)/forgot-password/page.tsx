@@ -4,7 +4,7 @@ import { AuthShell } from "../auth-shell";
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export const metadata: Metadata = {
-  title: "Forgot Password | Te Pūaroha",
+  title: "Forgot password | Te Pūaroha",
   description:
     "Request a password reset link for your Compassion Soup Kitchen volunteer account.",
 };
@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
     <AuthShell
       eyebrow="Kia ora · It happens"
       title="Forgot your password?"
-      subtitle="No worries — tell us your email and we'll send you a link to choose a new one."
+      subtitle="No worries - tell us your email and we'll send you a link to choose a new one."
       footer={
         <>
           Remembered it?{" "}

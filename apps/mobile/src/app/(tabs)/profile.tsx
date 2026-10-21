@@ -218,14 +218,14 @@ export default function ProfileScreen() {
           {/* Leave — the one thing on this screen that changes the roster */}
           {user && offersLeave({ role: user.role, onboarding: isOnboarding(data.status) }) ? (
             <View style={{ gap: Spacing.lg }}>
-              <SectionHeader overline="Wā okioki · Leave" title="Going away?" divider />
+              <SectionHeader overline="Wā okioki" title="Going away?" divider />
               <LeaveSummary onPress={() => router.push('/leave')} />
             </View>
           ) : null}
 
           {/* Your details — the reachability + safety data the kitchen relies on */}
           <View style={{ gap: Spacing.lg }}>
-            <SectionHeader overline="Whakapā mai · Reach me" title="Your details" divider />
+            <SectionHeader overline="Whakapā mai" title="Your details" divider />
             <Card style={{ gap: Spacing.lg }}>
               {data.phone ? <DetailRow icon="call-outline" label="Phone" value={data.phone} /> : null}
               {data.phone && data.address ? <Divider /> : null}
@@ -240,7 +240,7 @@ export default function ProfileScreen() {
 
           {/* Emergency contact — safety-critical, kept its own clearly-flagged block */}
           <View style={{ gap: Spacing.lg }}>
-            <SectionHeader overline="Pāpātanga ohotata · Emergency" title="In case of emergency" divider />
+            <SectionHeader overline="Pāpātanga ohotata" title="In case of emergency" divider />
             <Card style={{ gap: Spacing.lg }}>
               {data.emergencyContactName ? (
                 <>
@@ -276,7 +276,7 @@ export default function ProfileScreen() {
           {/* Where I help — service areas, colour-coded to aid rostering */}
           {data.interests.length > 0 ? (
             <View style={{ gap: Spacing.lg }}>
-              <SectionHeader overline="Ngā wāhanga · Service" title="Where I help" divider />
+              <SectionHeader overline="Ngā wāhanga" title="Where I help" divider />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
                 {data.interests.map((area) => (
                   <AreaPill key={area.id} area={area} />
@@ -289,7 +289,7 @@ export default function ProfileScreen() {
           {data.trainingHistory.length > 0 ? (
             <View style={{ gap: Spacing.lg }}>
               <SectionHeader
-                overline="Kua oti · Completed"
+                overline="Kua oti"
                 title="Credentials"
                 divider
               />
@@ -300,7 +300,7 @@ export default function ProfileScreen() {
           {/* About me — the softer, social note, kept low in the hierarchy */}
           {data.bio || data.skills.length > 0 ? (
             <View style={{ gap: Spacing.lg }}>
-              <SectionHeader overline="Ko wai au · About" title="About me" divider />
+              <SectionHeader overline="Ko wai au" title="About me" divider />
               <Card style={{ gap: Spacing.md }}>
                 {data.bio ? <Text variant="body">{data.bio}</Text> : null}
                 {data.bio && data.skills.length > 0 ? <Divider /> : null}

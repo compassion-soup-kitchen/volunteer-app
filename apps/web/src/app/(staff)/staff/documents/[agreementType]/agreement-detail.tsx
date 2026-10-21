@@ -45,6 +45,7 @@ import {
 } from "@/lib/document-actions";
 import type { AgreementTemplateInput } from "@/lib/agreement-templates";
 import { agreementLabel } from "@/lib/agreement-labels";
+import { formatTimestamp } from "@/lib/format";
 import { AgreementFields } from "../agreement-fields";
 
 function initials(name: string) {
@@ -56,14 +57,6 @@ function initials(name: string) {
       .map((part) => part[0]!.toUpperCase())
       .join("") || "?"
   );
-}
-
-function formatDate(value: Date | string) {
-  return new Date(value).toLocaleDateString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
@@ -94,19 +87,17 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
     });
   }
 
-  function handleAskEveryoneAgain() {
-    startTransition(async () => {
-      await setAgreementReAckRequired(detail.agreementType, true);
-      toast.success("Everyone has been asked to confirm this again");
-    });
+  async function handleAskEveryoneAgain(): Promise<boolean> {
+    await setAgreementReAckRequired(detail.agreementType, true);
+    toast.success("Everyone has been asked to confirm this again");
+    return true;
   }
 
-  function handleArchive(archived: boolean) {
-    startTransition(async () => {
-      await setAgreementArchived(detail.agreementType, archived);
-      toast.success(archived ? "Agreement retired" : "Agreement restored");
-      if (archived) router.push("/staff/documents");
-    });
+  async function handleArchive(archived: boolean): Promise<boolean> {
+    await setAgreementArchived(detail.agreementType, archived);
+    toast.success(archived ? "Agreement retired" : "Agreement restored");
+    if (archived) router.push("/staff/documents");
+    return true;
   }
 
   const signedOutdated = detail.volunteers.filter(
@@ -131,7 +122,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             )}
           </CardTitle>
           <CardDescription>
-            Version {detail.version} · Updated {formatDate(detail.updatedAt)} ·{" "}
+            Version {detail.version} · Updated {formatTimestamp(detail.updatedAt)} ·{" "}
             {detail.requiresSignature
               ? "Tick and signature"
               : "Tick to confirm"}
@@ -219,7 +210,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
             <CardTitle>Managing this agreement</CardTitle>
             <CardDescription>
               {detail.requiresReAck && detail.reAckSetAt
-                ? `Everyone was asked to confirm again on ${formatDate(detail.reAckSetAt)}. ${awaiting.length} still to do.`
+                ? `Everyone was asked to confirm again on ${formatTimestamp(detail.reAckSetAt)}. ${awaiting.length} still to do.`
                 : "Volunteers confirm an agreement once. Ask again when the wording changes in a way they need to see."}
             </CardDescription>
           </CardHeader>
@@ -245,7 +236,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleAskEveryoneAgain}>
+                    <AlertDialogAction onConfirm={handleAskEveryoneAgain}>
                       Ask everyone
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -257,7 +248,11 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleArchive(false)}
+                onClick={() =>
+                  startTransition(async () => {
+                    await handleArchive(false);
+                  })
+                }
                 disabled={isPending}
               >
                 <RiInboxUnarchiveLine className="size-3.5" />
@@ -283,7 +278,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleArchive(true)}>
+                    <AlertDialogAction onConfirm={() => handleArchive(true)}>
                       Retire agreement
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -364,7 +359,7 @@ export function AgreementDetailView({ detail }: { detail: AgreementDetail }) {
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {vol.signedAt
-                      ? `Confirmed ${formatDate(vol.signedAt)}`
+                      ? `Confirmed ${formatTimestamp(vol.signedAt)}`
                       : vol.userEmail}
                   </p>
                 </div>

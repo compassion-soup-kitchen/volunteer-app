@@ -528,7 +528,7 @@ export async function getVolunteerExportData(
       hours += calcHours(s.shift.startTime, s.shift.endTime);
     }
     return {
-      name: v.user.name || "—",
+      name: v.user.name || "-",
       email: v.user.email,
       status: v.status,
       mojStatus: v.mojStatus,

@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { DetailSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
-  title: "Agreement Detail | Te Pūaroha Staff",
+  title: "Agreement details | Te Pūaroha",
 };
 
 async function DetailContent({

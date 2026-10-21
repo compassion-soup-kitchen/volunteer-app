@@ -6,7 +6,7 @@ import { getVolunteerProfile } from "@/lib/application-actions";
 import { ProfileEditForm } from "../profile-edit-form";
 
 export const metadata: Metadata = {
-  title: "Edit Profile | Te Pūaroha",
+  title: "Edit profile | Te Pūaroha",
 };
 
 export default async function EditProfilePage() {
