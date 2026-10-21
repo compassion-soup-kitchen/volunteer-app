@@ -443,12 +443,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Button
                       size="sm"
-                      variant={signup.status === "ATTENDED" ? "secondary" : "outline"}
-                      className={
-                        signup.status === "ATTENDED"
-                          ? "bg-success-tint text-success-tint-foreground hover:bg-success-tint/80"
-                          : undefined
-                      }
+                      variant={signup.status === "ATTENDED" ? "success-tint" : "outline"}
                       aria-pressed={signup.status === "ATTENDED"}
                       disabled={isPending && markingId === signup.id}
                       onClick={() =>
@@ -464,12 +459,7 @@ export function ShiftDetailView({ shift, volunteers, away }: ShiftDetailViewProp
                     </Button>
                     <Button
                       size="sm"
-                      variant={signup.status === "NO_SHOW" ? "secondary" : "outline"}
-                      className={
-                        signup.status === "NO_SHOW"
-                          ? "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80"
-                          : undefined
-                      }
+                      variant={signup.status === "NO_SHOW" ? "destructive-tint" : "outline"}
                       aria-pressed={signup.status === "NO_SHOW"}
                       disabled={isPending && markingId === signup.id}
                       onClick={() =>

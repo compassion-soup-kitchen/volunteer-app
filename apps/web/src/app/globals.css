@@ -56,6 +56,7 @@
   --color-ink-foreground: var(--ink-foreground);
   --color-ink-muted-foreground: var(--ink-muted-foreground);
   --color-paper: var(--paper);
+  --color-overlay: var(--overlay);
 
   /* Semantic status pairs — solid + tinted pill (bg/fg tuned per theme for AA) */
   --color-success: var(--success);
@@ -132,6 +133,7 @@
   --ink-foreground: #fbf7f2;
   --ink-muted-foreground: rgb(251 247 242 / 0.66);
   --paper: #fbf7f2;
+  --overlay: rgb(28 24 21 / 0.4); /* modal scrim - cocoa, so the page dims warm */
 
   --success: #1b7a4b;
   --success-foreground: #ffffff;
@@ -214,6 +216,7 @@
   --ink-foreground: #fbf7f2;
   --ink-muted-foreground: rgb(251 247 242 / 0.66);
   --paper: #fbf7f2; /* fixed brand paper across themes */
+  --overlay: rgb(0 0 0 / 0.6);
 
   --success: #56b585;
   --success-foreground: #0a2318;

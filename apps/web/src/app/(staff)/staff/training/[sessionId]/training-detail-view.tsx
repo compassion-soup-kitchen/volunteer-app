@@ -296,12 +296,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Button
                       size="sm"
-                      variant={attendance.status === "ATTENDED" ? "secondary" : "outline"}
-                      className={
-                        attendance.status === "ATTENDED"
-                          ? "bg-success-tint text-success-tint-foreground hover:bg-success-tint/80"
-                          : undefined
-                      }
+                      variant={attendance.status === "ATTENDED" ? "success-tint" : "outline"}
                       aria-pressed={attendance.status === "ATTENDED"}
                       disabled={isPending && markingId === attendance.id}
                       onClick={() =>
@@ -317,12 +312,7 @@ export function TrainingDetailView({ session }: TrainingDetailViewProps) {
                     </Button>
                     <Button
                       size="sm"
-                      variant={attendance.status === "NO_SHOW" ? "secondary" : "outline"}
-                      className={
-                        attendance.status === "NO_SHOW"
-                          ? "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80"
-                          : undefined
-                      }
+                      variant={attendance.status === "NO_SHOW" ? "destructive-tint" : "outline"}
                       aria-pressed={attendance.status === "NO_SHOW"}
                       disabled={isPending && markingId === attendance.id}
                       onClick={() =>

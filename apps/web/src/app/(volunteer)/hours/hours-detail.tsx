@@ -30,13 +30,15 @@ interface HoursDetailProps {
   data: VolunteerHoursData;
 }
 
-/** Row accent rotation for the area ledger: icon tone + matching bar colour. */
+/**
+ * Row accent rotation for the area ledger: an icon tone and the chart colour
+ * of the same hue (red, ochre, cocoa, green), so a row's chip and bar match.
+ */
 const AREA_ACCENTS = [
   { tone: "brand", bar: "bg-chart-1" },
-  { tone: "info", bar: "bg-chart-2" },
-  { tone: "warning", bar: "bg-chart-3" },
+  { tone: "warning", bar: "bg-chart-2" },
+  { tone: "neutral", bar: "bg-chart-3" },
   { tone: "success", bar: "bg-chart-4" },
-  { tone: "neutral", bar: "bg-chart-5" },
 ] as const;
 
 export function HoursDetail({ data }: HoursDetailProps) {

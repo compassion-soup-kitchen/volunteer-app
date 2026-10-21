@@ -21,6 +21,11 @@ const buttonVariants = cva(
           "font-medium hover:bg-secondary/60 hover:text-foreground aria-expanded:bg-secondary aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        // Tinted answers that stay chosen, e.g. attendance: Attended / No show.
+        "success-tint":
+          "bg-success-tint text-success-tint-foreground hover:bg-success-tint/80",
+        "destructive-tint":
+          "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
