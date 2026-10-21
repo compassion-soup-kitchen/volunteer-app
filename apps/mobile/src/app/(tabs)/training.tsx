@@ -160,7 +160,9 @@ export default function TrainingScreen() {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: Spacing.sm, paddingVertical: 2, paddingRight: Spacing.lg }}>
+                  // 3pt above and below makes the scroller 44pt, so each chip's hitSlop
+                  // lands inside it: a ScrollView clips touches at its edges.
+                  contentContainerStyle={{ gap: Spacing.sm, paddingVertical: 3, paddingRight: Spacing.lg }}>
                   <Chip label="All" selected={typeFilter === null} onPress={() => setTypeFilter(null)} />
                   {browseTypes.map((t) => (
                     <Chip

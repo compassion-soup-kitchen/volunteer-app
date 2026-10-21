@@ -34,6 +34,8 @@ function Segmented({ value, onChange }: { value: 'upcoming' | 'past'; onChange: 
             onPress={() => onChange(o.key)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
+            // Reaches into the track's padding to make a 44pt target.
+            hitSlop={{ top: 4, bottom: 4 }}
             style={{
               flex: 1,
               paddingVertical: 9,

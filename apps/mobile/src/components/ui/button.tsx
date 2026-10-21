@@ -20,6 +20,7 @@ import {
   type GestureResponderEvent,
   Pressable,
   type PressableProps,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -80,6 +81,13 @@ function palette(variant: Variant, c: ColorTokens) {
   }
 }
 
+/**
+ * Roughly how much taller a SwiftUI button label gets per step of Dynamic
+ * Type: one line of body text. The glass styles pad their labels differently,
+ * so the Host keeps a fixed height and grows by this as the text scales.
+ */
+const BODY_LINE = 22;
+
 /** SwiftUI button style + tint per variant — the authentic iOS 26 Liquid Glass controls. */
 function swiftStyle(
   variant: Variant
@@ -103,6 +111,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const { colors } = useTheme();
+  const { fontScale } = useWindowDimensions();
 
   function fireHaptic() {
     if (haptic && process.env.EXPO_OS === "ios") {
@@ -124,7 +133,9 @@ export function Button({
         : variant === "secondary"
         ? undefined
         : colors.primary;
-    const h = size === "lg" ? 54 : 44;
+    // Grows with Dynamic Type so a larger label isn't clipped; never shrinks
+    // below the resting height (or a 44pt target) at the smaller text sizes.
+    const h = (size === "lg" ? 54 : 44) + BODY_LINE * Math.max(0, fontScale - 1);
     const modifiers = [
       buttonStyle(swiftStyle(variant)),
       controlSize(size === "lg" ? "large" : "regular"),
@@ -187,8 +198,9 @@ export function Button({
       onPress={handlePress}
       style={({ pressed }) => [
         {
-          height,
-          minHeight: 44,
+          // A floor, so larger Dynamic Type sizes grow the button, not clip it.
+          minHeight: height,
+          paddingVertical: Spacing.sm,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
