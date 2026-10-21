@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { EventCard } from '@/components/event-card';
-import { Card, EmptyState, Screen, SectionHeader, SkeletonCard, Text } from '@/components/ui';
+import { Card, EmptyState, PageHeader, Screen, SectionHeader, SkeletonCard, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { formatShiftDate } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
@@ -26,15 +26,7 @@ export default function EventsScreen() {
       }}
       refreshing={upcoming.isRefetching}
       insetTop={false}>
-      <View style={{ gap: 4 }}>
-        <Text variant="overline" color="primary">
-          Ngā hui
-        </Text>
-        <Text variant="display">Come along</Text>
-        <Text variant="body" color="textSecondary">
-          Parties, hui and get-togethers for the whānau.
-        </Text>
-      </View>
+      <PageHeader overline="Ngā hui" title="Come along" subtitle="Parties, hui and get-togethers for the whānau." />
 
       {upcoming.isLoading ? (
         <View style={{ gap: Spacing.md }}>

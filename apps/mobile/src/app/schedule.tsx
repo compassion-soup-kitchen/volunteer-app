@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { DateBlock } from '@/components/date-block';
-import { Card, type CommitmentStatus, Icon, Screen, SkeletonCard, StatusBadge, Text } from '@/components/ui';
+import { Card, type CommitmentStatus, Icon, PageHeader, Screen, SkeletonCard, StatusBadge, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange } from '@/lib/format';
@@ -81,15 +81,7 @@ export default function ScheduleScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
-      <View style={{ gap: 4 }}>
-        <Text variant="overline" color="primary">
-          Taku wātaka
-        </Text>
-        <Text variant="display">My schedule</Text>
-        <Text variant="body" color="textSecondary">
-          Your booked shifts.
-        </Text>
-      </View>
+      <PageHeader overline="Taku wātaka" title="My schedule" subtitle="Your booked shifts." />
 
       <Segmented value={tab} onChange={setTab} />
 
