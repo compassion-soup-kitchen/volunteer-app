@@ -6,6 +6,7 @@ import { AuthScreen, AuthSwitch } from '@/components/auth/auth-screen';
 import { IdentityProviders } from '@/components/auth/identity-providers';
 import { Button, Card, Text, TextField } from '@/components/ui';
 import { Shadows, Spacing } from '@/constants/theme';
+import { useAnnounce } from '@/hooks/use-announce';
 import { useAuth } from '@/providers/auth-provider';
 
 export default function LoginScreen() {
@@ -14,6 +15,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  useAnnounce(error);
   const [loading, setLoading] = useState(false);
   const [providerBusy, setProviderBusy] = useState(false);
 

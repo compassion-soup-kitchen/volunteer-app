@@ -26,8 +26,10 @@ import {
   Text,
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useNoticesSeen } from '@/hooks/use-notices-seen';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange, relativeDay } from '@/lib/format';
+import { countUnread, noticesBellLabel } from '@/lib/notices';
 import { qk } from '@/lib/query-keys';
 import { openVenueDirections, VENUE } from '@/lib/venue';
 import { useAuth } from '@/providers/auth-provider';
@@ -62,11 +64,12 @@ function greeting(): string {
 
 /** Compact brand lockup with a notification bell that opens the notices feed. */
 function UtilityBar({
-  hasUnread,
+  unread,
   onNotices,
   onVideo = false,
 }: {
-  hasUnread: boolean;
+  /** Notices published since the feed was last opened */
+  unread: number;
   onNotices: () => void;
   /** Light treatment for sitting over the video header */
   onVideo?: boolean;
@@ -77,7 +80,7 @@ function UtilityBar({
       <Wordmark height={24} color={onVideo ? 'primaryForeground' : 'text'} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Notices"
+        accessibilityLabel={noticesBellLabel(unread)}
         onPress={onNotices}
         hitSlop={10}
         style={({ pressed }) => ({ opacity: pressed ? 0.55 : 1, padding: 2 })}>
@@ -87,7 +90,7 @@ function UtilityBar({
           color={onVideo ? undefined : 'textSecondary'}
           raw={onVideo ? colors.onMediaMuted : undefined}
         />
-        {hasUnread ? (
+        {unread > 0 ? (
           <View
             style={{
               position: 'absolute',
@@ -126,6 +129,13 @@ export default function DashboardScreen() {
   const rosterOverflow = data ? Math.max(0, data.upcomingShifts.length - 1) : 0;
   const notices = announcements ?? [];
   const topNotices = notices.slice(0, 2);
+  const noticesSeen = useNoticesSeen();
+  const unreadNotices = noticesSeen.loaded ? countUnread(notices, noticesSeen.lastSeenAt) : 0;
+  // Opening the feed is what reads them; a single notice opened from here doesn't.
+  const openNotices = () => {
+    noticesSeen.markSeen(notices);
+    router.push('/news');
+  };
   const unanswered = (events ?? [])
     .filter((event) => event.myResponse === null && canReply(event))
     .slice(0, 2);
@@ -136,7 +146,7 @@ export default function DashboardScreen() {
       refreshing={isRefetching}
       header={
         <HomeVideoHeader>
-          <UtilityBar onVideo hasUnread={notices.length > 0} onNotices={() => router.push('/news')} />
+          <UtilityBar onVideo unread={unreadNotices} onNotices={openNotices} />
 
           {/* Greeting — personal, floating on the footage */}
           <View>
@@ -244,7 +254,7 @@ export default function DashboardScreen() {
                 title="Notices"
                 divider
                 actionLabel={notices.length > topNotices.length ? 'All notices' : undefined}
-                onAction={notices.length > topNotices.length ? () => router.push('/news') : undefined}
+                onAction={notices.length > topNotices.length ? openNotices : undefined}
               />
               {topNotices.map((item) => (
                 <AnnouncementCard

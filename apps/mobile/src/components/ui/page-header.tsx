@@ -30,7 +30,11 @@ export function PageHeader({ overline, title, subtitle, right, illustration }: P
             style={{ position: 'absolute', right: -8, top: -20, opacity: 0.16 }}
           />
         ) : null}
-        <View style={{ flex: 1, gap: 4 }}>
+        <View
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel={overline ? `${overline}, ${title}` : title}
+          style={{ flex: 1, gap: 4 }}>
           {overline ? (
             <Text variant="overline" color="primary">
               {overline}

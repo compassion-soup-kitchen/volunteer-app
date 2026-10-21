@@ -1,3 +1,5 @@
+import { useIsFocused } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useState } from 'react';
 import {
   type LayoutChangeEvent,
@@ -7,8 +9,14 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import Animated, { useAnimatedRef, useAnimatedStyle, useScrollViewOffset } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useScrollViewOffset,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { Kowhaiwhai } from '@/components/brand';
 import { Layout, Spacing } from '@/constants/theme';
@@ -35,6 +43,9 @@ export type ScreenProps = {
    * A full-bleed hero rendered at the top of the page. It scrolls away with the
    * content like a normal banner, but holds its position on overscroll (pull-down)
    * for a parallax effect. See HomeVideoHeader.
+   *
+   * The hero is dark footage, so the status bar turns light while the hero sits
+   * under it, and back to the theme's once the page scrolls up past it.
    */
   header?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
@@ -78,6 +89,21 @@ export function Screen({
     transform: [{ translateY: Math.min(0, scrollOffset.value + insets.top) }],
   }));
 
+  // Light status bar over the hero. Measured to where the hero's bottom fade
+  // starts (the last quarter dissolves into the paper canvas), and only while
+  // this screen is focused: tab screens stay mounted when you switch away.
+  const focused = useIsFocused();
+  const [heroUnderStatusBar, setHeroUnderStatusBar] = useState(true);
+  useAnimatedReaction(
+    // Before the hero is measured it is at rest, so under the status bar.
+    () => headerHeight === 0 || scrollOffset.value + insets.top < headerHeight * 0.75,
+    (under, previous) => {
+      if (under !== previous) scheduleOnRN(setHeroUnderStatusBar, under);
+    },
+    [headerHeight, insets.top],
+  );
+  const heroStatusBar = header && focused && heroUnderStatusBar ? <StatusBar style="light" /> : null;
+
   const paddingTop = (insetTop ? insets.top : 0) + Spacing.sm;
   // Clear the home indicator AND the floating native tab bar (which overlays content on iOS 26).
   const paddingBottom = insets.bottom + Spacing.huge + Spacing.md + bottomInset;
@@ -119,6 +145,7 @@ export function Screen({
   if (!scroll) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
+        {heroStatusBar}
         {watermark}
         {heroHeader}
         {padded}
@@ -154,10 +181,18 @@ export function Screen({
     </Animated.ScrollView>
   );
 
-  if (!motif) return list;
+  if (!motif) {
+    return (
+      <>
+        {heroStatusBar}
+        {list}
+      </>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {heroStatusBar}
       {watermark}
       {list}
     </View>
