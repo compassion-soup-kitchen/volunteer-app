@@ -101,10 +101,10 @@ export function RegisterForm() {
           {pending ? (
             <>
               <RiLoader4Line className="size-4 animate-spin" />
-              Creating account...
+              Creating account…
             </>
           ) : (
-            "Create Account"
+            "Create account"
           )}
         </Button>
       </form>

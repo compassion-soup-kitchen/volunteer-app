@@ -396,7 +396,7 @@ export function ApplicationForm({ serviceAreas }: ApplicationFormProps) {
             {isPending ? (
               <>
                 <RiLoader4Line className="size-4 animate-spin" />
-                Submitting...
+                Submitting…
               </>
             ) : (
               <>
@@ -668,7 +668,7 @@ function StepSkills({
         <Label htmlFor="bio">About you</Label>
         <Textarea
           id="bio"
-          placeholder="Tell us a bit about yourself - why you'd like to volunteer, any experience you have, or anything else you'd like us to know..."
+          placeholder="Tell us a bit about yourself - why you'd like to volunteer, any experience you have, or anything else you'd like us to know…"
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           rows={4}
@@ -758,7 +758,7 @@ function StepAgreements({
             <li>Acting in the best interests of all tamariki (children) and vulnerable people</li>
             <li>Never being alone with a child or vulnerable person in an unsupervised setting</li>
             <li>Reporting any concerns about abuse or neglect to a coordinator immediately</li>
-            <li>Completing a Ministry of Justice (MOJ) check if required</li>
+            <li>Completing a Ministry of Justice (MoJ) check if required</li>
             <li>Maintaining appropriate boundaries with all people we serve</li>
             <li>Not using personal devices to photograph or record people we serve</li>
             <li>Understanding that breaches of this policy may result in immediate removal</li>

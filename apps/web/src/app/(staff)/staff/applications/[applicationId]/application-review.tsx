@@ -98,7 +98,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     }
 
     const labels = {
-      APPROVED: "Application approved — the volunteer can now sign up for shifts.",
+      APPROVED: "Application approved - the volunteer can now sign up for shifts.",
       DECLINED: "Application declined.",
       INFO_REQUESTED: "More information requested from applicant.",
     };
@@ -119,7 +119,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         toast.error(result.error);
         setMojStatus(application.volunteer.mojStatus);
       } else {
-        toast.success("MOJ status updated.");
+        toast.success("MoJ status updated.");
       }
     });
   }
@@ -358,7 +358,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add notes about this application..."
+              placeholder="Add notes about this application…"
               rows={4}
             />
           </CardContent>

@@ -13,7 +13,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { PersonAvatar } from "@/components/brand/person-avatar";
 
 export const metadata: Metadata = {
-  title: "News & Updates | Te Pūaroha",
+  title: "Notices | Te Pūaroha",
 };
 
 function formatNoticeDate(date: Date) {
@@ -33,7 +33,7 @@ export default async function NewsPage() {
     <div className="space-y-6">
       <PageHeader
         backHref="/dashboard"
-        eyebrow="Pānui · Notices"
+        eyebrow="Ngā pānui · Notices"
         title="From the kitchen team"
         description="Notices, newsletters and updates from your coordinators."
       />

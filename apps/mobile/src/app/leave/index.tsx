@@ -177,7 +177,7 @@ export default function LeaveScreen() {
           <Button title="Log leave" icon="add" onPress={() => edit()} />
 
           <View style={{ gap: Spacing.lg }}>
-            <SectionHeader overline="Kei mua · Ahead" title="Coming up" divider />
+            <SectionHeader overline="Kei mua" title="Coming up" divider />
             {ahead.length === 0 ? (
               <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xxl }}>
                 <IconChip icon="sunny-outline" tone="success" size={44} />
@@ -209,7 +209,7 @@ export default function LeaveScreen() {
 
           {data.past.length > 0 ? (
             <View style={{ gap: Spacing.lg }}>
-              <SectionHeader overline="Kua hipa · Past" title="Past leave" divider />
+              <SectionHeader overline="Kua hipa" title="Past leave" divider />
               <Card style={{ gap: Spacing.lg }}>
                 {data.past.map((entry, i) => (
                   <View key={entry.id} style={{ gap: Spacing.lg }}>

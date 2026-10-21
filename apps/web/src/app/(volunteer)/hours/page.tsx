@@ -59,8 +59,8 @@ export default function HoursPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Tō pānga · Your impact"
-        title="Your impact"
+        eyebrow="Tō pānga · Impact"
+        title="The good you've done"
         description="Every hour of mahi you've shared with the kitchen"
       />
 

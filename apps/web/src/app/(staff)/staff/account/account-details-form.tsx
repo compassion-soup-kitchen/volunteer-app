@@ -87,7 +87,7 @@ export function AccountDetailsForm({
           {pending ? (
             <>
               <RiLoader4Line className="size-4 animate-spin" />
-              Saving...
+              Saving…
             </>
           ) : (
             <>

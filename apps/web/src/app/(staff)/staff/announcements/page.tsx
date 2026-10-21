@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { AnnouncementsSkeleton } from "./skeleton";
 
 export const metadata: Metadata = {
-  title: "Announcements | Te Pūaroha Staff",
+  title: "Announcements | Te Pūaroha",
 };
 
 async function AnnouncementsContent() {

@@ -215,9 +215,11 @@ export function DeleteAccountCard() {
                 {deleting ? (
                   <>
                     <RiLoader4Line
-                       data-icon="inline-start" className="size-4 animate-spin"
-                      aria-hidden />
-                    Deleting...
+                      data-icon="inline-start"
+                      className="size-4 animate-spin"
+                      aria-hidden
+                    />
+                    Deleting…
                   </>
                 ) : (
                   <>

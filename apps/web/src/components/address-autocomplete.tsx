@@ -75,7 +75,7 @@ export function AddressAutocomplete({
   value,
   onChange,
   id = "address",
-  placeholder = "Start typing your address...",
+  placeholder = "Start typing your address…",
   disabled,
 }: AddressAutocompleteProps) {
   const [isReady, setIsReady] = useState(false);

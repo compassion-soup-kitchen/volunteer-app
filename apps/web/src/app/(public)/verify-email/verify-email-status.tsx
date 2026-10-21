@@ -72,7 +72,7 @@ export function VerifyEmailStatus({ token }: { token: string }) {
         {pending ? (
           <>
             <RiLoader4Line className="size-4 animate-spin" />
-            Confirming...
+            Confirming…
           </>
         ) : (
           "Confirm my email"

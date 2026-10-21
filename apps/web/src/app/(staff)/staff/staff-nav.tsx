@@ -75,7 +75,7 @@ export function StaffNav({
       ],
     },
     {
-      label: "Ngā mahi · Operations",
+      label: "Whakahaere · Operations",
       items: [
         { href: "/staff/calendar", label: "Calendar", icon: RiCalendar2Line },
         { href: "/staff/shifts", label: "Shifts", icon: RiCalendarLine },

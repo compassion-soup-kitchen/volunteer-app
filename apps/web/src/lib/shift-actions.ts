@@ -432,7 +432,7 @@ export async function updateShift(
     const booked = existing.signups.length;
     if (fields.capacity < booked) {
       return {
-        error: `${booked} volunteer${booked > 1 ? "s are" : " is"} already signed up — capacity can't go below that.`,
+        error: `${booked} volunteer${booked > 1 ? "s are" : " is"} already signed up - capacity can't go below that.`,
       };
     }
 
@@ -859,7 +859,7 @@ export async function deleteShift(
 
   if (activeSignups > 0) {
     return {
-      error: `Cannot delete — ${activeSignups} volunteer${activeSignups > 1 ? "s" : ""} still signed up. Cancel their signups first.`,
+      error: `Cannot delete - ${activeSignups} volunteer${activeSignups > 1 ? "s" : ""} still signed up. Cancel their signups first.`,
     };
   }
 

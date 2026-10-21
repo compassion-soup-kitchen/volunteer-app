@@ -204,7 +204,7 @@ export function DeleteUserDialog({
               {deleting ? (
                 <>
                   <RiLoader4Line data-icon="inline-start" className="size-4 animate-spin" aria-hidden />
-                  Deleting...
+                  Deleting…
                 </>
               ) : (
                 <>

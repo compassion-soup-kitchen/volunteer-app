@@ -22,7 +22,7 @@ import { StatusBadge } from "@/components/brand/status-badge";
 import { Eyebrow } from "@/components/brand/eyebrow";
 
 export const metadata: Metadata = {
-  title: "Volunteer Application | Te Pūaroha",
+  title: "Volunteer application | Te Pūaroha",
 };
 
 const STATUS_CONFIG = {

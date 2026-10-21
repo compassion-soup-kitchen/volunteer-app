@@ -172,7 +172,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
             {isPending ? (
               <>
                 <RiLoader4Line className="size-4 animate-spin" />
-                Saving...
+                Saving…
               </>
             ) : (
               <>
