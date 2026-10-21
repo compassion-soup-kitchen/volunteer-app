@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { getDocumentDownloadUrl } from "@/lib/document-actions";
 import { documentTypeLabel } from "@/lib/document-labels";
+import { formatTimestamp } from "@/lib/format";
 import type { VolunteerDetailDocument } from "@/lib/staff-actions";
 
 /**
@@ -77,11 +78,7 @@ export function VolunteerDocuments({
                   <p className="text-xs text-muted-foreground">
                     {documentTypeLabel(doc.type)}
                     {" · "}
-                    {new Date(doc.uploadedAt).toLocaleDateString("en-NZ", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {formatTimestamp(doc.uploadedAt)}
                     {doc.uploadedByName && ` · ${doc.uploadedByName}`}
                   </p>
                 </div>

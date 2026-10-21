@@ -22,7 +22,8 @@ import {
   RiFileListLine,
   RiLoader4Line,
 } from "@remixicon/react";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
+import { formatTimestamp } from "@/lib/format";
 import {
   getApplicationsList,
   type ApplicationListItem,
@@ -197,7 +198,7 @@ export function ApplicationsList({ initialApplications }: ApplicationsListProps)
                         <StatusBadge status={app.status} />
                       </TableCell>
                       <TableCell className="tnum text-right text-muted-foreground">
-                        {format(app.submittedAt, "d MMM yyyy")}
+                        {formatTimestamp(app.submittedAt)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Link

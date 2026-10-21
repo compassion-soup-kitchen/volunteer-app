@@ -36,6 +36,7 @@ import {
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { documentTypeLabel } from "@/lib/document-labels";
+import { formatTimestamp } from "@/lib/format";
 import {
   uploadDocument,
   deleteDocument,
@@ -227,11 +228,7 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
                 fileName={doc.fileName}
                 meta={
                   <>
-                    {new Date(doc.uploadedAt).toLocaleDateString("en-NZ", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {formatTimestamp(doc.uploadedAt)}
                     {doc.uploadedByName && ` · ${doc.uploadedByName}`}
                   </>
                 }

@@ -30,6 +30,14 @@ const appZoneParts = new Intl.DateTimeFormat("en-NZ", {
   day: "2-digit",
 });
 
+/** Time of day on the kitchen's clock, for `timeOfDayInAppZone`. */
+const appZoneTimeOfDay = new Intl.DateTimeFormat("en-NZ", {
+  timeZone: APP_TIME_ZONE,
+  hourCycle: "h23",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /** Wall-clock reading in the kitchen's timezone, used to measure its offset. */
 const appZoneClock = new Intl.DateTimeFormat("en-US", {
   timeZone: APP_TIME_ZONE,
@@ -180,6 +188,17 @@ export function timestampToDateOnly(at: Date): DateOnly {
   return todayInAppZone(at);
 }
 
+/**
+ * The time of day a real timestamp fell at in the kitchen's timezone, as the
+ * same `HH:mm` that shift times are stored in, so `formatTime` reads it back.
+ */
+export function timeOfDayInAppZone(at: Date): string {
+  const parts = appZoneTimeOfDay.formatToParts(at);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("hour")}:${get("minute")}`;
+}
+
 // ─── Calendar arithmetic ─────────────────────────────────
 //
 // Pure string maths on `YYYY-MM-DD`. No `Date` arithmetic, so no timezone can
@@ -273,11 +292,12 @@ export function formatDateOnly(
  * Formats a real timestamp — `createdAt`, `sentAt`, `signedAt` — as the date it
  * happened on in Wellington.
  *
- * The counterpart to `formatDateOnly`, and the one to reach for in a Server
- * Component: rendering a timestamp without a timezone uses the *server's*,
- * which in a UTC container shows the day before for the whole NZ morning.
- * Client components can format without this, since the browser is already on
- * the reader's clock.
+ * The counterpart to `formatDateOnly`. Rendering a timestamp without a
+ * timezone uses the *server's*, which in a UTC container shows the day before
+ * for the whole NZ morning. Client components are no exception: they render
+ * on the server first, so formatting on the reader's clock would also make the
+ * browser disagree with the HTML it hydrates. UI code reaches this through
+ * `formatTimestamp` in `@/lib/format`.
  */
 export function formatTimestampInAppZone(
   at: Date,

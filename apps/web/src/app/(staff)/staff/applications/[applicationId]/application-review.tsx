@@ -50,7 +50,11 @@ import {
   RiUserLine,
   RiHeartLine,
 } from "@remixicon/react";
-import { format } from "date-fns";
+import {
+  formatDateOfBirth,
+  formatTimestamp,
+  formatTimestampWithTime,
+} from "@/lib/format";
 import { agreementLabel } from "@/lib/agreement-labels";
 import { toast } from "sonner";
 import {
@@ -129,7 +133,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     {
       label: "Date of birth",
       value: vol.dateOfBirth
-        ? format(vol.dateOfBirth, "d MMMM yyyy")
+        ? formatDateOfBirth(vol.dateOfBirth)
         : "Not provided",
       icon: RiCalendarLine,
     },
@@ -281,7 +285,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                     {agreementLabel(a.agreementType)}
                   </span>
                   <span className="tnum shrink-0 text-xs text-muted-foreground">
-                    {format(a.signedAt, "d MMM yyyy")}
+                    {formatTimestamp(a.signedAt)}
                   </span>
                 </li>
               ))}
@@ -304,7 +308,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             <CardTitle>Application status</CardTitle>
             <CardDescription>
               Submitted{" "}
-              {format(application.submittedAt, "d MMM yyyy 'at' h:mm a")}
+              {formatTimestampWithTime(application.submittedAt)}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -313,7 +317,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             {application.reviewedAt && application.reviewedBy && (
               <p className="text-xs text-muted-foreground">
                 Reviewed by {application.reviewedBy.name} on{" "}
-                {format(application.reviewedAt, "d MMM yyyy")}
+                {formatTimestamp(application.reviewedAt)}
               </p>
             )}
           </CardContent>

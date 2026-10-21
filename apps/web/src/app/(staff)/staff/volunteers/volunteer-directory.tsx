@@ -55,10 +55,9 @@ import {
   RiGroupLine,
   RiFileUserLine,
 } from "@remixicon/react";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { contactLine } from "@/lib/format";
+import { contactLine, formatTimestamp } from "@/lib/format";
 import {
   getVolunteersList,
   updateVolunteerStatus,
@@ -608,7 +607,7 @@ export function VolunteerDirectory({
                         {vol._count.shiftSignups}
                       </TableCell>
                       <TableCell className="tnum text-right text-muted-foreground">
-                        {format(vol.createdAt, "d MMM yy")}
+                        {formatTimestamp(vol.createdAt)}
                       </TableCell>
                       <TableCell className="text-right">
                         <StatusMenu
@@ -712,7 +711,7 @@ export function VolunteerDirectory({
                     )}
 
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Joined {format(vol.createdAt, "d MMM yyyy")}
+                      Joined {formatTimestamp(vol.createdAt)}
                       {" · "}
                       <span className="tnum">{vol._count.shiftSignups}</span>{" "}
                       {vol._count.shiftSignups === 1 ? "shift" : "shifts"}

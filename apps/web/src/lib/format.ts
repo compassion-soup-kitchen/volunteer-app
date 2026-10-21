@@ -3,6 +3,12 @@
  * strings, so the whole app reads them back the same friendly way.
  */
 
+import {
+  formatDateOnly,
+  formatTimestampInAppZone,
+  timeOfDayInAppZone,
+} from "@/lib/date-only";
+
 /** "09:00" -> "9am", "13:30" -> "1:30pm". */
 export function formatTime(time: string): string {
   const [hStr, mStr] = time.split(":");
@@ -18,6 +24,31 @@ export function formatTime(time: string): string {
 /** "09:00", "13:00" -> "9am – 1pm". */
 export function formatTimeRange(start: string, end: string): string {
   return `${formatTime(start)} – ${formatTime(end)}`;
+}
+
+/**
+ * A real timestamp (`createdAt`, `uploadedAt`, `signedAt`) as the day it
+ * happened in Wellington: "21 Oct 2026". Always in the kitchen's timezone, so
+ * the server's render and the browser's hydration agree, and a staff member
+ * reading at 9am never sees yesterday. Stored calendar days (`@db.Date`) are a
+ * different thing and go through `formatDateOnly`.
+ */
+export function formatTimestamp(at: Date | string): string {
+  return formatTimestampInAppZone(new Date(at));
+}
+
+/** Same as `formatTimestamp`, with the time it happened: "21 Oct 2026 at 9:15am". */
+export function formatTimestampWithTime(at: Date | string): string {
+  const instant = new Date(at);
+  return `${formatTimestamp(instant)} at ${formatTime(timeOfDayInAppZone(instant))}`;
+}
+
+/**
+ * A date of birth: "1 July 1990". Stored as the day itself at midnight UTC,
+ * so it is a calendar day, not a timestamp.
+ */
+export function formatDateOfBirth(date: Date): string {
+  return formatDateOnly(date, { day: "numeric", month: "long", year: "numeric" });
 }
 
 /**
