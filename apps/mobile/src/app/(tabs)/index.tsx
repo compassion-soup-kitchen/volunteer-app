@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Fragment } from 'react';
-import { Linking, Platform, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AnnouncementCard } from '@/components/announcement-card';
 import { EventCard } from '@/components/event-card';
@@ -29,16 +29,13 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTimeRange, relativeDay } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
+import { openVenueDirections, VENUE } from '@/lib/venue';
 import { useAuth } from '@/providers/auth-provider';
 import { getAnnouncements } from '@/services/announcements-service';
 import { getUpcomingEvents } from '@/services/events-service';
 import { canReply, todayISO } from '@/lib/events';
 import { getDashboardData } from '@/services/dashboard-service';
 import { getAvailableTraining } from '@/services/training-service';
-
-/** Where shifts happen — used for the hero location line and the directions link. */
-const VENUE = 'Compassion Soup Kitchen · Tory St, Te Aro';
-const VENUE_QUERY = 'Compassion Soup Kitchen, Tory Street, Wellington';
 
 /**
  * Soft drop shadow so light greeting text stays legible over the moving footage.
@@ -61,15 +58,6 @@ function greeting(): string {
   if (h < 12) return 'Mōrena'; // good morning
   if (h < 18) return 'Ahiahi mārie'; // good afternoon
   return 'Pō mārie'; // good evening
-}
-
-function openDirections() {
-  const q = encodeURIComponent(VENUE_QUERY);
-  const url = Platform.select({
-    ios: `http://maps.apple.com/?q=${q}`,
-    default: `https://www.google.com/maps/search/?api=1&query=${q}`,
-  });
-  if (url) void Linking.openURL(url);
 }
 
 /** Compact brand lockup with a notification bell that opens the notices feed. */
@@ -177,10 +165,10 @@ export default function DashboardScreen() {
           {data.nextShift ? (
             <NextShiftHero
               shift={data.nextShift}
-              location={VENUE}
+              location={VENUE.address}
               extraCount={rosterOverflow}
               onDetails={() => router.push({ pathname: '/shift/[id]', params: { id: data.nextShift!.id } })}
-              onDirections={openDirections}
+              onDirections={openVenueDirections}
               onMore={() => router.push('/schedule')}
             />
           ) : (

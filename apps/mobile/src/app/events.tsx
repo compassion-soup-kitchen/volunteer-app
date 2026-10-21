@@ -5,12 +5,14 @@ import { View } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Card, EmptyState, PageHeader, Screen, SectionHeader, SkeletonCard, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { formatShiftDate } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
 import { getPastEvents, getUpcomingEvents } from '@/services/events-service';
 
 export default function EventsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const upcoming = useQuery({ queryKey: qk.events, queryFn: getUpcomingEvents });
   const past = useQuery({ queryKey: qk.pastEvents, queryFn: getPastEvents });
@@ -65,7 +67,7 @@ export default function EventsScreen() {
                   paddingVertical: Spacing.md,
                   gap: 2,
                   borderTopWidth: index === 0 ? 0 : 1,
-                  borderTopColor: 'transparent',
+                  borderTopColor: colors.border,
                 }}>
                 <Text variant="callout">{event.title}</Text>
                 <Text variant="caption" color="textTertiary">

@@ -4,6 +4,7 @@ import { CapacityMeter, availability, spotsLabel } from '@/components/capacity-m
 import { Badge, Button, Card, Icon, StatusBadge, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { formatTimeRange } from '@/lib/format';
+import { VENUE } from '@/lib/venue';
 
 export type BrowseShiftCardProps = {
   areaName: string;
@@ -39,7 +40,7 @@ export function BrowseShiftCard({
   endTime,
   signupCount,
   capacity,
-  location = 'Tory St',
+  location = VENUE.short,
   signedUp,
   onLeave = false,
   booking,

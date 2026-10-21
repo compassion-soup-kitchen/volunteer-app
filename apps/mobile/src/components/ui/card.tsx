@@ -77,9 +77,11 @@ export function Card({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      onPressIn={() => {
+      // The tick lands with the tap that navigates, not the touch that might
+      // turn into a scroll - the same moment a Button fires its own.
+      onPress={() => {
         if (process.env.EXPO_OS === 'ios') Haptics.selectionAsync();
+        onPress();
       }}
       style={({ pressed }) => [
         base,

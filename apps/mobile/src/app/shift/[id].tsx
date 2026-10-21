@@ -8,12 +8,10 @@ import { FontFamily, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatLongDate, formatTimeRange } from '@/lib/format';
 import { qk } from '@/lib/query-keys';
+import { VENUE } from '@/lib/venue';
 import { useToast } from '@/providers/toast-provider';
 import { cancelShiftSignup, getShiftById, signUpForShift } from '@/services/shifts-service';
 import type { ActionResult } from '@/types/models';
-
-/** The kitchen's single venue. */
-const VENUE = '132 Tory Street, Te Aro, Pōneke';
 
 function timeOfDay(start: string): string {
   const h = Number(start.split(':')[0]);
@@ -225,7 +223,7 @@ export default function ShiftDetailScreen() {
       {/* Facts */}
       <View style={{ gap: 13, marginTop: Spacing.xl }}>
         <FactRow icon="calendar-outline" value={`${formatLongDate(shift.date)} · ${formatTimeRange(shift.startTime, shift.endTime)}`} />
-        <FactRow icon="location-outline" value={VENUE} />
+        <FactRow icon="location-outline" value={VENUE.address} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
           <Icon name="people-outline" size={19} color="primary" />
           <Text variant="callout" color="text" style={{ flex: 1 }}>
