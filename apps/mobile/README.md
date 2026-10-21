@@ -56,8 +56,8 @@ src/
 
 - **Theme tokens only** — never hardcode hex or font sizes in screens. Use `<Text variant>` and
   `colors.*` from `useTheme()`. Centralise repeated styles into variant components.
-- **Styling**: StyleSheet + the `constants/theme.ts` token system (no NativeWind). Fraunces
-  (serif) for display/titles, system sans for UI, tabular mono for data.
+- **Styling**: StyleSheet + the `constants/theme.ts` token system (no NativeWind). Newsreader
+  (serif) for display/titles and figures, Hanken Grotesk for UI and body, tabular system mono for data.
 - **Data**: React Query for fetching/caching; invalidate keys after a mutation (the mobile
   equivalent of the web app's `revalidatePath`).
 - **Safe areas, 44pt touch targets, press feedback, haptics, light/dark** are baked into the

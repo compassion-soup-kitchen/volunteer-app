@@ -19,7 +19,7 @@ interface SectionHeadingProps extends Omit<React.ComponentProps<"div">, "title">
 }
 
 /**
- * SectionHeading — Fraunces display heading with the signature red underline rule,
+ * SectionHeading — Newsreader display heading with the signature red underline rule,
  * optionally preceded by an eyebrow label. The brand's recurring heading gesture.
  */
 export function SectionHeading({

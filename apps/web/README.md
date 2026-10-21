@@ -198,10 +198,10 @@ See [`CLAUDE.md`](./CLAUDE.md) for the full developer guide. 📖
 
 ## 🎨 Design
 
-- **Brand primary**: 🔴 `#DC0831` → `oklch(0.52 0.22 18)`
-- **Fonts**: Mona Sans (body) + Fraunces (display) + Geist Mono, 18px base
+- **Brand primary**: 🔴 `#e4002b` (Pūaroha red)
+- **Fonts**: Hanken Grotesk (body) + Newsreader (display) + Geist Mono, 18px base
 - **Layouts**: Volunteer = mobile-first with bottom nav; Staff = desktop sidebar
-- **Charts**: Red ramp (`--chart-1` … `--chart-5`)
+- **Charts**: `--chart-1` … `--chart-5` (red → ochre → taupe → green → stone)
 - 🌓 Dark mode supported via `next-themes`
 
 ---
