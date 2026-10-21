@@ -243,7 +243,7 @@ export function ShiftBrowser({
                 className={cn(
                   "inline-flex h-9 shrink-0 items-center rounded-md px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                   selected
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary-fill text-primary-foreground"
                     : "bg-card text-muted-foreground ring-1 ring-border hover:text-foreground"
                 )}
               >
