@@ -156,10 +156,10 @@ src/
 │   └── report-actions.ts             # Aggregations / chart data
 │
 ├── types/
-│   └── next-auth.d.ts                # Augments Session.user with `role: Role`
+│   └── next-auth.d.ts                # Augments Session.user with `role` + `sessionVersion`
 │
-└── proxy.ts                          # Edge proxy: public path allowlist, auth gate,
-                                       #   role-based redirect for /staff/*
+└── proxy.ts                          # Edge proxy: public path allowlist, signed-in gate
+                                       #   (which area you may use is the layouts' call)
 
 prisma/
 ├── schema.prisma                     # Single source of truth (see Database section)
@@ -217,10 +217,14 @@ Anyone may permanently erase their own account, in the app (`/profile/delete-acc
 - `ADMIN` — full system access + reporting
 
 Route protection lives in **two places**:
-1. `src/proxy.ts` — edge-level allowlist + role check for `/staff/*`.
-2. Per-layout `auth()` checks in `(volunteer)/layout.tsx` and `(staff)/staff/layout.tsx`.
+1. `src/proxy.ts` — edge-level public-path allowlist; everything else needs a session.
+2. The layout gates in `(volunteer)/layout.tsx` and `(staff)/staff/layout.tsx`, which decide who may use which area.
 
-Always check role in Server Actions too — never trust the client.
+Always check role in Server Actions too — never trust the client. Use `requireActiveSession` / `requireStaffSession` (`src/lib/action-auth.ts`), never a bare `auth()`.
+
+**The role in the JWT is a snapshot — never authorise with it.** `loadSessionAccess` (`src/lib/data/session-account.ts`) re-reads the account on every page and every action: whether it is still active, whether the token is on the account's current `User.sessionVersion`, and its **live role**. `requireActiveSession` overwrites `session.user.role` with that live role, and the layouts gate on it, so a demotion takes effect on the next request. The proxy deliberately doesn't gate `/staff` on the token's role: it would disagree with the layouts whenever a role changed mid-session and the two would redirect at each other.
+
+**`User.sessionVersion` is the revocation switch.** Web sessions and mobile bearer tokens both carry the version they were minted on (`token.sessionVersion`, the `ver` claim) and stop working when it moves. A password reset, a password change and archiving bump it; `changeMyPassword` signs the current browser back in on the new version. Bump it anywhere else that should end every session.
 
 ### Design
 - **Brand primary**: `#e4002b` (Pūaroha red) as `--primary` in light mode; a brighter `#ff3355` in dark mode.

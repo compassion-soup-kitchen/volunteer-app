@@ -118,6 +118,18 @@ describe("listVolunteerAnnouncements", () => {
     expect(result.event).toBeNull();
   });
 
+  // An unvetted applicant - anyone who registers - reads none of it.
+  it("returns nothing to a PUBLIC reader, without reading", async () => {
+    announcementFindManyMock.mockResolvedValue([announcement(null)]);
+
+    expect(
+      await listVolunteerAnnouncements({
+        reader: { userId: "new-1", role: "PUBLIC" },
+      })
+    ).toEqual([]);
+    expect(announcementFindManyMock).not.toHaveBeenCalled();
+  });
+
   it("leaves an ordinary pānui without an event alone", async () => {
     announcementFindManyMock.mockResolvedValue([announcement(null)]);
 
@@ -147,6 +159,14 @@ describe("getVolunteerAnnouncement", () => {
     });
 
     expect(await getVolunteerAnnouncement("an-1", coordinator)).toBeNull();
+  });
+
+  it("returns null to a PUBLIC reader", async () => {
+    announcementFindUniqueMock.mockResolvedValue(announcement(null));
+
+    expect(
+      await getVolunteerAnnouncement("an-1", { userId: "new-1", role: "PUBLIC" })
+    ).toBeNull();
   });
 
   it("returns null for a draft pānui", async () => {

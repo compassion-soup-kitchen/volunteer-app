@@ -13,8 +13,9 @@ export type ApiUser = {
 
 /**
  * Resolves the user behind a `Authorization: Bearer <token>` header.
- * Re-reads the user from the database so role changes apply immediately and
- * archived accounts are locked out even with a valid token.
+ * Re-reads the user from the database so role changes apply immediately, and
+ * archived accounts and tokens from before a password change are locked out
+ * even while the token itself is still valid.
  */
 export async function authenticateApiRequest(
   req: NextRequest
@@ -22,12 +23,12 @@ export async function authenticateApiRequest(
   const header = req.headers.get("authorization");
   if (!header?.startsWith("Bearer ")) return null;
 
-  const userId = await verifyApiToken(header.slice("Bearer ".length));
-  if (!userId) return null;
+  const claims = await verifyApiToken(header.slice("Bearer ".length));
+  if (!claims) return null;
 
   const db = getDb();
   const user = await db.user.findUnique({
-    where: { id: userId },
+    where: { id: claims.userId },
     select: {
       id: true,
       name: true,
@@ -35,11 +36,14 @@ export async function authenticateApiRequest(
       image: true,
       role: true,
       status: true,
+      sessionVersion: true,
     },
   });
 
   // No address means an offline volunteer's record, which never signs in.
   if (!user || user.status === "ARCHIVED" || !user.email) return null;
+  // Minted before a password change or reset (or an archive) - revoked.
+  if (user.sessionVersion !== claims.sessionVersion) return null;
 
   return {
     id: user.id,

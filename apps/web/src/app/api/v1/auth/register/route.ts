@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { issueApiToken } from "@/lib/api/token";
+import { issueApiTokenForUser } from "@/lib/api/token";
 import { serializeSessionUser } from "@/lib/api/serializers";
 import { createUserAccount, normalizeEmail } from "@/lib/data/users";
 import { isEmailConfigured } from "@/lib/email";
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const token = await issueApiToken(created.user.id);
+  const token = await issueApiTokenForUser(created.user.id);
   return NextResponse.json(
     { token, user: serializeSessionUser(created.user) },
     { status: 201 }

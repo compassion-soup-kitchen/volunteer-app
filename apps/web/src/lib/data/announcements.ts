@@ -2,6 +2,7 @@ import type { Audience, EventStatus, Role } from "@prisma/client";
 
 import { getDb } from "@/lib/db";
 import {
+  isVettedRole,
   rolesForAudience,
   summariseRsvps,
   type RsvpCounts,
@@ -135,12 +136,17 @@ function toAnnouncementEvent(
   };
 }
 
-/** Published announcements a volunteer may see (ALL + VOLUNTEERS audiences). */
+/**
+ * Published announcements a volunteer may see (ALL + VOLUNTEERS audiences).
+ * None at all for an unvetted `PUBLIC` reader - see `isVettedRole`.
+ */
 export async function listVolunteerAnnouncements(
   options: { limit?: number; reader?: AnnouncementReader | null } = {}
 ): Promise<AnnouncementSummary[]> {
-  const db = getDb();
   const { limit, reader } = options;
+  if (reader && !isVettedRole(reader.role)) return [];
+
+  const db = getDb();
 
   const announcements = await db.announcement.findMany({
     where: {
@@ -178,6 +184,8 @@ export async function getVolunteerAnnouncement(
   id: string,
   reader?: AnnouncementReader | null
 ): Promise<AnnouncementSummary | null> {
+  if (reader && !isVettedRole(reader.role)) return null;
+
   const db = getDb();
 
   const a = await db.announcement.findUnique({

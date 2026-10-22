@@ -61,6 +61,17 @@ export function rolesForAudience(audience: Audience): Role[] {
   }
 }
 
+/**
+ * Whether someone in this role is past the application stage - everyone an
+ * `ALL` audience reaches. A `PUBLIC` account is an unvetted applicant: anyone
+ * can make one by registering or signing in with Google, before any
+ * application, MoJ vetting or induction. So it sees no pānui, no attachments
+ * and nobody's name on the team page, just as it's on no event's guest list.
+ */
+export function isVettedRole(role: Role): boolean {
+  return rolesForAudience("ALL").includes(role);
+}
+
 export function audienceIncludesRole(audience: Audience, role: Role): boolean {
   return rolesForAudience(audience).includes(role);
 }

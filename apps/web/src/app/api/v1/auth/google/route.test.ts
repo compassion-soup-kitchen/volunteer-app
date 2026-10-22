@@ -15,7 +15,7 @@ vi.mock("@/lib/data/google-accounts", () => ({
 }));
 
 vi.mock("@/lib/api/token", () => ({
-  issueApiToken: (...args: unknown[]) => issueApiTokenMock(...args),
+  issueApiTokenForUser: (...args: unknown[]) => issueApiTokenMock(...args),
 }));
 
 import { POST } from "./route";

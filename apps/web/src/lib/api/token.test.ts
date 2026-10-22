@@ -1,6 +1,7 @@
 // @vitest-environment node
 // (jose's WebCrypto build rejects jsdom's cross-realm Uint8Array)
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SignJWT } from "jose";
 import { issueApiToken, verifyApiToken } from "./token";
 
 describe("api tokens", () => {
@@ -12,20 +13,41 @@ describe("api tokens", () => {
     vi.unstubAllEnvs();
   });
 
-  it("round-trips the user id", async () => {
-    const token = await issueApiToken("user-123");
-    await expect(verifyApiToken(token)).resolves.toBe("user-123");
+  it("round-trips the user id and session version", async () => {
+    const token = await issueApiToken("user-123", 4);
+    await expect(verifyApiToken(token)).resolves.toEqual({
+      userId: "user-123",
+      sessionVersion: 4,
+    });
+  });
+
+  // Tokens issued before versions existed must keep working until the
+  // account's first bump, or the deploy itself would sign everyone out.
+  it("reads a token with no version as version 0", async () => {
+    const legacy = await new SignJWT({})
+      .setProtectedHeader({ alg: "HS256" })
+      .setSubject("user-123")
+      .setIssuer("csk-web")
+      .setAudience("csk-mobile")
+      .setIssuedAt()
+      .setExpirationTime("30d")
+      .sign(new TextEncoder().encode("test-secret-for-unit-tests"));
+
+    await expect(verifyApiToken(legacy)).resolves.toEqual({
+      userId: "user-123",
+      sessionVersion: 0,
+    });
   });
 
   it("rejects a tampered token", async () => {
-    const token = await issueApiToken("user-123");
+    const token = await issueApiToken("user-123", 0);
     const [header, payload] = token.split(".");
     const forged = `${header}.${payload}.forged-signature`;
     await expect(verifyApiToken(forged)).resolves.toBeNull();
   });
 
   it("rejects a token signed with a different secret", async () => {
-    const token = await issueApiToken("user-123");
+    const token = await issueApiToken("user-123", 0);
     vi.stubEnv("NEXTAUTH_SECRET", "a-completely-different-secret");
     await expect(verifyApiToken(token)).resolves.toBeNull();
   });
@@ -36,7 +58,7 @@ describe("api tokens", () => {
 
   it("throws when NEXTAUTH_SECRET is missing", async () => {
     vi.stubEnv("NEXTAUTH_SECRET", "");
-    await expect(issueApiToken("user-123")).rejects.toThrow(
+    await expect(issueApiToken("user-123", 0)).rejects.toThrow(
       "NEXTAUTH_SECRET is not set"
     );
   });

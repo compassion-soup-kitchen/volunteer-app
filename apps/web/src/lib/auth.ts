@@ -3,7 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { getDb } from "./db";
-import { verifyCredentials } from "./data/users";
+import { authorizeCredentials } from "./credentials-authorize";
 import { googleProfileToUser, isOAuthSignInAllowed } from "./google-auth";
 import { applySessionRefresh } from "./session-refresh";
 import { applyImpersonationUpdate, type Impersonator } from "./impersonation";
@@ -15,6 +15,15 @@ function readSessionUser(userId: string) {
     where: { id: userId },
     select: { name: true, email: true, role: true },
   });
+}
+
+/** The version a newly minted session carries; 0 for an unknown account. */
+async function readSessionVersion(userId: string): Promise<number> {
+  const row = await getDb().user.findUnique({
+    where: { id: userId },
+    select: { sessionVersion: true },
+  });
+  return row?.sessionVersion ?? 0;
 }
 
 /**
@@ -77,14 +86,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: {},
         password: {},
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        return verifyCredentials(
-          credentials.email as string,
-          credentials.password as string
-        );
-      },
+      // Rate limited inside - see credentials-authorize.ts for why it must be.
+      authorize: authorizeCredentials,
     }),
   ],
   callbacks: {
@@ -103,6 +106,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id!;
         token.role = (user as { role: Role }).role;
+        // The version this session was minted on. Bumping the column (password
+        // change or reset, archiving) ends every session minted before it - see
+        // `loadSessionAccess`. Read here rather than trusted from `user`, which
+        // the OAuth adapter and the credentials path shape differently.
+        token.sessionVersion = await readSessionVersion(user.id!);
       }
 
       // `useSession().update(payload)` — fired to start/stop impersonation or
@@ -138,6 +146,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role as Role;
+        session.user.sessionVersion =
+          typeof token.sessionVersion === "number" ? token.sessionVersion : 0;
         // Surface the real admin (id/name/email only) so the UI can show the
         // impersonation banner and offer a way back.
         const impersonator = token.impersonator as Impersonator | undefined;

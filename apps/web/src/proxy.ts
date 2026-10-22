@@ -44,13 +44,11 @@ export const proxy = auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Staff routes require COORDINATOR or ADMIN role
-  if (pathname.startsWith("/staff")) {
-    const role = req.auth?.user?.role;
-    if (role !== "COORDINATOR" && role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-  }
+  // Which area a signed-in person may use is decided by the layout gates,
+  // from the role in the database. The token's role is a snapshot from
+  // sign-in, so gating /staff on it here would disagree with them whenever
+  // someone's role changed mid-session - and the two redirecting at each
+  // other loops.
 
   return NextResponse.next();
 });

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withApiAuth } from "@/lib/api/auth";
 import { getDb } from "@/lib/db";
+import { isExpoPushToken, MAX_PUSH_TOKENS_PER_USER } from "@/lib/push";
 
 const registerSchema = z.object({
   token: z
     .string()
-    .regex(/^ExponentPushToken\[.+\]$/, "Not a valid Expo push token."),
+    .refine(isExpoPushToken, { message: "Not a valid Expo push token." }),
   // The app sends lowercase (React Native's Platform.OS); the DB enum is
   // uppercase like every other enum in the schema.
   platform: z
@@ -43,6 +44,21 @@ export const POST = withApiAuth(async (req, user) => {
     create: { token, platform, userId: user.id },
     update: { platform, userId: user.id },
   });
+
+  // Keep only the most recently registered few. Every token is sent on every
+  // broadcast, so an account with an unbounded pile of them could make each
+  // one slower and costlier for everybody.
+  const surplus = await db.pushToken.findMany({
+    where: { userId: user.id },
+    orderBy: { updatedAt: "desc" },
+    skip: MAX_PUSH_TOKENS_PER_USER,
+    select: { id: true },
+  });
+  if (surplus.length > 0) {
+    await db.pushToken.deleteMany({
+      where: { id: { in: surplus.map((row) => row.id) } },
+    });
+  }
 
   return NextResponse.json({ success: true });
 });

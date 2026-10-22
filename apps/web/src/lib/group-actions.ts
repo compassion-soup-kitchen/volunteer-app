@@ -3,6 +3,7 @@
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { personName } from "@/lib/format";
+import { isVettedRole } from "@/lib/event-rsvp";
 import { revalidatePath } from "next/cache";
 import { Prisma, type GroupTone } from "@prisma/client";
 import {
@@ -404,6 +405,8 @@ export type TeamGroup = {
 export async function getVisibleTeam(): Promise<TeamGroup[]> {
   const session = await requireActiveSession();
   if (!session?.user?.id) return [];
+  // Names of the whole team aren't for someone who has only just signed up.
+  if (!isVettedRole(session.user.role)) return [];
 
   const db = getDb();
   const groups = await db.volunteerGroup.findMany({

@@ -19,6 +19,8 @@ declare module "next-auth" {
     user: {
       id: string;
       role: Role;
+      /** The `User.sessionVersion` this session was minted on. */
+      sessionVersion?: number;
       /** Present only while an admin is impersonating this (effective) user. */
       impersonator?: ImpersonatorSummary;
     } & DefaultSession["user"];
@@ -29,6 +31,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
+    /** The `User.sessionVersion` this session was minted on. */
+    sessionVersion?: number;
     /** The real admin, carried only while impersonating. */
     impersonator?: Impersonator;
   }

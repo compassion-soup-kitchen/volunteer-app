@@ -12,6 +12,12 @@ const userFindManyMock = vi.fn();
 const userFindUniqueMock = vi.fn();
 const hoursForUserMock = vi.fn();
 const trainingForUserMock = vi.fn();
+const userCountMock = vi.fn();
+const userUpdateMock = vi.fn();
+const userUpdateManyMock = vi.fn();
+const applicationFindUniqueMock = vi.fn();
+const applicationUpdateManyMock = vi.fn();
+const volunteerProfileUpdateMock = vi.fn();
 
 vi.mock("next/server", () => ({
   connection: vi.fn(async () => {}),
@@ -26,32 +32,48 @@ vi.mock("@/lib/auth", () => ({
   auth: (...args: unknown[]) => authMock(...args),
 }));
 
-// The account-liveness re-read that every Server Action now does (see
+// The account re-read (liveness, version, live role) every Server Action does (see
 // `action-auth.ts`). Stubbed active here so these tests keep exercising the
 // auth gate itself; `session-account.test.ts` covers the check.
 vi.mock("@/lib/data/session-account", () => ({
-  isSessionAccountActive: () => Promise.resolve(true),
+  loadSessionAccess: (user: { role: string }) =>
+    Promise.resolve({ alive: true, canAct: true, role: user.role }),
 }));
 
 vi.mock("@/lib/push", () => ({
   sendPushToUsers: vi.fn(),
 }));
 
-vi.mock("@/lib/db", () => ({
-  getDb: () => ({
+vi.mock("@/lib/db", () => {
+  // Built per call: the mocks aren't initialised yet when this is hoisted.
+  const db = (): Record<string, unknown> => ({
     volunteerProfile: {
       count: volunteerProfileCountMock,
       findMany: volunteerProfileFindManyMock,
+      update: volunteerProfileUpdateMock,
     },
-    application: { count: applicationCountMock },
+    application: {
+      count: applicationCountMock,
+      findUnique: applicationFindUniqueMock,
+      updateMany: applicationUpdateManyMock,
+    },
     shift: { count: shiftCountMock },
     shiftSignup: {
       findMany: shiftSignupFindManyMock,
       count: shiftSignupCountMock,
     },
-    user: { findMany: userFindManyMock, findUnique: userFindUniqueMock },
-  }),
-}));
+    user: {
+      findMany: userFindManyMock,
+      findUnique: userFindUniqueMock,
+      count: userCountMock,
+      update: userUpdateMock,
+      updateMany: userUpdateManyMock,
+    },
+    // The transaction client is the same set of mocks.
+    $transaction: (fn: (tx: unknown) => unknown) => fn(db()),
+  });
+  return { getDb: () => db() };
+});
 
 // The record page borrows the volunteer-facing hours and training reads. Mocked
 // here so a test can assert *whether* they were called - the point of the
@@ -66,9 +88,12 @@ vi.mock("@/lib/data/volunteer-training", () => ({
 }));
 
 import {
+  archiveVolunteer,
   getStaffDashboardStats,
   getVolunteerDetail,
   getVolunteersList,
+  restoreVolunteer,
+  reviewApplication,
 } from "./staff-actions";
 
 const staffSession = { user: { id: "staff-1", role: "COORDINATOR" } };
@@ -85,6 +110,12 @@ beforeEach(() => {
   userFindUniqueMock.mockReset().mockResolvedValue(null);
   hoursForUserMock.mockReset().mockResolvedValue(null);
   trainingForUserMock.mockReset().mockResolvedValue([]);
+  userCountMock.mockReset().mockResolvedValue(2);
+  userUpdateMock.mockReset().mockResolvedValue({});
+  userUpdateManyMock.mockReset().mockResolvedValue({ count: 1 });
+  applicationFindUniqueMock.mockReset().mockResolvedValue(null);
+  applicationUpdateManyMock.mockReset().mockResolvedValue({ count: 1 });
+  volunteerProfileUpdateMock.mockReset().mockResolvedValue({});
 });
 
 describe("getStaffDashboardStats", () => {
@@ -441,5 +472,165 @@ describe("getVolunteerDetail", () => {
     expect(
       userFindUniqueMock.mock.calls[0][0].select.volunteerProfile.select.groups
     ).toMatchObject({ where: { isArchived: false } });
+  });
+});
+
+describe("reviewApplication", () => {
+  const application = (status: string) => ({
+    id: "app-1",
+    status,
+    volunteerId: "vp-1",
+    volunteer: {
+      userId: "user-9",
+      user: { name: "Aroha Ngata", email: null },
+    },
+  });
+
+  // The hole: a coordinator could re-approve the old, long-approved
+  // application of someone since made an admin, and approving sets the role
+  // to VOLUNTEER - demoting the admin around every role-change guard.
+  it.each(["APPROVED", "DECLINED"])(
+    "refuses to decide an application already %s",
+    async (status) => {
+      authMock.mockResolvedValue(staffSession);
+      applicationFindUniqueMock.mockResolvedValue(application(status));
+
+      const result = await reviewApplication("app-1", "APPROVED");
+
+      expect(result.error).toMatch(/already been decided/i);
+      expect(applicationUpdateManyMock).not.toHaveBeenCalled();
+      expect(userUpdateManyMock).not.toHaveBeenCalled();
+    }
+  );
+
+  it("refuses a decision that isn't one", async () => {
+    authMock.mockResolvedValue(staffSession);
+    applicationFindUniqueMock.mockResolvedValue(application("PENDING"));
+
+    const result = await reviewApplication(
+      "app-1",
+      "ADMIN" as unknown as "APPROVED"
+    );
+
+    expect(result.error).toBeTruthy();
+    expect(applicationUpdateManyMock).not.toHaveBeenCalled();
+  });
+
+  it("approves a pending application, promoting only from PUBLIC", async () => {
+    authMock.mockResolvedValue(staffSession);
+    applicationFindUniqueMock.mockResolvedValue(application("PENDING"));
+
+    const result = await reviewApplication("app-1", "APPROVED");
+
+    expect(result).toEqual({ success: true });
+    expect(applicationUpdateManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "app-1", status: { in: ["PENDING", "INFO_REQUESTED"] } },
+      })
+    );
+    expect(userUpdateManyMock).toHaveBeenCalledWith({
+      where: { id: "user-9", role: "PUBLIC" },
+      data: { role: "VOLUNTEER" },
+    });
+  });
+
+  it("reports a decision another reviewer got in first", async () => {
+    authMock.mockResolvedValue(staffSession);
+    applicationFindUniqueMock.mockResolvedValue(application("PENDING"));
+    applicationUpdateManyMock.mockResolvedValue({ count: 0 });
+
+    const result = await reviewApplication("app-1", "DECLINED");
+
+    expect(result.error).toMatch(/already been decided/i);
+    expect(volunteerProfileUpdateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("archiveVolunteer", () => {
+  const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+
+  it("lets a coordinator archive a volunteer, ending their sessions", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue({ id: "vol-1", role: "VOLUNTEER" });
+
+    expect(await archiveVolunteer("vol-1", "moved away")).toEqual({
+      success: true,
+    });
+    expect(userUpdateMock).toHaveBeenCalledWith({
+      where: { id: "vol-1" },
+      data: expect.objectContaining({
+        status: "ARCHIVED",
+        sessionVersion: { increment: 1 },
+      }),
+    });
+  });
+
+  // A coordinator could lock every admin out, leaving themselves the only
+  // person able to restore anybody.
+  it.each(["ADMIN", "COORDINATOR"])(
+    "refuses a coordinator archiving a %s",
+    async (role) => {
+      authMock.mockResolvedValue(staffSession);
+      userFindUniqueMock.mockResolvedValue({ id: "staff-2", role });
+
+      const result = await archiveVolunteer("staff-2");
+
+      expect(result.error).toMatch(/only an admin/i);
+      expect(userUpdateMock).not.toHaveBeenCalled();
+    }
+  );
+
+  it("refuses archiving the last active admin", async () => {
+    authMock.mockResolvedValue(adminSession);
+    userFindUniqueMock.mockResolvedValue({ id: "admin-2", role: "ADMIN" });
+    userCountMock.mockResolvedValue(1);
+
+    const result = await archiveVolunteer("admin-2");
+
+    expect(result.error).toMatch(/last admin/i);
+    expect(userUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("rolls back when a concurrent archive took the last other admin", async () => {
+    authMock.mockResolvedValue(adminSession);
+    userFindUniqueMock.mockResolvedValue({ id: "admin-2", role: "ADMIN" });
+    // Two seen before the write, none left after it.
+    userCountMock.mockResolvedValueOnce(2).mockResolvedValueOnce(0);
+
+    const result = await archiveVolunteer("admin-2");
+
+    expect(result.error).toMatch(/last admin/i);
+  });
+
+  it("refuses archiving yourself", async () => {
+    authMock.mockResolvedValue(adminSession);
+    userFindUniqueMock.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
+
+    expect((await archiveVolunteer("admin-1")).error).toMatch(/your own/i);
+  });
+
+  it("lets an admin archive another admin while others remain", async () => {
+    authMock.mockResolvedValue(adminSession);
+    userFindUniqueMock.mockResolvedValue({ id: "admin-2", role: "ADMIN" });
+
+    expect(await archiveVolunteer("admin-2")).toEqual({ success: true });
+  });
+});
+
+describe("restoreVolunteer", () => {
+  it("lets a coordinator restore a volunteer", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue({ id: "vol-1", role: "VOLUNTEER" });
+
+    expect(await restoreVolunteer("vol-1")).toEqual({ success: true });
+  });
+
+  // Restoring an admin archived for cause hands back every admin power.
+  it("refuses a coordinator restoring an admin", async () => {
+    authMock.mockResolvedValue(staffSession);
+    userFindUniqueMock.mockResolvedValue({ id: "admin-2", role: "ADMIN" });
+
+    expect((await restoreVolunteer("admin-2")).error).toMatch(/only an admin/i);
+    expect(userUpdateMock).not.toHaveBeenCalled();
   });
 });

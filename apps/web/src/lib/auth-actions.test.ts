@@ -18,7 +18,10 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("next-auth", () => {
   class FakeAuthError extends Error {}
-  return { AuthError: FakeAuthError };
+  class FakeCredentialsSignin extends FakeAuthError {
+    code = "credentials";
+  }
+  return { AuthError: FakeAuthError, CredentialsSignin: FakeCredentialsSignin };
 });
 
 vi.mock("@/lib/db", () => ({
@@ -65,6 +68,7 @@ import {
   verifyEmail,
 } from "./auth-actions";
 import { demoLoginsEnabled } from "./demo-accounts";
+import { SignInRateLimited } from "./credentials-authorize";
 
 function form(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -455,27 +459,20 @@ describe("login", () => {
     expect(bcrypt.compare).not.toHaveBeenCalled();
   });
 
-  it("rate limits after 10 attempts, keyed by normalized email", async () => {
-    signInMock.mockResolvedValue(undefined);
-    for (let i = 0; i < 10; i++) {
-      expect(
-        await login(null, form({ email: "Busy@B.co", password: "pw" })),
-      ).toBeNull();
-    }
+  // The budget itself is spent in `authorize` (credentials-authorize.test.ts),
+  // which every credentials sign-in reaches. The form's job is to say so kindly.
+  it("tells the person how long to wait when sign-in is rate limited", async () => {
+    signInMock.mockRejectedValueOnce(new SignInRateLimited(120));
 
-    // Blocked — and case variants share the same bucket.
-    const blocked = await login(
+    const result = await login(
       null,
       form({ email: "busy@b.co", password: "pw" }),
     );
-    expect(blocked?.error).toMatch(/too many sign-in attempts/i);
-    expect(signInMock).toHaveBeenCalledTimes(10);
 
-    // A different account is unaffected.
-    signInMock.mockResolvedValueOnce(undefined);
-    expect(
-      await login(null, form({ email: "other@b.co", password: "pw" })),
-    ).toBeNull();
+    expect(result?.error).toMatch(/too many sign-in attempts/i);
+    expect(result?.error).toMatch(/about 2 minutes/);
+    // Rate limited is not "maybe unverified": no extra bcrypt work for it.
+    expect(bcrypt.compare).not.toHaveBeenCalled();
   });
 });
 
@@ -950,7 +947,12 @@ describe("resetPassword", () => {
     });
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: "u1" },
-      data: { password: "hashed:newpassword1", isOffline: false },
+      data: {
+        password: "hashed:newpassword1",
+        isOffline: false,
+        // A reset signs out every session minted before it.
+        sessionVersion: { increment: 1 },
+      },
     });
     expect(tokenDeleteManyMock).toHaveBeenCalledWith({
       where: { identifier: "password-reset:aroha@b.co" },
@@ -982,6 +984,7 @@ describe("resetPassword", () => {
         password: "hashed:newpassword1",
         emailVerified: expect.any(Date),
         isOffline: false,
+        sessionVersion: { increment: 1 },
       },
     });
   });

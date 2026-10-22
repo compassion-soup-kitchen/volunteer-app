@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireActiveSession } from "@/lib/action-auth";
 import { redirect } from "next/navigation";
 import { getServiceAreasWithStats } from "@/lib/service-area-actions";
 import { ServiceAreaManager } from "./service-area-manager";
@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 
 export default async function ServiceAreasPage() {
   await connection();
-  const session = await auth();
+  const session = await requireActiveSession();
 
-  // Admin only
+  // Admin only - by the live role, not the token's snapshot
   if (session?.user?.role !== "ADMIN") {
     redirect("/staff/dashboard");
   }

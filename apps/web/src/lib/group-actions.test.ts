@@ -28,11 +28,12 @@ vi.mock("@/lib/auth", () => ({
   auth: (...args: unknown[]) => authMock(...args),
 }));
 
-// The account-liveness re-read that every Server Action now does (see
+// The account re-read (liveness, version, live role) every Server Action does (see
 // `action-auth.ts`). Stubbed active here so these tests keep exercising the
 // auth gate itself; `session-account.test.ts` covers the check.
 vi.mock("@/lib/data/session-account", () => ({
-  isSessionAccountActive: () => Promise.resolve(true),
+  loadSessionAccess: (user: { role: string }) =>
+    Promise.resolve({ alive: true, canAct: true, role: user.role }),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -513,6 +514,14 @@ describe("getVisibleTeam", () => {
       { id: "p2", name: "hemi" },
     ]);
     expect(JSON.stringify(group)).not.toContain("@");
+  });
+
+  // Anyone can make a PUBLIC account by registering - before any
+  // application or vetting - so it isn't shown who is on the team.
+  it("returns nothing to an unvetted applicant", async () => {
+    authMock.mockResolvedValue({ user: { id: "new-1", role: "PUBLIC" } });
+    expect(await getVisibleTeam()).toEqual([]);
+    expect(groupFindManyMock).not.toHaveBeenCalled();
   });
 
   it("returns nothing to a signed-out caller", async () => {
