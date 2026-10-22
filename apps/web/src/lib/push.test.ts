@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   chunk,
   deadTokensFromTickets,
+  isExpoPushToken,
   sendPushToUsers,
   type PushTicket,
 } from "@/lib/push";
@@ -18,6 +19,26 @@ vi.mock("@/lib/db", () => ({
     },
   }),
 }));
+
+describe("isExpoPushToken", () => {
+  it("accepts a real-shaped token", () => {
+    expect(isExpoPushToken("ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]")).toBe(true);
+    expect(isExpoPushToken("ExponentPushToken[aB3_d-9]")).toBe(true);
+  });
+
+  // Anything else is sent to Expo alongside everyone's tokens, where one bad
+  // entry fails the whole batch.
+  it.each([
+    ["an empty body", "ExponentPushToken[]"],
+    ["stray characters", "ExponentPushToken[abc def]"],
+    ["a nested bracket", "ExponentPushToken[abc]]"],
+    ["an oversized body", `ExponentPushToken[${"a".repeat(257)}]`],
+    ["the wrong prefix", "ExpoToken[abc]"],
+    ["trailing text", "ExponentPushToken[abc]x"],
+  ])("rejects %s", (_, token) => {
+    expect(isExpoPushToken(token)).toBe(false);
+  });
+});
 
 describe("chunk", () => {
   it("splits items into batches of the given size", () => {
@@ -107,6 +128,72 @@ describe("sendPushToUsers", () => {
     expect(deleteMany).toHaveBeenCalledWith({
       where: { token: { in: ["tok-dead"] } },
     });
+  });
+
+  // One bad token - malformed, or from another Expo project - makes Expo
+  // refuse the whole request. Before, that cost everyone in the batch every
+  // notification for good.
+  describe("when Expo refuses a batch", () => {
+    const refused = { ok: false, status: 400, json: async () => ({}) };
+    const delivered = {
+      ok: true,
+      json: async () => ({ data: [{ status: "ok" }] }),
+    };
+    const sentTo = (call: unknown[]) =>
+      JSON.parse((call[1] as { body: string }).body).map(
+        (m: { to: string }) => m.to
+      );
+
+    it("retries each device alone and prunes only the one refused", async () => {
+      findMany.mockResolvedValue([
+        { token: "tok-a" },
+        { token: "tok-bad" },
+        { token: "tok-b" },
+      ]);
+      deleteMany.mockResolvedValue({ count: 1 });
+      const fetchMock = vi.fn(async (_url: string, init: { body: string }) => {
+        const to = JSON.parse(init.body).map((m: { to: string }) => m.to);
+        return to.includes("tok-bad") ? refused : delivered;
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      await sendPushToUsers(["u1", "u2", "u3"], { title: "Hi", body: "there" });
+
+      expect(fetchMock.mock.calls.map(sentTo)).toEqual([
+        ["tok-a", "tok-bad", "tok-b"],
+        ["tok-a"],
+        ["tok-bad"],
+        ["tok-b"],
+      ]);
+      expect(deleteMany).toHaveBeenCalledWith({
+        where: { token: { in: ["tok-bad"] } },
+      });
+    });
+
+    // Every device refused alone means the message is the problem.
+    it("prunes nothing when every device is refused", async () => {
+      findMany.mockResolvedValue([{ token: "tok-a" }, { token: "tok-b" }]);
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(refused));
+
+      await sendPushToUsers(["u1"], { title: "Hi", body: "there" });
+
+      expect(deleteMany).not.toHaveBeenCalled();
+    });
+
+    // An outage says nothing about the tokens.
+    it.each([429, 500, 503])(
+      "neither retries nor prunes on a %s",
+      async (status) => {
+        findMany.mockResolvedValue([{ token: "tok-a" }, { token: "tok-b" }]);
+        const fetchMock = vi.fn().mockResolvedValue({ ok: false, status });
+        vi.stubGlobal("fetch", fetchMock);
+
+        await sendPushToUsers(["u1"], { title: "Hi", body: "there" });
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(deleteMany).not.toHaveBeenCalled();
+      }
+    );
   });
 
   it("swallows database errors without throwing", async () => {

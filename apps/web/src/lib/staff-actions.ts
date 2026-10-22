@@ -24,8 +24,12 @@ import {
 import { Prisma, type Role } from "@prisma/client";
 import {
   validateRoleChange,
+  validateApplicationDecision,
+  validateArchive,
+  validateRestore,
   isLastActiveAdmin,
   STAFF_ROLES,
+  UNDECIDED_APPLICATION_STATUSES,
   type AssignableRole,
 } from "./role-change";
 import {
@@ -55,6 +59,10 @@ import { formatLeaveRange } from "@/lib/leave";
 // Thrown inside the role-change transaction to roll back a demotion that would
 // leave zero active admins; caught and mapped to a user-facing message.
 class LastAdminError extends Error {}
+
+// Thrown inside the review transaction when another reviewer decided the
+// application first; caught and mapped to a user-facing message.
+class AlreadyDecidedError extends Error {}
 
 // ─── Auth helpers ────────────────────────────────────
 
@@ -383,11 +391,21 @@ export async function reviewApplication(
 
   if (!application) return { error: "Application not found." };
 
+  const decisionError = validateApplicationDecision({
+    currentStatus: application.status,
+    decision,
+  });
+  if (decisionError) return { error: decisionError };
+
   try {
     await db.$transaction(async (tx) => {
-      // Update application
-      await tx.application.update({
-        where: { id: applicationId },
+      // Conditional on the application still being undecided, so two
+      // reviewers racing can't both record a decision.
+      const updated = await tx.application.updateMany({
+        where: {
+          id: applicationId,
+          status: { in: [...UNDECIDED_APPLICATION_STATUSES] },
+        },
         data: {
           status: decision,
           notes: notes?.trim() || null,
@@ -395,6 +413,7 @@ export async function reviewApplication(
           reviewedById: session.user!.id,
         },
       });
+      if (updated.count === 0) throw new AlreadyDecidedError();
 
       // Update volunteer profile status based on decision
       if (decision === "APPROVED") {
@@ -402,9 +421,11 @@ export async function reviewApplication(
           where: { id: application.volunteerId },
           data: { status: "APPROVED_FOR_INDUCTION" },
         });
-        // Also upgrade user role to VOLUNTEER
-        await tx.user.update({
-          where: { id: application.volunteer.userId },
+        // Also upgrade user role to VOLUNTEER - only ever *up* from PUBLIC.
+        // Approval is staff-level, so it must never be able to change the
+        // role of someone who already holds one (a coordinator or admin).
+        await tx.user.updateMany({
+          where: { id: application.volunteer.userId, role: "PUBLIC" },
           data: { role: "VOLUNTEER" },
         });
       } else if (decision === "DECLINED") {
@@ -451,6 +472,9 @@ export async function reviewApplication(
     revalidatePath("/dashboard");
     return { success: true };
   } catch (e) {
+    if (e instanceof AlreadyDecidedError) {
+      return { error: "This application has already been decided." };
+    }
     console.error("Review application error:", e);
     return { error: "Something went wrong. Please try again." };
   }
@@ -1015,26 +1039,68 @@ export async function archiveVolunteer(
   const db = getDb();
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { id: true },
+    select: { id: true, role: true },
   });
 
   if (!user) return { error: "Volunteer not found." };
 
+  const validationError = validateArchive({
+    actorUserId: session.user!.id,
+    actorRole: session.user!.role,
+    targetUserId: user.id,
+    targetRole: user.role,
+    isTargetLastAdmin: isLastActiveAdmin(
+      user.role,
+      await db.user.count({ where: { role: "ADMIN", status: "ACTIVE" } })
+    ),
+  });
+  if (validationError) return { error: validationError };
+
   try {
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        status: "ARCHIVED",
-        archivedAt: new Date(),
-        archivedReason: reason?.trim() || null,
-        archivedById: session.user!.id,
+    // Re-counted inside a serializable transaction for the same reason as
+    // `updateUserRole`: two admins archiving two *different* admins at once
+    // could each see one left and both commit.
+    await db.$transaction(
+      async (tx) => {
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            status: "ARCHIVED",
+            archivedAt: new Date(),
+            archivedReason: reason?.trim() || null,
+            archivedById: session.user!.id,
+            // Ends every session they hold, web and app. Without it a later
+            // restore would bring a cookie minted before the archive back to
+            // life along with the account.
+            sessionVersion: { increment: 1 },
+          },
+        });
+
+        if (user.role === "ADMIN") {
+          const remainingAdmins = await tx.user.count({
+            where: { role: "ADMIN", status: "ACTIVE" },
+          });
+          if (remainingAdmins < 1) throw new LastAdminError();
+        }
       },
-    });
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
 
     revalidatePath("/staff/volunteers");
     revalidatePath("/staff/dashboard");
     return { success: true };
   } catch (e) {
+    if (e instanceof LastAdminError) {
+      return {
+        error: "You can't archive the last admin. Promote someone else first.",
+      };
+    }
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2034"
+    ) {
+      return { error: "Someone else changed this just now. Please try again." };
+    }
     console.error("Archive volunteer error:", e);
     return { error: "Something went wrong. Please try again." };
   }
@@ -1049,10 +1115,16 @@ export async function restoreVolunteer(
   const db = getDb();
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { id: true },
+    select: { id: true, role: true },
   });
 
   if (!user) return { error: "Volunteer not found." };
+
+  const validationError = validateRestore({
+    actorRole: session.user!.role,
+    targetRole: user.role,
+  });
+  if (validationError) return { error: validationError };
 
   try {
     await db.user.update({

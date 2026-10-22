@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  validateApplicationDecision,
+  validateArchive,
+  validateRestore,
   isAssignableRole,
   isLastActiveAdmin,
   validateRoleChange,
@@ -157,4 +160,90 @@ describe("isLastActiveAdmin", () => {
     expect(isLastActiveAdmin("VOLUNTEER", 1)).toBe(false);
     expect(isLastActiveAdmin("COORDINATOR", 0)).toBe(false);
   });
+});
+
+describe("validateApplicationDecision", () => {
+  it.each(["PENDING", "INFO_REQUESTED"])(
+    "allows deciding an application that is %s",
+    (currentStatus) => {
+      for (const decision of ["APPROVED", "DECLINED", "INFO_REQUESTED"]) {
+        expect(validateApplicationDecision({ currentStatus, decision })).toBeNull();
+      }
+    }
+  );
+
+  it.each(["APPROVED", "DECLINED"])(
+    "refuses re-deciding an application already %s",
+    (currentStatus) => {
+      expect(
+        validateApplicationDecision({ currentStatus, decision: "APPROVED" })
+      ).toMatch(/already been decided/i);
+    }
+  );
+
+  it("refuses something that isn't a decision", () => {
+    expect(
+      validateApplicationDecision({ currentStatus: "PENDING", decision: "ADMIN" })
+    ).toBeTruthy();
+  });
+});
+
+describe("validateArchive", () => {
+  const base = {
+    actorUserId: "actor",
+    actorRole: "COORDINATOR" as const,
+    targetUserId: "target",
+    targetRole: "VOLUNTEER" as const,
+    isTargetLastAdmin: false,
+  };
+
+  it("lets a coordinator archive a volunteer or applicant", () => {
+    expect(validateArchive(base)).toBeNull();
+    expect(validateArchive({ ...base, targetRole: "PUBLIC" })).toBeNull();
+  });
+
+  it.each(["COORDINATOR", "ADMIN"] as const)(
+    "keeps archiving a %s to admins",
+    (targetRole) => {
+      expect(validateArchive({ ...base, targetRole })).toMatch(/only an admin/i);
+      expect(
+        validateArchive({ ...base, actorRole: "ADMIN", targetRole })
+      ).toBeNull();
+    }
+  );
+
+  it("refuses archiving yourself", () => {
+    expect(
+      validateArchive({ ...base, actorRole: "ADMIN", targetUserId: "actor" })
+    ).toMatch(/your own/i);
+  });
+
+  it("refuses archiving the last admin, even for an admin", () => {
+    expect(
+      validateArchive({
+        ...base,
+        actorRole: "ADMIN",
+        targetRole: "ADMIN",
+        isTargetLastAdmin: true,
+      })
+    ).toMatch(/last admin/i);
+  });
+});
+
+describe("validateRestore", () => {
+  it("lets a coordinator restore a volunteer", () => {
+    expect(
+      validateRestore({ actorRole: "COORDINATOR", targetRole: "VOLUNTEER" })
+    ).toBeNull();
+  });
+
+  it.each(["COORDINATOR", "ADMIN"] as const)(
+    "keeps restoring a %s to admins",
+    (targetRole) => {
+      expect(validateRestore({ actorRole: "COORDINATOR", targetRole })).toMatch(
+        /only an admin/i
+      );
+      expect(validateRestore({ actorRole: "ADMIN", targetRole })).toBeNull();
+    }
+  );
 });

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
+import { isVettedRole } from "@/lib/event-rsvp";
 import {
   announcementPushBody,
   MAX_ANNOUNCEMENT_ATTACHMENTS,
@@ -472,8 +473,9 @@ export async function deleteAnnouncementAttachment(
 /**
  * A short-lived link to an attachment.
  *
- * Staff can reach any attachment; everyone else only files on a pānui that is
+ * Staff can reach any attachment; volunteers only files on a pānui that is
  * actually published to them, so an unpublished draft's roster stays private.
+ * Unvetted `PUBLIC` accounts get none (see `isVettedRole`).
  */
 export async function getAnnouncementAttachmentUrl(
   attachmentId: string
@@ -493,6 +495,8 @@ export async function getAnnouncementAttachmentUrl(
 
   const isStaff = ["COORDINATOR", "ADMIN"].includes(session.user.role);
   if (!isStaff) {
+    // An unvetted applicant reads no pānui, so gets none of their files.
+    if (!isVettedRole(session.user.role)) return null;
     const { sentAt, audience } = attachment.announcement;
     if (!sentAt || !["ALL", "VOLUNTEERS"].includes(audience)) return null;
   }

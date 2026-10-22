@@ -100,3 +100,93 @@ export function validateRoleChange(input: RoleChangeInput): string | null {
   }
   return null;
 }
+
+// ─── Application decisions ───────────────────────────────────────────
+
+/** What a reviewer may record on an application. */
+export const APPLICATION_DECISIONS = [
+  "APPROVED",
+  "DECLINED",
+  "INFO_REQUESTED",
+] as const;
+export type ApplicationDecision = (typeof APPLICATION_DECISIONS)[number];
+
+/** Applications still waiting on a decision. Only these can be reviewed. */
+export const UNDECIDED_APPLICATION_STATUSES = [
+  "PENDING",
+  "INFO_REQUESTED",
+] as const;
+
+/**
+ * Whether a reviewer may record `decision` on an application currently in
+ * `currentStatus`. Returns an error message, or null if allowed.
+ *
+ * Approving promotes the applicant to VOLUNTEER, and reviewing is staff-level,
+ * not admin-only. Before this check a coordinator could re-approve the old,
+ * long-approved application of someone since made an admin and demote them to
+ * VOLUNTEER - around both the admin-only role change and the last-admin guard.
+ * A decided application stays decided.
+ */
+export function validateApplicationDecision(input: {
+  currentStatus: string;
+  decision: string;
+}): string | null {
+  if (!(APPLICATION_DECISIONS as readonly string[]).includes(input.decision)) {
+    return "That isn't a decision we can record.";
+  }
+  if (
+    !(UNDECIDED_APPLICATION_STATUSES as readonly string[]).includes(
+      input.currentStatus
+    )
+  ) {
+    return "This application has already been decided.";
+  }
+  return null;
+}
+
+// ─── Archiving and restoring accounts ────────────────────────────────
+
+export type AccountArchiveInput = {
+  actorUserId: string;
+  actorRole: Role;
+  targetUserId: string;
+  targetRole: Role;
+  /** True when the target is the only remaining active ADMIN. */
+  isTargetLastAdmin: boolean;
+};
+
+/**
+ * Whether the actor may archive the target. Returns an error message, or null.
+ *
+ * Archiving is staff-level so coordinators can tidy away volunteers who have
+ * moved on - but an archived account can't sign in or act, so on a staff
+ * account it is a stronger lever than a role change, and must be at least as
+ * guarded: admin-only, never yourself, never the last admin.
+ */
+export function validateArchive(input: AccountArchiveInput): string | null {
+  if (input.actorUserId === input.targetUserId) {
+    return "You can't archive your own account.";
+  }
+  if (STAFF_ROLES.includes(input.targetRole) && input.actorRole !== "ADMIN") {
+    return "Only an admin can archive a coordinator or admin.";
+  }
+  if (input.isTargetLastAdmin) {
+    return "You can't archive the last admin. Promote someone else first.";
+  }
+  return null;
+}
+
+/**
+ * Whether the actor may restore the target. Restoring a staff account gives
+ * back staff powers someone may have been archived to remove, so it is
+ * admin-only for the same reason archiving one is.
+ */
+export function validateRestore(input: {
+  actorRole: Role;
+  targetRole: Role;
+}): string | null {
+  if (STAFF_ROLES.includes(input.targetRole) && input.actorRole !== "ADMIN") {
+    return "Only an admin can restore a coordinator or admin.";
+  }
+  return null;
+}

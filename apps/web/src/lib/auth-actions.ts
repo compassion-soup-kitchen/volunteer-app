@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { signIn } from "@/lib/auth";
+import { SignInRateLimited } from "@/lib/credentials-authorize";
 import {
   DEMO_ACCOUNTS,
   demoLoginsEnabled,
@@ -152,16 +153,9 @@ export async function login(
     return { error: parsed.error.issues[0].message };
   }
 
-  const throttle = checkRateLimit(
-    `login:${normalizeEmail(parsed.data.email)}`,
-    authRateLimits.login
-  );
-  if (!throttle.allowed) {
-    return {
-      error: `Too many sign-in attempts just now. Take a breather and try again in about ${retryAfterPhrase(throttle.retryAfterSeconds)}.`,
-    };
-  }
-
+  // The `login:` budget is spent inside `authorize` (credentials-authorize.ts),
+  // which every credentials sign-in reaches - this form included - so it is
+  // not checked again here.
   try {
     await signIn("credentials", {
       email: parsed.data.email,
@@ -170,6 +164,11 @@ export async function login(
     });
     return null;
   } catch (error) {
+    if (error instanceof SignInRateLimited) {
+      return {
+        error: `Too many sign-in attempts just now. Take a breather and try again in about ${retryAfterPhrase(error.retryAfterSeconds)}.`,
+      };
+    }
     if (error instanceof AuthError) {
       // Distinguish "right password, unverified email" so people aren't told
       // their password is wrong when it isn't. The helper only bcrypt-compares
@@ -401,6 +400,10 @@ export async function resetPassword(
       // verification gate.
       ...(user.emailVerified ? {} : { emailVerified: new Date() }),
       isOffline: false,
+      // A reset is what someone does when they think their account is in
+      // other hands, so it signs out every session and app token minted
+      // before it - including one an attacker is holding.
+      sessionVersion: { increment: 1 },
     },
   });
 

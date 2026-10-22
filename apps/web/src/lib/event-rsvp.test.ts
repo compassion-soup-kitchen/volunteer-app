@@ -11,6 +11,7 @@ import {
   formatEventWhen,
   formatRsvpTally,
   isRsvpResponse,
+  isVettedRole,
   rolesForAudience,
   rsvpClosedMessage,
   rsvpClosesOn,
@@ -50,6 +51,18 @@ describe("rolesForAudience", () => {
     for (const audience of ["ALL", "VOLUNTEERS", "COORDINATORS"] as const) {
       expect(audienceIncludesRole(audience, "PUBLIC")).toBe(false);
     }
+  });
+});
+
+describe("isVettedRole", () => {
+  it("is everyone past the application stage", () => {
+    expect(isVettedRole("VOLUNTEER")).toBe(true);
+    expect(isVettedRole("COORDINATOR")).toBe(true);
+    expect(isVettedRole("ADMIN")).toBe(true);
+  });
+
+  it("excludes PUBLIC, who anyone can become by signing up", () => {
+    expect(isVettedRole("PUBLIC")).toBe(false);
   });
 });
 

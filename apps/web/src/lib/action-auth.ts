@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { isSessionAccountActive } from "@/lib/data/session-account";
+import { loadSessionAccess } from "@/lib/data/session-account";
 
 /**
  * The session, but only if the account behind it still exists and is still
@@ -17,8 +17,11 @@ import { isSessionAccountActive } from "@/lib/data/session-account";
  * The session is a JWT, so `auth()` alone can only report what was true when
  * the token was minted. `session.user.role` is likewise a snapshot: it is
  * refreshed by the `jwt` callback when a client fires `update()`, and never
- * otherwise. This adds the one thing that must be current - is this still a
- * real, active account - at the cost of a primary-key lookup per action.
+ * otherwise - so a demoted coordinator kept every staff power for as long as
+ * their session lived. This re-reads what must be current (is this still a
+ * real, active account, on the token's version, and in what role) and
+ * **overwrites `session.user.role` with the database's**, so every role check
+ * downstream of it reads the live role. One query per action.
  *
  * The mobile API has always worked this way: `authenticateApiRequest` re-reads
  * the user on every request for exactly these reasons.
@@ -30,7 +33,9 @@ import { isSessionAccountActive } from "@/lib/data/session-account";
 export async function requireActiveSession() {
   const session = await auth();
   if (!session?.user?.id) return null;
-  if (!(await isSessionAccountActive(session.user.id))) return null;
+  const access = await loadSessionAccess(session.user);
+  if (!access.canAct) return null;
+  session.user.role = access.role;
   return session;
 }
 

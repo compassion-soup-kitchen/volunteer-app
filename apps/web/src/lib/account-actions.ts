@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { requireActiveSession } from "@/lib/action-auth";
+import { signIn } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import {
   buildBrandedEmailHtml,
@@ -195,7 +196,12 @@ export async function changeMyPassword(
   const hashedPassword = await bcrypt.hash(parsed.data.newPassword, 12);
   await db.user.update({
     where: { id: user.id },
-    data: { password: hashedPassword },
+    data: {
+      password: hashedPassword,
+      // Signs out every other session and app token: whoever might have
+      // been holding one stops being able to use it now.
+      sessionVersion: { increment: 1 },
+    },
   });
 
   // Any outstanding reset link is now a loose key to the account — burn it.
@@ -216,9 +222,30 @@ export async function changeMyPassword(
     text: buildBrandedEmailText(content),
   });
 
+  // The bump above ended this browser's session too. Mint it a fresh one on
+  // the new version so the person who just changed their password isn't the
+  // one thrown out. Not while impersonating: the session belongs to the admin,
+  // whose own version didn't move, and signing in here would swap it for the
+  // impersonated person's real session.
+  if (!session.user.impersonator) {
+    try {
+      await signIn("credentials", {
+        email: user.email,
+        password: parsed.data.newPassword,
+        redirect: false,
+      });
+    } catch (e) {
+      console.error("Re-sign-in after password change failed:", e);
+      return {
+        success:
+          "Ka pai - your password has been updated, and you've been signed out everywhere. Sign in again with your new password.",
+      };
+    }
+  }
+
   return {
     success:
-      "Ka pai - your password has been updated. You'll stay signed in here.",
+      "Ka pai - your password has been updated. You'll stay signed in here, and we've signed you out everywhere else.",
   };
 }
 

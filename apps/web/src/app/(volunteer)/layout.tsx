@@ -1,9 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import {
-  isSessionAccountActive,
-  sessionOwnerId,
-} from "@/lib/data/session-account";
+import { loadSessionAccess } from "@/lib/data/session-account";
 import { MAIN_CONTENT_ID, SkipLink } from "@/components/skip-link";
 import { VolunteerNav } from "./volunteer-nav";
 import { VolunteerFooter } from "./volunteer-footer";
@@ -19,11 +16,6 @@ export default async function VolunteerLayout({
     redirect("/login");
   }
 
-  // Staff should use the staff dashboard
-  if (session.user.role === "COORDINATOR" || session.user.role === "ADMIN") {
-    redirect("/staff/dashboard");
-  }
-
   // The session is a JWT, so it outlives the account it names - someone
   // deleted or archived mid-session would otherwise keep browsing here. Sent
   // via the sign-out route, not straight to /login: the token still reads as
@@ -33,14 +25,22 @@ export default async function VolunteerLayout({
   // impersonation - so that deleting the impersonated account doesn't take
   // the admin's own session down with it. This is the likelier of the two
   // routes for it: an impersonated volunteer sits here. See `sessionOwnerId`.
-  if (!(await isSessionAccountActive(sessionOwnerId(session.user)))) {
+  const access = await loadSessionAccess(session.user);
+  if (!access.alive) {
     redirect("/api/auth/session-ended");
   }
+
+  // Staff should use the staff dashboard. The role is the database's, so it
+  // agrees with the staff layout's gate even when the token's is stale.
+  if (access.role === "COORDINATOR" || access.role === "ADMIN") {
+    redirect("/staff/dashboard");
+  }
+  const user = { ...session.user, role: access.role };
 
   return (
     <div className="flex min-h-dvh flex-col bg-background pb-16 sm:pb-0">
       <SkipLink />
-      <VolunteerNav user={session.user} />
+      <VolunteerNav user={user} />
       {/* Editorial column on mobile, opening out to the full width on desktop */}
       <main
         id={MAIN_CONTENT_ID}

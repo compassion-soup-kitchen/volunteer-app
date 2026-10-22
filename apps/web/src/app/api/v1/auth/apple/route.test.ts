@@ -21,7 +21,7 @@ vi.mock("@/lib/apple-api", () => ({
 }));
 
 vi.mock("@/lib/api/token", () => ({
-  issueApiToken: (...args: unknown[]) => issueApiTokenMock(...args),
+  issueApiTokenForUser: (...args: unknown[]) => issueApiTokenMock(...args),
 }));
 
 import { POST } from "./route";

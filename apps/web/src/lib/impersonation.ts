@@ -201,6 +201,15 @@ async function startImpersonating(
   });
   if (!authority.ok) return;
 
+  // The token says ADMIN, but the token is a snapshot from sign-in. An admin
+  // since archived or demoted still holds one, and the swap below would hand
+  // them a live identity: Server Actions check the *effective* account, which
+  // is the target's and perfectly active. So the actor's own account is read
+  // too - only once the token has already claimed admin, so a forged request
+  // from anyone else still never reaches the database.
+  const actor = await readUser(adminId);
+  if (actor?.status !== "ACTIVE" || actor.role !== "ADMIN") return;
+
   const target = await readUser(targetUserId);
   if (!checkImpersonationTarget(target).ok) return;
   // Past the guard, `target` is non-null.

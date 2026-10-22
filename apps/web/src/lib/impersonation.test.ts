@@ -41,10 +41,29 @@ function deps(
   };
 }
 
+const adminRow: ImpersonationUserRow = {
+  id: ADMIN_ID,
+  name: "Ari Admin",
+  email: "ari@soupkitchen.org.nz",
+  role: "ADMIN",
+  status: "ACTIVE",
+  isOffline: false,
+};
+
+/** Deps for a start: the admin reads back as `actor`, anyone else as `target`. */
+function startDeps(
+  target: ImpersonationUserRow | null,
+  actor: ImpersonationUserRow | null = adminRow
+): ImpersonationDeps {
+  return deps(null, {
+    readUser: vi.fn(async (id: string) => (id === ADMIN_ID ? actor : target)),
+  });
+}
+
 describe("applyImpersonationUpdate - start", () => {
   it("swaps identity to the target and stashes the admin", async () => {
     const token = adminToken();
-    const d = deps(volunteerRow);
+    const d = startDeps(volunteerRow);
 
     const { handled, token: out } = await applyImpersonationUpdate(
       token,
@@ -73,7 +92,7 @@ describe("applyImpersonationUpdate - start", () => {
   // attacker-controlled, so only a genuinely-ADMIN signed token may start.
   it("refuses a non-admin token and never records or mutates it", async () => {
     const token = { id: "vol_2", name: "V", email: "v@x.org", role: "VOLUNTEER" as const };
-    const d = deps(volunteerRow);
+    const d = startDeps(volunteerRow);
 
     const { handled, token: out } = await applyImpersonationUpdate(
       token,
@@ -87,9 +106,31 @@ describe("applyImpersonationUpdate - start", () => {
     expect(d.readUser).not.toHaveBeenCalled();
   });
 
+  // The token is a snapshot. An admin archived or demoted since signing in
+  // still carries role ADMIN, and must not be able to borrow a live identity
+  // with it - Server Actions would check the target, who is active.
+  it.each([
+    ["archived", { ...adminRow, status: "ARCHIVED" as const }],
+    ["demoted", { ...adminRow, role: "COORDINATOR" as const }],
+    ["deleted", null],
+  ])("refuses an admin whose account has since been %s", async (_, actor) => {
+    const token = adminToken();
+    const d = startDeps(volunteerRow, actor);
+
+    const { handled, token: out } = await applyImpersonationUpdate(
+      token,
+      { impersonate: TARGET_ID },
+      d
+    );
+
+    expect(handled).toBe(true);
+    expect(out).toEqual(adminToken());
+    expect(d.recordStart).not.toHaveBeenCalled();
+  });
+
   it("refuses to impersonate another admin", async () => {
     const token = adminToken();
-    const d = deps({ ...volunteerRow, role: "ADMIN" });
+    const d = startDeps({ ...volunteerRow, role: "ADMIN" });
 
     const { token: out } = await applyImpersonationUpdate(
       token,
@@ -104,7 +145,7 @@ describe("applyImpersonationUpdate - start", () => {
 
   it("refuses an archived target", async () => {
     const token = adminToken();
-    const d = deps({ ...volunteerRow, status: "ARCHIVED" });
+    const d = startDeps({ ...volunteerRow, status: "ARCHIVED" });
 
     const { token: out } = await applyImpersonationUpdate(
       token,
@@ -118,7 +159,7 @@ describe("applyImpersonationUpdate - start", () => {
 
   it("refuses a missing target", async () => {
     const token = adminToken();
-    const d = deps(null);
+    const d = startDeps(null);
 
     const { token: out } = await applyImpersonationUpdate(
       token,
@@ -132,7 +173,7 @@ describe("applyImpersonationUpdate - start", () => {
 
   it("refuses self-impersonation without hitting the database", async () => {
     const token = adminToken();
-    const d = deps(volunteerRow);
+    const d = startDeps(volunteerRow);
 
     await applyImpersonationUpdate(token, { impersonate: ADMIN_ID }, d);
 
@@ -153,7 +194,7 @@ describe("applyImpersonationUpdate - start", () => {
         eventId: "event_1",
       },
     };
-    const d = deps({ ...volunteerRow, id: "vol_9" });
+    const d = startDeps({ ...volunteerRow, id: "vol_9" });
 
     await applyImpersonationUpdate(token, { impersonate: "vol_9" }, d);
 

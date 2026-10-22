@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { issueApiToken } from "@/lib/api/token";
+import { issueApiTokenForUser } from "@/lib/api/token";
 import { serializeSessionUser } from "@/lib/api/serializers";
 import { checkCredentials, normalizeEmail } from "@/lib/data/users";
 import { existingPasswordField } from "@/lib/password-rules";
@@ -59,6 +59,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const token = await issueApiToken(check.user.id);
+  const token = await issueApiTokenForUser(check.user.id);
   return NextResponse.json({ token, user: serializeSessionUser(check.user) });
 }

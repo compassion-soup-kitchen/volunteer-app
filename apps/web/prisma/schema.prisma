@@ -38,6 +38,10 @@ model User {
   /// roster them and mark their attendance; they have no password and cannot
   /// sign in. Cleared if they later claim the account.
   isOffline      Boolean    @default(false)
+  /// Bumped to sign out every existing session: web JWTs and mobile bearer
+  /// tokens carry the value they were minted with and stop working once it
+  /// moves on. Raised by a password change or reset and by archiving.
+  sessionVersion Int        @default(0)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 

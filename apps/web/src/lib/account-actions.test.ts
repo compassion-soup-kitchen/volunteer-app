@@ -9,15 +9,19 @@ const tokenDeleteManyMock = vi.fn();
 const sendEmailMock = vi.fn();
 const revalidatePathMock = vi.fn();
 
+const signInMock = vi.fn();
+
 vi.mock("@/lib/auth", () => ({
   auth: () => authMock(),
+  signIn: (...args: unknown[]) => signInMock(...args),
 }));
 
-// The account-liveness re-read that every Server Action now does (see
+// The account re-read (liveness, version, live role) every Server Action does (see
 // `action-auth.ts`). Stubbed active here so these tests keep exercising the
 // auth gate itself; `session-account.test.ts` covers the check.
 vi.mock("@/lib/data/session-account", () => ({
-  isSessionAccountActive: () => Promise.resolve(true),
+  loadSessionAccess: (user: { role: string }) =>
+    Promise.resolve({ alive: true, canAct: true, role: user.role }),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -91,6 +95,7 @@ function credentialsUser() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  signInMock.mockReset();
   clearRateLimits();
   authMock.mockResolvedValue(null);
   vi.mocked(bcrypt.compare).mockReset();
@@ -288,8 +293,59 @@ describe("changeMyPassword", () => {
     expect(result?.success).toBeTruthy();
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: USER_ID },
-      data: { password: "hashed:brand-new-password" },
+      data: {
+        password: "hashed:brand-new-password",
+        sessionVersion: { increment: 1 },
+      },
     });
+  });
+
+  // The version bump ends every session, this browser's included - so the
+  // person who changed their password is signed straight back in on the new
+  // one, and only everyone else is thrown out.
+  it("signs this browser back in on the new password", async () => {
+    signedIn();
+    findUniqueMock.mockResolvedValue(credentialsUser());
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    updateMock.mockResolvedValue({});
+    signInMock.mockResolvedValue("/dashboard");
+
+    const result = await changeMyPassword(null, passwordForm());
+
+    expect(signInMock).toHaveBeenCalledWith("credentials", {
+      email: "mereana@soupkitchen.org.nz",
+      password: "brand-new-password",
+      redirect: false,
+    });
+    expect(result?.success).toMatch(/stay signed in here/i);
+  });
+
+  it("says to sign in again when signing back in fails", async () => {
+    signedIn();
+    findUniqueMock.mockResolvedValue(credentialsUser());
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    updateMock.mockResolvedValue({});
+    signInMock.mockRejectedValue(new Error("nope"));
+
+    const result = await changeMyPassword(null, passwordForm());
+
+    expect(result?.success).toMatch(/sign in again/i);
+  });
+
+  // While impersonating, the session is the admin's and their version didn't
+  // move; signing in here would swap it for the impersonated person's own.
+  it("doesn't sign in as the person while an admin is impersonating", async () => {
+    authMock.mockResolvedValue({
+      user: { id: USER_ID, role: "VOLUNTEER", impersonator: { id: "admin-9" } },
+    });
+    findUniqueMock.mockResolvedValue(credentialsUser());
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    updateMock.mockResolvedValue({});
+
+    const result = await changeMyPassword(null, passwordForm());
+
+    expect(result?.success).toBeTruthy();
+    expect(signInMock).not.toHaveBeenCalled();
   });
 
   it("burns any outstanding reset token for the account", async () => {
@@ -357,7 +413,10 @@ describe("changeMyPassword", () => {
     expect(result?.success).toBeTruthy();
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: USER_ID },
-      data: { password: "hashed:brand-new-password" },
+      data: {
+        password: "hashed:brand-new-password",
+        sessionVersion: { increment: 1 },
+      },
     });
   });
 

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { issueApiToken } from "@/lib/api/token";
+import { issueApiTokenForUser } from "@/lib/api/token";
 import { serializeSessionUser } from "@/lib/api/serializers";
 import { signInWithAppleIdentity } from "@/lib/data/apple-accounts";
 import { verifyAppleIdToken } from "@/lib/apple-id-token";
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const token = await issueApiToken(result.user.id);
+  const token = await issueApiTokenForUser(result.user.id);
   return NextResponse.json(
     { token, user: serializeSessionUser(result.user) },
     { status: result.created ? 201 : 200 }

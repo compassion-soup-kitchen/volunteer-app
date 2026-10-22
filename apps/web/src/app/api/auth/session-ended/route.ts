@@ -1,15 +1,12 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
-import {
-  isSessionAccountActive,
-  sessionOwnerId,
-} from "@/lib/data/session-account";
+import { homeForRole, loadSessionAccess } from "@/lib/data/session-account";
 
 /**
  * Where a session whose account no longer exists is sent to die.
  *
  * The layout gates re-read the account on every authenticated page (see
- * `isSessionAccountActive`), but a layout renders - it cannot clear a cookie.
+ * `loadSessionAccess`), but a layout renders - it cannot clear a cookie.
  * Redirecting straight to `/login` would therefore bounce for ever: the JWT
  * still says "signed in", so `proxy.ts` sends it back to the dashboard, which
  * fails the same check again.
@@ -45,13 +42,9 @@ export async function GET() {
   // admin, when impersonating - for the same reason the gates do it: signing
   // out because the *borrowed* identity was deleted would take the admin's own
   // session with it. See `sessionOwnerId`.
-  if (await isSessionAccountActive(sessionOwnerId(session.user))) {
-    const role = session.user.role;
-    redirect(
-      role === "COORDINATOR" || role === "ADMIN"
-        ? "/staff/dashboard"
-        : "/dashboard"
-    );
+  const access = await loadSessionAccess(session.user);
+  if (access.alive) {
+    redirect(homeForRole(access.role));
   }
 
   // `redirectTo` makes signOut itself issue the redirect, with the
