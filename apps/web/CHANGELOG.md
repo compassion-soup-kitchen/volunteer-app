@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.15.0...v1.15.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* **web:** close staff privilege, revocation and sign-in gaps from security review ([6875117](https://github.com/compassion-soup-kitchen/volunteer-app/commit/68751171c1f20123dd6ec82a4f0f5e7b2cb6929a))
+* **web:** close staff privilege, revocation and sign-in gaps from security review ([f18ac61](https://github.com/compassion-soup-kitchen/volunteer-app/commit/f18ac6164265ae9884d3913a563ae8b2493bc106))
+
 ## [1.15.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.14.0...v1.15.0) (2026-10-21)
 
 
