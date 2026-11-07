@@ -13,6 +13,7 @@ import type {
 } from "@/lib/data/volunteer-dashboard";
 import type {
   ScheduleEntry,
+  ShiftWeekPage,
   ShiftWithDetails,
 } from "@/lib/data/volunteer-shifts";
 import type {
@@ -69,6 +70,14 @@ export function serializeShift(shift: ShiftWithDetails) {
     // The day falls in this volunteer's leave. Older app versions ignore it;
     // the signup endpoint refuses the day either way.
     onLeave: shift.userOnLeave,
+  };
+}
+
+export function serializeShiftWeek(page: ShiftWeekPage) {
+  return {
+    weekStart: page.weekStart,
+    shifts: page.shifts.map(serializeShift),
+    nextWeek: page.nextWeek,
   };
 }
 

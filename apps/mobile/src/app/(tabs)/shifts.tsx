@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addWeeks, differenceInCalendarDays, format, isSameWeek, parseISO, startOfWeek } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -11,7 +11,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { qk } from '@/lib/query-keys';
 import { useToast } from '@/providers/toast-provider';
-import { getAvailableShifts, getMySchedule, getServiceAreas, signUpForShift } from '@/services/shifts-service';
+import { getMySchedule, getServiceAreas, getShiftWeek, signUpForShift } from '@/services/shifts-service';
 import type { ShiftWithDetails } from '@/types/models';
 
 /* -------------------------------------------------------------------------- */
@@ -111,10 +111,21 @@ export default function ShiftsScreen() {
   // The roster rail is the volunteer's own commitments — kept independent of the
   // area filter so it stays a stable anchor while they browse.
   const { data: schedule } = useQuery({ queryKey: qk.schedule, queryFn: getMySchedule });
-  const { data, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: qk.shifts(areaFilter ?? undefined),
-    queryFn: () => getAvailableShifts(areaFilter ? { serviceAreaId: areaFilter } : undefined),
-  });
+  // A week per page: the roster runs twelve weeks ahead, and rendering all of
+  // it at once (each card with its own native Book button) made the tab crawl.
+  // The next week loads as the volunteer scrolls towards the end.
+  const { data, isLoading, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } =
+    useInfiniteQuery({
+      queryKey: qk.shifts(areaFilter ?? undefined),
+      queryFn: ({ pageParam }) =>
+        getShiftWeek({ from: pageParam, ...(areaFilter ? { serviceAreaId: areaFilter } : {}) }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (last) => last.nextWeek ?? undefined,
+    });
+
+  const loadNextWeek = () => {
+    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) fetchNextPage();
+  };
 
   const book = useMutation({
     mutationFn: (shiftId: string) => signUpForShift(shiftId),
@@ -131,7 +142,10 @@ export default function ShiftsScreen() {
   });
 
   // Booked shifts live in the top rail; the timeline below is open shifts only.
-  const openShifts = useMemo(() => (data ?? []).filter((s) => s.userSignupStatus !== 'SIGNED_UP'), [data]);
+  const openShifts = useMemo(
+    () => (data?.pages ?? []).flatMap((page) => page.shifts).filter((s) => s.userSignupStatus !== 'SIGNED_UP'),
+    [data],
+  );
   const weeks = useMemo(() => groupShifts(openShifts), [openShifts]);
   const roster = schedule?.upcoming ?? [];
 
@@ -139,10 +153,10 @@ export default function ShiftsScreen() {
     ? 'Finding times you can help.'
     : openShifts.length === 0
       ? 'No open shifts right now.'
-      : `${openShifts.length} ${openShifts.length === 1 ? 'shift' : 'shifts'} open to pick up.`;
+      : 'Find a time that suits you.';
 
   return (
-    <Screen onRefresh={refetch} refreshing={isRefetching} insetTop={false}>
+    <Screen onRefresh={refetch} refreshing={isRefetching && !isFetchingNextPage} insetTop={false} onEndReached={loadNextWeek}>
       <PageHeader
         overline="Te rārangi mahi"
         title="Shifts"
@@ -244,6 +258,21 @@ export default function ShiftsScreen() {
                 ))}
               </View>
             ))}
+            {isFetchingNextPage ? (
+              <SkeletonCard />
+            ) : isFetchNextPageError ? (
+              <EmptyState
+                icon="cloud-offline-outline"
+                title="Couldn't load the next week"
+                message="Check your connection and try again."
+                actionLabel="Try again"
+                onAction={() => fetchNextPage()}
+              />
+            ) : !hasNextPage ? (
+              <Text variant="caption" color="textTertiary" style={{ textAlign: 'center' }}>
+                That&apos;s the roster for now - new shifts go up each week.
+              </Text>
+            ) : null}
           </View>
         )}
       </View>

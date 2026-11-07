@@ -124,6 +124,15 @@ export interface ShiftFilters {
   serviceAreaId?: string;
 }
 
+/** One week of open shifts from `/api/v1/shifts/week`, and where the next one is. */
+export interface ShiftWeekPage {
+  /** Monday of this week, or null when nothing is on from the requested week on. */
+  weekStart: string | null;
+  shifts: ShiftWithDetails[];
+  /** Monday of the next week with any shift - pass it back as `from` - or null at the end. */
+  nextWeek: string | null;
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Training                                                                   */
 /* -------------------------------------------------------------------------- */
