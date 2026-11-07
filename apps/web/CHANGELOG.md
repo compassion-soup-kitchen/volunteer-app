@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.2](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.15.1...v1.15.2) (2026-11-07)
+
+
+### Performance Improvements
+
+* **mobile:** page the Shifts tab a week at a time ([48c4a96](https://github.com/compassion-soup-kitchen/volunteer-app/commit/48c4a968c86c3c0a97bcf6888a05b89a2a4b424d))
+* **mobile:** page the Shifts tab a week at a time ([d73e4b1](https://github.com/compassion-soup-kitchen/volunteer-app/commit/d73e4b13a9a6a7fdecd41dc9cefde5de0d440573))
+
 ## [1.15.1](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.15.0...v1.15.1) (2026-10-26)
 
 
