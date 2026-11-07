@@ -1,6 +1,6 @@
 import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
   type LayoutChangeEvent,
   RefreshControl,
@@ -14,6 +14,7 @@ import Animated, {
   useAnimatedRef,
   useAnimatedStyle,
   useScrollViewOffset,
+  useSharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -49,6 +50,13 @@ export type ScreenProps = {
    */
   header?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  /**
+   * Called when the page is scrolled to within a screen's height of its end -
+   * or when it is that short to begin with - to load the next page of a list.
+   * It fires again each time the content grows (or shrinks) while still near
+   * the end, so the caller only has to guard against a fetch already running.
+   */
+  onEndReached?: () => void;
 };
 
 /**
@@ -68,6 +76,7 @@ export function Screen({
   motif = false,
   header,
   contentStyle,
+  onEndReached,
 }: ScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -103,6 +112,29 @@ export function Screen({
     [headerHeight, insets.top],
   );
   const heroStatusBar = header && focused && heroUnderStatusBar ? <StatusBar style="light" /> : null;
+
+  // Infinite paging. The reaction keys on the content height while near the
+  // end, so it fires once per height rather than on every scroll frame - and
+  // again after a page lands if that page still leaves the end in view.
+  const viewportHeight = useSharedValue(0);
+  const contentHeight = useSharedValue(0);
+  const onEndReachedRef = useRef(onEndReached);
+  useLayoutEffect(() => {
+    onEndReachedRef.current = onEndReached;
+  });
+  const fireEndReached = useCallback(() => onEndReachedRef.current?.(), []);
+  const pagesOnScroll = Boolean(onEndReached);
+  useAnimatedReaction(
+    () => {
+      if (!pagesOnScroll || viewportHeight.value === 0 || contentHeight.value === 0) return -1;
+      const remaining = contentHeight.value - (scrollOffset.value + viewportHeight.value);
+      return remaining < viewportHeight.value ? contentHeight.value : -1;
+    },
+    (nearEndAt, previous) => {
+      if (nearEndAt !== -1 && nearEndAt !== previous) scheduleOnRN(fireEndReached);
+    },
+    [pagesOnScroll, fireEndReached],
+  );
 
   const paddingTop = (insetTop ? insets.top : 0) + Spacing.sm;
   // Clear the home indicator AND the floating native tab bar (which overlays content on iOS 26).
@@ -165,6 +197,12 @@ export function Screen({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom }}
+      onLayout={(e: LayoutChangeEvent) => {
+        viewportHeight.set(e.nativeEvent.layout.height);
+      }}
+      onContentSizeChange={(_width: number, height: number) => {
+        contentHeight.set(height);
+      }}
       refreshControl={
         onRefresh ? (
           <RefreshControl

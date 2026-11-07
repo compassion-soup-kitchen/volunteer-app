@@ -4,8 +4,12 @@ import { revalidatePath } from "next/cache";
 import { scheduleRosterTopUp } from "@/lib/data/shift-patterns";
 import {
   dateOnlyOf,
+  endOfWeekOf,
+  parseDateOnly,
   safeParseDateOnly,
   startOfTodayInAppZone,
+  startOfWeekOf,
+  type DateOnly,
 } from "@/lib/date-only";
 import { leaveCovering, leaveForVolunteers } from "@/lib/data/leave-days";
 import {
@@ -174,6 +178,65 @@ export async function getAvailableShiftsForUser(
   return shifts.map((shift) =>
     toShiftWithDetails(shift, profile?.id ?? null, leave, now)
   );
+}
+
+/** One week of the roster a volunteer can browse, and where the next one is. */
+export type ShiftWeekPage = {
+  /** Monday of the week returned, or null when nothing is on from `from` on. */
+  weekStart: DateOnly | null;
+  shifts: ShiftWithDetails[];
+  /** Monday of the next week that has any shift, or null if this is the last. */
+  nextWeek: DateOnly | null;
+};
+
+/**
+ * The roster a week at a time, for a client that pages through it (the
+ * mobile app's Shifts tab) rather than asking for every generated shift at
+ * once - patterns alone keep twelve weeks of them on the books.
+ *
+ * Weeks with nothing on are skipped in both directions: the page is the
+ * first week from `from` that has a shift, and `nextWeek` points past any
+ * empty weeks (a closed fortnight over Christmas) to the next one that
+ * does, so a client following it never lands on a blank page.
+ */
+export async function getShiftWeekForUser(
+  userId: string,
+  filters?: { serviceAreaId?: string; from?: string }
+): Promise<ShiftWeekPage> {
+  const db = getDb();
+  const area = filters?.serviceAreaId
+    ? { serviceAreaId: filters.serviceAreaId }
+    : {};
+
+  const first = await db.shift.findFirst({
+    where: { date: { gte: availableFrom(filters?.from, new Date()) }, ...area },
+    orderBy: { date: "asc" },
+    select: { date: true },
+  });
+  if (!first) return { weekStart: null, shifts: [], nextWeek: null };
+
+  const weekStart = startOfWeekOf(dateOnlyOf(first.date));
+  const weekEnd = endOfWeekOf(weekStart);
+
+  const [shifts, next] = await Promise.all([
+    // Floors at today itself, so the days already gone from this week stay out.
+    getAvailableShiftsForUser(userId, {
+      serviceAreaId: filters?.serviceAreaId,
+      fromDate: weekStart,
+      toDate: weekEnd,
+    }),
+    db.shift.findFirst({
+      where: { date: { gt: parseDateOnly(weekEnd) }, ...area },
+      orderBy: { date: "asc" },
+      select: { date: true },
+    }),
+  ]);
+
+  return {
+    weekStart,
+    shifts,
+    nextWeek: next ? startOfWeekOf(dateOnlyOf(next.date)) : null,
+  };
 }
 
 export async function getShiftForUser(

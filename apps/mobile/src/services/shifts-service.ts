@@ -1,19 +1,22 @@
 /**
  * Shifts service. Mirrors `getAvailableShifts`, `signUpForShift` and
  * `cancelShiftSignup` in the web app; against the real API it calls
- * `/api/v1/shifts`, `/api/v1/schedule` and `/api/v1/service-areas`.
+ * `/api/v1/shifts/week`, `/api/v1/shifts/:id`, `/api/v1/schedule` and
+ * `/api/v1/service-areas`.
  */
 
-import { areaById, db, isPast, nextId, signupCount, type ShiftRecord } from '@/data/mock-db';
+import { areaById, db, isoDate, isPast, nextId, signupCount, type ShiftRecord } from '@/data/mock-db';
 import type {
   ActionResult,
   ServiceArea,
   ShiftFilters,
   ShiftServiceArea,
+  ShiftWeekPage,
   ShiftWithDetails,
 } from '@/types/models';
 
 import { formatLeaveRange } from '@/lib/leave';
+import { pageByWeek } from '@/lib/shift-weeks';
 
 import { apiFetch, ApiError, delay, toActionError, USE_MOCK } from './client';
 import { mockLeaveOn } from './leave-service';
@@ -47,20 +50,27 @@ function toDetails(s: ShiftRecord): ShiftWithDetails {
   };
 }
 
-export async function getAvailableShifts(filters?: ShiftFilters): Promise<ShiftWithDetails[]> {
+/**
+ * One week of open shifts - the Shifts tab pages through the roster with
+ * these rather than loading every generated shift (twelve weeks of them) at
+ * once. Leave `from` off for the first page; pass the last page's `nextWeek`
+ * for the one after.
+ */
+export async function getShiftWeek(filters?: ShiftFilters & { from?: string }): Promise<ShiftWeekPage> {
   if (!USE_MOCK) {
-    const query = filters?.serviceAreaId
-      ? `?serviceAreaId=${encodeURIComponent(filters.serviceAreaId)}`
-      : '';
-    return apiFetch<ShiftWithDetails[]>(`/api/v1/shifts${query}`);
+    const params = new URLSearchParams();
+    if (filters?.from) params.set('from', filters.from);
+    if (filters?.serviceAreaId) params.set('serviceAreaId', filters.serviceAreaId);
+    const query = params.toString();
+    return apiFetch<ShiftWeekPage>(`/api/v1/shifts/week${query ? `?${query}` : ''}`);
   }
 
   await delay();
-  return db.shifts
-    .filter((s) => !isPast(s.date))
+  const shifts = db.shifts
     .filter((s) => !filters?.serviceAreaId || s.serviceAreaId === filters.serviceAreaId)
-    .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
-    .map(toDetails);
+    .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
+  const page = pageByWeek(shifts, isoDate(0), filters?.from);
+  return { weekStart: page.weekStart, shifts: page.items.map(toDetails), nextWeek: page.nextWeek };
 }
 
 export type ScheduleStatus = 'CONFIRMED' | 'ATTENDED' | 'NO_SHOW';
