@@ -308,7 +308,7 @@ pnpm mobile prebuild:ios       # regenerate ios/ locally — needed after a conf
 - **A development build is not optional.** `@react-native-google-signin/google-signin` and the other native modules aren't in Expo Go, so anything touching Google sign-in must be tested on `build:ios:dev`.
 - **Sign in with Apple needs a native rebuild, and the App ID capability.** `ios.usesAppleSignIn: true` plus the `expo-apple-authentication` plugin change the entitlements, so the runtime fingerprint moves and **no OTA update can deliver it** — it takes `build:ios`. EAS adds the "Sign In with Apple" capability to the App ID when it syncs credentials. Nothing goes in the app's EAS environment: the audience is the bundle id, so all the configuration is server-side (`APPLE_*`).
 - **Env vars come from EAS, not `.env`.** `apps/mobile/.env` is gitignored, so it is never uploaded to a cloud build; each profile names an EAS environment (`development` / `preview` / `production`) and the variables are read from there. Manage them with `eas env:list --environment production` / `eas env:create`. Anything the app needs at build time — `EXPO_PUBLIC_API_URL`, the `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` pair — must exist in that environment or the build ships without it.
-- **`submit.production` is empty on purpose.** The first `eas submit` prompts for the Apple ID, team and App Store Connect app id, and offers to save them.
+- **`submit.production` pins `ios.ascAppId`** (the App Store Connect app id, `6785313022`), so `submit:ios` / `release:ios` run without prompts. Apple authentication comes from the App Store Connect API key stored on EAS (`credentials:ios`), not from `eas.json`. Without the id, `eas submit --non-interactive` refuses to start.
 
 ### Over-the-air updates (EAS Update)
 
