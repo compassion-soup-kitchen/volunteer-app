@@ -151,6 +151,25 @@ export function validateApplicationDecision(input: {
   return null;
 }
 
+/**
+ * What to store as the applicant's message for a decision. The review form
+ * starts with the existing message filled in, so approving or declining without
+ * touching it would leave "please send a referee" under the final outcome. An
+ * unchanged message is the old request, spent once a final decision is made;
+ * anything the reviewer wrote or edited is kept.
+ */
+export function applicantMessageToStore(input: {
+  decision: string;
+  message?: string | null;
+  previousMessage?: string | null;
+}): string | null {
+  const message = input.message?.trim() || null;
+  if (input.decision !== "INFO_REQUESTED" && message === input.previousMessage) {
+    return null;
+  }
+  return message;
+}
+
 // ─── Archiving and restoring accounts ────────────────────────────────
 
 export type AccountArchiveInput = {

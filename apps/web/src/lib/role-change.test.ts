@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applicantMessageToStore,
   validateApplicationDecision,
   validateArchive,
   validateRestore,
@@ -212,6 +213,45 @@ describe("validateApplicationDecision", () => {
     expect(
       validateApplicationDecision({ currentStatus: "PENDING", decision: "ADMIN" })
     ).toBeTruthy();
+  });
+});
+
+describe("applicantMessageToStore", () => {
+  const previousMessage = "Please send a referee.";
+
+  it.each(["APPROVED", "DECLINED"])(
+    "drops the old info request when the reviewer leaves it unchanged on %s",
+    (decision) => {
+      expect(
+        applicantMessageToStore({ decision, message: previousMessage, previousMessage })
+      ).toBeNull();
+    }
+  );
+
+  it("keeps a message the reviewer wrote for a final decision", () => {
+    expect(
+      applicantMessageToStore({
+        decision: "DECLINED",
+        message: "Thanks for offering, kia kaha.",
+        previousMessage,
+      })
+    ).toBe("Thanks for offering, kia kaha.");
+  });
+
+  it("keeps an unchanged message when asking for more info again", () => {
+    expect(
+      applicantMessageToStore({
+        decision: "INFO_REQUESTED",
+        message: previousMessage,
+        previousMessage,
+      })
+    ).toBe(previousMessage);
+  });
+
+  it("stores nothing for a blank message", () => {
+    expect(
+      applicantMessageToStore({ decision: "APPROVED", message: "   ", previousMessage: null })
+    ).toBeNull();
   });
 });
 

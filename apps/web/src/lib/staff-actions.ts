@@ -24,6 +24,7 @@ import {
 } from "@/lib/date-only";
 import { Prisma, type Role } from "@prisma/client";
 import {
+  applicantMessageToStore,
   validateRoleChange,
   validateApplicationDecision,
   validateArchive,
@@ -418,7 +419,11 @@ export async function reviewApplication(
         data: {
           status: decision,
           notes: notes?.trim() || null,
-          applicantMessage: message.data || null,
+          applicantMessage: applicantMessageToStore({
+            decision,
+            message: message.data,
+            previousMessage: application.applicantMessage,
+          }),
           reviewedAt: new Date(),
           reviewedById: session.user!.id,
         },
