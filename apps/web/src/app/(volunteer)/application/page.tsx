@@ -52,7 +52,7 @@ const STATUS_CONFIG = {
     tone: "info" as const,
     cardVariant: "default" as const,
     description:
-      "We need a bit more information before we can process your application. Please check the notes below.",
+      "We need a bit more information before we can process your application.",
   },
 };
 
@@ -97,13 +97,13 @@ export default async function ApplicationPage() {
               </p>
             </div>
           </CardContent>
-          {appStatus.applicationNotes && (
+          {appStatus.applicantMessage && (
             <CardContent>
               <div className="rounded-lg bg-muted p-4 text-left">
                 <Eyebrow tone="muted">
                   Notes from our team
                 </Eyebrow>
-                <p className="mt-1.5 text-sm">{appStatus.applicationNotes}</p>
+                <p className="mt-1.5 text-sm">{appStatus.applicantMessage}</p>
               </div>
             </CardContent>
           )}

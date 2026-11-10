@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applicantMessageToStore,
   validateApplicationDecision,
   validateArchive,
   validateRestore,
@@ -167,10 +168,37 @@ describe("validateApplicationDecision", () => {
     "allows deciding an application that is %s",
     (currentStatus) => {
       for (const decision of ["APPROVED", "DECLINED", "INFO_REQUESTED"]) {
-        expect(validateApplicationDecision({ currentStatus, decision })).toBeNull();
+        expect(
+          validateApplicationDecision({
+            currentStatus,
+            decision,
+            applicantMessage: "Please send a referee.",
+          })
+        ).toBeNull();
       }
     }
   );
+
+  it.each([undefined, null, "", "   "])(
+    "refuses to request more info with no message (%j)",
+    (applicantMessage) => {
+      expect(
+        validateApplicationDecision({
+          currentStatus: "PENDING",
+          decision: "INFO_REQUESTED",
+          applicantMessage,
+        })
+      ).toMatch(/message/i);
+    }
+  );
+
+  it("doesn't need a message to approve or decline", () => {
+    for (const decision of ["APPROVED", "DECLINED"]) {
+      expect(
+        validateApplicationDecision({ currentStatus: "PENDING", decision })
+      ).toBeNull();
+    }
+  });
 
   it.each(["APPROVED", "DECLINED"])(
     "refuses re-deciding an application already %s",
@@ -185,6 +213,45 @@ describe("validateApplicationDecision", () => {
     expect(
       validateApplicationDecision({ currentStatus: "PENDING", decision: "ADMIN" })
     ).toBeTruthy();
+  });
+});
+
+describe("applicantMessageToStore", () => {
+  const previousMessage = "Please send a referee.";
+
+  it.each(["APPROVED", "DECLINED"])(
+    "drops the old info request when the reviewer leaves it unchanged on %s",
+    (decision) => {
+      expect(
+        applicantMessageToStore({ decision, message: previousMessage, previousMessage })
+      ).toBeNull();
+    }
+  );
+
+  it("keeps a message the reviewer wrote for a final decision", () => {
+    expect(
+      applicantMessageToStore({
+        decision: "DECLINED",
+        message: "Thanks for offering, kia kaha.",
+        previousMessage,
+      })
+    ).toBe("Thanks for offering, kia kaha.");
+  });
+
+  it("keeps an unchanged message when asking for more info again", () => {
+    expect(
+      applicantMessageToStore({
+        decision: "INFO_REQUESTED",
+        message: previousMessage,
+        previousMessage,
+      })
+    ).toBe(previousMessage);
+  });
+
+  it("stores nothing for a blank message", () => {
+    expect(
+      applicantMessageToStore({ decision: "APPROVED", message: "   ", previousMessage: null })
+    ).toBeNull();
   });
 });
 

@@ -8,6 +8,11 @@ updates:
       time: "09:00"
       timezone: Pacific/Auckland
     open-pull-requests-limit: 10
+    # Most malicious npm releases are caught and pulled within days, so don't
+    # propose a version until it has been public for a week. Security updates
+    # are not delayed by this.
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
     # Expo (apps/mobile) pins these native packages to the installed SDK.
@@ -26,7 +31,15 @@ updates:
       - dependency-name: "react"
       - dependency-name: "react-dom"
     groups:
-      minor-and-patch:
+      # Split by dependency type so the development bundle can auto-merge
+      # without a single production package holding it back for review.
+      dev-minor-and-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      production-minor-and-patch:
+        dependency-type: production
         update-types:
           - minor
           - patch

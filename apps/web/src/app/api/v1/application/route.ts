@@ -16,7 +16,9 @@ export const GET = withApiAuth(async (_req, user) => {
   return NextResponse.json({
     status: status.applicationStatus,
     submittedAt: status.submittedAt.toISOString(),
-    notes: status.applicationNotes,
+    // Named `notes` because that's what installed app builds read. It carries
+    // only the message written for the applicant, never `Application.notes`.
+    notes: status.applicantMessage,
   });
 });
 
