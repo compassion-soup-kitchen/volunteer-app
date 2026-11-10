@@ -35,7 +35,7 @@ const STATUS_CONFIG: Record<
     tone: 'accent',
     icon: 'information-circle-outline',
     description:
-      'We need a little more information before we can process your application - see the note below.',
+      'We need a little more information before we can process your application.',
   },
 };
 

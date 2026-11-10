@@ -239,7 +239,10 @@ model Application {
   id           String            @id @default(cuid())
   volunteerId  String
   status       ApplicationStatus @default(PENDING)
+  /// Staff-only review notes. Must never be returned to the applicant.
   notes        String?
+  /// What the reviewer wants the applicant to read, e.g. what more is needed.
+  applicantMessage String?
   submittedAt  DateTime          @default(now())
   reviewedAt   DateTime?
   reviewedById String?

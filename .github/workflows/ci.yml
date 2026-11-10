@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# These jobs run third-party code (install scripts, eslint, vitest, the build),
+# so that code gets a token that can only read the repo.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

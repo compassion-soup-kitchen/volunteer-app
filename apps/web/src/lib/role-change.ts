@@ -126,10 +126,14 @@ export const UNDECIDED_APPLICATION_STATUSES = [
  * long-approved application of someone since made an admin and demote them to
  * VOLUNTEER - around both the admin-only role change and the last-admin guard.
  * A decided application stays decided.
+ *
+ * Requesting more information needs a message, because that message is the only
+ * place the applicant is told what's wanted.
  */
 export function validateApplicationDecision(input: {
   currentStatus: string;
   decision: string;
+  applicantMessage?: string | null;
 }): string | null {
   if (!(APPLICATION_DECISIONS as readonly string[]).includes(input.decision)) {
     return "That isn't a decision we can record.";
@@ -140,6 +144,9 @@ export function validateApplicationDecision(input: {
     )
   ) {
     return "This application has already been decided.";
+  }
+  if (input.decision === "INFO_REQUESTED" && !input.applicantMessage?.trim()) {
+    return "Add a message telling the applicant what you need from them.";
   }
   return null;
 }

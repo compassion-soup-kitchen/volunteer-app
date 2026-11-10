@@ -1,6 +1,7 @@
 "use server";
 
 import { after, connection } from "next/server";
+import { z } from "zod";
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { sendPushToUsers } from "@/lib/push";
@@ -319,6 +320,7 @@ export type ApplicationDetail = {
   submittedAt: Date;
   reviewedAt: Date | null;
   notes: string | null;
+  applicantMessage: string | null;
   volunteer: {
     id: string;
     phone: string | null;
@@ -374,10 +376,16 @@ export async function getApplicationDetail(
 export async function reviewApplication(
   applicationId: string,
   decision: "APPROVED" | "DECLINED" | "INFO_REQUESTED",
-  notes?: string
+  notes?: string,
+  applicantMessage?: string
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await requireStaff();
   if (!session) return { error: "Not authorised." };
+
+  const message = z.string().trim().max(2000).optional().safeParse(applicantMessage);
+  if (!message.success) {
+    return { error: "Keep the message to the applicant under 2000 characters." };
+  }
 
   const db = getDb();
   const application = await db.application.findUnique({
@@ -394,6 +402,7 @@ export async function reviewApplication(
   const decisionError = validateApplicationDecision({
     currentStatus: application.status,
     decision,
+    applicantMessage: message.data,
   });
   if (decisionError) return { error: decisionError };
 
@@ -409,6 +418,7 @@ export async function reviewApplication(
         data: {
           status: decision,
           notes: notes?.trim() || null,
+          applicantMessage: message.data || null,
           reviewedAt: new Date(),
           reviewedById: session.user!.id,
         },

@@ -53,14 +53,21 @@ export async function listServiceAreas() {
 
 // ─── Application ────────────────────────────────────────
 
+/**
+ * What an applicant may read about their own application. An explicit select
+ * so that `Application.notes` - the reviewer's private notes - can't come along
+ * with the row.
+ */
 export async function getApplicationStatusForUser(userId: string) {
   const db = getDb();
   const profile = await db.volunteerProfile.findUnique({
     where: { userId },
-    include: {
+    select: {
+      status: true,
       applications: {
         orderBy: { submittedAt: "desc" },
         take: 1,
+        select: { status: true, submittedAt: true, applicantMessage: true },
       },
     },
   });
@@ -70,7 +77,7 @@ export async function getApplicationStatusForUser(userId: string) {
   return {
     profileStatus: profile.status,
     applicationStatus: profile.applications[0]?.status ?? null,
-    applicationNotes: profile.applications[0]?.notes ?? null,
+    applicantMessage: profile.applications[0]?.applicantMessage ?? null,
     submittedAt: profile.applications[0]?.submittedAt ?? null,
   };
 }
@@ -158,10 +165,6 @@ export async function getProfileForUser(userId: string) {
     where: { userId },
     include: {
       interests: true,
-      applications: {
-        orderBy: { submittedAt: "desc" },
-        take: 1,
-      },
       signedAgreements: true,
     },
   });

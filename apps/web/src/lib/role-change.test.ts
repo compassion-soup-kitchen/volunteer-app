@@ -167,10 +167,37 @@ describe("validateApplicationDecision", () => {
     "allows deciding an application that is %s",
     (currentStatus) => {
       for (const decision of ["APPROVED", "DECLINED", "INFO_REQUESTED"]) {
-        expect(validateApplicationDecision({ currentStatus, decision })).toBeNull();
+        expect(
+          validateApplicationDecision({
+            currentStatus,
+            decision,
+            applicantMessage: "Please send a referee.",
+          })
+        ).toBeNull();
       }
     }
   );
+
+  it.each([undefined, null, "", "   "])(
+    "refuses to request more info with no message (%j)",
+    (applicantMessage) => {
+      expect(
+        validateApplicationDecision({
+          currentStatus: "PENDING",
+          decision: "INFO_REQUESTED",
+          applicantMessage,
+        })
+      ).toMatch(/message/i);
+    }
+  );
+
+  it("doesn't need a message to approve or decline", () => {
+    for (const decision of ["APPROVED", "DECLINED"]) {
+      expect(
+        validateApplicationDecision({ currentStatus: "PENDING", decision })
+      ).toBeNull();
+    }
+  });
 
   it.each(["APPROVED", "DECLINED"])(
     "refuses re-deciding an application already %s",

@@ -64,7 +64,7 @@ export async function getUserApplicationStatus() {
   return {
     profileStatus: status.profileStatus,
     applicationStatus: status.applicationStatus,
-    applicationNotes: status.applicationNotes,
+    applicantMessage: status.applicantMessage,
   };
 }
 

@@ -81,6 +81,9 @@ interface ApplicationReviewProps {
 export function ApplicationReview({ application }: ApplicationReviewProps) {
   const router = useRouter();
   const [notes, setNotes] = useState(application.notes || "");
+  const [applicantMessage, setApplicantMessage] = useState(
+    application.applicantMessage || ""
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [, startTransition] = useTransition();
   const [mojStatus, setMojStatus] = useState(application.volunteer.mojStatus);
@@ -92,7 +95,12 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     decision: "APPROVED" | "DECLINED" | "INFO_REQUESTED"
   ): Promise<boolean> {
     setIsSaving(true);
-    const result = await reviewApplication(application.id, decision, notes);
+    const result = await reviewApplication(
+      application.id,
+      decision,
+      notes,
+      applicantMessage
+    );
     setIsSaving(false);
 
     if (result.error) {
@@ -364,6 +372,27 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add notes about this application…"
               rows={4}
+              aria-label="Review notes, internal only"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Message to applicant */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Message to applicant</CardTitle>
+            <CardDescription>
+              The applicant will read this · needed to request more info
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              value={applicantMessage}
+              onChange={(e) => setApplicantMessage(e.target.value)}
+              placeholder="Let them know what you need from them…"
+              rows={3}
+              maxLength={2000}
+              aria-label="Message to applicant, visible to them"
             />
           </CardContent>
         </Card>

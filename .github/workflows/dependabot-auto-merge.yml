@@ -9,7 +9,7 @@ permissions:
 jobs:
   auto-merge:
     name: Auto-merge patch and minor updates
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Dependabot metadata
@@ -18,10 +18,16 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Development dependencies only. A merge to main deploys, so anything that
+      # runs in the production container needs a person to look at it first.
+      # For a grouped PR, dependency-type reports the most sensitive member, so
+      # one production package in the group keeps the whole PR out of here.
       - name: Enable auto-merge for patch and minor updates
         if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+          steps.metadata.outputs.dependency-type == 'direct:development' && (
+            steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+            steps.metadata.outputs.update-type == 'version-update:semver-minor'
+          )
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
