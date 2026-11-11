@@ -1,25 +1,32 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+// The Content-Security-Policy is not here: it carries a fresh nonce on every
+// request, so src/proxy.ts builds it (src/lib/content-security-policy.ts),
+// including the frame-ancestors rule that lets awhinatech.nz embed the site.
+// X-Frame-Options can't express "self + another origin", and CSP
+// frame-ancestors supersedes it anyway, so it's deliberately not set.
 const securityHeaders = [
   // HSTS is safe to set unconditionally: browsers ignore it over plain HTTP,
   // and production terminates TLS at the Coolify reverse proxy.
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-  // awhinatech.nz embeds the live site in its showcase, so framing is allowed
-  // for that origin as well as 'self'. X-Frame-Options can't express "self +
-  // another origin", and CSP frame-ancestors supersedes it anyway, so it's
-  // deliberately not set.
-  {
-    key: "Content-Security-Policy",
-    value: "frame-ancestors 'self' https://awhinatech.nz https://*.awhinatech.nz",
-  },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // Isolate the window from anything it opens or is opened by. Google sign-in
+  // on the web is a full-page redirect, not a popup, so nothing relies on
+  // window.opener. (Cross-Origin-Embedder-Policy is left off on purpose:
+  // require-corp would block Google Maps and Google profile pictures.)
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Nothing outside this origin loads the app's pages or assets (emails carry
+  // no images from here; the mobile app is not a browser, so it is unaffected).
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
 ];
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Don't advertise the framework in an X-Powered-By header.
+  poweredByHeader: false,
   experimental: {
     serverActions: {
       // Uploads (policies, training material, pānui attachments) travel as

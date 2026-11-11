@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { nextWithCsp } from "@/lib/csp-response";
 
 const publicPaths = [
   "/",
@@ -13,6 +14,8 @@ const publicPaths = [
   "/copyright",
   "/styleguide",
   "/styleguide/emails",
+  "/robots.txt",
+  "/sitemap.xml",
 ];
 
 // The auth config is built per request (see `lib/auth.ts`), and in that mode
@@ -40,7 +43,7 @@ const authorised = auth((req) => {
           : "/dashboard";
       return NextResponse.redirect(new URL(destination, req.url));
     }
-    return NextResponse.next();
+    return nextWithCsp(req);
   }
 
   // Require auth for all other routes
@@ -54,7 +57,7 @@ const authorised = auth((req) => {
   // someone's role changed mid-session - and the two redirecting at each
   // other loops.
 
-  return NextResponse.next();
+  return nextWithCsp(req);
 });
 
 export async function proxy(...args: Parameters<Awaited<typeof authorised>>) {
