@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "There's already an account with this email address. Sign in with your email and password instead.",
+            "There's already an account with this email address, but it hasn't been confirmed yet. Sign in with your email and password, or use \"Forgot password\" to confirm it.",
           code: "ACCOUNT_NOT_LINKED",
         },
         { status: 409 }

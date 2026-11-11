@@ -16,6 +16,8 @@ import { authorizeCredentials } from "./credentials-authorize";
 import { googleProfileToUser, isOAuthSignInAllowed } from "./google-auth";
 import { applySessionRefresh } from "./session-refresh";
 import { applyImpersonationUpdate, type Impersonator } from "./impersonation";
+import { decideEmailLink } from "./oauth-account-linking";
+import { normalizeEmail } from "./data/users";
 import type { Role } from "@prisma/client";
 
 /** Current name/email/role for one account - the JWT's source of truth. */
@@ -76,15 +78,43 @@ const impersonationDeps = {
   },
 };
 
-/** Whether an Apple identity is already linked to one of our accounts. */
-async function isAppleIdentityLinked(sub: string): Promise<boolean> {
+/** Whether a provider identity is already linked to one of our accounts. */
+async function isIdentityLinked(provider: string, sub: string): Promise<boolean> {
   const linked = await getDb().account.findUnique({
     where: {
-      provider_providerAccountId: { provider: "apple", providerAccountId: sub },
+      provider_providerAccountId: { provider, providerAccountId: sub },
     },
     select: { id: true },
   });
   return Boolean(linked);
+}
+
+/**
+ * Whether Auth.js may attach this Google or Apple identity to the existing
+ * account with the same address, which `allowDangerousEmailAccountLinking`
+ * otherwise lets it do unconditionally. The rule is `decideEmailLink`, shared
+ * with the app's endpoints: only onto an account whose address is verified.
+ *
+ * Returns what the `signIn` callback should return - `true` to carry on (no
+ * such account, or a safe link), or a refusal.
+ */
+async function checkEmailLink(
+  account: { provider: string; providerAccountId: string },
+  email: string | null | undefined
+): Promise<true | false | string> {
+  if (!email) return true;
+  if (await isIdentityLinked(account.provider, account.providerAccountId)) {
+    return true;
+  }
+  const existing = await getDb().user.findUnique({
+    where: { email: normalizeEmail(email) },
+    select: { emailVerified: true, status: true, isOffline: true },
+  });
+  if (!existing) return true;
+  const decision = decideEmailLink(existing);
+  if (decision === "archived") return false;
+  if (decision === "unverified") return "/login?error=OAuthAccountNotLinked";
+  return true;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,6 +136,8 @@ async function appleProvider() {
       clientId: creds.clientId,
       clientSecret,
       profile: (profile) => appleProfileToUser(profile as AppleProfileClaims),
+      // Gated by `checkEmailLink` in the `signIn` callback, which runs first.
+      allowDangerousEmailAccountLinking: true,
     }),
   ];
 }
@@ -142,6 +174,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async (req?: NextReq
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       profile: googleProfileToUser,
+      // Gated by `checkEmailLink` in the `signIn` callback, which runs first.
+      allowDangerousEmailAccountLinking: true,
     }),
     ...(await appleProvider()),
     Credentials({
@@ -164,9 +198,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async (req?: NextReq
       if (
         account?.provider === "apple" &&
         !profile?.email &&
-        !(await isAppleIdentityLinked(account.providerAccountId))
+        !(await isIdentityLinked("apple", account.providerAccountId))
       ) {
         return "/login?error=AppleNoEmail";
+      }
+      // A first Google or Apple sign-in for an address that already has an
+      // account: link only onto a verified one (see `checkEmailLink`).
+      if (account?.provider === "google" || account?.provider === "apple") {
+        const linkCheck = await checkEmailLink(account, user?.email);
+        if (linkCheck !== true) return linkCheck;
       }
       // Block archived users from any provider (Google, Credentials)
       if (!user?.id) return true;

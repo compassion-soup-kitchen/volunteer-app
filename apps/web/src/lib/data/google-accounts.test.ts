@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const accountFindUnique = vi.fn();
+const accountCreate = vi.fn();
 const userFindUnique = vi.fn();
 const userCreate = vi.fn();
 
 vi.mock("@/lib/db", () => ({
   getDb: () => ({
-    account: { findUnique: accountFindUnique },
+    account: { findUnique: accountFindUnique, create: accountCreate },
     user: { findUnique: userFindUnique, create: userCreate },
   }),
 }));
@@ -33,6 +34,7 @@ const duplicate = () => Object.assign(new Error("dup"), { code: "P2002" });
 
 beforeEach(() => {
   accountFindUnique.mockReset();
+  accountCreate.mockReset();
   userFindUnique.mockReset();
   userCreate.mockReset();
 });
@@ -78,17 +80,77 @@ describe("signInWithGoogleIdentity", () => {
     });
   });
 
-  // Adopting an unlinked address would hand over an account claimed by
-  // someone else's password sign-up. The web flow refuses this too.
-  it("refuses to link onto an existing account with the same email", async () => {
+  // Someone who signed up another way (Apple, or a confirmed password
+  // account) gets Google added to the account they already have.
+  it("adds Google to an existing account whose address is verified", async () => {
     accountFindUnique.mockResolvedValueOnce(null);
-    userFindUnique.mockResolvedValueOnce({ id: "u9" });
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      emailVerified: new Date(),
+      isOffline: false,
+    });
+    accountCreate.mockResolvedValueOnce({});
+
+    const result = await signInWithGoogleIdentity(identity);
+
+    expect(result).toMatchObject({ ok: true, created: false, user: { id: "u1" } });
+    expect(accountCreate).toHaveBeenCalledWith({
+      data: {
+        userId: "u1",
+        type: "oidc",
+        provider: "google",
+        providerAccountId: "google-123",
+      },
+    });
+    expect(userCreate).not.toHaveBeenCalled();
+  });
+
+  // Adopting an unconfirmed address would hand over an account claimed by
+  // someone else's password sign-up. The web flow refuses this too.
+  it("refuses to link onto an account whose address is unverified", async () => {
+    accountFindUnique.mockResolvedValueOnce(null);
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      emailVerified: null,
+      isOffline: false,
+    });
 
     expect(await signInWithGoogleIdentity(identity)).toEqual({
       ok: false,
       reason: "not-linked",
     });
+    expect(accountCreate).not.toHaveBeenCalled();
     expect(userCreate).not.toHaveBeenCalled();
+  });
+
+  it("refuses to link onto an offline volunteer's record", async () => {
+    accountFindUnique.mockResolvedValueOnce(null);
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      emailVerified: new Date(),
+      isOffline: true,
+    });
+
+    expect(await signInWithGoogleIdentity(identity)).toEqual({
+      ok: false,
+      reason: "not-linked",
+    });
+    expect(accountCreate).not.toHaveBeenCalled();
+  });
+
+  it("refuses to link onto an archived account", async () => {
+    accountFindUnique.mockResolvedValueOnce(null);
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      status: "ARCHIVED",
+      emailVerified: new Date(),
+      isOffline: false,
+    });
+
+    expect(await signInWithGoogleIdentity(identity)).toEqual({
+      ok: false,
+      reason: "archived",
+    });
   });
 
   it("creates a pre-verified PUBLIC user with a linked account", async () => {
@@ -113,7 +175,11 @@ describe("signInWithGoogleIdentity", () => {
 
   it("looks the existing user up by normalized email", async () => {
     accountFindUnique.mockResolvedValueOnce(null);
-    userFindUnique.mockResolvedValueOnce({ id: "u9" });
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      emailVerified: null,
+      isOffline: false,
+    });
 
     await signInWithGoogleIdentity(identity);
 

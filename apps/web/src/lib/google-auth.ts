@@ -6,6 +6,7 @@
 
 import type { Role } from "@prisma/client";
 import { isAppleEmailVerified } from "./apple-auth";
+import { normalizeEmail } from "./data/users";
 
 type GoogleProfileClaims = {
   sub: string;
@@ -24,7 +25,9 @@ export function googleProfileToUser(profile: GoogleProfileClaims) {
   return {
     id: profile.sub,
     name: profile.name,
-    email: profile.email,
+    // Lower-cased like every other path into `User.email`, so Auth.js's
+    // lookup by address finds an existing account however Google cased it.
+    email: profile.email ? normalizeEmail(profile.email) : profile.email,
     image: profile.picture,
     role: "PUBLIC" as Role,
     emailVerified: profile.email_verified ? new Date() : null,

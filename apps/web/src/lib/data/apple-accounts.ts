@@ -3,8 +3,8 @@
  *
  * The Apple counterpart to `google-accounts`, reaching the same answers by the
  * same rules: link on the `Account` row, create pre-verified PUBLIC users, and
- * refuse to attach a new identity to an email address that already belongs to
- * somebody.
+ * attach a new identity to an existing account with the same address only when
+ * that account's address is verified (`decideEmailLink`).
  *
  * Where it differs, Apple does. Only `sub` is guaranteed - the email arrives on
  * the first authorisation and may never be sent again, and the name is never in
@@ -16,6 +16,7 @@
 import type { Prisma } from "@prisma/client";
 import { getDb } from "@/lib/db";
 import type { AppleIdentity } from "@/lib/apple-id-token";
+import { decideEmailLink } from "@/lib/oauth-account-linking";
 import {
   normalizeEmail,
   toAuthenticatedUser,
@@ -62,10 +63,11 @@ export type AppleSignInInput = {
  * Finds - or first-time creates - the account behind an Apple identity whose
  * token has already been verified.
  *
- * An existing user with the same email but no linked Apple account is refused
- * rather than adopted, exactly as for Google: that address may have been
- * claimed by a password account before anyone proved they own the mailbox, so
- * silently linking would hand it over.
+ * An existing user with the same email but no linked Apple account gets Apple
+ * added to it when their address is verified - someone who signed up with
+ * Google lands on the account they already have. An unverified address is
+ * refused, exactly as for Google: it may have been claimed by a password
+ * account before anyone proved they own the mailbox. See `decideEmailLink`.
  */
 export async function signInWithAppleIdentity(
   input: AppleSignInInput
@@ -124,15 +126,32 @@ async function resolve(
 
   const email = normalizeEmail(identity.email);
 
-  const existing = await db.user.findUnique({
-    where: { email },
-    select: { id: true },
-  });
-  if (existing) return { ok: false, reason: "not-linked" };
-
   const name = input.fullName?.trim();
 
   try {
+    const existing = await db.user.findUnique({
+      where: { email },
+      select: { ...userFields, emailVerified: true, isOffline: true },
+    });
+    if (existing) {
+      const decision = decideEmailLink(existing);
+      if (decision === "archived") return { ok: false, reason: "archived" };
+      if (decision === "unverified") return { ok: false, reason: "not-linked" };
+      // Same verified mailbox as the account they already have (usually made
+      // with Google) - add Apple as another way into it.
+      await db.account.create({
+        data: {
+          userId: existing.id,
+          type: "oidc",
+          provider: PROVIDER,
+          providerAccountId: identity.sub,
+          refresh_token: input.refreshToken ?? null,
+        },
+      });
+      return { ok: true, user: toAuthenticatedUser(existing), created: false };
+    }
+
+
     const user = await db.user.create({
       data: {
         name: name || null,

@@ -2,12 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const accountFindUnique = vi.fn();
 const accountUpdate = vi.fn();
+const accountCreate = vi.fn();
 const userFindUnique = vi.fn();
 const userCreate = vi.fn();
 
 vi.mock("@/lib/db", () => ({
   getDb: () => ({
-    account: { findUnique: accountFindUnique, update: accountUpdate },
+    account: {
+      findUnique: accountFindUnique,
+      update: accountUpdate,
+      create: accountCreate,
+    },
     user: { findUnique: userFindUnique, create: userCreate },
   }),
 }));
@@ -42,6 +47,7 @@ const duplicate = () => Object.assign(new Error("dup"), { code: "P2002" });
 beforeEach(() => {
   accountFindUnique.mockReset();
   accountUpdate.mockReset();
+  accountCreate.mockReset();
   userFindUnique.mockReset();
   userCreate.mockReset();
 });
@@ -89,17 +95,97 @@ describe("signInWithAppleIdentity", () => {
     });
   });
 
-  // Adopting an unlinked address would hand over an account claimed by
-  // someone else's password sign-up. The Google flow refuses this too.
-  it("refuses to link onto an existing account with the same email", async () => {
+  // The case that prompted this: someone signed up with Google, then taps
+  // Sign in with Apple with the same address. Both proved the mailbox.
+  it("adds Apple to an existing account whose address is verified", async () => {
     accountFindUnique.mockResolvedValueOnce(null);
-    userFindUnique.mockResolvedValueOnce({ id: "u9" });
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      emailVerified: new Date(),
+      isOffline: false,
+    });
+    accountCreate.mockResolvedValueOnce({});
+
+    const result = await signInWithAppleIdentity({
+      identity: firstTime,
+      refreshToken: "rt-1",
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      created: false,
+      user: {
+        id: "u1",
+        email: "aroha@icloud.com",
+        name: "Aroha",
+        image: null,
+        role: "VOLUNTEER",
+      },
+    });
+    expect(userFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { email: "aroha@icloud.com" } })
+    );
+    expect(accountCreate).toHaveBeenCalledWith({
+      data: {
+        userId: "u1",
+        type: "oidc",
+        provider: "apple",
+        providerAccountId: "001234.abc",
+        refresh_token: "rt-1",
+      },
+    });
+    expect(userCreate).not.toHaveBeenCalled();
+  });
+
+  // Adopting an unconfirmed address would hand over an account claimed by
+  // someone else's password sign-up. The Google flow refuses this too.
+  it("refuses to link onto an account whose address is unverified", async () => {
+    accountFindUnique.mockResolvedValueOnce(null);
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      emailVerified: null,
+      isOffline: false,
+    });
 
     expect(await signInWithAppleIdentity({ identity: firstTime })).toEqual({
       ok: false,
       reason: "not-linked",
     });
+    expect(accountCreate).not.toHaveBeenCalled();
     expect(userCreate).not.toHaveBeenCalled();
+  });
+
+  it("refuses to link onto an archived account", async () => {
+    accountFindUnique.mockResolvedValueOnce(null);
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      status: "ARCHIVED",
+      emailVerified: new Date(),
+      isOffline: false,
+    });
+
+    expect(await signInWithAppleIdentity({ identity: firstTime })).toEqual({
+      ok: false,
+      reason: "archived",
+    });
+    expect(accountCreate).not.toHaveBeenCalled();
+  });
+
+  it("re-reads the link when two sign-ins race to add Apple", async () => {
+    accountFindUnique.mockResolvedValueOnce(null);
+    userFindUnique.mockResolvedValueOnce({
+      ...user,
+      emailVerified: new Date(),
+      isOffline: false,
+    });
+    accountCreate.mockRejectedValueOnce(duplicate());
+    accountFindUnique.mockResolvedValueOnce({ id: "a1", refresh_token: null, user });
+
+    expect(await signInWithAppleIdentity({ identity: firstTime })).toMatchObject({
+      ok: true,
+      created: false,
+    });
+    expect(accountCreate).toHaveBeenCalledTimes(1);
   });
 
   it("creates a pre-verified PUBLIC user with a linked account", async () => {
