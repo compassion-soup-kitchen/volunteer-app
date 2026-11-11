@@ -9,10 +9,11 @@
  */
 
 const MESSAGES: Record<string, string> = {
-  // An account with this email already exists, made another way. We refuse to
-  // attach the new identity to it - see `google-accounts` / `apple-accounts`.
+  // An account with this email already exists but its address was never
+  // confirmed, so we won't attach the new identity to it - see
+  // `decideEmailLink`. A verified one is linked instead of landing here.
   OAuthAccountNotLinked:
-    "There's already an account with that email address. Sign in the way you did before - usually with your email and password.",
+    "There's already an account with that email address, but it hasn't been confirmed yet. Sign in with your email and password, or use \"Forgot password\" to confirm it.",
   // Our `signIn` callback said no: an archived account, or an address the
   // provider hasn't verified.
   AccessDenied:

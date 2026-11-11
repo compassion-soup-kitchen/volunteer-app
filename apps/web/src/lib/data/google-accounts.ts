@@ -3,13 +3,15 @@
  *
  * This is the mobile counterpart to what NextAuth's Prisma adapter does for
  * the web Google button, and it deliberately reaches the same answers: link on
- * the `Account` row, create pre-verified PUBLIC users, and refuse to attach a
- * Google identity to an email address that already belongs to somebody.
+ * the `Account` row, create pre-verified PUBLIC users, and attach a Google
+ * identity to an existing account with the same address only when that
+ * account's address is verified (`decideEmailLink`).
  */
 
 import type { Prisma } from "@prisma/client";
 import { getDb } from "@/lib/db";
 import type { GoogleIdentity } from "@/lib/google-id-token";
+import { decideEmailLink } from "@/lib/oauth-account-linking";
 import {
   normalizeEmail,
   toAuthenticatedUser,
@@ -44,11 +46,11 @@ function isUniqueViolation(error: unknown): boolean {
  * Finds - or first-time creates - the account behind a Google identity whose
  * ID token has already been verified.
  *
- * An existing user with the same email but no linked Google account is
- * refused rather than adopted: that address may have been claimed by a
- * password account before anyone proved they own the mailbox, so silently
- * linking would hand it over. The web flow behaves the same way (NextAuth
- * raises `OAuthAccountNotLinked` for exactly this case).
+ * An existing user with the same email but no linked Google account gets
+ * Google added to it when their address is verified. An unverified address is
+ * refused: it may have been claimed by a password account before anyone
+ * proved they own the mailbox, so linking would hand it over. The website's
+ * `signIn` callback applies the same rule (see `auth.ts`).
  */
 export async function signInWithGoogleIdentity(
   identity: GoogleIdentity
@@ -80,13 +82,28 @@ async function resolve(
     return { ok: true, user: toAuthenticatedUser(linked.user), created: false };
   }
 
-  const existing = await db.user.findUnique({
-    where: { email },
-    select: { id: true },
-  });
-  if (existing) return { ok: false, reason: "not-linked" };
-
   try {
+    const existing = await db.user.findUnique({
+      where: { email },
+      select: { ...userFields, emailVerified: true, isOffline: true },
+    });
+    if (existing) {
+      const decision = decideEmailLink(existing);
+      if (decision === "archived") return { ok: false, reason: "archived" };
+      if (decision === "unverified") return { ok: false, reason: "not-linked" };
+      // Same verified mailbox as the account they already have (perhaps made
+      // with Apple, or a confirmed password account) - add Google to it.
+      await db.account.create({
+        data: {
+          userId: existing.id,
+          type: "oidc",
+          provider: PROVIDER,
+          providerAccountId: identity.sub,
+        },
+      });
+      return { ok: true, user: toAuthenticatedUser(existing), created: false };
+    }
+
     const user = await db.user.create({
       data: {
         name: identity.name,
