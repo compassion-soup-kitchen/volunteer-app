@@ -34,8 +34,12 @@ const appleSchema = z.object({
     .string()
     .min(1, "Missing Apple sign-in token")
     .max(4096, "Missing Apple sign-in token"),
-  authorizationCode: z.string().max(1024).optional(),
-  fullName: z.string().max(200).optional(),
+  // `nullish`, not `optional`: the app sends an explicit `null` for whichever
+  // of these Apple withheld - and Apple withholds the name on every sign-in
+  // after the first - so `optional` alone turned every returning person away
+  // with a 400. Builds already installed send `null`, so this must stay.
+  authorizationCode: z.string().max(1024).nullish(),
+  fullName: z.string().max(200).nullish(),
 });
 
 export async function POST(req: NextRequest) {

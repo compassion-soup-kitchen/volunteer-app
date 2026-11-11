@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthShell } from "../auth-shell";
+import { connection } from "next/server";
 import { RegisterForm } from "./register-form";
+import { readAppleWebCredentials } from "@/lib/apple-api";
 
 export const metadata: Metadata = {
   title: "Nau mai · Join us | Te Pūaroha",
@@ -9,7 +11,12 @@ export const metadata: Metadata = {
     "Create your Compassion Soup Kitchen volunteer account and start making a difference in your community.",
 };
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  // Per request, so the Apple button follows the runtime environment rather
+  // than whatever was set when the image was built.
+  await connection();
+  const appleEnabled = readAppleWebCredentials() !== null;
+
   return (
     <AuthShell
       eyebrow="Nau mai · Join our whānau"
@@ -27,7 +34,7 @@ export default function RegisterPage() {
         </>
       }
     >
-      <RegisterForm />
+      <RegisterForm appleEnabled={appleEnabled} />
     </AuthShell>
   );
 }

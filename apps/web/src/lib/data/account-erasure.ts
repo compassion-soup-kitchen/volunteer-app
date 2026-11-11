@@ -166,14 +166,18 @@ export async function eraseUserAccount(
 
   // Likewise for the Apple authorisation: the Account row cascades away with
   // the user, taking the only refresh token we could revoke with.
-  const appleRefreshTokens = (
+  // The ID token travels with it because it says which client - the app or
+  // the website - issued the grant, and Apple only revokes as that client.
+  const appleGrants = (
     await db.account.findMany({
       where: { userId: facts.userId, provider: "apple" },
-      select: { refresh_token: true },
+      select: { refresh_token: true, id_token: true },
     })
-  )
-    .map((a) => a.refresh_token)
-    .filter((token): token is string => Boolean(token));
+  ).flatMap((a) =>
+    a.refresh_token
+      ? [{ refreshToken: a.refresh_token, idToken: a.id_token }]
+      : []
+  );
 
   try {
     // The caller's pre-check closes the sequential last-admin case, but its
@@ -253,8 +257,8 @@ export async function eraseUserAccount(
     // Required by App Store guideline 5.1.1(v), and the only thing that lets
     // this person sign up with Apple again later - without it Apple treats
     // their next sign-in as a repeat authorisation and withholds the email.
-    for (const token of appleRefreshTokens) {
-      const result = await revokeAppleToken(token);
+    for (const grant of appleGrants) {
+      const result = await revokeAppleToken(grant.refreshToken, grant.idToken);
       if (!result.ok) {
         console.error(
           "[audit] Apple token revocation did not complete for deleted user",

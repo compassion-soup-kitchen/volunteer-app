@@ -46,7 +46,25 @@ describe("isOAuthSignInAllowed", () => {
     expect(isOAuthSignInAllowed(account, undefined)).toBe(false);
   });
 
-  it("passes non-Google sign-ins through untouched", () => {
+  it("blocks an Apple sign-in whose address Apple hasn't verified", () => {
+    const account = { provider: "apple" };
+    const email = "aroha@icloud.com";
+    expect(isOAuthSignInAllowed(account, { email, email_verified: true })).toBe(true);
+    // Apple sends the flag as a string as often as a boolean.
+    expect(isOAuthSignInAllowed(account, { email, email_verified: "true" })).toBe(true);
+    expect(isOAuthSignInAllowed(account, { email, email_verified: "false" })).toBe(false);
+    expect(isOAuthSignInAllowed(account, { email, email_verified: false })).toBe(false);
+    expect(isOAuthSignInAllowed(account, { email })).toBe(false);
+  });
+
+  // A returning Apple sign-in may carry no address at all; whether it gets in
+  // is decided by the linked account, not by this gate.
+  it("leaves an Apple sign-in with no address to the account lookup", () => {
+    expect(isOAuthSignInAllowed({ provider: "apple" }, {})).toBe(true);
+    expect(isOAuthSignInAllowed({ provider: "apple" }, { email: null })).toBe(true);
+  });
+
+  it("passes other sign-ins through untouched", () => {
     // Credentials sign-ins have no OIDC profile; the gate for them lives in
     // checkCredentials, not here.
     expect(

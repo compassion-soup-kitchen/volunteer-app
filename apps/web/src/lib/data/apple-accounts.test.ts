@@ -167,7 +167,29 @@ describe("signInWithAppleIdentity", () => {
 
       expect(accountUpdate).toHaveBeenCalledWith({
         where: { id: "a1" },
-        data: { refresh_token: "new" },
+        data: { refresh_token: "new", id_token: null },
+      });
+    });
+
+    // A person who signed up on the website has a web ID token on the row,
+    // and deletion reads its audience to pick which client revokes. Once the
+    // app replaces the refresh token, that ID token would point revocation at
+    // the website's client for an app-issued grant, which Apple refuses.
+    it("drops a website ID token once the app replaces the grant", async () => {
+      accountFindUnique.mockResolvedValueOnce({
+        id: "a1",
+        refresh_token: "web-refresh",
+        user,
+      });
+
+      await signInWithAppleIdentity({
+        identity: returning,
+        refreshToken: "app-refresh",
+      });
+
+      expect(accountUpdate).toHaveBeenCalledWith({
+        where: { id: "a1" },
+        data: { refresh_token: "app-refresh", id_token: null },
       });
     });
 

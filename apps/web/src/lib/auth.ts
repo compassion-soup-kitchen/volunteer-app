@@ -2,7 +2,16 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import Apple from "next-auth/providers/apple";
+import type { NextRequest } from "next/server";
 import { getDb } from "./db";
+import { getAppleWebClientSecret, readAppleWebCredentials } from "./apple-api";
+import {
+  appleFormPostCookies,
+  appleProfileToUser,
+  usesSecureCookies,
+  type AppleProfileClaims,
+} from "./apple-auth";
 import { authorizeCredentials } from "./credentials-authorize";
 import { googleProfileToUser, isOAuthSignInAllowed } from "./google-auth";
 import { applySessionRefresh } from "./session-refresh";
@@ -67,13 +76,66 @@ const impersonationDeps = {
   },
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adapter: PrismaAdapter(getDb()) as any,
+/** Whether an Apple identity is already linked to one of our accounts. */
+async function isAppleIdentityLinked(sub: string): Promise<boolean> {
+  const linked = await getDb().account.findUnique({
+    where: {
+      provider_providerAccountId: { provider: "apple", providerAccountId: sub },
+    },
+    select: { id: true },
+  });
+  return Boolean(linked);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const adapter = PrismaAdapter(getDb()) as any;
+
+/**
+ * Sign in with Apple on the web, or nothing when it isn't configured - in
+ * which case the sign-in pages don't offer the button either.
+ *
+ * Built per request because its client secret is a JWT that Apple stops
+ * accepting when it expires (see `getAppleWebClientSecret`).
+ */
+async function appleProvider() {
+  const creds = readAppleWebCredentials();
+  const clientSecret = await getAppleWebClientSecret();
+  if (!creds || !clientSecret) return [];
+  return [
+    Apple({
+      clientId: creds.clientId,
+      clientSecret,
+      profile: (profile) => appleProfileToUser(profile as AppleProfileClaims),
+    }),
+  ];
+}
+
+// A function rather than an object: Auth.js then rebuilds the config for each
+// request, which is what lets the Apple client secret be reminted before it
+// lapses, and lets the cookie settings follow the request's protocol.
+export const { handlers, auth, signIn, signOut } = NextAuth(async (req?: NextRequest) => ({
+  adapter,
   session: { strategy: "jwt" },
   trustHost: true,
   pages: {
     signIn: "/login",
+    // Refused OAuth sign-ins land on /login with `?error=`, where
+    // `signInErrorMessage` explains them, instead of Auth.js's bare page.
+    error: "/login",
+  },
+  cookies: appleFormPostCookies(usesSecureCookies(req?.url)),
+  events: {
+    // Auth.js creates OAuth users with `emailVerified: null` regardless of what
+    // the profile says. Both providers are only let in with an address they
+    // have verified (see `isOAuthSignInAllowed`), so record it - otherwise
+    // staff see every Google and Apple account as unverified.
+    async createUser({ user }) {
+      if (!user.id || !user.email) return;
+      await getDb().user.updateMany({
+        where: { id: user.id, emailVerified: null },
+        data: { emailVerified: new Date() },
+      });
+    },
   },
   providers: [
     Google({
@@ -81,6 +143,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       profile: googleProfileToUser,
     }),
+    ...(await appleProvider()),
     Credentials({
       credentials: {
         email: {},
@@ -93,6 +156,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (!isOAuthSignInAllowed(account, profile)) return false;
+      // Apple can leave the address out of a returning sign-in. With a linked
+      // account that's fine - it is the source of truth for the address - but
+      // with none there is nothing to make a person from, and Auth.js would
+      // otherwise create a user with no email at all. Almost always someone
+      // whose earlier account was deleted while Apple still remembered it.
+      if (
+        account?.provider === "apple" &&
+        !profile?.email &&
+        !(await isAppleIdentityLinked(account.providerAccountId))
+      ) {
+        return "/login?error=AppleNoEmail";
+      }
       // Block archived users from any provider (Google, Credentials)
       if (!user?.id) return true;
       const db = getDb();
@@ -162,4 +237,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-});
+}));
