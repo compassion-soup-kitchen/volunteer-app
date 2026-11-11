@@ -11,6 +11,7 @@ vi.mock("next-auth/react", () => ({
   signIn: vi.fn(),
 }));
 
+import { signIn } from "next-auth/react";
 import { demoLogin, login } from "@/lib/auth-actions";
 import { LoginForm } from "./login-form";
 
@@ -25,6 +26,8 @@ function submitForm() {
 beforeEach(() => {
   vi.mocked(login).mockReset();
   vi.mocked(demoLogin).mockReset();
+  // A real sign-in navigates away and never settles from the page's view.
+  vi.mocked(signIn).mockReset().mockImplementation(() => new Promise(() => {}));
 });
 
 describe("<LoginForm />", () => {
@@ -53,6 +56,38 @@ describe("<LoginForm />", () => {
     expect(
       screen.queryByRole("button", { name: /resend verification email/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("offers Apple only when the server can finish it", () => {
+    const { unmount } = render(<LoginForm />);
+    expect(
+      screen.queryByRole("button", { name: /continue with apple/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /continue with google/i }),
+    ).toBeInTheDocument();
+    unmount();
+
+    render(<LoginForm appleEnabled />);
+    expect(
+      screen.getByRole("button", { name: /continue with apple/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("starts Sign in with Apple and holds both buttons while it leaves", () => {
+    render(<LoginForm appleEnabled />);
+
+    fireEvent.click(screen.getByRole("button", { name: /continue with apple/i }));
+
+    expect(signIn).toHaveBeenCalledWith("apple", { redirectTo: "/dashboard" });
+    expect(screen.getByRole("button", { name: /continue with apple/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /continue with google/i })).toBeDisabled();
+  });
+
+  it("explains why an Apple or Google sign-in bounced back", () => {
+    render(<LoginForm providerError="There's already an account with that email address." />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/already an account/i);
   });
 
   it("hides the demo accounts by default", () => {

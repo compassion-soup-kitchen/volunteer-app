@@ -42,7 +42,11 @@ function nextWithCsp(req: NextRequest) {
   return response;
 }
 
-export const proxy = auth((req) => {
+// The auth config is built per request (see `lib/auth.ts`), and in that mode
+// Auth.js hands back the wrapped middleware as a *promise* of it - so it is
+// awaited inside `proxy` below rather than exported directly. Next requires
+// the export to be a function.
+const authorised = auth((req) => {
   const { pathname } = req.nextUrl;
   const isAuth = !!req.auth?.user;
 
@@ -79,6 +83,10 @@ export const proxy = auth((req) => {
 
   return nextWithCsp(req);
 });
+
+export async function proxy(...args: Parameters<Awaited<typeof authorised>>) {
+  return (await authorised)(...args);
+}
 
 export const config = {
   matcher: [

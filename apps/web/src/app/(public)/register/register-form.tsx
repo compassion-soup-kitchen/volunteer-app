@@ -2,17 +2,21 @@
 
 import { useActionState } from "react";
 import { register, type RegisterState } from "@/lib/auth-actions";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OrDivider } from "../_components/or-divider";
-import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
+import { IdentityProviders } from "../_components/identity-providers";
+import { RiLoader4Line } from "@remixicon/react";
 import { EmailSentNotice } from "../_components/email-sent-notice";
 import { FormAlert } from "@/components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 
-export function RegisterForm() {
+export function RegisterForm({
+  appleEnabled = false,
+}: {
+  /** Whether the server can finish a Sign in with Apple. */
+  appleEnabled?: boolean;
+}) {
   const [state, action, pending] = useActionState<RegisterState, FormData>(
     register,
     null
@@ -109,17 +113,7 @@ export function RegisterForm() {
         </Button>
       </form>
 
-      <OrDivider>or sign up with</OrDivider>
-
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => signIn("google", { redirectTo: "/dashboard" })}
-        type="button"
-      >
-        <RiGoogleFill className="size-4" />
-        Google
-      </Button>
+      <IdentityProviders intent="sign-up" appleEnabled={appleEnabled} />
     </>
   );
 }

@@ -38,7 +38,8 @@ vi.mock("@/lib/storage", () => ({ deleteFile: (key: string) => deleteFile(key) }
 
 const revokeAppleToken = vi.fn();
 vi.mock("@/lib/apple-api", () => ({
-  revokeAppleToken: (token: string) => revokeAppleToken(token),
+  revokeAppleToken: (token: string, idToken?: string | null) =>
+    revokeAppleToken(token, idToken),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -271,7 +272,20 @@ describe("eraseUserAccount", () => {
       expect(accountFindMany.mock.invocationCallOrder[0]).toBeLessThan(
         userDelete.mock.invocationCallOrder[0]
       );
-      expect(revokeAppleToken).toHaveBeenCalledWith("refresh-1");
+      expect(revokeAppleToken).toHaveBeenCalledWith("refresh-1", undefined);
+    });
+
+    // Apple only revokes as the client that issued the grant, and the stored
+    // ID token is what says whether that was the app or the website.
+    it("hands revocation the ID token that names the issuing client", async () => {
+      accountFindMany.mockResolvedValueOnce([
+        { refresh_token: "refresh-web", id_token: "id-token-web" },
+      ]);
+      revokeAppleToken.mockResolvedValue({ ok: true });
+
+      await eraseUserAccount(facts, "u1");
+
+      expect(revokeAppleToken).toHaveBeenCalledWith("refresh-web", "id-token-web");
     });
 
     it("ignores Apple accounts with no token to revoke", async () => {

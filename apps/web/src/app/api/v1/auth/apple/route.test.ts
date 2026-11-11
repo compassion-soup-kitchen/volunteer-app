@@ -109,6 +109,23 @@ describe("POST /api/v1/auth/apple", () => {
       });
     });
 
+    // Exactly what the app posts on every sign-in after the first: Apple
+    // withholds the name, and the app sends the gaps as `null`. This used to
+    // fail validation, bouncing every returning person back to sign-in.
+    it("accepts the nulls the app sends when Apple withholds a field", async () => {
+      const res = await POST(
+        request({ identityToken: "token", authorizationCode: null, fullName: null })
+      );
+
+      expect(res.status).toBe(200);
+      expect(exchangeAppleAuthorizationCodeMock).not.toHaveBeenCalled();
+      expect(signInWithAppleIdentityMock).toHaveBeenCalledWith({
+        identity,
+        fullName: null,
+        refreshToken: null,
+      });
+    });
+
     it("skips the round trip when Apple issued no code", async () => {
       await POST(request({ identityToken: "token" }));
 

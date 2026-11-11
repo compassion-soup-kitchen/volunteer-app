@@ -5,12 +5,11 @@ import Link from "next/link";
 import { RiShieldKeyholeLine, RiUserLine, RiHeartLine } from "@remixicon/react";
 import { demoLogin, login, type AuthState } from "@/lib/auth-actions";
 import type { DemoRole } from "@/lib/demo-accounts";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OrDivider } from "../_components/or-divider";
-import { RiGoogleFill, RiLoader4Line } from "@remixicon/react";
+import { IdentityProviders } from "../_components/identity-providers";
+import { RiLoader4Line } from "@remixicon/react";
 import { FormAlert } from "@/components/form-alert";
 import { ResendVerificationForm } from "../_components/resend-verification-form";
 import { Eyebrow } from "@/components/brand/eyebrow";
@@ -28,10 +27,16 @@ const DEMO_ACCOUNTS: { role: DemoRole; label: string; icon: typeof RiUserLine }[
 
 export function LoginForm({
   showDemoAccounts = false,
+  appleEnabled = false,
+  providerError = null,
 }: {
   /** Renders one-click sign-in chips for the seeded demo accounts. Only ever
    *  true outside production (see login/page.tsx). */
   showDemoAccounts?: boolean;
+  /** Whether the server can finish a Sign in with Apple. */
+  appleEnabled?: boolean;
+  /** Why an Apple or Google sign-in just bounced back here, if it did. */
+  providerError?: string | null;
 }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(
     login,
@@ -47,7 +52,8 @@ export function LoginForm({
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const busy = pending || demoPending;
-  const alert = state?.error ?? demoState?.error;
+  // A password attempt's own error replaces the provider's once there is one.
+  const alert = state?.error ?? demoState?.error ?? providerError;
 
   return (
     <>
@@ -132,17 +138,7 @@ export function LoginForm({
         </div>
       )}
 
-      <OrDivider>or continue with</OrDivider>
-
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => signIn("google", { redirectTo: "/dashboard" })}
-        type="button"
-      >
-        <RiGoogleFill className="size-4" />
-        Google
-      </Button>
+      <IdentityProviders intent="sign-in" appleEnabled={appleEnabled} />
     </>
   );
 }

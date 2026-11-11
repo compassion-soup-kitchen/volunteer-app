@@ -27,6 +27,11 @@ const buttonVariants = cva(
         "destructive-tint":
           "bg-destructive-tint text-destructive-tint-foreground hover:bg-destructive-tint/80",
         link: "text-primary underline-offset-4 hover:underline",
+        // Sign in with Apple. Apple's guidelines fix these colours - black in
+        // light mode, white in dark - so this is the one variant that doesn't
+        // draw from the theme tokens.
+        apple:
+          "bg-black text-white hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-white/90",
       },
       size: {
         default:

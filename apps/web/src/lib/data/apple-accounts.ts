@@ -97,10 +97,17 @@ async function resolve(
     // Apple only returns a code worth exchanging on some sign-ins; when we did
     // get a fresh refresh token, keep it, so revocation on deletion has the
     // newest handle rather than a stale one.
+    //
+    // The ID token goes with it. A stored ID token is how deletion tells a
+    // website-issued grant from the app's (`appleCredentialsForAccount`), and
+    // only the website's sign-in stores one - so on a row first linked on the
+    // web, it would keep naming the Services ID while the refresh token beside
+    // it is now the app's, and revocation would go to Apple as the wrong
+    // client and be refused. Clearing it keeps the pair describing one client.
     if (input.refreshToken && input.refreshToken !== linked.refresh_token) {
       await db.account.update({
         where: { id: linked.id },
-        data: { refresh_token: input.refreshToken },
+        data: { refresh_token: input.refreshToken, id_token: null },
       });
     }
     return { ok: true, user: toAuthenticatedUser(linked.user), created: false };

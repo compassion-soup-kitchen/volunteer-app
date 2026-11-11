@@ -4,6 +4,8 @@ import Link from "next/link";
 import { AuthShell } from "../auth-shell";
 import { LoginForm } from "./login-form";
 import { demoLoginsEnabled } from "@/lib/demo-accounts";
+import { readAppleWebCredentials } from "@/lib/apple-api";
+import { signInErrorMessage } from "@/lib/sign-in-errors";
 
 export const metadata: Metadata = {
   title: "Kia ora · Sign in | Te Pūaroha",
@@ -11,11 +13,17 @@ export const metadata: Metadata = {
     "Sign in to your Compassion Soup Kitchen volunteer account to manage shifts and connect with whānau.",
 };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
   // Rendered per-request so DEMO_LOGINS is read from the runtime environment -
   // a production build deployed to staging can still enable the demo accounts.
   await connection();
   const showDemoAccounts = demoLoginsEnabled();
+  const appleEnabled = readAppleWebCredentials() !== null;
+  const providerError = signInErrorMessage((await searchParams).error);
 
   return (
     <AuthShell
@@ -34,7 +42,11 @@ export default async function LoginPage() {
         </>
       }
     >
-      <LoginForm showDemoAccounts={showDemoAccounts} />
+      <LoginForm
+        showDemoAccounts={showDemoAccounts}
+        appleEnabled={appleEnabled}
+        providerError={providerError}
+      />
     </AuthShell>
   );
 }
