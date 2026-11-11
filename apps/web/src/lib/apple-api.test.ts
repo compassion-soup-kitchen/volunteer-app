@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
   decodeJwt,
   decodeProtectedHeader,
@@ -116,6 +116,28 @@ describe("readAppleWebCredentials", () => {
     expect(
       readAppleWebCredentials({ APPLE_WEB_CLIENT_ID: SERVICES_ID, APPLE_TEAM_ID: "T" })
     ).toBeNull();
+  });
+
+  // An App ID as the web client gets people as far as Apple's own "Sign Up Not
+  // Completed" page and no further, so the button is hidden instead.
+  it("is off when the web client is the app's bundle id", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(readAppleWebCredentials({ ...env("key"), APPLE_WEB_CLIENT_ID: BUNDLE_ID })).toBeNull();
+    expect(
+      readAppleWebCredentials({
+        ...env("key"),
+        APPLE_CLIENT_ID: `other.app, ${BUNDLE_ID}`,
+        APPLE_WEB_CLIENT_ID: ` ${BUNDLE_ID} `,
+      })
+    ).toBeNull();
+    expect(error).toHaveBeenCalledTimes(1);
+    error.mockRestore();
+  });
+
+  it("keeps a Services ID alongside the bundle id", () => {
+    expect(
+      readAppleWebCredentials({ ...env("key"), APPLE_WEB_CLIENT_ID: SERVICES_ID })
+    ).toMatchObject({ clientId: SERVICES_ID });
   });
 });
 

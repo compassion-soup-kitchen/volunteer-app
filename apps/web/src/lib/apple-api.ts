@@ -79,10 +79,17 @@ export function readAppleServerCredentials(
   return { clientId, ...key };
 }
 
+let warnedAboutBundleIdAsWebClient = false;
+
 /**
  * The website's credentials (Services ID as client), or null when any is
  * missing - which is also what decides whether the web offers the button at
  * all, since the browser flow can't finish without a client secret.
+ *
+ * Also null when `APPLE_WEB_CLIENT_ID` is one of the app's bundle ids. An App
+ * ID can't carry a web return URL, so Apple lets the person authenticate and
+ * then strands them on its own "Sign Up Not Completed" page - nothing ever
+ * reaches our callback to explain it. No button beats a button that can't work.
  */
 export function readAppleWebCredentials(
   env: AppleServerEnv = process.env as AppleServerEnv
@@ -90,6 +97,17 @@ export function readAppleWebCredentials(
   const clientId = env.APPLE_WEB_CLIENT_ID?.trim();
   const key = readSigningKey(env);
   if (!clientId || !key) return null;
+
+  const bundleIds = (env.APPLE_CLIENT_ID ?? "").split(",").map((id) => id.trim());
+  if (bundleIds.includes(clientId)) {
+    if (!warnedAboutBundleIdAsWebClient) {
+      warnedAboutBundleIdAsWebClient = true;
+      console.error(
+        `[apple-web] APPLE_WEB_CLIENT_ID is the app's bundle id (${clientId}); it must be a Services ID whose Primary App ID is the app. Sign in with Apple is off on the website until it is.`
+      );
+    }
+    return null;
+  }
   return { clientId, ...key };
 }
 
