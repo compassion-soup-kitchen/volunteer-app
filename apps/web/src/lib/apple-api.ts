@@ -22,7 +22,7 @@
  * reason to fail a person's sign-in, so callers log it loudly and carry on.
  */
 
-import { SignJWT, importPKCS8 } from "jose";
+import { SignJWT, decodeJwt, importPKCS8 } from "jose";
 
 const APPLE_AUDIENCE = "https://appleid.apple.com";
 const TOKEN_URL = "https://appleid.apple.com/auth/token";
@@ -33,6 +33,12 @@ const SECRET_TTL = "30m";
 
 export type AppleServerEnv = {
   APPLE_CLIENT_ID?: string;
+  /**
+   * The Services ID the website's Sign in with Apple runs under. A browser
+   * flow can't use the app's bundle id - Apple only lets a Services ID carry a
+   * web return URL - so it is a second client of the same team and key.
+   */
+  APPLE_WEB_CLIENT_ID?: string;
   APPLE_TEAM_ID?: string;
   APPLE_KEY_ID?: string;
   APPLE_PRIVATE_KEY?: string;
@@ -45,31 +51,55 @@ export type AppleServerCredentials = {
   privateKey: string;
 };
 
+type AppleSigningKey = Omit<AppleServerCredentials, "clientId">;
+
 /**
- * The credentials, or null when any is missing.
+ * The `.p8` key and the ids that go with it, or null when any is missing.
  *
  * `APPLE_PRIVATE_KEY` holds the contents of the `.p8` file. Most secret stores
  * flatten newlines on the way in, so a literal `\n` is accepted and unescaped
  * here - a PKCS#8 PEM without real line breaks won't parse.
  */
-export function readAppleServerCredentials(
-  env: AppleServerEnv = process.env as AppleServerEnv
-): AppleServerCredentials | null {
-  const clientId = env.APPLE_CLIENT_ID?.split(",")[0]?.trim();
+function readSigningKey(env: AppleServerEnv): AppleSigningKey | null {
   const teamId = env.APPLE_TEAM_ID?.trim();
   const keyId = env.APPLE_KEY_ID?.trim();
   const privateKey = env.APPLE_PRIVATE_KEY?.trim().replace(/\\n/g, "\n");
 
-  if (!clientId || !teamId || !keyId || !privateKey) return null;
-  return { clientId, teamId, keyId, privateKey };
+  if (!teamId || !keyId || !privateKey) return null;
+  return { teamId, keyId, privateKey };
+}
+
+/** The app's credentials (bundle id as client), or null when any is missing. */
+export function readAppleServerCredentials(
+  env: AppleServerEnv = process.env as AppleServerEnv
+): AppleServerCredentials | null {
+  const clientId = env.APPLE_CLIENT_ID?.split(",")[0]?.trim();
+  const key = readSigningKey(env);
+  if (!clientId || !key) return null;
+  return { clientId, ...key };
 }
 
 /**
- * Mints the short-lived JWT Apple accepts in place of a client secret. Signed
- * with the `.p8` key over ES256; `sub` is our client id and `iss` the team.
+ * The website's credentials (Services ID as client), or null when any is
+ * missing - which is also what decides whether the web offers the button at
+ * all, since the browser flow can't finish without a client secret.
+ */
+export function readAppleWebCredentials(
+  env: AppleServerEnv = process.env as AppleServerEnv
+): AppleServerCredentials | null {
+  const clientId = env.APPLE_WEB_CLIENT_ID?.trim();
+  const key = readSigningKey(env);
+  if (!clientId || !key) return null;
+  return { clientId, ...key };
+}
+
+/**
+ * Mints the JWT Apple accepts in place of a client secret. Signed with the
+ * `.p8` key over ES256; `sub` is our client id and `iss` the team.
  */
 async function createClientSecret(
-  creds: AppleServerCredentials
+  creds: AppleServerCredentials,
+  ttlSeconds?: number
 ): Promise<string> {
   const key = await importPKCS8(creds.privateKey, "ES256");
   return new SignJWT({})
@@ -78,8 +108,75 @@ async function createClientSecret(
     .setAudience(APPLE_AUDIENCE)
     .setSubject(creds.clientId)
     .setIssuedAt()
-    .setExpirationTime(SECRET_TTL)
+    .setExpirationTime(ttlSeconds ? `${ttlSeconds}s` : SECRET_TTL)
     .sign(key);
+}
+
+/** A day: long enough to mint rarely, short enough that a rotated key lands. */
+const WEB_SECRET_TTL_SECONDS = 24 * 60 * 60;
+/** Reminted this long before it lapses, so no sign-in races the expiry. */
+const WEB_SECRET_REFRESH_MARGIN_MS = 60 * 60 * 1000;
+
+let webSecret: { value: string; expiresAt: number; cacheKey: string } | null =
+  null;
+
+/**
+ * The website's client secret for Auth.js, or null when web Sign in with Apple
+ * isn't configured.
+ *
+ * It is a JWT that Apple refuses once it expires (six months at most), so it
+ * can't be minted once at boot: a container that outlives it would quietly
+ * break every Apple sign-in. Instead the auth config asks for it per request
+ * and this hands back a cached one, reminted shortly before it lapses.
+ */
+export async function getAppleWebClientSecret(
+  env: AppleServerEnv = process.env as AppleServerEnv,
+  now: number = Date.now()
+): Promise<string | null> {
+  const creds = readAppleWebCredentials(env);
+  if (!creds) return null;
+
+  const cacheKey = `${creds.clientId}|${creds.teamId}|${creds.keyId}`;
+  if (
+    webSecret &&
+    webSecret.cacheKey === cacheKey &&
+    webSecret.expiresAt - WEB_SECRET_REFRESH_MARGIN_MS > now
+  ) {
+    return webSecret.value;
+  }
+
+  const value = await createClientSecret(creds, WEB_SECRET_TTL_SECONDS);
+  webSecret = {
+    value,
+    cacheKey,
+    expiresAt: now + WEB_SECRET_TTL_SECONDS * 1000,
+  };
+  return value;
+}
+
+/**
+ * Which credentials a stored Apple authorisation has to be revoked with.
+ *
+ * Apple only accepts a revocation from the client the token was issued to. The
+ * app's sign-ins never store an ID token, while a web sign-in stores the one
+ * Auth.js received - whose audience names the Services ID. So a stored ID
+ * token addressed to the web client means "revoke as the web"; anything else
+ * is the app's.
+ */
+export function appleCredentialsForAccount(
+  idToken: string | null | undefined,
+  env: AppleServerEnv = process.env as AppleServerEnv
+): AppleServerCredentials | null {
+  const web = readAppleWebCredentials(env);
+  if (web && idToken) {
+    try {
+      const audience = [decodeJwt(idToken).aud].flat();
+      if (audience.includes(web.clientId)) return web;
+    } catch {
+      // Not a JWT we can read - fall through to the app's credentials.
+    }
+  }
+  return readAppleServerCredentials(env);
 }
 
 async function postForm(
@@ -145,9 +242,11 @@ export type AppleRevocationResult =
  * retry later.
  */
 export async function revokeAppleToken(
-  refreshToken: string
+  refreshToken: string,
+  /** The account's stored ID token - it says which client issued the grant. */
+  idToken?: string | null
 ): Promise<AppleRevocationResult> {
-  const creds = readAppleServerCredentials();
+  const creds = appleCredentialsForAccount(idToken);
   if (!creds) return { ok: false, reason: "not-configured" };
 
   try {

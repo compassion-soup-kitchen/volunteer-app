@@ -61,6 +61,20 @@ describe("<RegisterForm />", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers Sign up with Apple when the server can finish it", () => {
+    render(<RegisterForm appleEnabled />);
+    expect(
+      screen.getByRole("button", { name: /sign up with apple/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides Apple when it isn't configured", () => {
+    render(<RegisterForm />);
+    expect(
+      screen.queryByRole("button", { name: /apple/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("does not render an error alert until the action returns one", () => {
     render(<RegisterForm />);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();

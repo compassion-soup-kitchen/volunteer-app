@@ -1,6 +1,17 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { exportPKCS8, generateKeyPair, importPKCS8 } from "jose";
-import { readAppleServerCredentials } from "./apple-api";
+import {
+  decodeJwt,
+  decodeProtectedHeader,
+  exportPKCS8,
+  generateKeyPair,
+  importPKCS8,
+} from "jose";
+import {
+  appleCredentialsForAccount,
+  getAppleWebClientSecret,
+  readAppleServerCredentials,
+  readAppleWebCredentials,
+} from "./apple-api";
 
 /**
  * The `.p8` Apple issues is a multi-line PEM, and it has to survive a trip
@@ -86,5 +97,82 @@ describe("the private key survives its trip through the environment", () => {
     const padded = `  ${pem.replace(/\n/g, "\\n")}  `;
     const creds = readAppleServerCredentials(env(padded));
     await expect(importPKCS8(creds!.privateKey, "ES256")).resolves.toBeDefined();
+  });
+});
+
+describe("readAppleWebCredentials", () => {
+  const SERVICES_ID = "nz.org.compassion.volunteer.web";
+
+  // The website signs in as its Services ID, and needs no bundle id at all.
+  it("pairs the Services ID with the shared signing key", () => {
+    const key: Partial<ReturnType<typeof env>> = env("key");
+    delete key.APPLE_CLIENT_ID;
+    const creds = readAppleWebCredentials({ ...key, APPLE_WEB_CLIENT_ID: ` ${SERVICES_ID} ` });
+    expect(creds).toMatchObject({ clientId: SERVICES_ID, teamId: "TEAM123456" });
+  });
+
+  it("is off without a Services ID or without the key", () => {
+    expect(readAppleWebCredentials(env("key"))).toBeNull();
+    expect(
+      readAppleWebCredentials({ APPLE_WEB_CLIENT_ID: SERVICES_ID, APPLE_TEAM_ID: "T" })
+    ).toBeNull();
+  });
+});
+
+describe("getAppleWebClientSecret", () => {
+  const SERVICES_ID = "nz.org.compassion.volunteer.web";
+  const webEnv = () => ({ ...env(pem), APPLE_WEB_CLIENT_ID: SERVICES_ID });
+
+  it("is null when web sign-in isn't configured", async () => {
+    await expect(getAppleWebClientSecret(env(pem))).resolves.toBeNull();
+  });
+
+  it("mints a secret Apple will accept for the Services ID", async () => {
+    const secret = await getAppleWebClientSecret(webEnv(), Date.now() + 1);
+    const claims = decodeJwt(secret!);
+    expect(claims).toMatchObject({
+      iss: "TEAM123456",
+      sub: SERVICES_ID,
+      aud: "https://appleid.apple.com",
+    });
+    expect(decodeProtectedHeader(secret!)).toMatchObject({ alg: "ES256", kid: "KEY1234567" });
+  });
+
+  // Minting per request would be wasteful; never reminting would let a
+  // long-lived container outlive the secret and break every Apple sign-in.
+  it("reuses the secret until shortly before it lapses", async () => {
+    const start = Date.now() + 10_000;
+    const first = await getAppleWebClientSecret(webEnv(), start);
+    const later = await getAppleWebClientSecret(webEnv(), start + 60 * 60 * 1000);
+    expect(later).toBe(first);
+
+    const nearExpiry = start + 23.5 * 60 * 60 * 1000;
+    const reminted = await getAppleWebClientSecret(webEnv(), nearExpiry);
+    expect(reminted).not.toBe(first);
+  });
+});
+
+describe("appleCredentialsForAccount", () => {
+  const SERVICES_ID = "nz.org.compassion.volunteer.web";
+  const both = () => ({ ...env("key"), APPLE_WEB_CLIENT_ID: SERVICES_ID });
+  const idToken = (aud: string) =>
+    `${btoa(JSON.stringify({ alg: "none" }))}.${btoa(JSON.stringify({ aud }))}.`;
+
+  // Apple only revokes as the client the grant was issued to.
+  it("revokes a web sign-in as the website", () => {
+    expect(appleCredentialsForAccount(idToken(SERVICES_ID), both())?.clientId).toBe(
+      SERVICES_ID
+    );
+  });
+
+  it("revokes an app sign-in - which stores no ID token - as the app", () => {
+    expect(appleCredentialsForAccount(null, both())?.clientId).toBe(BUNDLE_ID);
+    expect(appleCredentialsForAccount(idToken(BUNDLE_ID), both())?.clientId).toBe(
+      BUNDLE_ID
+    );
+  });
+
+  it("falls back to the app for a token it can't read", () => {
+    expect(appleCredentialsForAccount("not-a-jwt", both())?.clientId).toBe(BUNDLE_ID);
   });
 });
