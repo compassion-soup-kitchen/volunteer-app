@@ -109,27 +109,34 @@ describe("isSeededTrainingType", () => {
 });
 
 describe("trainingTypeDeleteBlocker", () => {
+  it("blocks a type that volunteers' training records still reference", () => {
+    expect(
+      trainingTypeDeleteBlocker({ key: "FIRST_AID", sessionCount: 0, recordCount: 1 })
+    ).toMatch(/1 volunteer training record uses this type/);
+  });
+
+
   it("allows deleting an unused staff-created type", () => {
     expect(
-      trainingTypeDeleteBlocker({ key: "FIRST_AID", sessionCount: 0 })
+      trainingTypeDeleteBlocker({ key: "FIRST_AID", sessionCount: 0, recordCount: 0 })
     ).toBeNull();
   });
 
   it("protects the built-in types even when unused", () => {
     expect(
-      trainingTypeDeleteBlocker({ key: "INDUCTION", sessionCount: 0 })
+      trainingTypeDeleteBlocker({ key: "INDUCTION", sessionCount: 0, recordCount: 0 })
     ).toMatch(/built-in/i);
   });
 
   it("blocks a type that sessions still reference", () => {
     expect(
-      trainingTypeDeleteBlocker({ key: "FIRST_AID", sessionCount: 3 })
+      trainingTypeDeleteBlocker({ key: "FIRST_AID", sessionCount: 3, recordCount: 0 })
     ).toMatch(/3 training sessions use/);
   });
 
   it("reads naturally for a single session", () => {
     expect(
-      trainingTypeDeleteBlocker({ key: "FIRST_AID", sessionCount: 1 })
+      trainingTypeDeleteBlocker({ key: "FIRST_AID", sessionCount: 1, recordCount: 0 })
     ).toMatch(/1 training session uses/);
   });
 });

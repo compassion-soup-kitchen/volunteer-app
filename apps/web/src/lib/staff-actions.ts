@@ -945,7 +945,7 @@ export async function getVolunteerDetail(
   const [hours, training, shifts] = profile
     ? await Promise.all([
         getVolunteerHoursDataForUser(userId),
-        getTrainingHistoryForUser(userId),
+        getTrainingHistoryForUser(userId, { forStaff: true }),
         readShiftsForRecord(profile.id),
       ])
     : [

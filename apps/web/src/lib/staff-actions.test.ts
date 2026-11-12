@@ -337,7 +337,8 @@ describe("getVolunteerDetail", () => {
     const detail = await getVolunteerDetail("user-1");
 
     expect(hoursForUserMock).toHaveBeenCalledWith("user-1");
-    expect(trainingForUserMock).toHaveBeenCalledWith("user-1");
+    // Staff read the staff-only detail of recorded training (note, scan).
+    expect(trainingForUserMock).toHaveBeenCalledWith("user-1", { forStaff: true });
     expect(detail?.hours).toEqual({ totalHours: 11 });
     expect(detail?.training).toEqual([{ id: "ta1" }]);
     expect(detail?.profile).toMatchObject({

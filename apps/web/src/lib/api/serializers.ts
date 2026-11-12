@@ -191,6 +191,9 @@ export function serializeTrainingHistoryItem(item: TrainingHistoryItem) {
     title: item.title,
     date: dateOnly(item.date),
     status: item.status,
+    // `RECORD` is training staff signed off on paper; its status is always
+    // ATTENDED, so clients that predate this field still count it as done.
+    source: item.source,
   };
 }
 

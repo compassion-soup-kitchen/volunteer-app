@@ -12,6 +12,7 @@ import { contactLine } from "@/lib/format";
 import Link from "next/link";
 import { RiPencilLine, RiSuitcaseLine } from "@remixicon/react";
 import { getLeaveFor } from "@/lib/leave-actions";
+import { getActiveTrainingTypes } from "@/lib/training-type-actions";
 import { describeLeaveStatus } from "@/lib/leave";
 import { VolunteerRecord } from "./volunteer-record";
 
@@ -36,7 +37,10 @@ export default async function VolunteerDetailPage({
 
   const { user, profile } = detail;
   // Volunteers and the kitchen team both keep leave, so it shows on either record.
-  const leave = await getLeaveFor(user.id);
+  const [leave, trainingTypes] = await Promise.all([
+    getLeaveFor(user.id),
+    profile ? getActiveTrainingTypes() : Promise.resolve([]),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -87,7 +91,12 @@ export default async function VolunteerDetailPage({
         }
       />
 
-      <VolunteerRecord detail={detail} leave={leave} viewerUserId={viewerUserId} />
+      <VolunteerRecord
+        detail={detail}
+        leave={leave}
+        trainingTypes={trainingTypes}
+        viewerUserId={viewerUserId}
+      />
     </div>
   );
 }

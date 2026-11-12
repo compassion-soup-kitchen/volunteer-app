@@ -62,6 +62,7 @@ model User {
   createdEvents        Event[]
   eventRsvps           EventRsvp[]
   uploadedDocuments    Document[]           @relation("UploadedBy")
+  recordedTraining     TrainingRecord[]     @relation("TrainingRecordedBy")
   updatedAgreements    AgreementTemplate[]  @relation("AgreementTemplateUpdatedBy")
   reAckSetAgreements   AgreementTemplate[]  @relation("AgreementTemplateReAckSetBy")
   archivedBy           User?                @relation("UserArchivedBy", fields: [archivedById], references: [id])
@@ -188,6 +189,7 @@ model VolunteerProfile {
   shiftSignups        ShiftSignup[]
   shiftOffers         ShiftOffer[]
   trainingAttendances TrainingAttendance[]
+  trainingRecords     TrainingRecord[]
   regularPatterns     ShiftPattern[]       @relation("ShiftPatternRegulars")
 }
 
@@ -257,6 +259,11 @@ enum DocumentType {
   SIGNED_AGREEMENT
   POLICY
   TRAINING_MATERIAL
+  /// NZ Police vetting - distinct from the MoJ criminal record check.
+  POLICE_VETTING
+  /// A completed training or safety sign-off sheet, scanned onto the record.
+  TRAINING_RECORD
+  OTHER
 }
 
 model Document {
@@ -270,6 +277,8 @@ model Document {
 
   volunteer  VolunteerProfile? @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
   uploadedBy User?             @relation("UploadedBy", fields: [uploadedById], references: [id])
+
+  trainingRecords TrainingRecord[]
 }
 
 model SignedAgreement {
@@ -511,6 +520,7 @@ model TrainingType {
   createdAt   DateTime @default(now())
 
   sessions TrainingSession[]
+  records  TrainingRecord[]
 }
 
 model TrainingSession {
@@ -551,6 +561,36 @@ model TrainingAttendance {
   volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, volunteerId])
+}
+
+/// Training someone completed outside a scheduled session - the Breakfast or
+/// Dinner sheet ticked off over several shifts, the H&S walk-through - written
+/// onto their record by staff. The sign-off itself stays on paper; `document`
+/// is the scan of it, so the record and its evidence sit together.
+///
+/// Deliberately not a `TrainingAttendance` against a made-up session: nobody
+/// was rostered, there is no capacity or time, and a fake session would show
+/// up on the training calendar.
+model TrainingRecord {
+  id           String   @id @default(cuid())
+  volunteerId  String
+  typeId       String
+  /// The day the training was signed off, not the day it was typed in.
+  completedOn  DateTime @db.Date
+  note         String?
+  /// The scanned sign-off sheet. Removing the file keeps the record.
+  documentId   String?
+  /// Nullable so the record outlives the staff member who wrote it.
+  recordedById String?
+  createdAt    DateTime @default(now())
+
+  volunteer  VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  type       TrainingType     @relation(fields: [typeId], references: [id])
+  document   Document?        @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  recordedBy User?            @relation("TrainingRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([volunteerId])
+  @@index([typeId])
 }
 
 // ─── Communication ────────────────────────────────────

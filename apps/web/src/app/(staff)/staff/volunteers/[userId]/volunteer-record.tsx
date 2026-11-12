@@ -24,7 +24,6 @@ import {
   RiArrowRightLine,
   RiCakeLine,
   RiCalendarLine,
-  RiGraduationCapLine,
   RiGroupLine,
   RiHeartLine,
   RiMailLine,
@@ -53,6 +52,8 @@ import type { LeaveOverview } from "@/lib/leave-actions";
 import { LeaveEntries } from "@/components/leave/leave-entries";
 import { LogLeaveDialog } from "@/components/leave/log-leave-dialog";
 import { VolunteerDocuments } from "./volunteer-documents";
+import { VolunteerTraining } from "./volunteer-training";
+import type { TrainingTypeOption } from "@/lib/training-type-actions";
 import { Eyebrow } from "@/components/brand/eyebrow";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -71,19 +72,24 @@ const NOT_PROVIDED = (
  * own profile, plus the things only staff need - emergency contact, vetting,
  * their record of shifts and training, and the account behind it all.
  *
- * Read-only by design, leave aside. Everything that *changes* a volunteer
- * (status, role, groups, archiving) stays in one place - the directory's row
- * menu - so there is never a question of which control is authoritative.
- * Leave is logged here because it is about this one person's dates, and the
- * leave board offers the same controls.
+ * Read-only by design, bar what is about this one person's own paperwork and
+ * dates. Everything that *changes* a volunteer (status, role, groups,
+ * archiving) stays in one place - the directory's row menu - so there is never
+ * a question of which control is authoritative. Leave is logged here because
+ * it is about this one person's dates, and the leave board offers the same
+ * controls; scanned forms and training signed off on paper are attached here
+ * because the record is the only place they belong.
  */
 export function VolunteerRecord({
   detail,
   leave,
+  trainingTypes,
   viewerUserId,
 }: {
   detail: VolunteerDetail;
   leave: LeaveOverview | null;
+  /** Types still offered, for recording training by hand. */
+  trainingTypes: TrainingTypeOption[];
   /** The staff member looking, so their own leave reads as theirs. */
   viewerUserId: string | undefined;
 }) {
@@ -346,39 +352,13 @@ export function VolunteerRecord({
           )}
         </Card>
 
-        <Card>
-          <CardHeader>
-            <SectionTitle icon={RiGraduationCapLine}>
-              Whakangungu · Training
-            </SectionTitle>
-          </CardHeader>
-          {training.length > 0 ? (
-            <BleedList>
-              {training.map((item) => (
-                <li key={item.id} className="flex items-center gap-3 px-5 py-3">
-                  <IconChip size="sm">
-                    <RiGraduationCapLine />
-                  </IconChip>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDateOnly(item.date, {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                      {" · "}
-                      {item.type.name}
-                    </p>
-                  </div>
-                  <StatusBadge className="shrink-0" status={item.status} />
-                </li>
-              ))}
-            </BleedList>
-          ) : (
-            <EmptyRow icon={RiGraduationCapLine}>No training sessions yet</EmptyRow>
-          )}
-        </Card>
+        <VolunteerTraining
+          userId={user.id}
+          firstName={firstNameOf(user.name)}
+          training={training}
+          trainingTypes={trainingTypes}
+          today={todayInAppZone()}
+        />
 
         <Card>
           <CardHeader>
@@ -416,7 +396,7 @@ export function VolunteerRecord({
           )}
         </Card>
 
-        <VolunteerDocuments documents={profile.documents} />
+        <VolunteerDocuments userId={user.id} documents={profile.documents} />
       </div>
 
       {/* Right rail — status, standing and the account behind it */}
@@ -715,7 +695,7 @@ function LeaveCard({
     ...leave.upcoming,
     ...leave.past,
   ];
-  const firstName = person.name.split(" ")[0];
+  const firstName = firstNameOf(person.name);
 
   return (
     <Card>
@@ -834,4 +814,9 @@ function EmptyRow({
       className="border-t border-border"
     />
   );
+}
+
+/** What to call someone in a sentence - their first name, or a fallback. */
+function firstNameOf(name: string | null): string {
+  return name?.trim().split(/\s+/)[0] || "this volunteer";
 }

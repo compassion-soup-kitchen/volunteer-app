@@ -251,13 +251,14 @@ export async function deleteTrainingType(id: string): Promise<Result> {
   const db = getDb();
   const existing = await db.trainingType.findUnique({
     where: { id },
-    select: { key: true, _count: { select: { sessions: true } } },
+    select: { key: true, _count: { select: { sessions: true, records: true } } },
   });
   if (!existing) return { error: "That training type no longer exists." };
 
   const blocker = trainingTypeDeleteBlocker({
     key: existing.key,
     sessionCount: existing._count.sessions,
+    recordCount: existing._count.records,
   });
   if (blocker) return { error: blocker };
 
