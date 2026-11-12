@@ -1,11 +1,11 @@
 "use server";
 
-import { DocumentType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { getSignedDownloadUrl } from "@/lib/storage";
-import { canDownloadDocument } from "@/lib/document-access";
+import { canDownloadDocument, ORG_FILE_TYPES } from "@/lib/document-access";
 import {
   removeStoredDocument,
   storeDocument,
@@ -482,7 +482,7 @@ export async function getPendingResignCount(): Promise<number> {
 // ─── Staff: Upload Document ─────────────────────────────
 
 const uploadDocumentSchema = z.object({
-  type: z.enum(DocumentType),
+  type: z.enum(ORG_FILE_TYPES),
   file: z.instanceof(File),
 });
 
@@ -623,7 +623,7 @@ export async function getVolunteerDocuments(): Promise<UploadedDocument[]> {
   const docs = await db.document.findMany({
     where: {
       volunteerId: null,
-      type: { in: ["POLICY", "TRAINING_MATERIAL"] },
+      type: { in: [...ORG_FILE_TYPES] },
     },
     orderBy: { uploadedAt: "desc" },
     select: {

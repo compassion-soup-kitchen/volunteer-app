@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { canDownloadDocument } from "./document-access";
+import { canDownloadDocument, ORG_FILE_TYPES } from "./document-access";
+import { VOLUNTEER_FILE_TYPES } from "./training-records";
 
 const staff = { isStaff: true };
 const volunteer = { isStaff: false };
@@ -24,5 +25,13 @@ describe("canDownloadDocument", () => {
 
   it("refuses org-level files that aren't meant for volunteers", () => {
     expect(canDownloadDocument(volunteer, { type: "SIGNED_AGREEMENT", volunteerId: null })).toBe(false);
+  });
+});
+
+describe("ORG_FILE_TYPES", () => {
+  it("never overlaps the kinds of file kept on one volunteer's record", () => {
+    for (const type of ORG_FILE_TYPES) {
+      expect((VOLUNTEER_FILE_TYPES as readonly string[]).includes(type)).toBe(false);
+    }
   });
 });
