@@ -196,7 +196,10 @@ export default async function ProfilePage() {
             {trainingHistory.length > 0 ? (
               <BleedList>
                 {trainingHistory.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3 px-5 py-3">
+                  <li
+                    key={`${item.source}-${item.id}`}
+                    className="flex items-center gap-3 px-5 py-3"
+                  >
                     <IconChip size="sm">
                       <RiGraduationCapLine />
                     </IconChip>
@@ -211,7 +214,8 @@ export default async function ProfilePage() {
                           year: "numeric",
                         })}
                         {" · "}
-                        {item.type.name}
+                        {/* A recorded item is titled by its type already. */}
+                        {item.source === "RECORD" ? "Signed off" : item.type.name}
                       </p>
                     </div>
                     <StatusBadge
@@ -235,8 +239,8 @@ export default async function ProfilePage() {
                 bare
                 size="compact"
                 icon={<RiGraduationCapLine />}
-                title="No training sessions yet"
-                description="Sessions you register for will show up here."
+                title="No training yet"
+                description="Sessions you register for, and training the team signs off, will show up here."
                 className="border-t border-border"
               />
             )}

@@ -1,16 +1,15 @@
 "use server";
 
-import { DocumentType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
+import { getSignedDownloadUrl } from "@/lib/storage";
+import { canDownloadDocument, ORG_FILE_TYPES } from "@/lib/document-access";
 import {
-  uploadFile,
-  getSignedDownloadUrl,
-  deleteFile,
-  isStorageConfigured,
-} from "@/lib/storage";
-import { buildStorageKey, checkUploadFile } from "@/lib/uploads";
+  removeStoredDocument,
+  storeDocument,
+} from "@/lib/data/stored-documents";
 import { STAFF_ROLES } from "@/lib/role-change";
 import {
   isCurrentVersion,
@@ -483,7 +482,7 @@ export async function getPendingResignCount(): Promise<number> {
 // ─── Staff: Upload Document ─────────────────────────────
 
 const uploadDocumentSchema = z.object({
-  type: z.enum(DocumentType),
+  type: z.enum(ORG_FILE_TYPES),
   file: z.instanceof(File),
 });
 
@@ -502,14 +501,6 @@ export async function uploadDocument(
     return { error: "Not authorised." };
   }
 
-  if (!isStorageConfigured()) {
-    console.error("uploadDocument: S3 storage env vars are not configured");
-    return {
-      error:
-        "File storage isn't set up on the server yet. Let your administrator know.",
-    };
-  }
-
   const parsed = uploadDocumentSchema.safeParse({
     file: formData.get("file"),
     type: formData.get("type"),
@@ -517,38 +508,14 @@ export async function uploadDocument(
   if (!parsed.success) {
     return { error: "Choose a file and a document type." };
   }
-  const { file, type } = parsed.data;
 
-  const rejection = checkUploadFile(file);
-  if (rejection) return { error: rejection };
-
-  const db = getDb();
-  const storagePath = buildStorageKey(type.toLowerCase(), file.name, Date.now());
-
-  try {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await uploadFile(storagePath, buffer, file.type);
-  } catch (err) {
-    console.error("uploadDocument: storage upload failed", err);
-    return { error: "The upload didn't reach storage. Please try again." };
-  }
-
-  try {
-    await db.document.create({
-      data: {
-        type,
-        fileName: file.name,
-        fileUrl: storagePath,
-        uploadedById: session.user.id,
-      },
-    });
-  } catch (err) {
-    // The bytes are in the bucket but the row isn't — drop the orphan so the
-    // key doesn't linger unreferenced.
-    console.error("uploadDocument: could not record the document", err);
-    await deleteFile(storagePath).catch(() => {});
-    return { error: "Something went wrong. Please try again." };
-  }
+  const stored = await storeDocument({
+    file: parsed.data.file,
+    type: parsed.data.type,
+    volunteerId: null,
+    uploadedById: session.user.id,
+  });
+  if (!stored.ok) return { error: stored.error };
 
   revalidatePath("/staff/documents");
   revalidatePath("/documents");
@@ -603,19 +570,8 @@ export async function getDocumentDownloadUrl(
 
   if (!doc) return null;
 
-  // Staff can download anything; everyone else only their own documents or
-  // org-level material that volunteers are meant to see (policies, training).
-  if (!["COORDINATOR", "ADMIN"].includes(session.user.role)) {
-    if (doc.volunteerId) {
-      const profile = await db.volunteerProfile.findUnique({
-        where: { userId: session.user.id },
-        select: { id: true },
-      });
-      if (profile?.id !== doc.volunteerId) throw new Error("Unauthorized");
-    } else if (!["POLICY", "TRAINING_MATERIAL"].includes(doc.type)) {
-      throw new Error("Unauthorized");
-    }
-  }
+  const isStaff = ["COORDINATOR", "ADMIN"].includes(session.user.role);
+  if (!canDownloadDocument({ isStaff }, doc)) throw new Error("Unauthorized");
 
   try {
     return await getSignedDownloadUrl(doc.fileUrl, 60 * 5); // 5 min expiry
@@ -643,14 +599,8 @@ export async function deleteDocument(
 
   if (!doc) return { error: "That document no longer exists." };
 
-  // A bucket object that's already gone shouldn't strand the row it belongs to,
-  // so a failed delete here is logged and the row goes regardless.
-  await deleteFile(doc.fileUrl).catch((err) => {
-    console.error("deleteDocument: could not remove the stored file", err);
-  });
-
   try {
-    await db.document.delete({ where: { id: doc.id } });
+    await removeStoredDocument(doc);
   } catch (err) {
     console.error("deleteDocument: could not delete the document row", err);
     return { error: "Something went wrong. Please try again." };
@@ -673,7 +623,7 @@ export async function getVolunteerDocuments(): Promise<UploadedDocument[]> {
   const docs = await db.document.findMany({
     where: {
       volunteerId: null,
-      type: { in: ["POLICY", "TRAINING_MATERIAL"] },
+      type: { in: [...ORG_FILE_TYPES] },
     },
     orderBy: { uploadedAt: "desc" },
     select: {

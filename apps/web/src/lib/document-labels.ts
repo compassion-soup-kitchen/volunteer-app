@@ -11,6 +11,9 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   SIGNED_AGREEMENT: "Signed agreement",
   POLICY: "Policy",
   TRAINING_MATERIAL: "Training material",
+  POLICE_VETTING: "Police vetting",
+  TRAINING_RECORD: "Training sign-off",
+  OTHER: "Other",
 };
 
 /**

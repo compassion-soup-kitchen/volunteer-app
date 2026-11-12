@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { startOfTodayInAppZone } from "@/lib/date-only";
+import { newestFirst } from "@/lib/training-records";
 import { revalidatePath } from "next/cache";
 import type { MutationResult } from "./volunteer-shifts";
 
@@ -34,7 +35,25 @@ export type TrainingHistoryItem = {
   type: TrainingTypeRef;
   title: string;
   date: Date;
+  /**
+   * The attendance status of a session. A recorded item is always `ATTENDED`:
+   * it records training that was completed, and that is what every reader
+   * (the mobile readiness hero included) already counts as done.
+   */
   status: string;
+  /**
+   * `SESSION` - a scheduled session they booked or attended.
+   * `RECORD` - training signed off on paper and written onto their record by
+   * staff (a `TrainingRecord`).
+   */
+  source: "SESSION" | "RECORD";
+  /** Staff-only detail of a recorded item. Always null outside the staff view. */
+  record: {
+    note: string | null;
+    recordedByName: string | null;
+    /** The scanned sign-off sheet, when one was attached. */
+    document: { id: string; fileName: string } | null;
+  } | null;
 };
 
 // ─── Reads ──────────────────────────────────────────────
@@ -132,32 +151,71 @@ export async function getTrainingSessionForUser(
   return ts ? toVolunteerSession(ts, profile?.id ?? null) : null;
 }
 
+/**
+ * Everything someone has done or booked, newest first: the sessions they were
+ * on and the training staff recorded for them by hand. The staff-only detail
+ * of a recorded item (note, who wrote it, the scan) is read only `forStaff`, so
+ * it never reaches the volunteer's own pages or the mobile API.
+ */
 export async function getTrainingHistoryForUser(
-  userId: string
+  userId: string,
+  { forStaff = false }: { forStaff?: boolean } = {}
 ): Promise<TrainingHistoryItem[]> {
   const db = getDb();
   const profile = await db.volunteerProfile.findUnique({
     where: { userId },
+    select: { id: true },
   });
   if (!profile) return [];
 
-  const attendances = await db.trainingAttendance.findMany({
-    where: { volunteerId: profile.id },
-    include: {
-      session: {
-        select: { id: true, type: typeSelect, title: true, date: true },
+  const [attendances, records] = await Promise.all([
+    db.trainingAttendance.findMany({
+      where: { volunteerId: profile.id },
+      include: {
+        session: {
+          select: { id: true, type: typeSelect, title: true, date: true },
+        },
       },
-    },
-    orderBy: { session: { date: "desc" } },
-  });
+    }),
+    db.trainingRecord.findMany({
+      where: { volunteerId: profile.id },
+      select: {
+        id: true,
+        completedOn: true,
+        note: true,
+        type: typeSelect,
+        recordedBy: { select: { name: true } },
+        document: { select: { id: true, fileName: true } },
+      },
+    }),
+  ]);
 
-  return attendances.map((a) => ({
-    id: a.id,
-    type: a.session.type,
-    title: a.session.title,
-    date: a.session.date,
-    status: a.status,
-  }));
+  return newestFirst<TrainingHistoryItem>([
+    ...attendances.map((a) => ({
+      id: a.id,
+      type: a.session.type,
+      title: a.session.title,
+      date: a.session.date,
+      status: a.status,
+      source: "SESSION" as const,
+      record: null,
+    })),
+    ...records.map((r) => ({
+      id: r.id,
+      type: r.type,
+      title: r.type.name,
+      date: r.completedOn,
+      status: "ATTENDED",
+      source: "RECORD" as const,
+      record: forStaff
+        ? {
+            note: r.note,
+            recordedByName: r.recordedBy?.name ?? null,
+            document: r.document,
+          }
+        : null,
+    })),
+  ]);
 }
 
 // ─── Mutations ──────────────────────────────────────────

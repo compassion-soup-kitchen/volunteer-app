@@ -39,7 +39,6 @@ import { formatTimestamp } from "@/lib/format";
 import {
   uploadDocument,
   deleteDocument,
-  getDocumentDownloadUrl,
   type UploadedDocument,
 } from "@/lib/document-actions";
 import {
@@ -49,6 +48,7 @@ import {
 } from "@/lib/uploads";
 import { BleedList } from "@/components/brand/detail-list";
 import { EmptyState } from "@/components/brand/empty-state";
+import { useDocumentDownload } from "@/components/documents/use-document-download";
 
 const TYPE_VARIANTS: Record<
   string,
@@ -63,7 +63,7 @@ const TYPE_VARIANTS: Record<
 
 export function FileManager({ documents }: { documents: UploadedDocument[] }) {
   const [uploading, startUpload] = useTransition();
-  const [downloading, setDownloading] = useState<string | null>(null);
+  const { downloading, download: handleDownload } = useDocumentDownload();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [docType, setDocType] = useState("POLICY");
   // Held until Upload is pressed, so the type can be corrected after choosing.
@@ -109,27 +109,6 @@ export function FileManager({ documents }: { documents: UploadedDocument[] }) {
     }
     toast.success(`"${fileName}" deleted.`);
     return true;
-  }
-
-  async function handleDownload(id: string, fileName: string) {
-    setDownloading(id);
-    try {
-      const url = await getDocumentDownloadUrl(id);
-      if (!url) {
-        toast.error("That file couldn't be opened. Please try again.");
-        return;
-      }
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.target = "_blank";
-      a.click();
-    } catch (err) {
-      console.error("Document download failed:", err);
-      toast.error("That file couldn't be opened. Please try again.");
-    } finally {
-      setDownloading(null);
-    }
   }
 
   return (
