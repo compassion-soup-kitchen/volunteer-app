@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.16.0](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.15.2...v1.16.0) (2026-11-12)
+
+
+### Features
+
+* **web:** record paper-signed training and attach scanned forms to volunteer records ([#203](https://github.com/compassion-soup-kitchen/volunteer-app/issues/203)) ([8d58340](https://github.com/compassion-soup-kitchen/volunteer-app/commit/8d5834065aaa19f66e827bca4774e522fa027527))
+
+
+### Bug Fixes
+
+* Apple sign-in bouncing back to login in the app, and add Apple sign-in to the web ([#199](https://github.com/compassion-soup-kitchen/volunteer-app/issues/199)) ([31f6f62](https://github.com/compassion-soup-kitchen/volunteer-app/commit/31f6f62ca4a709592a61f3b36886febe722e055c))
+* **applications:** accept applications without a date of birth ([#200](https://github.com/compassion-soup-kitchen/volunteer-app/issues/200)) ([2c818b7](https://github.com/compassion-soup-kitchen/volunteer-app/commit/2c818b71493595c5058a26a4b58b0adf3b19c318))
+* **auth:** hide web Apple sign-in when its client id is the app's bundle id ([#202](https://github.com/compassion-soup-kitchen/volunteer-app/issues/202)) ([d24a625](https://github.com/compassion-soup-kitchen/volunteer-app/commit/d24a625735614737396fbe2a163716ae6e032603))
+* **auth:** link Apple and Google sign-in onto an existing verified account ([#201](https://github.com/compassion-soup-kitchen/volunteer-app/issues/201)) ([4aaa580](https://github.com/compassion-soup-kitchen/volunteer-app/commit/4aaa580c423e6aca2a6fcd40e8c9c3ac0b779fbc))
+* **security:** keep review notes private and tighten CI trust ([#196](https://github.com/compassion-soup-kitchen/volunteer-app/issues/196)) ([90711cb](https://github.com/compassion-soup-kitchen/volunteer-app/commit/90711cbb8f60c8a1b1fa4e1eb9821c453af2348e))
+* **security:** strict nonce CSP and the scanner's header findings ([#198](https://github.com/compassion-soup-kitchen/volunteer-app/issues/198)) ([ed00acc](https://github.com/compassion-soup-kitchen/volunteer-app/commit/ed00acc7068888dc7d4251c72248932ef20a949b))
+
 ## [1.15.2](https://github.com/compassion-soup-kitchen/volunteer-app/compare/v1.15.1...v1.15.2) (2026-11-07)
 
 
