@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireActiveSession } from "@/lib/action-auth";
 import { getDb } from "@/lib/db";
 import { getSignedDownloadUrl } from "@/lib/storage";
+import { canDownloadDocument } from "@/lib/document-access";
 import {
   removeStoredDocument,
   storeDocument,
@@ -569,19 +570,8 @@ export async function getDocumentDownloadUrl(
 
   if (!doc) return null;
 
-  // Staff can download anything; everyone else only their own documents or
-  // org-level material that volunteers are meant to see (policies, training).
-  if (!["COORDINATOR", "ADMIN"].includes(session.user.role)) {
-    if (doc.volunteerId) {
-      const profile = await db.volunteerProfile.findUnique({
-        where: { userId: session.user.id },
-        select: { id: true },
-      });
-      if (profile?.id !== doc.volunteerId) throw new Error("Unauthorized");
-    } else if (!["POLICY", "TRAINING_MATERIAL"].includes(doc.type)) {
-      throw new Error("Unauthorized");
-    }
-  }
+  const isStaff = ["COORDINATOR", "ADMIN"].includes(session.user.role);
+  if (!canDownloadDocument({ isStaff }, doc)) throw new Error("Unauthorized");
 
   try {
     return await getSignedDownloadUrl(doc.fileUrl, 60 * 5); // 5 min expiry
